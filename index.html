@@ -25,6 +25,9 @@
     }
     canvas#inkCanvas {
       touch-action: none;
+      -webkit-user-select: none;
+      user-select: none;
+      -webkit-touch-callout: none;
       cursor: crosshair;
     }
     .no-scrollbar::-webkit-scrollbar {
@@ -70,6 +73,10 @@
 
       <!-- Controls -->
       <div class="flex items-center gap-2">
+        <button id="openAiModalBtn" class="flex items-center gap-1 text-xs font-medium text-stone-600 bg-stone-100 hover:bg-stone-200/70 px-2.5 py-1.5 rounded-full transition" title="실제 손글씨 인식을 위한 Gemini API 키 설정">
+          <i data-lucide="cpu" class="w-3.5 h-3.5"></i>
+          <span id="aiStatusLabel">AI 연결</span>
+        </button>
         <label class="flex items-center gap-1.5 text-xs font-medium text-stone-600 bg-stone-100 px-2.5 py-1.5 rounded-full cursor-pointer select-none hover:bg-stone-200/70 transition" title="이면에 저장된 AI 변환 텍스트를 확인합니다">
           <input id="peekAiToggle" type="checkbox" class="accent-blue-600 rounded" />
           <span>숨김 태그 보기</span>
@@ -82,6 +89,27 @@
       </div>
     </div>
   </header>
+
+  <!-- AI Settings Modal -->
+  <div id="aiModal" class="hidden fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl border border-stone-200 shadow-xl max-w-md w-full p-5 space-y-4">
+      <div class="flex items-center justify-between">
+        <h2 class="text-sm font-bold text-stone-900">실제 손글씨 AI 인식 연결 (선택)</h2>
+        <button id="closeAiModalBtn" class="text-stone-400 hover:text-stone-700"><i data-lucide="x" class="w-4 h-4"></i></button>
+      </div>
+      <p class="text-xs text-stone-600 leading-relaxed">
+        API 키를 입력하면 저장 시 손글씨 이미지를 Gemini Vision으로 보내 <b>기호 판별 + 숨김 텍스트·키워드</b>를 자동으로 추출합니다. 키는 현재 기기 브라우저에만 저장됩니다.
+      </p>
+      <div>
+        <label class="block text-[11px] font-semibold text-stone-600 mb-1">Gemini API Key</label>
+        <input id="geminiKeyInput" type="password" placeholder="AIza..." class="w-full text-xs border border-stone-300 rounded-lg px-3 py-2 outline-none focus:border-blue-500" />
+      </div>
+      <div class="flex items-center justify-end gap-2 pt-1">
+        <button id="clearGeminiKeyBtn" class="px-3 py-1.5 text-xs text-stone-600 hover:bg-stone-100 rounded-lg">키 삭제</button>
+        <button id="saveGeminiKeyBtn" class="px-3.5 py-1.5 text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white rounded-lg">저장하기</button>
+      </div>
+    </div>
+  </div>
 
   <!-- Toast Banner -->
   <div id="toast" class="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 hidden bg-stone-900 text-white text-xs sm:text-sm px-4 py-2 rounded-full shadow-lg transition-opacity"></div>
@@ -104,6 +132,11 @@
           </button>
           <button id="clearCanvasBtn" class="p-1.5 rounded-lg text-stone-600 hover:bg-stone-200 transition" title="캔버스 비우기">
             <i data-lucide="eraser" class="w-4 h-4"></i>
+          </button>
+          <div class="h-4 w-px bg-stone-300 mx-1"></div>
+          <button id="penOnlyBtn" class="px-2 py-1 rounded-lg text-[11px] font-semibold bg-stone-900 text-white flex items-center gap-1 transition" title="켜면 Apple Pencil / S-Pen과 마우스만 인식하고 손바닥·손가락 터치를 무시합니다">
+            <i data-lucide="pen-tool" class="w-3 h-3"></i>
+            <span>펜 전용</span>
           </button>
         </div>
 
@@ -352,6 +385,11 @@
     let sortDesc = true;
     let searchQuery = '';
     let peekAi = false;
+    let penOnlyMode = true;
+    let currentLayoutMode = 'split';
+    let palmNoticeShown = false;
+    let geminiApiKey = '';
+    try { geminiApiKey = localStorage.getItem('cronota_gemini_key') || ''; } catch (e) {}
 
     // Canvas drawing state
     const canvas = document.getElementById('inkCanvas');
@@ -531,7 +569,13 @@
     }
 
     canvas.addEventListener('pointerdown', (e) => {
-      // Allow palm rejection feel: if a pen is active or touch is used, still draw on desktop/touch for testing
+      if (penOnlyMode && e.pointerType === 'touch') {
+        if (!palmNoticeShown) {
+          palmNoticeShown = true;
+          showToast('펜 전용 모드입니다. 손가락으로 그리려면 상단 [펜 전용]을 끄세요.');
+        }
+        return;
+      }
       e.preventDefault();
       canvas.setPointerCapture(e.pointerId);
       isDrawing = true;
@@ -543,6 +587,7 @@
 
     canvas.addEventListener('pointermove', (e) => {
       if (!isDrawing || !currentStroke) return;
+      if (penOnlyMode && e.pointerType === 'touch') return;
       const coalesced = e.getCoalescedEvents ? e.getCoalescedEvents() : [e];
       for (const ce of coalesced) {
         currentStroke.points.push(getPointerPos(ce));
@@ -599,24 +644,74 @@
       }));
     }
 
-    function commitCurrentBlock() {
+    function renderStrokesToBase64(strokes) {
+      const tmp = document.createElement('canvas');
+      tmp.width = 720;
+      tmp.height = 280;
+      const tctx = tmp.getContext('2d');
+      tctx.fillStyle = '#FAF9F6';
+      tctx.fillRect(0, 0, tmp.width, tmp.height);
+      drawStrokeList(tctx, normalizeStrokes(strokes), 10, 10, 1);
+      return tmp.toDataURL('image/png').split(',')[1];
+    }
+
+    async function analyzeInkWithGemini(strokes) {
+      const b64 = renderStrokesToBase64(strokes);
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(geminiApiKey)}`;
+      const prompt = '이 손글씨 이미지를 읽고 JSON으로만 답하세요. {"tagType":"todo|fact|ref|idea|question|decision 중 하나 (□=todo, ○=fact, *=ref, +=idea, △=question, !=decision)","ocrText":"손글씨 전체 텍스트","keywords":["핵심키워드1","핵심키워드2"]}';
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }, { inline_data: { mime_type: 'image/png', data: b64 } }] }],
+          generationConfig: { responseMimeType: 'application/json' }
+        })
+      });
+      if (!res.ok) throw new Error('API Error ' + res.status);
+      const data = await res.json();
+      const raw = data.candidates?.[0]?.content?.parts?.[0]?.text || '{}';
+      return JSON.parse(raw);
+    }
+
+    async function commitCurrentBlock() {
       if (canvasStrokes.length === 0) {
         showToast('먼저 캔버스에 기호와 필기를 작성해 주세요.');
         return;
       }
+      const commitBtn = document.getElementById('commitBlockBtn');
       const manualSel = document.getElementById('manualTagSelect').value;
-      const finalTag = manualSel !== 'auto' ? manualSel : (detectedSymbol || 'idea');
+      let finalTag = manualSel !== 'auto' ? manualSel : (detectedSymbol || 'idea');
       const hintInput = document.getElementById('hiddenHintInput');
-      const hintText = hintInput.value.trim();
+      let hintText = hintInput.value.trim();
+      let aiKeywords = null;
+
+      if (!hintText && geminiApiKey) {
+        commitBtn.disabled = true;
+        commitBtn.classList.add('opacity-60');
+        showToast('AI가 손글씨를 숨김 태그로 변환 중입니다...');
+        try {
+          const parsed = await analyzeInkWithGemini(canvasStrokes);
+          if (parsed.ocrText) hintText = parsed.ocrText;
+          if (Array.isArray(parsed.keywords)) aiKeywords = parsed.keywords;
+          if (manualSel === 'auto' && parsed.tagType && TAG_META[parsed.tagType]) {
+            finalTag = parsed.tagType;
+          }
+        } catch (err) {
+          showToast('AI 인식에 실패해 기본 태그로 저장합니다.');
+        } finally {
+          commitBtn.disabled = false;
+          commitBtn.classList.remove('opacity-60');
+        }
+      }
 
       const hasRedInk = canvasStrokes.some(s => s.color === '#DC2626');
       const meta = TAG_META[finalTag];
       const nowIso = new Date().toISOString();
 
       const autoText = hintText || `${meta.label} 손글씨 메모 (${new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })})`;
-      const autoKeywords = hintText
+      const autoKeywords = aiKeywords || (hintText
         ? hintText.split(/[\s,]+/).filter(w => w.length >= 1)
-        : [meta.label, '손글씨', '새메모'];
+        : [meta.label, '손글씨', '새메모']);
 
       const newBlock = {
         id: 'blk_' + Date.now(),
@@ -632,14 +727,17 @@
       blocks.unshift(newBlock);
       saveToStorage();
 
-      // Clear canvas for next page-less entry
       canvasStrokes = [];
       hintInput.value = '';
       document.getElementById('manualTagSelect').value = 'auto';
       redrawCanvas();
       updateLiveDetectionBadge();
       renderNotes();
-      showToast(`${meta.symbol} ${meta.label} 노트에 분류되어 저장되었습니다.`);
+      if (!hintText && !geminiApiKey) {
+        showToast(`${meta.symbol} ${meta.label} 저장됨 (검색용 텍스트는 하단 입력 또는 AI 연결 필요)`);
+      } else {
+        showToast(`${meta.symbol} ${meta.label} 노트에 분류되어 저장되었습니다.`);
+      }
     }
 
     // ---------- Render Notes & Mini Ink Canvases ----------
@@ -839,6 +937,9 @@
     searchInput.addEventListener('input', (e) => {
       searchQuery = e.target.value;
       clearSearchBtn.classList.toggle('hidden', !searchQuery);
+      if (searchQuery.trim() && currentLayoutMode === 'canvas') {
+        setLayoutMode('split');
+      }
       renderNotes();
     });
     function clearSearch() {
@@ -897,6 +998,7 @@
       document.getElementById('modeNotesBtn')
     ];
     function setLayoutMode(mode) {
+      currentLayoutMode = mode;
       modeBtns.forEach(b => b.classList.remove('bg-white', 'text-stone-900', 'shadow-sm'));
       if (mode === 'split') {
         modeBtns[0].classList.add('bg-white', 'text-stone-900', 'shadow-sm');
@@ -929,7 +1031,60 @@
       renderNotes();
     });
 
+    // Pen-only toggle
+    const penOnlyBtn = document.getElementById('penOnlyBtn');
+    function updatePenOnlyUI() {
+      if (penOnlyMode) {
+        penOnlyBtn.className = 'px-2 py-1 rounded-lg text-[11px] font-semibold bg-stone-900 text-white flex items-center gap-1 transition';
+        penOnlyBtn.querySelector('span').textContent = '펜 전용';
+      } else {
+        penOnlyBtn.className = 'px-2 py-1 rounded-lg text-[11px] font-medium bg-stone-200 text-stone-700 flex items-center gap-1 transition';
+        penOnlyBtn.querySelector('span').textContent = '펜+손 모두';
+      }
+    }
+    penOnlyBtn.addEventListener('click', () => {
+      penOnlyMode = !penOnlyMode;
+      updatePenOnlyUI();
+      showToast(penOnlyMode ? '펜 전용 모드: 손바닥 터치를 무시합니다.' : '펜+손 모드: 손가락으로도 그릴 수 있습니다.');
+    });
+
+    // AI Modal wiring
+    const aiModal = document.getElementById('aiModal');
+    const aiStatusLabel = document.getElementById('aiStatusLabel');
+    const geminiKeyInput = document.getElementById('geminiKeyInput');
+    function updateAiStatusUI() {
+      if (geminiApiKey) {
+        aiStatusLabel.textContent = 'AI 연결됨';
+        aiStatusLabel.parentElement.classList.add('text-blue-700', 'bg-blue-50');
+      } else {
+        aiStatusLabel.textContent = 'AI 연결';
+        aiStatusLabel.parentElement.classList.remove('text-blue-700', 'bg-blue-50');
+      }
+    }
+    document.getElementById('openAiModalBtn').addEventListener('click', () => {
+      geminiKeyInput.value = geminiApiKey;
+      aiModal.classList.remove('hidden');
+    });
+    document.getElementById('closeAiModalBtn').addEventListener('click', () => aiModal.classList.add('hidden'));
+    document.getElementById('saveGeminiKeyBtn').addEventListener('click', () => {
+      geminiApiKey = geminiKeyInput.value.trim();
+      try { localStorage.setItem('cronota_gemini_key', geminiApiKey); } catch (e) {}
+      updateAiStatusUI();
+      aiModal.classList.add('hidden');
+      showToast(geminiApiKey ? 'Gemini AI 손글씨 인식이 활성화되었습니다.' : 'API 키가 비워졌습니다.');
+    });
+    document.getElementById('clearGeminiKeyBtn').addEventListener('click', () => {
+      geminiApiKey = '';
+      geminiKeyInput.value = '';
+      try { localStorage.removeItem('cronota_gemini_key'); } catch (e) {}
+      updateAiStatusUI();
+      aiModal.classList.add('hidden');
+      showToast('API 키를 삭제했습니다.');
+    });
+
     window.addEventListener('load', () => {
+      updatePenOnlyUI();
+      updateAiStatusUI();
       resizeCanvas();
       renderNotes();
       if (window.lucide) lucide.createIcons();
