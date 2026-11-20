@@ -97,6 +97,11 @@
   .mtabs { display: none; max-width: 1360px; margin: 6px 12px 10px; padding: 3px; background: var(--press); border-radius: var(--r-md); }
   .mtab { flex: 1; height: 34px; border-radius: var(--r-sm); font-weight: 600; font-size: 13px; color: var(--muted); }
   .mtab[aria-selected="true"] { background: var(--surface); color: var(--ink); }
+  /* One panel at a time (phones, and tablets unless side-by-side is turned on) */
+  body.tabs .mtabs { display: flex; }
+  body.tabs main { grid-template-columns: minmax(0, 1fr) !important; }
+  body.tabs[data-tab="write"] #notesPanel, body.tabs[data-tab="notes"] #writePanel { display: none; }
+  @media (min-width: 900px) { body.tabs .mtabs { margin: 6px 24px 10px; } body.tabs main { padding-top: 0; } }
 
   /* ---------- Buttons ---------- */
   .btn { height: 36px; padding: 0 14px; border-radius: var(--r-sm); display: inline-flex; align-items: center; justify-content: center; gap: 6px; font-weight: 600; font-size: 13px; background: var(--hover); color: var(--ink); white-space: nowrap; transition: background .15s; }
@@ -255,9 +260,7 @@
     .sep { margin: 0 6px; }
   }
   @media (max-width: 899px) {
-    .mtabs { display: flex; }
-    main { grid-template-columns: minmax(0, 1fr); padding: 0 12px 12px; }
-    body[data-tab="write"] #notesPanel, body[data-tab="notes"] #writePanel { display: none; }
+    main { padding: 0 12px 12px; }
     .top-inner { padding: 12px 12px 4px; gap: 8px; }
     .logo { height: 17px; }
     .toolbar { padding: 8px; }
@@ -313,6 +316,7 @@
         </select>
       </label>
       <button id="syncBtn" class="icon-btn" hidden data-i18n-title="gdSyncNow"><i data-icon="cloud"></i><span class="dot"></span></button>
+      <button id="layoutBtn" class="icon-btn" data-i18n-title="splitView" data-i18n-aria="splitView"><i data-icon="columns"></i></button>
       <button id="helpBtn" class="icon-btn" data-i18n-title="help"><i data-icon="help"></i></button>
       <button id="settingsBtn" class="icon-btn settings-btn" data-i18n-title="settings"><i data-icon="sliders"></i><span class="dot"></span></button>
     </div>
@@ -491,7 +495,7 @@ const I18N = {
     widths: ['가는 펜', '보통 펜', '굵은 펜'],
     eraser: '지우개 (E)', undo: '되돌리기 (Ctrl+Z)', redo: '다시 실행 (Ctrl+Shift+Z)', clearCanvas: '캔버스 비우기',
     penOnlyOn: '펜 전용 (손바닥 터치 무시) · 누르면 손가락으로도 쓰기', penOnlyOff: '손가락으로도 쓰는 중 · 누르면 펜 전용',
-    save: '저장', reedit: '다시 쓰기', saveEdit: '수정', cancelEdit: '취소', saveFirst: '쓰기 화면의 글을 먼저 저장하거나 비워 주세요.', updated: '노트를 수정했습니다.', saving: '저장 중…', saveN: '노트 {n}개 저장', saveTitle: '저장 (Ctrl+Enter)',
+    save: '저장', splitView: '나란히 보기', reedit: '다시 쓰기', saveEdit: '수정', cancelEdit: '취소', saveFirst: '쓰기 화면의 글을 먼저 저장하거나 비워 주세요.', updated: '노트를 수정했습니다.', saving: '저장 중…', saveN: '노트 {n}개 저장', saveTitle: '저장 (Ctrl+Enter)',
     sortNew: '최신순', sortOld: '오래된순', all: '전체',
     results: '"{q}" 검색 결과 {n}건',
     emptyNone: '아직 노트가 없어요', emptyNoneSub: '왼쪽 캔버스에 써 보세요.',
@@ -546,7 +550,7 @@ const I18N = {
     widths: ['Fine pen', 'Medium pen', 'Bold pen'],
     eraser: 'Eraser (E)', undo: 'Undo (Ctrl+Z)', redo: 'Redo (Ctrl+Shift+Z)', clearCanvas: 'Clear canvas',
     penOnlyOn: 'Pen only (palm ignored) · tap to allow finger', penOnlyOff: 'Finger writing on · tap for pen only',
-    save: 'Save', reedit: 'Open in writing', saveEdit: 'Update', cancelEdit: 'Cancel', saveFirst: 'Save or clear the writing page first.', updated: 'Note updated.', saving: 'Saving…', saveN: 'Save {n} notes', saveTitle: 'Save (Ctrl+Enter)',
+    save: 'Save', splitView: 'Side by side', reedit: 'Open in writing', saveEdit: 'Update', cancelEdit: 'Cancel', saveFirst: 'Save or clear the writing page first.', updated: 'Note updated.', saving: 'Saving…', saveN: 'Save {n} notes', saveTitle: 'Save (Ctrl+Enter)',
     sortNew: 'Newest', sortOld: 'Oldest', all: 'All',
     results: '{n} results for "{q}"',
     emptyNone: 'No notes yet', emptyNoneSub: 'Write something on the canvas.',
@@ -601,7 +605,7 @@ const I18N = {
     widths: ['細いペン', '普通のペン', '太いペン'],
     eraser: '消しゴム (E)', undo: '元に戻す (Ctrl+Z)', redo: 'やり直す (Ctrl+Shift+Z)', clearCanvas: 'キャンバスを消去',
     penOnlyOn: 'ペン専用(手のひらを無視)· 押すと指でも書けます', penOnlyOff: '指でも書けます · 押すとペン専用',
-    save: '保存', reedit: '書き直す', saveEdit: '更新', cancelEdit: 'キャンセル', saveFirst: '先に書く画面を保存するか消去してください。', updated: 'ノートを更新しました。', saving: '保存中…', saveN: 'ノート{n}件を保存', saveTitle: '保存 (Ctrl+Enter)',
+    save: '保存', splitView: '左右に並べて表示', reedit: '書き直す', saveEdit: '更新', cancelEdit: 'キャンセル', saveFirst: '先に書く画面を保存するか消去してください。', updated: 'ノートを更新しました。', saving: '保存中…', saveN: 'ノート{n}件を保存', saveTitle: '保存 (Ctrl+Enter)',
     sortNew: '新しい順', sortOld: '古い順', all: 'すべて',
     results: '「{q}」の検索結果 {n}件',
     emptyNone: 'まだノートがありません', emptyNoneSub: 'キャンバスに書いてみましょう。',
@@ -656,7 +660,7 @@ const I18N = {
     widths: ['细笔', '中笔', '粗笔'],
     eraser: '橡皮擦 (E)', undo: '撤销 (Ctrl+Z)', redo: '重做 (Ctrl+Shift+Z)', clearCanvas: '清空画布',
     penOnlyOn: '仅限笔(忽略手掌)· 点击后手指也能写', penOnlyOff: '手指也能书写 · 点击切换为仅限笔',
-    save: '保存', reedit: '重新编辑', saveEdit: '更新', cancelEdit: '取消', saveFirst: '请先保存或清空书写页。', updated: '已更新笔记。', saving: '保存中…', saveN: '保存 {n} 条笔记', saveTitle: '保存 (Ctrl+Enter)',
+    save: '保存', splitView: '并排显示', reedit: '重新编辑', saveEdit: '更新', cancelEdit: '取消', saveFirst: '请先保存或清空书写页。', updated: '已更新笔记。', saving: '保存中…', saveN: '保存 {n} 条笔记', saveTitle: '保存 (Ctrl+Enter)',
     sortNew: '最新', sortOld: '最早', all: '全部',
     results: '“{q}”的搜索结果 {n} 条',
     emptyNone: '还没有笔记', emptyNoneSub: '在画布上写点什么吧。',
@@ -740,6 +744,7 @@ const ICONS = {
   penTip: '<path d="m12 19 7-7 3 3-7 7-3-3Z"/><path d="m18 13-1.5-7.5L2 2l3.5 14.5L13 18l5-5Z"/><path d="m2 2 7.586 7.586"/><circle cx="11" cy="11" r="2"/>',
   x: '<path d="M18 6 6 18M6 6l12 12"/>',
   cloud: '<path d="M7 18.5h10.5a4 4 0 0 0 .6-7.95A6 6 0 0 0 6.6 9.2 4.65 4.65 0 0 0 7 18.5Z"/>',
+  columns: '<rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><path d="M12 4.5v15"/>',
   sliders: '<path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/>',
   help: '<circle cx="12" cy="12" r="9"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><path d="M12 17h.01"/>',
   globe: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a14 14 0 0 1 0 18a14 14 0 0 1 0-18"/>',
@@ -1976,6 +1981,38 @@ function setTab(tab) {
   requestAnimationFrame(() => { sizeInk(); if (tab === 'notes') renderNotes(); });
 }
 document.querySelectorAll('.mtab').forEach((x) => x.addEventListener('click', () => setTab(x.dataset.tab)));
+
+/* Layout: writing and notes side by side, or one at a time with tabs.
+   Phones always use tabs. Touch/pen tablets default to tabs, desktops to side by
+   side; the header button switches it and the choice is remembered. */
+const WIDE_MIN = 900;
+function isTouchTablet() {
+  const fine = matchMedia('(hover: hover) and (pointer: fine)').matches;
+  return matchMedia('(pointer: coarse)').matches || (navigator.maxTouchPoints > 1 && !fine);
+}
+function wantSplit() {
+  const v = lsGet('cronota_layout', '');
+  if (v === 'split') return true;
+  if (v === 'tabs') return false;
+  return !isTouchTablet();
+}
+let lastTabsState = null;
+function applyLayout() {
+  const wide = window.innerWidth >= WIDE_MIN;
+  const tabs = !wide || !wantSplit();
+  $('#layoutBtn').hidden = !wide;
+  $('#layoutBtn').setAttribute('aria-pressed', String(!tabs));
+  if (tabs === lastTabsState) return;
+  lastTabsState = tabs;
+  document.body.classList.toggle('tabs', tabs);
+  requestAnimationFrame(() => { sizeInk(); renderNotes(); });
+}
+$('#layoutBtn').addEventListener('click', () => {
+  lsSet('cronota_layout', wantSplit() ? 'tabs' : 'split');
+  applyLayout();
+});
+window.addEventListener('resize', applyLayout);
+applyLayout();
 
 /* keyboard shortcuts */
 document.addEventListener('keydown', (e) => {

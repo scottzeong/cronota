@@ -2,7 +2,7 @@
    The page itself is fetched network-first, so a new index.html shows up on the
    next launch whenever the device is online; the cache is only the offline copy.
    Google sign-in and Drive requests are never touched. */
-const CACHE = 'cronota-v1';
+const CACHE = 'cronota-v2';
 const SHELL = ['./', './manifest.webmanifest', './icon-192.png', './icon-512.png', './icon-maskable-512.png', './apple-touch-icon.png'];
 
 self.addEventListener('install', (e) => {
