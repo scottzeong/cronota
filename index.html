@@ -498,8 +498,10 @@
     function classifySymbolCluster(symStrokes) {
       if (!symStrokes || symStrokes.length === 0) return null;
       let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+      const allPts = [];
       for (const s of symStrokes) {
         for (const p of s.points) {
+          allPts.push(p);
           if (p.x < minX) minX = p.x;
           if (p.y < minY) minY = p.y;
           if (p.x > maxX) maxX = p.x;
@@ -510,38 +512,45 @@
       const h = Math.max(1, maxY - minY);
       const aspect = w / h;
 
-      if (symStrokes.length >= 3) return 'ref'; // *
+      if (aspect < 0.38) return 'decision'; // ! (tall narrow)
+
+      // Check how many points pass through the inner center (distinguishes * / + from □ / ○ / △)
+      const centerPts = allPts.filter(p =>
+        p.x > minX + w * 0.28 && p.x < maxX - w * 0.28 &&
+        p.y > minY + h * 0.28 && p.y < maxY - h * 0.28
+      );
+      const centerRatio = centerPts.length / Math.max(1, allPts.length);
+
+      if (symStrokes.length >= 3 && centerRatio > 0.12) {
+        return 'ref'; // * (strokes cross through center)
+      }
+
       if (symStrokes.length === 2) {
         const b0 = getBox(symStrokes[0].points);
         const b1 = getBox(symStrokes[1].points);
         const isDot1 = b1.w < 12 && b1.h < 12 && b1.minY > b0.maxY - 4;
         const isDot0 = b0.w < 12 && b0.h < 12 && b0.minY > b1.maxY - 4;
-        if (isDot1 || isDot0 || aspect < 0.42) return 'decision'; // !
+        if (isDot1 || isDot0) return 'decision'; // !
 
-        const mid0x = (b0.minX + b0.maxX) / 2, mid0y = (b0.minY + b0.maxY) / 2;
-        const mid1x = (b1.minX + b1.maxX) / 2, mid1y = (b1.minY + b1.maxY) / 2;
-        if (Math.abs(mid0x - mid1x) < w * 0.4 && Math.abs(mid0y - mid1y) < h * 0.4) {
-          return 'idea'; // +
+        if (centerRatio > 0.12) {
+          return 'idea'; // + (2 strokes crossing center)
         }
-        return 'todo'; // □
       }
 
-      const pts = symStrokes[0].points;
-      if (aspect < 0.38) return 'decision'; // !
-
-      const topPts = pts.filter(p => p.y < minY + h * 0.35);
-      const botPts = pts.filter(p => p.y > minY + h * 0.65);
+      // Perimeter shapes (1, 2, 3, or 4 strokes): △ vs □ vs ○
+      const topPts = allPts.filter(p => p.y < minY + h * 0.35);
+      const botPts = allPts.filter(p => p.y > minY + h * 0.65);
       const topSpan = topPts.length ? (Math.max(...topPts.map(p => p.x)) - Math.min(...topPts.map(p => p.x))) : w;
       const botSpan = botPts.length ? (Math.max(...botPts.map(p => p.x)) - Math.min(...botPts.map(p => p.x))) : w;
       if (botSpan > 1.7 * Math.max(4, topSpan)) return 'question'; // △
 
       let cornerHits = 0;
-      const threshold = Math.min(w, h) * 0.24;
+      const threshold = Math.min(w, h) * 0.26;
       const corners = [[minX, minY], [maxX, minY], [minX, maxY], [maxX, maxY]];
       for (const [cx, cy] of corners) {
-        if (pts.some(p => Math.hypot(p.x - cx, p.y - cy) < threshold)) cornerHits++;
+        if (allPts.some(p => Math.hypot(p.x - cx, p.y - cy) < threshold)) cornerHits++;
       }
-      if (cornerHits >= 3) return 'todo'; // □
+      if (cornerHits >= 3) return 'todo'; // □ (1~4 strokes)
       return 'fact'; // ○
     }
 
