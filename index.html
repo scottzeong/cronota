@@ -166,15 +166,33 @@
       <div class="px-3 py-2 border-b border-stone-200 bg-stone-50/80 flex flex-wrap items-center justify-between gap-2">
         <div class="flex items-center gap-1.5">
           <span class="text-xs font-semibold text-stone-700 mr-1">무페이지 입력</span>
-          <button data-color="#1E293B" class="pen-color-btn w-6 h-6 rounded-full bg-slate-800 ring-2 ring-offset-1 ring-blue-500 transition" title="기본 검정 잉크"></button>
-          <button data-color="#DC2626" class="pen-color-btn w-6 h-6 rounded-full bg-red-600 ring-offset-1 transition" title="중요 강조(빨강) — 우선순위 높음으로 태깅"></button>
-          <button data-color="#2563EB" class="pen-color-btn w-6 h-6 rounded-full bg-blue-600 ring-offset-1 transition" title="파랑 잉크"></button>
-          <div class="h-4 w-px bg-stone-300 mx-1"></div>
+          <button data-color="#1E293B" class="pen-color-btn w-5 h-5 rounded-full bg-slate-800 ring-2 ring-offset-1 ring-blue-500 transition" title="기본 검정 잉크"></button>
+          <button data-color="#DC2626" class="pen-color-btn w-5 h-5 rounded-full bg-red-600 ring-offset-1 transition" title="중요 강조(빨강)"></button>
+          <button data-color="#2563EB" class="pen-color-btn w-5 h-5 rounded-full bg-blue-600 ring-offset-1 transition" title="파랑 잉크"></button>
+          <div class="h-4 w-px bg-stone-300 mx-0.5"></div>
+          <!-- 4 Pen Thickness Presets -->
+          <button data-width="1.5" class="pen-width-btn w-6 h-6 rounded-md flex items-center justify-center hover:bg-stone-200 transition" title="가는 펜 (1.5px)">
+            <span class="w-1 h-1 rounded-full bg-stone-800"></span>
+          </button>
+          <button data-width="2.8" class="pen-width-btn w-6 h-6 rounded-md flex items-center justify-center bg-stone-200 ring-1 ring-stone-400 transition" title="기본 펜 (2.8px)">
+            <span class="w-2 h-2 rounded-full bg-stone-800"></span>
+          </button>
+          <button data-width="4.8" class="pen-width-btn w-6 h-6 rounded-md flex items-center justify-center hover:bg-stone-200 transition" title="굵은 펜 (4.8px)">
+            <span class="w-3 h-3 rounded-full bg-stone-800"></span>
+          </button>
+          <button data-width="8.0" class="pen-width-btn w-6 h-6 rounded-md flex items-center justify-center hover:bg-stone-200 transition" title="마커 펜 (8.0px)">
+            <span class="w-4 h-4 rounded-full bg-stone-800"></span>
+          </button>
+          <div class="h-4 w-px bg-stone-300 mx-0.5"></div>
+          <button id="eraserModeBtn" class="px-2 py-1 rounded-lg text-[11px] font-medium text-stone-700 bg-white border border-stone-200 hover:bg-stone-100 flex items-center gap-1 transition" title="부분 지우개 모드">
+            <i data-lucide="eraser" class="w-3.5 h-3.5"></i>
+            <span>지우개</span>
+          </button>
           <button id="undoStrokeBtn" class="p-1.5 rounded-lg text-stone-600 hover:bg-stone-200 transition" title="획 되돌리기">
             <i data-lucide="undo-2" class="w-4 h-4"></i>
           </button>
-          <button id="clearCanvasBtn" class="p-1.5 rounded-lg text-stone-600 hover:bg-stone-200 transition" title="캔버스 비우기">
-            <i data-lucide="eraser" class="w-4 h-4"></i>
+          <button id="clearCanvasBtn" class="p-1.5 rounded-lg text-stone-500 hover:text-red-600 hover:bg-red-50 transition" title="전체 비우기">
+            <i data-lucide="trash-2" class="w-4 h-4"></i>
           </button>
           <div class="h-4 w-px bg-stone-300 mx-1"></div>
           <button id="penOnlyBtn" class="px-2 py-1 rounded-lg text-[11px] font-semibold bg-stone-900 text-white flex items-center gap-1 transition" title="켜면 Apple Pencil / S-Pen과 마우스만 인식하고 손바닥·손가락 터치를 무시합니다">
@@ -249,8 +267,8 @@
 
           <div class="shrink-0 flex items-center gap-1.5">
             <div class="flex bg-stone-200/70 p-0.5 rounded-lg text-[11px] font-medium">
-              <button id="dispCardBtn" class="px-2 py-0.5 rounded-md bg-white text-stone-900 shadow-xs transition">카드</button>
-              <button id="dispPageBtn" class="px-2 py-0.5 rounded-md text-stone-600 hover:text-stone-900 transition">연결 페이지</button>
+              <button id="dispPageBtn" class="px-2 py-0.5 rounded-md bg-white text-stone-900 shadow-xs transition">한 페이지</button>
+              <button id="dispCardBtn" class="px-2 py-0.5 rounded-md text-stone-600 hover:text-stone-900 transition">개별 관리</button>
             </div>
             <button id="sortOrderBtn" class="flex items-center gap-1 text-xs font-medium text-stone-600 bg-white border border-stone-200 hover:bg-stone-100 px-2.5 py-1 rounded-lg transition">
               <i data-lucide="arrow-up-down" class="w-3.5 h-3.5"></i>
@@ -427,7 +445,7 @@
     }
 
     let currentView = 'all';
-    let displayMode = 'card'; // 'card' | 'page'
+    let displayMode = 'page'; // 'card' | 'page'
     let sortDesc = true;
     let searchQuery = '';
     let peekAi = false;
@@ -447,7 +465,10 @@
     let canvasStrokes = [];
     let currentStroke = null;
     let isDrawing = false;
+    let isErasing = false;
+    let eraserMode = false;
     let penColor = '#1E293B';
+    let penWidth = 2.8;
     let detectedSymbol = null;
 
     const MARGIN_X = 84;
@@ -500,7 +521,7 @@
           const p0 = s.points[i - 1];
           const p1 = s.points[i];
           const pressure = p1.p !== undefined ? p1.p : 0.5;
-          context.lineWidth = Math.max(1.2, (s.width || 2.5) * (0.65 + pressure * 0.7) * scale);
+          context.lineWidth = Math.max(0.8, (s.width || 2.8) * (0.35 + Math.pow(pressure, 0.85) * 1.45) * scale);
           context.beginPath();
           context.moveTo((p0.x + offsetX) * scale, (p0.y + offsetY) * scale);
           context.lineTo((p1.x + offsetX) * scale, (p1.y + offsetY) * scale);
@@ -707,11 +728,43 @@
       context.lineJoin = 'round';
       context.strokeStyle = color;
       const pressure = p1.p !== undefined ? p1.p : 0.5;
-      context.lineWidth = Math.max(1.2, baseWidth * (0.65 + pressure * 0.7));
+      context.lineWidth = Math.max(0.8, baseWidth * (0.35 + Math.pow(pressure, 0.85) * 1.45));
       context.beginPath();
       context.moveTo(p0.x, p0.y);
       context.lineTo(p1.x, p1.y);
       context.stroke();
+    }
+
+    function eraseAtPoint(ex, ey, radius = 14) {
+      let changed = false;
+      const nextStrokes = [];
+      for (const st of canvasStrokes) {
+        let segment = [];
+        let hitThisStroke = false;
+        for (const pt of st.points) {
+          if (Math.hypot(pt.x - ex, pt.y - ey) <= radius) {
+            hitThisStroke = true;
+            changed = true;
+            if (segment.length >= 2) {
+              nextStrokes.push({ color: st.color, width: st.width, points: segment });
+            }
+            segment = [];
+          } else {
+            segment.push(pt);
+          }
+        }
+        if (hitThisStroke) {
+          if (segment.length >= 2) {
+            nextStrokes.push({ color: st.color, width: st.width, points: segment });
+          }
+        } else {
+          nextStrokes.push(st);
+        }
+      }
+      if (changed) {
+        canvasStrokes = nextStrokes;
+        redrawCanvas();
+      }
     }
 
     canvas.addEventListener('pointerdown', (e) => {
@@ -724,24 +777,39 @@
       }
       e.preventDefault();
       try { canvas.setPointerCapture(e.pointerId); } catch (err) {}
-      isDrawing = true;
       const pt = getPointerPos(e);
-      currentStroke = { color: penColor, width: 2.6, points: [pt] };
+
+      if (eraserMode) {
+        isErasing = true;
+        eraseAtPoint(pt.x, pt.y);
+        return;
+      }
+
+      isDrawing = true;
+      currentStroke = { color: penColor, width: penWidth, points: [pt] };
       canvasStrokes.push(currentStroke);
+      const r = Math.max(0.8, penWidth * (0.35 + Math.pow(pt.p, 0.85) * 1.45)) / 2;
       ctx.fillStyle = penColor;
       ctx.beginPath();
-      ctx.arc(pt.x, pt.y, 1.3, 0, Math.PI * 2);
+      ctx.arc(pt.x, pt.y, r, 0, Math.PI * 2);
       ctx.fill();
     });
 
     canvas.addEventListener('pointermove', (e) => {
-      if (!isDrawing || !currentStroke) return;
       if (penOnlyMode && e.pointerType === 'touch') return;
+      if (isErasing && eraserMode) {
+        const coalesced = e.getCoalescedEvents ? e.getCoalescedEvents() : [e];
+        for (const ce of coalesced) {
+          const pt = getPointerPos(ce);
+          eraseAtPoint(pt.x, pt.y);
+        }
+        return;
+      }
+      if (!isDrawing || !currentStroke) return;
       const coalesced = e.getCoalescedEvents ? e.getCoalescedEvents() : [e];
       for (const ce of coalesced) {
         const pt = getPointerPos(ce);
         const prev = currentStroke.points[currentStroke.points.length - 1];
-        // Thin points closer than 1.5px to keep memory & CPU ultra-light
         if (Math.hypot(pt.x - prev.x, pt.y - prev.y) >= 1.5) {
           currentStroke.points.push(pt);
           drawIncrementalSegment(ctx, currentStroke.color, currentStroke.width, prev, pt);
@@ -750,6 +818,11 @@
     });
 
     function endStroke() {
+      if (isErasing) {
+        isErasing = false;
+        updateLiveDetectionBadge();
+        return;
+      }
       if (!isDrawing) return;
       isDrawing = false;
       currentStroke = null;
@@ -1038,14 +1111,7 @@
           uctx.fillText('AI: ' + b.ocrText, 16, curY + it.h + 10);
         }
 
-        if (idx < layoutItems.length - 1) {
-          uctx.strokeStyle = 'rgba(214, 211, 209, 0.55)';
-          uctx.lineWidth = 1;
-          uctx.beginPath();
-          uctx.moveTo(16, curY + it.h + it.extraAi + BLOCK_GAP / 2);
-          uctx.lineTo(canvasW - 16, curY + it.h + it.extraAi + BLOCK_GAP / 2);
-          uctx.stroke();
-        }
+
 
         curY += it.h + it.extraAi + BLOCK_GAP;
       });
@@ -1162,11 +1228,34 @@
     }
 
     // ---------- Event Wiring ----------
+    const eraserModeBtn = document.getElementById('eraserModeBtn');
+    function setEraserMode(active) {
+      eraserMode = active;
+      if (eraserMode) {
+        eraserModeBtn.className = 'px-2 py-1 rounded-lg text-[11px] font-semibold text-white bg-amber-600 border border-amber-600 flex items-center gap-1 transition';
+        canvas.style.cursor = 'cell';
+      } else {
+        eraserModeBtn.className = 'px-2 py-1 rounded-lg text-[11px] font-medium text-stone-700 bg-white border border-stone-200 hover:bg-stone-100 flex items-center gap-1 transition';
+        canvas.style.cursor = 'crosshair';
+      }
+    }
+    eraserModeBtn.addEventListener('click', () => setEraserMode(!eraserMode));
+
     document.querySelectorAll('.pen-color-btn').forEach(btn => {
       btn.addEventListener('click', () => {
+        setEraserMode(false);
         penColor = btn.dataset.color;
         document.querySelectorAll('.pen-color-btn').forEach(b => b.classList.remove('ring-2', 'ring-blue-500'));
         btn.classList.add('ring-2', 'ring-blue-500');
+      });
+    });
+
+    document.querySelectorAll('.pen-width-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        setEraserMode(false);
+        penWidth = parseFloat(btn.dataset.width) || 2.8;
+        document.querySelectorAll('.pen-width-btn').forEach(b => b.classList.remove('bg-stone-200', 'ring-1', 'ring-stone-400'));
+        btn.classList.add('bg-stone-200', 'ring-1', 'ring-stone-400');
       });
     });
 
@@ -1535,6 +1624,7 @@
     window.addEventListener('load', () => {
       updatePenOnlyUI();
       updateAiStatusUI();
+      updateDisplayModeUI();
       resizeCanvas();
       renderNotes();
       if (window.lucide) lucide.createIcons();
