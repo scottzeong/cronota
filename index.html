@@ -57,17 +57,26 @@
         </div>
       </div>
 
-      <!-- Hidden AI Search Bar -->
-      <div class="relative flex-1 min-w-[200px] max-w-md">
-        <i data-lucide="search" class="w-4 h-4 text-stone-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
-        <input
-          id="searchInput"
-          type="text"
-          placeholder="숨김 AI 태그 검색 (예: 견적, 아이패드, 예산, API)..."
-          class="w-full pl-9 pr-8 py-1.5 text-sm bg-stone-100 hover:bg-stone-200/70 focus:bg-white border border-transparent focus:border-blue-500 rounded-full outline-none transition"
-        />
-        <button id="clearSearchBtn" class="hidden absolute right-2.5 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-700" title="검색어 지우기">
-          <i data-lucide="x" class="w-3.5 h-3.5"></i>
+      <!-- Hidden AI Search Bar + Handwriting Search Trigger -->
+      <div class="relative flex-1 min-w-[220px] max-w-md flex items-center gap-1.5">
+        <div class="relative flex-1">
+          <i data-lucide="search" class="w-4 h-4 text-stone-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+          <input
+            id="searchInput"
+            type="search"
+            inputmode="search"
+            enterkeyhint="search"
+            autocomplete="off"
+            placeholder="숨김 AI 태그 검색..."
+            class="w-full pl-9 pr-8 py-1.5 text-base sm:text-sm bg-stone-100 hover:bg-stone-200/70 focus:bg-white border border-transparent focus:border-blue-500 rounded-full outline-none transition"
+          />
+          <button id="clearSearchBtn" class="hidden absolute right-2.5 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-700" title="검색어 지우기">
+            <i data-lucide="x" class="w-3.5 h-3.5"></i>
+          </button>
+        </div>
+        <button id="toggleHandSearchBtn" class="shrink-0 flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-semibold bg-stone-100 hover:bg-stone-200 text-stone-700 transition" title="키보드 대신 필기나 태그 칩으로 검색">
+          <i data-lucide="pen-line" class="w-3.5 h-3.5"></i>
+          <span>필기 검색</span>
         </button>
       </div>
 
@@ -86,6 +95,27 @@
           <button id="modeCanvasBtn" class="px-2.5 py-1 rounded-full text-stone-600 hover:text-stone-900 transition">필기만</button>
           <button id="modeNotesBtn" class="px-2.5 py-1 rounded-full text-stone-600 hover:text-stone-900 transition">노트만</button>
         </div>
+      </div>
+    </div>
+
+    <!-- Expandable Handwriting Search & Quick Keyword Pad -->
+    <div id="handSearchPanel" class="hidden max-w-7xl mx-auto mt-2.5 pt-2.5 border-t border-stone-200 space-y-2">
+      <div class="flex flex-wrap items-center justify-between gap-2">
+        <span class="text-xs font-semibold text-stone-700">필기 검색 패드 <span class="font-normal text-stone-400">(여기에 검색어를 펜으로 쓰세요)</span></span>
+        <div class="flex items-center gap-1.5">
+          <button id="clearHandSearchBtn" class="px-2.5 py-1 text-xs text-stone-600 bg-stone-100 hover:bg-stone-200 rounded-lg">지우기</button>
+          <button id="runHandSearchBtn" class="px-3 py-1 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg flex items-center gap-1">
+            <i data-lucide="search" class="w-3 h-3"></i>
+            <span>필기로 검색</span>
+          </button>
+          <button id="closeHandSearchBtn" class="p-1 text-stone-400 hover:text-stone-700"><i data-lucide="x" class="w-4 h-4"></i></button>
+        </div>
+      </div>
+      <div class="dot-grid rounded-xl border border-stone-300 overflow-hidden h-[88px] relative">
+        <canvas id="handSearchCanvas" class="w-full h-full block" style="touch-action:none;"></canvas>
+      </div>
+      <div id="quickKeywordChips" class="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-0.5 text-xs">
+        <!-- Populated dynamically from hidden keywords -->
       </div>
     </div>
   </header>
@@ -847,8 +877,8 @@
                 </button>
               </div>
             </div>
-            <div class="dot-grid rounded-lg border border-stone-200/80 overflow-hidden relative">
-              <canvas data-mini-canvas="${b.id}" class="w-full h-[84px] block"></canvas>
+            <div class="dot-grid rounded-lg border border-stone-200/80 overflow-x-auto overflow-y-hidden relative">
+              <canvas data-mini-canvas="${b.id}" class="block" style="height:88px;"></canvas>
               ${isDone ? '<div class="absolute inset-0 flex items-center pointer-events-none px-4"><div class="w-full h-0.5 bg-stone-500/50"></div></div>' : ''}
             </div>
             ${hiddenLayerHtml}
@@ -856,29 +886,35 @@
         `;
       }).join('');
 
-      // Draw each block's raw strokes onto its mini canvas
+      // Draw each block's raw strokes at a CONSISTENT scale across all cards
+      const FIXED_CARD_SCALE = 0.62;
       filtered.forEach(b => {
         const mc = listEl.querySelector(`canvas[data-mini-canvas="${b.id}"]`);
         if (!mc) return;
-        const rect = mc.getBoundingClientRect();
+        const parentW = mc.parentElement ? mc.parentElement.clientWidth : 340;
+        let maxX = 120, maxY = 50;
+        for (const st of b.strokes) {
+          for (const pt of st.points) {
+            if (pt.x > maxX) maxX = pt.x;
+            if (pt.y > maxY) maxY = pt.y;
+          }
+        }
+        const neededH = Math.max(88, Math.min(210, Math.ceil((maxY + 18) * FIXED_CARD_SCALE)));
+        const neededW = Math.max(parentW, Math.ceil((maxX + 24) * FIXED_CARD_SCALE));
+        mc.style.width = neededW + 'px';
+        mc.style.height = neededH + 'px';
+
         const dpr = window.devicePixelRatio || 1;
-        const w = Math.max(240, rect.width || 360);
-        const h = 84;
-        mc.width = w * dpr;
-        mc.height = h * dpr;
+        mc.width = neededW * dpr;
+        mc.height = neededH * dpr;
         const mctx = mc.getContext('2d');
         mctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-        // Compute stroke bounds to fit cleanly
-        let maxX = 100, maxY = 50;
-        for (const s of b.strokes) {
-          for (const p of s.points) {
-            if (p.x > maxX) maxX = p.x;
-            if (p.y > maxY) maxY = p.y;
-          }
-        }
-        const scale = Math.min(1, (w - 20) / (maxX + 12), (h - 14) / (maxY + 10));
-        drawStrokeList(mctx, b.strokes, 4, 6, scale);
+        // Keep vertical scale consistent; only downscale if excessively tall
+        const fitScale = (maxY + 18) * FIXED_CARD_SCALE > 210
+          ? 195 / (maxY + 18)
+          : FIXED_CARD_SCALE;
+        drawStrokeList(mctx, b.strokes, 8, 8, fitScale);
       });
 
       if (window.lucide) lucide.createIcons();
@@ -1080,6 +1116,121 @@
       updateAiStatusUI();
       aiModal.classList.add('hidden');
       showToast('API 키를 삭제했습니다.');
+    });
+
+    // ---------- Handwriting Search Pad & Quick Keyword Chips ----------
+    const handSearchPanel = document.getElementById('handSearchPanel');
+    const handSearchCanvas = document.getElementById('handSearchCanvas');
+    const hsCtx = handSearchCanvas.getContext('2d');
+    let hsStrokes = [];
+    let hsCurrent = null;
+    let hsDrawing = false;
+
+    function resizeHandSearchCanvas() {
+      if (handSearchPanel.classList.contains('hidden')) return;
+      const rect = handSearchCanvas.parentElement.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+      handSearchCanvas.width = Math.max(260, Math.floor(rect.width * dpr));
+      handSearchCanvas.height = Math.floor(88 * dpr);
+      hsCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      hsCtx.clearRect(0, 0, rect.width, 88);
+      drawStrokeList(hsCtx, hsStrokes);
+    }
+
+    function renderQuickKeywordChips() {
+      const container = document.getElementById('quickKeywordChips');
+      const kwSet = new Set();
+      blocks.forEach(b => (b.keywords || []).forEach(k => kwSet.add(k)));
+      const kws = Array.from(kwSet).slice(0, 14);
+      container.innerHTML = `<span class="text-[11px] text-stone-400 shrink-0">추천 키워드:</span>` +
+        kws.map(k => `<button data-quick-kw="${escapeHtml(k)}" class="shrink-0 px-2 py-0.5 rounded-full bg-stone-100 hover:bg-blue-50 hover:text-blue-700 text-stone-600 text-[11px] font-medium transition">#${escapeHtml(k)}</button>`).join('');
+    }
+
+    document.getElementById('quickKeywordChips').addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-quick-kw]');
+      if (!btn) return;
+      const kw = btn.dataset.quickKw;
+      searchInput.value = kw;
+      searchQuery = kw;
+      clearSearchBtn.classList.remove('hidden');
+      if (currentLayoutMode === 'canvas') setLayoutMode('split');
+      renderNotes();
+    });
+
+    document.getElementById('toggleHandSearchBtn').addEventListener('click', () => {
+      handSearchPanel.classList.toggle('hidden');
+      if (!handSearchPanel.classList.contains('hidden')) {
+        renderQuickKeywordChips();
+        resizeHandSearchCanvas();
+      }
+    });
+    document.getElementById('closeHandSearchBtn').addEventListener('click', () => {
+      handSearchPanel.classList.add('hidden');
+    });
+    document.getElementById('clearHandSearchBtn').addEventListener('click', () => {
+      hsStrokes = [];
+      resizeHandSearchCanvas();
+    });
+
+    handSearchCanvas.addEventListener('pointerdown', (e) => {
+      if (penOnlyMode && e.pointerType === 'touch') return;
+      e.preventDefault();
+      handSearchCanvas.setPointerCapture(e.pointerId);
+      hsDrawing = true;
+      const rect = handSearchCanvas.getBoundingClientRect();
+      hsCurrent = { color: '#1E293B', width: 2.5, points: [{ x: e.clientX - rect.left, y: e.clientY - rect.top, p: e.pointerType === 'pen' ? (e.pressure || 0.5) : 0.5 }] };
+      hsStrokes.push(hsCurrent);
+      resizeHandSearchCanvas();
+    });
+    handSearchCanvas.addEventListener('pointermove', (e) => {
+      if (!hsDrawing || !hsCurrent) return;
+      if (penOnlyMode && e.pointerType === 'touch') return;
+      const rect = handSearchCanvas.getBoundingClientRect();
+      const coalesced = e.getCoalescedEvents ? e.getCoalescedEvents() : [e];
+      for (const ce of coalesced) {
+        hsCurrent.points.push({ x: ce.clientX - rect.left, y: ce.clientY - rect.top, p: ce.pointerType === 'pen' ? (ce.pressure || 0.5) : 0.5 });
+      }
+      resizeHandSearchCanvas();
+    });
+    function endHsStroke() { hsDrawing = false; hsCurrent = null; }
+    handSearchCanvas.addEventListener('pointerup', endHsStroke);
+    handSearchCanvas.addEventListener('pointercancel', endHsStroke);
+
+    document.getElementById('runHandSearchBtn').addEventListener('click', async () => {
+      if (hsStrokes.length === 0) {
+        showToast('먼저 필기 검색 패드에 단어를 적어주세요.');
+        return;
+      }
+      if (!geminiApiKey) {
+        showToast('필기 검색어 인식은 우측 상단 [AI 연결] 설정 후 작동합니다. 아래 키워드 칩을 눌러보세요!');
+        return;
+      }
+      showToast('필기 검색어를 읽고 있습니다...');
+      try {
+        const b64 = renderStrokesToBase64(hsStrokes);
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(geminiApiKey)}`;
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: '이 손글씨 이미지에 적힌 검색 단어만 짧게 텍스트로 출력하세요. 다른 설명은 쓰지 마세요.' }, { inline_data: { mime_type: 'image/png', data: b64 } }] }]
+          })
+        });
+        const data = await res.json();
+        const text = (data.candidates?.[0]?.content?.parts?.[0]?.text || '').trim();
+        if (text) {
+          searchInput.value = text;
+          searchQuery = text;
+          clearSearchBtn.classList.remove('hidden');
+          if (currentLayoutMode === 'canvas') setLayoutMode('split');
+          renderNotes();
+          showToast(`"${text}" 검색 결과를 표시합니다.`);
+        } else {
+          showToast('글씨를 인식하지 못했습니다.');
+        }
+      } catch (err) {
+        showToast('필기 검색 중 오류가 발생했습니다.');
+      }
     });
 
     window.addEventListener('load', () => {
