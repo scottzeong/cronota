@@ -1,1653 +1,1600 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>cronota — 무페이지 필기 & 숨김 AI 태그 프로토타입</title>
-  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
-  <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-    :root {
-      --paper-bg: #FAF9F6;
-      --line-color: #E2E0D8;
-      --line-gap: 32px;
-    }
-    html, body {
-      overscroll-behavior: none;
-      overscroll-behavior-y: contain;
-    }
-    body {
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
-      background-color: #F3F2EE;
-      color: #1F2937;
-    }
-    .lined-paper {
-      background-color: var(--paper-bg);
-      background-image: linear-gradient(to bottom, transparent calc(var(--line-gap) - 1px), var(--line-color) calc(var(--line-gap) - 1px));
-      background-size: 100% var(--line-gap);
-    }
-    canvas#inkCanvas {
-      touch-action: none;
-      -webkit-user-select: none;
-      user-select: none;
-      -webkit-touch-callout: none;
-      cursor: crosshair;
-    }
-    .no-scrollbar::-webkit-scrollbar {
-      display: none;
-    }
-    .no-scrollbar {
-      -ms-overflow-style: none;
-      scrollbar-width: none;
-    }
-    .glow-match {
-      box-shadow: 0 0 0 2px #3B82F6, 0 8px 20px -4px rgba(59, 130, 246, 0.25);
-    }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#FFFFFF" />
+<title>cronota</title>
+<style>
+  :root {
+    --bg: #F4F3EF;
+    --surface: #FFFFFF;
+    --paper: #FBFAF6;
+    --line: #E4E1D8;
+    --margin-line: rgba(220, 38, 38, 0.30);
+    --ink: #1F2937;
+    --muted: #6B6760;
+    --faint: #A19D95;
+    --border: #E7E5E0;
+    --hover: #F1F0EC;
+    --dark: #1C1917;
+    --accent: #2563EB;
+    --accent-hover: #1D4ED8;
+    --danger: #DC2626;
+    --gap: 32px;
+    --margin-x: 60px;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", "Segoe UI", sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    font-size: 14px;
+    -webkit-font-smoothing: antialiased;
+    overscroll-behavior: none;
+    display: flex;
+    flex-direction: column;
+    height: 100dvh;
+  }
+  [hidden] { display: none !important; }
+  button { font: inherit; color: inherit; cursor: pointer; border: 0; background: none; padding: 0; }
+  button:disabled { cursor: default; opacity: .35; }
+  input, select { font: inherit; color: inherit; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  svg.i { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+  svg.i.sm { width: 15px; height: 15px; }
+  .muted { color: var(--faint); }
+
+  /* ---------- Header ---------- */
+  .top { position: sticky; top: 0; z-index: 30; background: rgba(255,255,255,.94); backdrop-filter: blur(8px); border-bottom: 1px solid var(--border); }
+  .top-inner { max-width: 1280px; margin: 0 auto; padding: 10px 16px; display: flex; align-items: center; gap: 12px; }
+  .logo { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 16px; letter-spacing: -.01em; }
+  .logo-mark { width: 30px; height: 30px; border-radius: 9px; background: var(--dark); color: #fff; display: grid; place-items: center; font-size: 13px; }
+  .search { position: relative; flex: 1; max-width: 560px; margin: 0 auto; }
+  .search input { width: 100%; height: 38px; border-radius: 999px; border: 1px solid transparent; background: var(--hover); padding: 0 80px 0 38px; font-size: 15px; outline: none; transition: background .15s, border-color .15s; }
+  .search input:focus { background: #fff; border-color: var(--accent); }
+  .search input::-webkit-search-cancel-button { display: none; }
+  .search .s-icon { position: absolute; left: 12px; top: 10px; color: var(--faint); pointer-events: none; }
+  .search .s-actions { position: absolute; right: 3px; top: 3px; display: flex; }
+  .icon-btn { width: 32px; height: 32px; border-radius: 999px; display: grid; place-items: center; color: var(--muted); transition: background .15s, color .15s; }
+  .icon-btn:hover { background: var(--hover); color: var(--ink); }
+  .icon-btn.danger:hover { background: #FEF2F2; color: var(--danger); }
+  .icon-btn[aria-pressed="true"] { background: var(--dark); color: #fff; }
+  .settings-btn { position: relative; }
+  .settings-btn .dot { position: absolute; top: 5px; right: 5px; width: 8px; height: 8px; border-radius: 999px; background: #10B981; border: 2px solid #fff; display: none; }
+  .settings-btn.ai-on .dot { display: block; }
+
+  /* handwriting search popover */
+  .pad-pop { position: absolute; top: 44px; left: 0; right: 0; min-width: 300px; background: #fff; border: 1px solid var(--border); border-radius: 14px; box-shadow: 0 12px 32px -8px rgba(0,0,0,.18); padding: 12px; z-index: 40; display: none; }
+  .pad-pop.open { display: block; }
+  .pad-pop .pad-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; font-size: 13px; font-weight: 600; }
+  .pad-pop .pad-head span.muted { font-weight: 400; font-size: 12px; }
+  .pad-wrap { height: 96px; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+  #padCanvas { display: block; width: 100%; height: 100%; touch-action: none; cursor: crosshair; background-color: var(--paper); background-image: linear-gradient(to bottom, transparent 63px, var(--line) 63px); background-size: 100% 64px; }
+  .pad-actions { display: flex; gap: 6px; justify-content: flex-end; margin-top: 8px; }
+  .kw-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); font-size: 12px; align-items: center; }
+  .kw-chip { height: 26px; padding: 0 9px; border-radius: 999px; background: var(--hover); color: var(--muted); font-size: 12px; }
+  .kw-chip:hover { background: #EFF4FF; color: var(--accent); }
+
+  /* mobile tabs */
+  .mtabs { display: none; gap: 6px; max-width: 1280px; margin: 0 auto; padding: 0 16px 10px; }
+  .mtab { flex: 1; height: 36px; border-radius: 10px; background: var(--hover); font-weight: 600; color: var(--muted); }
+  .mtab[aria-selected="true"] { background: var(--dark); color: #fff; }
+
+  /* ---------- Buttons ---------- */
+  .btn { height: 34px; padding: 0 12px; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; font-weight: 600; font-size: 13px; background: var(--hover); color: var(--ink); white-space: nowrap; }
+  .btn:hover:not(:disabled) { background: #E8E6E1; }
+  .btn.primary { background: var(--accent); color: #fff; }
+  .btn.primary:hover:not(:disabled) { background: var(--accent-hover); }
+  .btn.ghost { background: none; color: var(--muted); }
+  .btn.ghost:hover:not(:disabled) { background: var(--hover); color: var(--ink); }
+  .btn.lg { height: 40px; padding: 0 18px; font-size: 14px; border-radius: 12px; }
+
+  /* ---------- Layout ---------- */
+  main { flex: 1; min-height: 0; width: 100%; max-width: 1280px; margin: 0 auto; padding: 16px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; }
+  .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+
+  /* ---------- Write panel ---------- */
+  .toolbar { display: flex; align-items: center; gap: 2px; padding: 8px 10px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+  .sep { width: 1px; height: 20px; background: var(--border); margin: 0 6px; }
+  .swatch { width: 32px; height: 32px; border-radius: 999px; display: grid; place-items: center; }
+  .swatch span { width: 16px; height: 16px; border-radius: 999px; background: var(--c); transition: box-shadow .15s; }
+  .swatch[aria-pressed="true"] span { box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--c); }
+  .wbtn { width: 32px; height: 32px; border-radius: 8px; display: grid; place-items: center; }
+  .wbtn span { border-radius: 999px; background: #44403C; }
+  .wbtn:hover { background: var(--hover); }
+  .wbtn[aria-pressed="true"] { background: #E8E6E1; }
+  .tool { height: 32px; min-width: 32px; padding: 0 7px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; gap: 5px; color: #44403C; font-size: 12px; font-weight: 600; }
+  .tool:hover:not(:disabled) { background: var(--hover); }
+  .tool[aria-pressed="true"] { background: var(--dark); color: #fff; }
+  .tool .lbl { display: none; }
+  .spacer { flex: 1; }
+
+  .symbar { display: flex; align-items: center; gap: 6px; padding: 8px 10px; border-bottom: 1px solid var(--border); background: #FCFBF8; overflow-x: auto; scrollbar-width: none; }
+  .symbar::-webkit-scrollbar { display: none; }
+  .symbar .cap { font-size: 12px; color: var(--muted); white-space: nowrap; margin-right: 2px; }
+  .sym-btn { height: 30px; padding: 0 10px; border-radius: 8px; border: 1px solid var(--border); background: #fff; display: inline-flex; gap: 5px; align-items: center; white-space: nowrap; font-size: 13px; color: #44403C; }
+  .sym-btn b { color: var(--c); font-size: 15px; }
+  .sym-btn:hover { border-color: var(--c); }
+
+  .canvas-scroll { position: relative; flex: 1; min-height: 300px; overflow-y: auto; overflow-x: hidden; background: var(--paper); scrollbar-gutter: stable; }
+  .paper {
+    background-color: var(--paper);
+    background-image:
+      linear-gradient(to right, transparent calc(var(--margin-x) - 1px), var(--margin-line) calc(var(--margin-x) - 1px), var(--margin-line) var(--margin-x), transparent var(--margin-x)),
+      linear-gradient(to bottom, transparent calc(var(--gap) - 1px), var(--line) calc(var(--gap) - 1px));
+    background-size: 100% 100%, 100% var(--gap);
+    background-repeat: no-repeat, repeat;
+  }
+  #ink { display: block; width: 100%; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; cursor: crosshair; }
+  #ink.erasing { cursor: cell; }
+  .canvas-hint li { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .canvas-hint { position: absolute; left: calc(var(--margin-x) + 12px); right: 16px; top: var(--gap); pointer-events: none; color: var(--faint); font-size: 13px; line-height: var(--gap); margin: 0; padding: 0; list-style: none; }
+  .canvas-hint b { color: var(--muted); }
+  .canvas-hint.hide { display: none; }
+
+  .write-foot { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-top: 1px solid var(--border); }
+  .status { flex: 1; min-width: 0; font-size: 13px; color: var(--muted); display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .status .pill { display: inline-flex; align-items: center; gap: 4px; height: 24px; padding: 0 8px; border-radius: 999px; border: 1px solid var(--c, var(--border)); color: var(--c, var(--muted)); font-weight: 600; font-size: 12px; background: #fff; }
+
+  /* ---------- Notes panel ---------- */
+  .filters { padding: 10px 12px; border-bottom: 1px solid var(--border); display: flex; flex-direction: column; gap: 8px; }
+  .chips { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; align-items: center; }
+  .chips::-webkit-scrollbar { display: none; }
+  .chip { height: 30px; padding: 0 11px; border-radius: 999px; border: 1px solid var(--border); background: #fff; white-space: nowrap; font-size: 13px; display: inline-flex; align-items: center; gap: 5px; color: #44403C; flex: none; }
+  .chip:hover { border-color: #C9C5BC; }
+  .chip b { color: var(--c); }
+  .chip .n { color: var(--faint); font-size: 12px; }
+  .chip[aria-pressed="true"] { background: var(--dark); border-color: var(--dark); color: #fff; }
+  .chip[aria-pressed="true"] b, .chip[aria-pressed="true"] .n { color: inherit; }
+  .chip.board { border-style: dashed; }
+  .row2 { display: flex; align-items: center; gap: 6px; }
+  .row2 .cap { font-size: 12px; color: var(--muted); margin-right: 2px; white-space: nowrap; }
+
+  .banner { display: none; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 12px; background: #EFF4FF; color: #1E40AF; font-size: 13px; border-bottom: 1px solid #DBE6FE; }
+  .banner.show { display: flex; }
+  .banner button { font-weight: 600; text-decoration: underline; }
+
+  .list { flex: 1; min-height: 0; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 10px; background: #FAFAF8; }
+  .card { background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 10px 12px 12px; }
+  .card.done .ink-wrap { opacity: .4; }
+  .card-head { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; flex-wrap: wrap; }
+  .tag-pick { position: relative; display: inline-flex; align-items: center; gap: 4px; height: 26px; padding: 0 8px 0 10px; border-radius: 999px; border: 1px solid var(--c); color: var(--c); font-weight: 700; font-size: 12px; background: #fff; }
+  .tag-pick select { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; }
+  .tag-pick svg.i { width: 12px; height: 12px; }
+  .badge-high { font-size: 11px; font-weight: 700; color: var(--danger); background: #FEF2F2; border-radius: 6px; padding: 3px 6px; }
+  .date { font-size: 12px; color: var(--faint); }
+  .card-actions { margin-left: auto; display: flex; gap: 2px; align-items: center; }
+  .done-btn { height: 28px; padding: 0 10px; border-radius: 999px; border: 1px solid var(--border); font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; color: var(--muted); }
+  .done-btn:hover { border-color: #C9C5BC; color: var(--ink); }
+  .done-btn[aria-pressed="true"] { background: var(--dark); color: #fff; border-color: var(--dark); }
+  .ink-wrap { overflow-x: auto; border-radius: 8px; border: 1px solid #EFEDE7; }
+  .ink-wrap canvas { display: block; }
+  .ai-text { margin-top: 10px; font-size: 13px; color: #44403C; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; line-height: 1.5; }
+  .ai-text .lbl { font-size: 11px; font-weight: 700; color: var(--accent); }
+  .kw { font-size: 11px; color: var(--muted); background: var(--hover); border-radius: 6px; padding: 2px 6px; }
+  .edit-row { margin-top: 10px; display: flex; gap: 6px; }
+  .edit-row input { flex: 1; min-width: 0; height: 34px; border: 1px solid var(--accent); border-radius: 8px; padding: 0 10px; font-size: 14px; outline: none; }
+  mark { background: #FEF08A; color: inherit; border-radius: 2px; padding: 0 1px; }
+  .empty { text-align: center; color: var(--faint); padding: 56px 16px; line-height: 1.7; }
+  .empty b { color: var(--muted); display: block; font-size: 14px; }
+
+  /* ---------- Toast ---------- */
+  #toast { position: fixed; left: 50%; bottom: calc(84px + env(safe-area-inset-bottom)); transform: translateX(-50%); background: var(--dark); color: #fff; padding: 10px 16px; border-radius: 999px; font-size: 13px; display: none; align-items: center; gap: 14px; z-index: 70; max-width: calc(100vw - 32px); box-shadow: 0 8px 24px -6px rgba(0,0,0,.35); }
+  #toast.show { display: flex; }
+  #toast button { color: #93C5FD; font-weight: 700; white-space: nowrap; }
+
+  /* ---------- Settings dialog ---------- */
+  dialog { border: 0; border-radius: 18px; padding: 0; width: min(460px, calc(100vw - 32px)); box-shadow: 0 24px 64px -12px rgba(0,0,0,.35); color: var(--ink); }
+  dialog::backdrop { background: rgba(0,0,0,.35); }
+  .dlg-head { display: flex; align-items: center; justify-content: space-between; padding: 16px 18px 6px; }
+  .dlg-head h2 { margin: 0; font-size: 16px; }
+  .dlg-body { padding: 4px 18px 18px; display: flex; flex-direction: column; gap: 18px; max-height: 75vh; overflow-y: auto; }
+  .sec h3 { margin: 0 0 6px; font-size: 13px; }
+  .sec p { margin: 0 0 10px; font-size: 12px; color: var(--muted); line-height: 1.6; }
+  .field { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; }
+  .field label { font-size: 12px; font-weight: 600; color: var(--muted); }
+  .field input[type=password], .field input[type=text] { height: 36px; border: 1px solid var(--border); border-radius: 9px; padding: 0 10px; font-size: 14px; outline: none; }
+  .field input:focus { border-color: var(--accent); }
+  .btn-row { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+  .result { font-size: 12px; padding: 8px 10px; border-radius: 9px; margin-bottom: 10px; display: none; }
+  .result.show { display: block; }
+  .result.ok { background: #ECFDF5; color: #047857; }
+  .result.err { background: #FEF2F2; color: #B91C1C; }
+  .result.info { background: var(--hover); color: var(--muted); }
+  .range-row { display: flex; align-items: center; gap: 10px; font-size: 13px; }
+  .range-row input { flex: 1; accent-color: var(--dark); }
+  .switch-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 13px; padding: 6px 0; }
+  .switch-row input { width: 18px; height: 18px; accent-color: var(--dark); }
+  hr.div { border: 0; border-top: 1px solid var(--border); margin: 0; }
+
+  /* ---------- Responsive ---------- */
+  @media (min-width: 1100px) { .tool .lbl { display: inline; } }
+  @media (max-width: 899px) {
+    .mtabs { display: flex; }
+    .logo-text { display: none; }
+    main { grid-template-columns: minmax(0, 1fr); padding: 0 12px 12px; }
+    body[data-tab="write"] #notesPanel, body[data-tab="notes"] #writePanel { display: none; }
+    .top-inner { padding: 10px 12px; gap: 8px; }
+    .toolbar .sep { display: none; }
+    .swatch, .wbtn, .tool { width: 30px; min-width: 30px; }
+    .toolbar { gap: 1px; padding: 6px 8px; }
+  }
+</style>
 </head>
-<body class="min-h-screen flex flex-col">
+<body data-tab="write">
 
-  <!-- Top Navigation & Hidden Search -->
-  <header class="sticky top-0 z-30 bg-white/90 backdrop-blur border-b border-stone-200 px-3 sm:px-5 py-2.5">
-    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2.5">
-      <div class="flex items-center gap-2.5">
-        <div class="w-8 h-8 rounded-lg bg-stone-900 text-white flex items-center justify-center font-bold text-sm tracking-tight">
-          cr
-        </div>
-        <div>
-          <h1 class="text-sm sm:text-base font-bold text-stone-900 leading-tight">cronota</h1>
-          <p class="text-[11px] text-stone-500 hidden sm:block">무페이지 필기 · 6대 기호 · 숨김 AI 태그</p>
-        </div>
+<header class="top">
+  <div class="top-inner">
+    <div class="logo"><div class="logo-mark">cr</div><span class="logo-text">cronota</span></div>
+
+    <div class="search" id="searchBox">
+      <i data-icon="search" class="s-icon"></i>
+      <input id="searchInput" type="search" placeholder="노트 검색" autocomplete="off" enterkeyhint="search" aria-label="노트 검색" />
+      <div class="s-actions">
+        <button id="clearSearchBtn" class="icon-btn" title="검색어 지우기" aria-label="검색어 지우기" hidden><i data-icon="x"></i></button>
+        <button id="padToggleBtn" class="icon-btn" title="손글씨로 검색" aria-label="손글씨로 검색" aria-expanded="false"><i data-icon="pen"></i></button>
       </div>
-
-      <!-- Hidden AI Search Bar + Handwriting Search Trigger -->
-      <div class="relative flex-1 min-w-[220px] max-w-md flex items-center gap-1.5">
-        <div class="relative flex-1">
-          <i data-lucide="search" class="w-4 h-4 text-stone-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
-          <input
-            id="searchInput"
-            type="search"
-            inputmode="search"
-            enterkeyhint="search"
-            autocomplete="off"
-            placeholder="숨김 AI 태그 검색..."
-            class="w-full pl-9 pr-8 py-1.5 text-base sm:text-sm bg-stone-100 hover:bg-stone-200/70 focus:bg-white border border-transparent focus:border-blue-500 rounded-full outline-none transition"
-          />
-          <button id="clearSearchBtn" class="hidden absolute right-2.5 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-700" title="검색어 지우기">
-            <i data-lucide="x" class="w-3.5 h-3.5"></i>
-          </button>
+      <div class="pad-pop" id="padPop" role="dialog" aria-label="손글씨 검색">
+        <div class="pad-head">손글씨로 검색 <span class="muted" id="padNote">검색어를 펜으로 쓰세요</span></div>
+        <div class="pad-wrap"><canvas id="padCanvas"></canvas></div>
+        <div class="pad-actions">
+          <button class="btn ghost" id="padClearBtn">지우기</button>
+          <button class="btn primary" id="padRunBtn"><i data-icon="search" class="sm"></i>검색</button>
         </div>
-        <button id="toggleHandSearchBtn" class="shrink-0 flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-semibold bg-stone-100 hover:bg-stone-200 text-stone-700 transition" title="키보드 대신 필기나 태그 칩으로 검색">
-          <i data-lucide="pen-line" class="w-3.5 h-3.5"></i>
-          <span>필기 검색</span>
-        </button>
-      </div>
-
-      <!-- Controls -->
-      <div class="flex items-center gap-2">
-        <button id="openAiModalBtn" class="flex items-center gap-1 text-xs font-medium text-stone-600 bg-stone-100 hover:bg-stone-200/70 px-2.5 py-1.5 rounded-full transition" title="실제 손글씨 인식을 위한 Gemini API 키 설정">
-          <i data-lucide="cpu" class="w-3.5 h-3.5"></i>
-          <span id="aiStatusLabel">AI 연결</span>
-        </button>
-        <label class="flex items-center gap-1.5 text-xs font-medium text-stone-600 bg-stone-100 px-2.5 py-1.5 rounded-full cursor-pointer select-none hover:bg-stone-200/70 transition" title="이면에 저장된 AI 변환 텍스트를 확인합니다">
-          <input id="peekAiToggle" type="checkbox" class="accent-blue-600 rounded" />
-          <span>숨김 태그 보기</span>
-        </label>
-        <div class="flex bg-stone-100 p-0.5 rounded-full text-xs font-medium">
-          <button id="modeSplitBtn" class="px-2.5 py-1 rounded-full bg-white text-stone-900 shadow-sm transition">분할 보기</button>
-          <button id="modeCanvasBtn" class="px-2.5 py-1 rounded-full text-stone-600 hover:text-stone-900 transition">필기만</button>
-          <button id="modeNotesBtn" class="px-2.5 py-1 rounded-full text-stone-600 hover:text-stone-900 transition">노트만</button>
-        </div>
+        <div class="kw-row" id="kwRow"></div>
       </div>
     </div>
 
-    <!-- Expandable Handwriting Search & Quick Keyword Pad -->
-    <div id="handSearchPanel" class="hidden max-w-7xl mx-auto mt-2.5 pt-2.5 border-t border-stone-200 space-y-2">
-      <div class="flex flex-wrap items-center justify-between gap-2">
-        <span class="text-xs font-semibold text-stone-700">필기 검색 패드 <span class="font-normal text-stone-400">(여기에 검색어를 펜으로 쓰세요)</span></span>
-        <div class="flex items-center gap-1.5">
-          <button id="clearHandSearchBtn" class="px-2.5 py-1 text-xs text-stone-600 bg-stone-100 hover:bg-stone-200 rounded-lg">지우기</button>
-          <button id="runHandSearchBtn" class="px-3 py-1 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg flex items-center gap-1">
-            <i data-lucide="search" class="w-3 h-3"></i>
-            <span>필기로 검색</span>
-          </button>
-          <button id="closeHandSearchBtn" class="p-1 text-stone-400 hover:text-stone-700"><i data-lucide="x" class="w-4 h-4"></i></button>
-        </div>
-      </div>
-      <div class="lined-paper rounded-xl border border-stone-300 overflow-hidden h-[88px] relative">
-        <canvas id="handSearchCanvas" class="w-full h-full block" style="touch-action:none;"></canvas>
-      </div>
-      <div id="quickKeywordChips" class="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-0.5 text-xs">
-        <!-- Populated dynamically from hidden keywords -->
+    <button id="settingsBtn" class="icon-btn settings-btn" title="설정" aria-label="설정"><i data-icon="sliders"></i><span class="dot"></span></button>
+  </div>
+  <div class="mtabs" role="tablist">
+    <button class="mtab" role="tab" data-tab="write" aria-selected="true">쓰기</button>
+    <button class="mtab" role="tab" data-tab="notes" aria-selected="false">노트 <span id="mtabCount"></span></button>
+  </div>
+</header>
+
+<main>
+  <!-- ========== Write ========== -->
+  <section class="panel" id="writePanel" aria-label="필기">
+    <div class="toolbar">
+      <div id="colorBtns" style="display:flex"></div>
+      <div class="sep"></div>
+      <div id="widthBtns" style="display:flex"></div>
+      <div class="sep"></div>
+      <button class="tool" id="eraserBtn" aria-pressed="false" title="지우개 (E)"><i data-icon="eraser"></i><span class="lbl">지우개</span></button>
+      <button class="tool" id="undoBtn" title="되돌리기 (Ctrl+Z)" aria-label="되돌리기" disabled><i data-icon="undo"></i></button>
+      <button class="tool" id="redoBtn" title="다시 실행 (Ctrl+Shift+Z)" aria-label="다시 실행" disabled><i data-icon="redo"></i></button>
+      <button class="tool" id="clearBtn" title="캔버스 비우기 (되돌리기 가능)" aria-label="캔버스 비우기" disabled><i data-icon="trash"></i></button>
+      <div class="spacer"></div>
+      <button class="tool" id="fingerBtn" aria-pressed="false" title="켜면 손가락으로도 쓸 수 있어요. 끄면 펜과 마우스만 인식하고 손바닥 터치는 무시합니다."><i data-icon="hand"></i><span class="lbl">손가락</span></button>
+    </div>
+
+    <div class="symbar" id="symbar"><span class="cap">기호 넣기</span></div>
+
+    <div class="canvas-scroll" id="canvasScroll">
+      <canvas id="ink" class="paper"></canvas>
+      <ol class="canvas-hint" id="canvasHint">
+        <li><b>1.</b> 빨간 선 왼쪽에 기호를 그리세요 (또는 위 기호 버튼)</li>
+        <li><b>2.</b> 오른쪽에 내용을 쓰세요 (여러 줄이면 첫 줄에만 기호)</li>
+        <li><b>3.</b> 저장하면 기호별로 자동 분류돼요</li>
+      </ol>
+    </div>
+
+    <div class="write-foot">
+      <div class="status" id="status" aria-live="polite"></div>
+      <button class="btn primary lg" id="saveBtn" title="저장 (Ctrl+Enter)" disabled><i data-icon="check"></i><span id="saveLabel">저장</span></button>
+    </div>
+  </section>
+
+  <!-- ========== Notes ========== -->
+  <section class="panel" id="notesPanel" aria-label="노트">
+    <div class="filters">
+      <div class="chips" id="tagChips"></div>
+      <div class="row2">
+        <div class="chips" id="boardChips" style="flex:1"></div>
+        <button class="icon-btn" id="textToggleBtn" aria-pressed="false" title="인식된 텍스트 보기" aria-label="인식된 텍스트 보기"><i data-icon="eye"></i></button>
+        <button class="btn ghost" id="sortBtn" title="정렬 바꾸기"><i data-icon="sort" class="sm"></i><span id="sortLabel">최신순</span></button>
       </div>
     </div>
-  </header>
+    <div class="banner" id="banner"><span id="bannerText"></span><button id="bannerClear">검색 지우기</button></div>
+    <div class="list" id="list"></div>
+  </section>
+</main>
 
-  <!-- AI Settings Modal -->
-  <div id="aiModal" class="hidden fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl border border-stone-200 shadow-xl max-w-md w-full p-5 space-y-4">
-      <div class="flex items-center justify-between">
-        <h2 class="text-sm font-bold text-stone-900">실제 손글씨 AI 인식 연결 (선택)</h2>
-        <button id="closeAiModalBtn" class="text-stone-400 hover:text-stone-700"><i data-lucide="x" class="w-4 h-4"></i></button>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<!-- ========== Settings ========== -->
+<dialog id="settings">
+  <div class="dlg-head">
+    <h2>설정</h2>
+    <button class="icon-btn" id="settingsClose" aria-label="닫기"><i data-icon="x"></i></button>
+  </div>
+  <div class="dlg-body">
+    <div class="sec">
+      <h3>AI 손글씨 인식 (선택)</h3>
+      <p>Gemini API 키를 넣으면 저장할 때 손글씨를 글자로 읽어 검색어와 키워드를 자동으로 붙입니다. 이때 <b>손글씨 이미지가 Google로 전송</b>됩니다. 키는 이 브라우저에만 저장되므로 공용 기기에서는 넣지 마세요.</p>
+      <div class="field">
+        <label for="keyInput">API 키</label>
+        <input id="keyInput" type="password" placeholder="AIza..." autocomplete="off" spellcheck="false" />
       </div>
-      <p class="text-xs text-stone-600 leading-relaxed">
-        API 키를 입력하면 저장 시 손글씨 이미지를 Gemini Vision으로 보내 <b>기호 판별 + 숨김 텍스트·키워드</b>를 자동으로 추출합니다. 키는 현재 기기 브라우저에만 저장됩니다.
-      </p>
-      <div>
-        <label class="block text-[11px] font-semibold text-stone-600 mb-1">Gemini API Key</label>
-        <input id="geminiKeyInput" type="password" placeholder="AIza..." class="w-full text-xs border border-stone-300 rounded-lg px-3 py-2 outline-none focus:border-blue-500" />
+      <div class="field">
+        <label for="modelInput">모델 이름</label>
+        <input id="modelInput" type="text" list="modelList" autocomplete="off" spellcheck="false" />
+        <datalist id="modelList">
+          <option value="gemini-3.5-flash-lite"></option>
+          <option value="gemini-3.6-flash"></option>
+          <option value="gemini-3.8-flash"></option>
+        </datalist>
       </div>
-      <div>
-        <label class="block text-[11px] font-semibold text-stone-600 mb-1">사용할 모델</label>
-        <select id="geminiModelSelect" class="w-full text-xs border border-stone-300 rounded-lg px-3 py-2 bg-white outline-none focus:border-blue-500">
-          <option value="gemini-3.5-flash-lite">gemini-3.5-flash-lite (권장 · 빠르고 가벼움)</option>
-          <option value="gemini-3.8-flash">gemini-3.8-flash (고성능)</option>
-          <option value="gemini-3.6-flash">gemini-3.6-flash</option>
-        </select>
+      <div class="result" id="aiResult"></div>
+      <div class="btn-row">
+        <button class="btn ghost" id="keyClearBtn">키 삭제</button>
+        <button class="btn" id="keyTestBtn">연결 테스트</button>
+        <button class="btn primary" id="keySaveBtn">저장</button>
       </div>
-      <div id="aiTestResult" class="hidden text-xs px-3 py-2 rounded-lg"></div>
-      <div class="flex items-center justify-end gap-2 pt-1">
-        <button id="clearGeminiKeyBtn" class="px-3 py-1.5 text-xs text-stone-600 hover:bg-stone-100 rounded-lg">키 삭제</button>
-        <button id="testGeminiKeyBtn" class="px-3 py-1.5 text-xs font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-lg">연결 테스트</button>
-        <button id="saveGeminiKeyBtn" class="px-3.5 py-1.5 text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white rounded-lg">저장하기</button>
+    </div>
+    <hr class="div" />
+    <div class="sec">
+      <h3>필기</h3>
+      <div class="range-row">
+        <span>줄 간격</span>
+        <input id="gapRange" type="range" min="24" max="56" step="2" />
+        <span id="gapLabel" style="width:36px;text-align:right"></span>
+      </div>
+      <label class="switch-row">손가락으로도 쓰기 (끄면 손바닥 터치 무시)
+        <input type="checkbox" id="fingerCheck" />
+      </label>
+    </div>
+    <hr class="div" />
+    <div class="sec">
+      <h3>데이터</h3>
+      <p>노트는 이 브라우저(IndexedDB)에 저장됩니다. 브라우저 데이터를 지우면 함께 사라지니 가끔 백업해 두세요.</p>
+      <div class="btn-row" style="justify-content:flex-start">
+        <button class="btn" id="exportBtn">백업 내보내기</button>
+        <button class="btn" id="importBtn">백업 가져오기</button>
+        <button class="btn ghost" id="sampleBtn">샘플 노트 추가</button>
+        <input type="file" id="importFile" accept="application/json,.json" hidden />
       </div>
     </div>
   </div>
+</dialog>
 
-  <!-- Toast Banner -->
-  <div id="toast" class="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 hidden bg-stone-900 text-white text-xs sm:text-sm px-4 py-2 rounded-full shadow-lg transition-opacity"></div>
+<script>
+'use strict';
 
-  <!-- Main Workspace -->
-  <main class="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-4 grid grid-cols-1 lg:grid-cols-12 gap-4">
+/* =========================================================
+   Constants
+   ========================================================= */
+const MARGIN_X = 60;
+const HIGH_COLOR = '#DC2626';
+const TAGS = {
+  todo:     { symbol: '□', label: '할일', color: '#2563EB', doneLabel: ['완료하기', '완료됨'] },
+  fact:     { symbol: '○', label: '정보', color: '#059669' },
+  ref:      { symbol: '*', label: '참고', color: '#7C3AED' },
+  idea:     { symbol: '+', label: '메모', color: '#B45309' },
+  question: { symbol: '△', label: '질문', color: '#EA580C', doneLabel: ['해결하기', '해결됨'] },
+  decision: { symbol: '!', label: '결정', color: '#E11D48' }
+};
+const TAG_KEYS = Object.keys(TAGS);
+const BOARDS = {
+  action:    { label: '실행', tags: ['todo', 'question'] },
+  knowledge: { label: '지식', tags: ['fact', 'ref'] },
+  insight:   { label: '인사이트', tags: ['idea', 'decision'] }
+};
+const PEN_COLORS = [
+  { c: '#1E293B', name: '검정' },
+  { c: HIGH_COLOR, name: '빨강 (중요 표시)' },
+  { c: '#2563EB', name: '파랑' }
+];
+const PEN_WIDTHS = [
+  { w: 1.6, name: '가는 펜', d: 4 },
+  { w: 2.8, name: '보통 펜', d: 7 },
+  { w: 5.0, name: '굵은 펜', d: 11 }
+];
+const DEFAULT_MODEL = 'gemini-3.5-flash-lite';
 
-    <!-- LEFT: Page-less Ink Input Canvas -->
-    <section id="canvasSection" class="lg:col-span-6 flex flex-col bg-white rounded-2xl border border-stone-200 shadow-sm overflow-hidden">
-      <!-- Pen Toolbar -->
-      <div class="px-3 py-2 border-b border-stone-200 bg-stone-50/80 flex flex-wrap items-center justify-between gap-2">
-        <div class="flex items-center gap-1.5">
-          <span class="text-xs font-semibold text-stone-700 mr-1">무페이지 입력</span>
-          <button data-color="#1E293B" class="pen-color-btn w-5 h-5 rounded-full bg-slate-800 ring-2 ring-offset-1 ring-blue-500 transition" title="기본 검정 잉크"></button>
-          <button data-color="#DC2626" class="pen-color-btn w-5 h-5 rounded-full bg-red-600 ring-offset-1 transition" title="중요 강조(빨강)"></button>
-          <button data-color="#2563EB" class="pen-color-btn w-5 h-5 rounded-full bg-blue-600 ring-offset-1 transition" title="파랑 잉크"></button>
-          <div class="h-4 w-px bg-stone-300 mx-0.5"></div>
-          <!-- 4 Pen Thickness Presets -->
-          <button data-width="1.5" class="pen-width-btn w-6 h-6 rounded-md flex items-center justify-center hover:bg-stone-200 transition" title="가는 펜 (1.5px)">
-            <span class="w-1 h-1 rounded-full bg-stone-800"></span>
-          </button>
-          <button data-width="2.8" class="pen-width-btn w-6 h-6 rounded-md flex items-center justify-center bg-stone-200 ring-1 ring-stone-400 transition" title="기본 펜 (2.8px)">
-            <span class="w-2 h-2 rounded-full bg-stone-800"></span>
-          </button>
-          <button data-width="4.8" class="pen-width-btn w-6 h-6 rounded-md flex items-center justify-center hover:bg-stone-200 transition" title="굵은 펜 (4.8px)">
-            <span class="w-3 h-3 rounded-full bg-stone-800"></span>
-          </button>
-          <button data-width="8.0" class="pen-width-btn w-6 h-6 rounded-md flex items-center justify-center hover:bg-stone-200 transition" title="마커 펜 (8.0px)">
-            <span class="w-4 h-4 rounded-full bg-stone-800"></span>
-          </button>
-          <div class="h-4 w-px bg-stone-300 mx-0.5"></div>
-          <button id="eraserModeBtn" class="px-2 py-1 rounded-lg text-[11px] font-medium text-stone-700 bg-white border border-stone-200 hover:bg-stone-100 flex items-center gap-1 transition" title="부분 지우개 모드">
-            <i data-lucide="eraser" class="w-3.5 h-3.5"></i>
-            <span>지우개</span>
-          </button>
-          <button id="undoStrokeBtn" class="p-1.5 rounded-lg text-stone-600 hover:bg-stone-200 transition" title="획 되돌리기">
-            <i data-lucide="undo-2" class="w-4 h-4"></i>
-          </button>
-          <button id="clearCanvasBtn" class="p-1.5 rounded-lg text-stone-500 hover:text-red-600 hover:bg-red-50 transition" title="전체 비우기">
-            <i data-lucide="trash-2" class="w-4 h-4"></i>
-          </button>
-          <div class="h-4 w-px bg-stone-300 mx-1"></div>
-          <button id="penOnlyBtn" class="px-2 py-1 rounded-lg text-[11px] font-semibold bg-stone-900 text-white flex items-center gap-1 transition" title="켜면 Apple Pencil / S-Pen과 마우스만 인식하고 손바닥·손가락 터치를 무시합니다">
-            <i data-lucide="pen-tool" class="w-3 h-3"></i>
-            <span>펜 전용</span>
-          </button>
-        </div>
+const ICONS = {
+  search: '<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>',
+  pen: '<path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/>',
+  x: '<path d="M18 6 6 18M6 6l12 12"/>',
+  sliders: '<path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/>',
+  eraser: '<path d="m7 21-4.3-4.3a1 1 0 0 1 0-1.4l10-10a1 1 0 0 1 1.4 0l5.6 5.6a1 1 0 0 1 0 1.4L13 19"/><path d="M22 21H7"/><path d="m5 11 9 9"/>',
+  undo: '<path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/>',
+  redo: '<path d="m15 14 5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/>',
+  trash: '<path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>',
+  hand: '<path d="M18 11V6a2 2 0 0 0-4 0v5"/><path d="M14 10V4a2 2 0 0 0-4 0v6"/><path d="M10 10.5V6a2 2 0 0 0-4 0v8"/><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-6-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/>',
+  check: '<path d="M20 6 9 17l-5-5"/>',
+  circle: '<circle cx="12" cy="12" r="8"/>',
+  sort: '<path d="m3 16 4 4 4-4"/><path d="M7 20V4"/><path d="m21 8-4-4-4 4"/><path d="M17 4v16"/>',
+  eye: '<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/>',
+  type: '<path d="M4 7V4h16v3"/><path d="M9 20h6"/><path d="M12 4v16"/>',
+  chevron: '<path d="m6 9 6 6 6-6"/>'
+};
+function icon(name, cls = '') {
+  return `<svg class="i ${cls}" viewBox="0 0 24 24" aria-hidden="true">${ICONS[name] || ''}</svg>`;
+}
 
-        <div class="flex items-center gap-1.5">
-          <span id="liveDetectBadge" class="text-[11px] font-medium px-2 py-0.5 rounded-full bg-stone-200 text-stone-600">
-            기호(□ ○ * + △ !)로 시작하기
-          </span>
-          <button id="commitBlockBtn" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg shadow-sm flex items-center gap-1 transition">
-            <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
-            <span>블록 태깅 & 저장</span>
-          </button>
-        </div>
-      </div>
+/* =========================================================
+   Small helpers
+   ========================================================= */
+const $ = (s) => document.querySelector(s);
+function lsGet(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : v; } catch { return d; } }
+function lsSet(k, v) { try { localStorage.setItem(k, v); return true; } catch { return false; } }
+function lsDel(k) { try { localStorage.removeItem(k); } catch {} }
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, (m) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
+}
+function uid() { return 'n_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 7); }
+function toStr(v) { if (v == null) return ''; return (typeof v === 'string' ? v : String(v)).slice(0, 1000); }
+function toKeywords(v) {
+  if (!Array.isArray(v)) return [];
+  const out = v.filter((k) => typeof k === 'string' || typeof k === 'number')
+    .map((k) => String(k).trim().replace(/^#/, '').slice(0, 40)).filter(Boolean);
+  return [...new Set(out)].slice(0, 12);
+}
+function getBox(pts) {
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  for (const p of pts) {
+    if (p.x < minX) minX = p.x; if (p.y < minY) minY = p.y;
+    if (p.x > maxX) maxX = p.x; if (p.y > maxY) maxY = p.y;
+  }
+  return { minX, minY, maxX, maxY, w: maxX - minX, h: maxY - minY };
+}
+function strokesBox(list) { return getBox(list.flatMap((s) => s.points)); }
+function formatDate(iso) {
+  const d = new Date(iso);
+  const now = new Date();
+  const hh = String(d.getHours()).padStart(2, '0');
+  const mm = String(d.getMinutes()).padStart(2, '0');
+  if (d.toDateString() === now.toDateString()) return `오늘 ${hh}:${mm}`;
+  const y = new Date(now); y.setDate(now.getDate() - 1);
+  if (d.toDateString() === y.toDateString()) return `어제 ${hh}:${mm}`;
+  const sameYear = d.getFullYear() === now.getFullYear();
+  return `${sameYear ? '' : d.getFullYear() + '년 '}${d.getMonth() + 1}월 ${d.getDate()}일 ${hh}:${mm}`;
+}
 
-      <!-- Symbol Quick Guide Strip -->
-      <div class="px-3 py-1.5 bg-amber-50/60 border-b border-amber-100 flex items-center gap-2 overflow-x-auto no-scrollbar text-[11px] text-stone-600">
-        <span class="font-semibold text-amber-800 shrink-0">6대 기호:</span>
-        <button data-stamp="todo" class="stamp-btn shrink-0 px-1.5 py-0.5 rounded bg-white border border-stone-200 hover:border-blue-400"><b>□</b> 할일</button>
-        <button data-stamp="fact" class="stamp-btn shrink-0 px-1.5 py-0.5 rounded bg-white border border-stone-200 hover:border-blue-400"><b>○</b> 정보</button>
-        <button data-stamp="ref" class="stamp-btn shrink-0 px-1.5 py-0.5 rounded bg-white border border-stone-200 hover:border-blue-400"><b>*</b> 참고</button>
-        <button data-stamp="idea" class="stamp-btn shrink-0 px-1.5 py-0.5 rounded bg-white border border-stone-200 hover:border-blue-400"><b>+</b> 메모</button>
-        <button data-stamp="question" class="stamp-btn shrink-0 px-1.5 py-0.5 rounded bg-white border border-stone-200 hover:border-blue-400"><b>△</b> 질문</button>
-        <button data-stamp="decision" class="stamp-btn shrink-0 px-1.5 py-0.5 rounded bg-white border border-stone-200 hover:border-blue-400"><b>!</b> 결정</button>
-        <div class="flex items-center gap-1.5 shrink-0 ml-auto pl-2 border-l border-amber-200/80">
-          <span class="text-[11px] font-medium text-stone-600">줄간격</span>
-          <input id="lineGapSlider" type="range" min="20" max="56" step="2" value="32" class="w-16 sm:w-20 accent-stone-700 cursor-pointer" title="선노트 줄 간격 조절" />
-          <span id="lineGapLabel" class="text-[11px] text-stone-500 w-7 text-right">32px</span>
-        </div>
-      </div>
+/* =========================================================
+   Toast (with optional action, e.g. undo)
+   ========================================================= */
+let toastTimer = null;
+function toast(msg, action) {
+  const el = $('#toast');
+  el.replaceChildren();
+  const span = document.createElement('span');
+  span.textContent = msg;
+  el.append(span);
+  if (action) {
+    const b = document.createElement('button');
+    b.textContent = action.label;
+    b.addEventListener('click', () => { hideToast(); action.run(); });
+    el.append(b);
+  }
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(hideToast, action ? 6000 : 3000);
+}
+function hideToast() { $('#toast').classList.remove('show'); }
 
-      <!-- Canvas Container -->
-      <div class="relative flex-1 min-h-[360px] sm:min-h-[440px] lined-paper select-none">
-        <div class="absolute top-2 left-3 pointer-events-none text-[11px] text-stone-400">
-          어디서든 기호(□ ○ * + △ !)를 먼저 그리고 이어서 손글씨를 적어보세요
-        </div>
-        <canvas id="inkCanvas" class="w-full h-full block"></canvas>
-      </div>
+/* =========================================================
+   Preferences
+   ========================================================= */
+const prefs = {
+  gap: Math.min(56, Math.max(24, parseInt(lsGet('cronota_line_gap', '32'), 10) || 32)),
+  penOnly: lsGet('cronota_pen_only', '1') === '1',
+  showText: lsGet('cronota_show_text', '0') === '1',
+  sortDesc: lsGet('cronota_sort', 'desc') !== 'asc',
+  key: lsGet('cronota_gemini_key', ''),
+  model: lsGet('cronota_gemini_model', DEFAULT_MODEL) || DEFAULT_MODEL
+};
 
-      <!-- Hidden AI Tagging Simulation Bar (Optional OCR hint on commit) -->
-      <div class="px-3 py-2 bg-stone-50 border-t border-stone-200 flex flex-wrap items-center gap-2">
-        <span class="text-[11px] text-stone-500 shrink-0">인식 기호 보정:</span>
-        <select id="manualTagSelect" class="text-xs bg-white border border-stone-200 rounded-lg px-2 py-1 outline-none focus:border-blue-500">
-          <option value="auto">자동 인식 결과 사용</option>
-          <option value="todo">□ 할일 (Action)</option>
-          <option value="fact">○ 정보 (Fact)</option>
-          <option value="ref">* 참고 (Reference)</option>
-          <option value="idea">+ 메모 (Idea)</option>
-          <option value="question">△ 질문 (Pending)</option>
-          <option value="decision">! 결정 (Decision)</option>
-        </select>
-        <input
-          id="hiddenHintInput"
-          type="text"
-          placeholder="(선택) 숨김 AI 검색용 텍스트 입력 — 비워두면 자동 태깅"
-          class="flex-1 min-w-[180px] text-xs bg-white border border-stone-200 rounded-lg px-2.5 py-1 outline-none focus:border-blue-500"
-        />
-      </div>
-    </section>
-
-    <!-- RIGHT: Tag-Based Notes & Smart Views -->
-    <section id="notesSection" class="lg:col-span-6 flex flex-col bg-white rounded-2xl border border-stone-200 shadow-sm overflow-hidden">
-      <!-- Tabs: Smart Boards & 6 Tag Notes -->
-      <div class="px-3 pt-2.5 pb-2 border-b border-stone-200 bg-stone-50/80 space-y-2">
-        <div class="flex items-center justify-between gap-2">
-          <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
-            <button data-view="all" class="view-tab shrink-0 px-2.5 py-1 rounded-lg text-xs font-semibold bg-stone-900 text-white">전체 스트림</button>
-            <button data-view="board_action" class="view-tab shrink-0 px-2.5 py-1 rounded-lg text-xs font-medium bg-indigo-50 text-indigo-700 hover:bg-indigo-100">실행 보드 (□+△)</button>
-            <button data-view="board_knowledge" class="view-tab shrink-0 px-2.5 py-1 rounded-lg text-xs font-medium bg-emerald-50 text-emerald-700 hover:bg-emerald-100">지식 아카이브 (○+*)</button>
-            <button data-view="board_insight" class="view-tab shrink-0 px-2.5 py-1 rounded-lg text-xs font-medium bg-amber-50 text-amber-800 hover:bg-amber-100">인사이트 (+ + !)</button>
-          </div>
-
-          <div class="shrink-0 flex items-center gap-1.5">
-            <div class="flex bg-stone-200/70 p-0.5 rounded-lg text-[11px] font-medium">
-              <button id="dispPageBtn" class="px-2 py-0.5 rounded-md bg-white text-stone-900 shadow-xs transition">한 페이지</button>
-              <button id="dispCardBtn" class="px-2 py-0.5 rounded-md text-stone-600 hover:text-stone-900 transition">개별 관리</button>
-            </div>
-            <button id="sortOrderBtn" class="flex items-center gap-1 text-xs font-medium text-stone-600 bg-white border border-stone-200 hover:bg-stone-100 px-2.5 py-1 rounded-lg transition">
-              <i data-lucide="arrow-up-down" class="w-3.5 h-3.5"></i>
-              <span id="sortOrderLabel">최신순</span>
-            </button>
-          </div>
-        </div>
-
-        <!-- 6 Individual Tag Note Filters -->
-        <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-0.5">
-          <button data-view="todo" class="view-tab shrink-0 px-2.5 py-1 rounded-full text-xs font-medium bg-white border border-stone-200 text-stone-700 hover:border-stone-400">□ 할일 <span class="count-badge text-stone-400 ml-0.5" data-count="todo"></span></button>
-          <button data-view="fact" class="view-tab shrink-0 px-2.5 py-1 rounded-full text-xs font-medium bg-white border border-stone-200 text-stone-700 hover:border-stone-400">○ 정보 <span class="count-badge text-stone-400 ml-0.5" data-count="fact"></span></button>
-          <button data-view="ref" class="view-tab shrink-0 px-2.5 py-1 rounded-full text-xs font-medium bg-white border border-stone-200 text-stone-700 hover:border-stone-400">* 참고 <span class="count-badge text-stone-400 ml-0.5" data-count="ref"></span></button>
-          <button data-view="idea" class="view-tab shrink-0 px-2.5 py-1 rounded-full text-xs font-medium bg-white border border-stone-200 text-stone-700 hover:border-stone-400">+ 메모 <span class="count-badge text-stone-400 ml-0.5" data-count="idea"></span></button>
-          <button data-view="question" class="view-tab shrink-0 px-2.5 py-1 rounded-full text-xs font-medium bg-white border border-stone-200 text-stone-700 hover:border-stone-400">△ 질문 <span class="count-badge text-stone-400 ml-0.5" data-count="question"></span></button>
-          <button data-view="decision" class="view-tab shrink-0 px-2.5 py-1 rounded-full text-xs font-medium bg-white border border-stone-200 text-stone-700 hover:border-stone-400">! 결정 <span class="count-badge text-stone-400 ml-0.5" data-count="decision"></span></button>
-        </div>
-      </div>
-
-      <!-- Search Status Bar -->
-      <div id="searchStatusBanner" class="hidden px-3 py-1.5 bg-blue-50 border-b border-blue-100 text-xs text-blue-800 flex items-center justify-between">
-        <span id="searchStatusText"></span>
-        <button id="resetSearchBannerBtn" class="underline font-medium">초기화</button>
-      </div>
-
-      <!-- Note Cards List -->
-      <div id="notesList" class="flex-1 p-3 space-y-3 overflow-y-auto max-h-[540px] bg-stone-50/40">
-        <!-- Rendered dynamically -->
-      </div>
-
-      <!-- Footer Helper -->
-      <div class="px-3 py-2 border-t border-stone-200 bg-white flex items-center justify-between text-[11px] text-stone-500">
-        <span>카드 클릭 시 상태 변경 · 원본 손글씨 그대로 보관됨</span>
-        <button id="resetDemoBtn" class="text-stone-500 hover:text-stone-800 underline">샘플 데이터 복원</button>
-      </div>
-    </section>
-
-  </main>
-
-  <script>
-    // ---------- Tag Definitions ----------
-    const TAG_META = {
-      todo:     { symbol: '□', label: '할일',   badgeClass: 'bg-blue-50 text-blue-700 border-blue-200' },
-      fact:     { symbol: '○', label: '정보',   badgeClass: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
-      ref:      { symbol: '*', label: '참고',   badgeClass: 'bg-purple-50 text-purple-700 border-purple-200' },
-      idea:     { symbol: '+', label: '메모',   badgeClass: 'bg-amber-50 text-amber-800 border-amber-200' },
-      question: { symbol: '△', label: '질문',   badgeClass: 'bg-orange-50 text-orange-700 border-orange-200' },
-      decision: { symbol: '!', label: '결정',   badgeClass: 'bg-rose-50 text-rose-700 border-rose-200' }
-    };
-
-    // Helper: generate realistic vector stroke handwriting for sample cards
-    function makeStrokeText(pointsList, color = '#1E293B', width = 2.6) {
-      return pointsList.map(pts => ({ color, width, points: pts.map(([x, y]) => ({ x, y, p: 0.5 })) }));
+/* =========================================================
+   Storage: IndexedDB, with localStorage as a fallback
+   ========================================================= */
+const idb = (() => {
+  let dbp = null;
+  function open() {
+    if (!dbp) {
+      dbp = new Promise((resolve, reject) => {
+        if (!('indexedDB' in window)) { reject(new Error('IndexedDB 없음')); return; }
+        const req = indexedDB.open('cronota', 1);
+        req.onupgradeneeded = () => req.result.createObjectStore('kv');
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+      });
     }
+    return dbp;
+  }
+  async function get(key) {
+    const db = await open();
+    return new Promise((resolve, reject) => {
+      const r = db.transaction('kv', 'readonly').objectStore('kv').get(key);
+      r.onsuccess = () => resolve(r.result);
+      r.onerror = () => reject(r.error);
+    });
+  }
+  async function set(key, value) {
+    const db = await open();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction('kv', 'readwrite');
+      tx.objectStore('kv').put(value, key);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+      tx.onabort = () => reject(tx.error || new Error('저장 중단'));
+    });
+  }
+  return { get, set };
+})();
 
-    // Pre-built clean sample ink blocks so the prototype opens rich and testable
-    function createInitialBlocks() {
-      return [
-        {
-          id: 'blk_1',
-          tagType: 'todo',
-          status: 'open',
-          priority: 'high',
-          createdAt: '2026-11-20T09:15:00',
-          ocrText: '디자인 시안 견적서 회신하기 (오후 4시 전)',
-          keywords: ['견적서', '회신', '디자인', '마감'],
-          strokes: makeStrokeText([
-            // □ box
-            [[22,20],[44,20],[44,42],[22,42],[22,20]],
-            // Stylized handwritten strokes for "견적서 회신"
-            [[68,24],[82,22],[80,38]], [[66,33],[84,31]], [[88,20],[88,42]],
-            [[98,22],[112,22],[100,36]], [[106,30],[114,40]], [[120,20],[120,42]],
-            [[130,24],[126,38]], [[132,26],[138,38]], [[144,20],[144,42]],
-            [[162,22],[170,22]], [[158,28],[174,28]], [[166,34],[166,42]],
-            [[182,22],[182,36],[196,36]], [[188,40],[204,40]]
-          ], '#DC2626', 2.8)
-        },
-        {
-          id: 'blk_2',
-          tagType: 'fact',
-          status: 'open',
-          priority: 'normal',
-          createdAt: '2026-11-19T16:40:00',
-          ocrText: '아이패드 프로 12.9 PencilKit + 갤럭시탭 S8 S-Pen 좌표 동기화 회의',
-          keywords: ['아이패드', '갤럭시탭', 'S-Pen', '동기화', '회의'],
-          strokes: makeStrokeText([
-            // ○ circle
-            [[33,18],[44,22],[46,33],[39,43],[27,43],[20,33],[23,22],[33,18]],
-            // Handwriting-like waves
-            [[66,24],[66,40]], [[66,24],[78,24],[78,40]],
-            [[88,22],[88,42]], [[98,22],[94,38]], [[96,30],[108,30]], [[108,22],[108,42]],
-            [[120,24],[134,24],[122,38],[136,38]], [[146,22],[146,42]],
-            [[160,26],[178,24],[194,28],[212,24],[230,27]]
-          ], '#1E293B', 2.5)
-        },
-        {
-          id: 'blk_3',
-          tagType: 'ref',
-          status: 'open',
-          priority: 'normal',
-          createdAt: '2026-11-18T11:20:00',
-          ocrText: '참고: Pointer Events getCoalescedEvents() API 문서 & Perfect Freehand',
-          keywords: ['API', 'Pointer', '참고', '필기엔진'],
-          strokes: makeStrokeText([
-            // * asterisk
-            [[33,16],[33,44]], [[21,23],[45,37]], [[45,23],[21,37]],
-            // Ink text
-            [[66,26],[76,22],[84,38]], [[92,24],[106,24],[106,38],[92,38]],
-            [[116,22],[116,42]], [[128,26],[142,26],[130,38],[144,38]],
-            [[156,28],[176,25],[192,31],[214,26]]
-          ], '#1E293B', 2.5)
-        },
-        {
-          id: 'blk_4',
-          tagType: 'idea',
-          status: 'open',
-          priority: 'normal',
-          createdAt: '2026-11-20T13:05:00',
-          ocrText: '아이디어: 검색 결과에 변환 텍스트 대신 원본 필기 크롭 카드를 띄우기',
-          keywords: ['아이디어', '검색', '원본필기', 'UI'],
-          strokes: makeStrokeText([
-            // + plus
-            [[33,18],[33,44]], [[20,31],[46,31]],
-            // Ink text
-            [[66,30],[74,22],[82,30],[74,38],[66,30]], [[92,20],[92,42]],
-            [[104,24],[120,24],[112,38]], [[130,26],[150,24],[170,29],[194,25],[218,28]]
-          ], '#2563EB', 2.6)
-        },
-        {
-          id: 'blk_5',
-          tagType: 'question',
-          status: 'open',
-          priority: 'normal',
-          createdAt: '2026-11-19T10:10:00',
-          ocrText: '질문: 월 예산 한도 내에서 비전 AI API 호출 비용이 얼마나 나올까?',
-          keywords: ['예산', '비용', 'AI', '질문'],
-          strokes: makeStrokeText([
-            // △ triangle
-            [[33,18],[46,42],[20,42],[33,18]],
-            // Ink text
-            [[66,24],[82,24],[82,36]], [[68,38],[84,38]],
-            [[96,22],[96,42]], [[108,24],[124,26],[140,22],[158,28]],
-            // ? mark
-            [[172,22],[180,20],[182,27],[175,32],[175,36]], [[175,41],[175,42]]
-          ], '#1E293B', 2.5)
-        },
-        {
-          id: 'blk_6',
-          tagType: 'decision',
-          status: 'open',
-          priority: 'high',
-          createdAt: '2026-11-20T14:00:00',
-          ocrText: '결정: MVP는 두 태블릿 동시 지원을 위해 PWA 웹앱으로 확정',
-          keywords: ['결정', 'MVP', 'PWA', '웹앱', '확정'],
-          strokes: makeStrokeText([
-            // ! exclamation
-            [[33,17],[33,35]], [[33,42],[33,44]],
-            // Ink text
-            [[66,22],[84,22],[84,36]], [[94,20],[94,42]],
-            [[108,26],[128,24],[146,29],[166,25],[188,28]]
-          ], '#DC2626', 2.8)
-        }
-      ];
-    }
+function sanitizeStroke(s) {
+  if (!s || !Array.isArray(s.points)) return null;
+  const points = s.points
+    .filter((p) => p && Number.isFinite(+p.x) && Number.isFinite(+p.y))
+    .map((p) => ({ x: Math.round(+p.x * 10) / 10, y: Math.round(+p.y * 10) / 10, p: Number.isFinite(+p.p) ? Math.round(+p.p * 100) / 100 : 0.5 }));
+  if (!points.length) return null;
+  return {
+    color: /^#[0-9a-fA-F]{3,8}$/.test(s.color) ? s.color : '#1E293B',
+    width: Math.min(20, Math.max(0.5, +s.width || 2.8)),
+    points
+  };
+}
+function sanitizeBlock(b) {
+  if (!b || typeof b !== 'object') return null;
+  const strokes = Array.isArray(b.strokes) ? b.strokes.map(sanitizeStroke).filter(Boolean) : [];
+  if (!strokes.length) return null;
+  return {
+    id: typeof b.id === 'string' && b.id ? b.id.slice(0, 80) : uid(),
+    tagType: TAGS[b.tagType] ? b.tagType : 'idea',
+    tagSource: ['symbol', 'auto', 'ai', 'user'].includes(b.tagSource) ? b.tagSource : 'symbol',
+    status: b.status === 'done' ? 'done' : 'open',
+    priority: b.priority === 'high' ? 'high' : 'normal',
+    createdAt: Number.isFinite(Date.parse(b.createdAt)) ? new Date(b.createdAt).toISOString() : new Date().toISOString(),
+    text: toStr(b.text ?? b.ocrText).trim(),
+    keywords: toKeywords(b.keywords),
+    gap: Math.min(56, Math.max(20, +b.gap || 32)),
+    strokes
+  };
+}
 
-    // ---------- App State ----------
-    const STORAGE_KEY = 'shadowink_blocks_v1';
-    let blocks = [];
+let blocks = [];
+let storageWarned = false;
+
+async function loadBlocks() {
+  let fromIdb = null, fromLs = null;
+  try { fromIdb = await idb.get('notes'); } catch {}
+  try {
+    const raw = localStorage.getItem('cronota_notes');
+    if (raw) fromLs = JSON.parse(raw);
+  } catch {}
+  // Prefer whichever copy was saved last
+  let chosen = null;
+  if (fromIdb && fromLs) chosen = (fromLs.savedAt || 0) > (fromIdb.savedAt || 0) ? fromLs : fromIdb;
+  else chosen = fromIdb || fromLs;
+  let list = chosen && Array.isArray(chosen.blocks) ? chosen.blocks : null;
+
+  if (!list) {
+    // Migrate from the old prototype's storage key
     try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      blocks = saved ? JSON.parse(saved) : createInitialBlocks();
+      const old = localStorage.getItem('shadowink_blocks_v1');
+      if (old) list = JSON.parse(old);
+    } catch {}
+  }
+  if (!Array.isArray(list)) list = createSampleBlocks();
+  blocks = list.map(sanitizeBlock).filter(Boolean);
+  if (!chosen) persist();
+}
+
+let saveChain = Promise.resolve();
+function persist() {
+  const payload = { savedAt: Date.now(), blocks: blocks.map((b) => ({ ...b })) };
+  saveChain = saveChain.then(async () => {
+    try {
+      await idb.set('notes', payload);
+      lsDel('cronota_notes');
     } catch (e) {
-      blocks = createInitialBlocks();
+      if (!lsSet('cronota_notes', JSON.stringify(payload))) {
+        if (!storageWarned) {
+          storageWarned = true;
+          toast('저장 공간이 부족해 노트를 저장하지 못했습니다. 설정에서 백업을 내보낸 뒤 오래된 노트를 정리해 주세요.');
+        }
+        return;
+      }
     }
+    storageWarned = false;
+  });
+  return saveChain;
+}
 
-    let currentView = 'all';
-    let displayMode = 'page'; // 'card' | 'page'
-    let sortDesc = true;
-    let searchQuery = '';
-    let peekAi = false;
-    let penOnlyMode = true;
-    let currentLayoutMode = 'split';
-    let palmNoticeShown = false;
-    let geminiApiKey = '';
-    let geminiModel = 'gemini-3.5-flash-lite';
+/* =========================================================
+   Sample data
+   ========================================================= */
+function mk(pointsList, color, width, dy = 16) {
+  return pointsList.map((pts) => ({ color, width, points: pts.map(([x, y]) => ({ x, y: y + dy, p: 0.5 })) }));
+}
+function createSampleBlocks() {
+  return [
+    { id: 'sample_1', tagType: 'todo', priority: 'high', createdAt: '2026-11-20T09:15:00',
+      text: '디자인 시안 견적서 회신하기 (오후 4시 전)', keywords: ['견적서', '회신', '디자인', '마감'],
+      strokes: mk([[[22,20],[44,20],[44,42],[22,42],[22,20]],
+        [[68,24],[82,22],[80,38]], [[66,33],[84,31]], [[88,20],[88,42]],
+        [[98,22],[112,22],[100,36]], [[106,30],[114,40]], [[120,20],[120,42]],
+        [[130,24],[126,38]], [[132,26],[138,38]], [[144,20],[144,42]],
+        [[162,22],[170,22]], [[158,28],[174,28]], [[166,34],[166,42]],
+        [[182,22],[182,36],[196,36]], [[188,40],[204,40]]], HIGH_COLOR, 2.8) },
+    { id: 'sample_2', tagType: 'fact', createdAt: '2026-11-19T16:40:00',
+      text: '아이패드 PencilKit + 갤럭시탭 S-Pen 좌표 동기화 회의', keywords: ['아이패드', '갤럭시탭', 'S-Pen', '동기화', '회의'],
+      strokes: mk([[[33,18],[44,22],[46,33],[39,43],[27,43],[20,33],[23,22],[33,18]],
+        [[66,24],[66,40]], [[66,24],[78,24],[78,40]],
+        [[88,22],[88,42]], [[98,22],[94,38]], [[96,30],[108,30]], [[108,22],[108,42]],
+        [[120,24],[134,24],[122,38],[136,38]], [[146,22],[146,42]],
+        [[160,26],[178,24],[194,28],[212,24],[230,27]]], '#1E293B', 2.5) },
+    { id: 'sample_3', tagType: 'ref', createdAt: '2026-11-18T11:20:00',
+      text: 'Pointer Events getCoalescedEvents() 문서 & Perfect Freehand', keywords: ['API', 'Pointer', '필기엔진'],
+      strokes: mk([[[33,16],[33,44]], [[21,23],[45,37]], [[45,23],[21,37]],
+        [[66,26],[76,22],[84,38]], [[92,24],[106,24],[106,38],[92,38]],
+        [[116,22],[116,42]], [[128,26],[142,26],[130,38],[144,38]],
+        [[156,28],[176,25],[192,31],[214,26]]], '#1E293B', 2.5) },
+    { id: 'sample_4', tagType: 'idea', createdAt: '2026-11-20T08:05:00',
+      text: '검색 결과에 변환 텍스트 대신 원본 필기 카드를 띄우기', keywords: ['검색', '원본필기', 'UI'],
+      strokes: mk([[[33,18],[33,44]], [[20,31],[46,31]],
+        [[66,30],[74,22],[82,30],[74,38],[66,30]], [[92,20],[92,42]],
+        [[104,24],[120,24],[112,38]], [[130,26],[150,24],[170,29],[194,25],[218,28]]], '#2563EB', 2.6) },
+    { id: 'sample_5', tagType: 'question', createdAt: '2026-11-19T10:10:00',
+      text: '월 예산 안에서 비전 AI 호출 비용이 얼마나 나올까?', keywords: ['예산', '비용', 'AI'],
+      strokes: mk([[[33,18],[46,42],[20,42],[33,18]],
+        [[66,24],[82,24],[82,36]], [[68,38],[84,38]],
+        [[96,22],[96,42]], [[108,24],[124,26],[140,22],[158,28]],
+        [[172,22],[180,20],[182,27],[175,32],[175,36]], [[175,41],[175,42]]], '#1E293B', 2.5) },
+    { id: 'sample_6', tagType: 'decision', priority: 'high', createdAt: '2026-11-20T07:00:00',
+      text: 'MVP는 두 태블릿 동시 지원을 위해 PWA 웹앱으로 확정', keywords: ['MVP', 'PWA', '웹앱', '확정'],
+      strokes: mk([[[33,17],[33,35]], [[33,42],[33,44]],
+        [[66,22],[84,22],[84,36]], [[94,20],[94,42]],
+        [[108,26],[128,24],[146,29],[166,25],[188,28]]], HIGH_COLOR, 2.8) }
+  ].map((b) => ({ status: 'open', priority: 'normal', gap: 32, tagSource: 'symbol', ...b }));
+}
+
+/* =========================================================
+   Stroke rendering
+   ========================================================= */
+function lineWidthFor(base, p) { return Math.max(0.8, base * (0.35 + Math.pow(p ?? 0.5, 0.85) * 1.45)); }
+function drawSegment(ctx, s, p0, p1, dx = 0, dy = 0) {
+  ctx.strokeStyle = s.color;
+  ctx.lineWidth = lineWidthFor(s.width, p1.p);
+  ctx.beginPath();
+  ctx.moveTo(p0.x + dx, p0.y + dy);
+  ctx.lineTo(p1.x + dx, p1.y + dy);
+  ctx.stroke();
+}
+function drawDot(ctx, s, p, dx = 0, dy = 0) {
+  ctx.fillStyle = s.color;
+  ctx.beginPath();
+  ctx.arc(p.x + dx, p.y + dy, lineWidthFor(s.width, p.p) / 2, 0, Math.PI * 2);
+  ctx.fill();
+}
+function drawStrokes(ctx, list, dx = 0, dy = 0) {
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  for (const s of list) {
+    if (!s.points.length) continue;
+    if (s.points.length === 1) { drawDot(ctx, s, s.points[0], dx, dy); continue; }
+    for (let i = 1; i < s.points.length; i++) drawSegment(ctx, s, s.points[i - 1], s.points[i], dx, dy);
+  }
+}
+function dprOf() { return Math.min(window.devicePixelRatio || 1, 2); }
+
+/** Render strokes tightly cropped on white, as base64 PNG (for AI). */
+function renderPng(list) {
+  const b = strokesBox(list);
+  const pad = 16;
+  const w = b.w + pad * 2, h = b.h + pad * 2;
+  const scale = Math.min(2, 1600 / w, 900 / h);
+  const c = document.createElement('canvas');
+  c.width = Math.max(64, Math.ceil(w * scale));
+  c.height = Math.max(64, Math.ceil(h * scale));
+  const x = c.getContext('2d');
+  x.fillStyle = '#FFFFFF';
+  x.fillRect(0, 0, c.width, c.height);
+  x.scale(scale, scale);
+  drawStrokes(x, list, pad - b.minX, pad - b.minY);
+  return c.toDataURL('image/png').split(',')[1];
+}
+
+/* =========================================================
+   Symbol classification & block splitting
+   Rule: symbols live in the left margin (left of the red line).
+   Each margin symbol starts a new note; text lines without a
+   symbol continue the note above.
+   ========================================================= */
+function classifySymbol(list) {
+  if (!list.length) return null;
+  const all = list.flatMap((s) => s.points);
+  const b = getBox(all);
+  const w = Math.max(1, b.w), h = Math.max(1, b.h);
+  if (w / h < 0.38) return 'decision'; // ! (tall and narrow)
+
+  const inCenter = all.filter((p) =>
+    p.x > b.minX + w * 0.28 && p.x < b.maxX - w * 0.28 &&
+    p.y > b.minY + h * 0.28 && p.y < b.maxY - h * 0.28).length;
+  const centerRatio = inCenter / all.length;
+
+  if (list.length >= 3 && centerRatio > 0.12) return 'ref'; // *
+  if (list.length === 2) {
+    const b0 = getBox(list[0].points), b1 = getBox(list[1].points);
+    const dot = Math.max(6, h * 0.3);
+    const dot1 = b1.w < dot && b1.h < dot && b1.minY > b0.maxY - 4;
+    const dot0 = b0.w < dot && b0.h < dot && b0.minY > b1.maxY - 4;
+    if (dot0 || dot1) return 'decision'; // !
+    if (centerRatio > 0.12) return 'idea'; // +
+  }
+  // Perimeter shapes: △ / □ / ○
+  const top = all.filter((p) => p.y < b.minY + h * 0.35);
+  const bot = all.filter((p) => p.y > b.minY + h * 0.65);
+  const span = (pts) => pts.length ? Math.max(...pts.map((p) => p.x)) - Math.min(...pts.map((p) => p.x)) : w;
+  if (span(bot) > 1.7 * Math.max(4, span(top))) return 'question';
+
+  const thr = Math.min(w, h) * 0.16;
+  let corners = 0;
+  for (const [cx, cy] of [[b.minX, b.minY], [b.maxX, b.minY], [b.minX, b.maxY], [b.maxX, b.maxY]]) {
+    if (all.some((p) => Math.hypot(p.x - cx, p.y - cy) < thr)) corners++;
+  }
+  return corners >= 3 ? 'todo' : 'fact';
+}
+
+function splitIntoBlocks(list, gap) {
+  const items = list.filter((s) => s.points.length).map((s) => {
+    const b = getBox(s.points);
+    return { s, b, cx: (b.minX + b.maxX) / 2, cy: (b.minY + b.maxY) / 2 };
+  });
+  const marginItems = items.filter((i) => i.cx < MARGIN_X).sort((a, b) => a.b.minY - b.b.minY);
+  const textItems = items.filter((i) => i.cx >= MARGIN_X);
+
+  // Group margin strokes that belong to the same symbol (e.g. the dot of "!")
+  const clusters = [];
+  for (const it of marginItems) {
+    const c = clusters[clusters.length - 1];
+    if (c && it.b.minY <= c.maxY + gap * 0.3) {
+      c.items.push(it);
+      c.minY = Math.min(c.minY, it.b.minY);
+      c.maxY = Math.max(c.maxY, it.b.maxY);
+    } else {
+      clusters.push({ items: [it], minY: it.b.minY, maxY: it.b.maxY });
+    }
+  }
+
+  const lines = new Map();
+  const lineOf = (i) => { if (!lines.has(i)) lines.set(i, { sym: [], text: [] }); return lines.get(i); };
+  for (const c of clusters) lineOf(Math.floor((c.minY + c.maxY) / 2 / gap)).sym.push(...c.items.map((i) => i.s));
+  for (const t of textItems) lineOf(Math.floor(t.cy / gap)).text.push(t.s);
+
+  const out = [];
+  let lastLine = -99;
+  for (const idx of [...lines.keys()].sort((a, b) => a - b)) {
+    const ln = lines.get(idx);
+    if (ln.sym.length) {
+      out.push({ tagType: classifySymbol(ln.sym), strokes: [...ln.sym, ...ln.text] });
+    } else if (out.length && idx - lastLine <= 2) {
+      out[out.length - 1].strokes.push(...ln.text); // continuation line
+    } else {
+      out.push({ tagType: null, strokes: [...ln.text] }); // no symbol
+    }
+    lastLine = idx;
+  }
+  return out;
+}
+
+/* =========================================================
+   Writing canvas
+   ========================================================= */
+const ink = $('#ink');
+const ictx = ink.getContext('2d');
+const scroller = $('#canvasScroll');
+let strokes = [];          // never mutated in place except the stroke being drawn
+let undoStack = [], redoStack = [];
+const pen = { color: PEN_COLORS[0].c, width: PEN_WIDTHS[1].w };
+let eraser = false;
+let active = null;         // { id, erase, stroke, before }
+let touchScroll = null;
+let palmNoticeShown = false;
+let inkW = 0, inkH = 0;
+
+function contentBottom() {
+  let m = 0;
+  for (const s of strokes) for (const p of s.points) if (p.y > m) m = p.y;
+  return m;
+}
+function sizeInk(minH = 0) {
+  const w = scroller.clientWidth;
+  if (!w) return;
+  const g = prefs.gap;
+  const h = Math.max(scroller.clientHeight, minH, Math.ceil((contentBottom() + g * 6) / g) * g);
+  if (w === inkW && h === inkH) return;
+  inkW = w; inkH = h;
+  const dpr = dprOf();
+  ink.width = Math.round(w * dpr);
+  ink.height = Math.round(h * dpr);
+  ink.style.height = h + 'px';
+  ictx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  redraw();
+}
+function redraw() {
+  ictx.clearRect(0, 0, inkW, inkH);
+  drawStrokes(ictx, strokes);
+}
+function pos(e) {
+  const r = ink.getBoundingClientRect();
+  return { x: e.clientX - r.left, y: e.clientY - r.top, p: e.pointerType === 'pen' ? (e.pressure || 0.5) : 0.5 };
+}
+function pushHistory() {
+  undoStack.push(strokes);
+  if (undoStack.length > 200) undoStack.shift();
+  redoStack = [];
+}
+function afterCanvasChange() {
+  $('#undoBtn').disabled = !undoStack.length;
+  $('#redoBtn').disabled = !redoStack.length;
+  $('#clearBtn').disabled = !strokes.length;
+  $('#canvasHint').classList.toggle('hide', strokes.length > 0);
+  updateStatus();
+}
+function undo() {
+  if (!undoStack.length || active) return;
+  redoStack.push(strokes);
+  strokes = undoStack.pop();
+  sizeInk(); redraw(); afterCanvasChange();
+}
+function redo() {
+  if (!redoStack.length || active) return;
+  undoStack.push(strokes);
+  strokes = redoStack.pop();
+  sizeInk(); redraw(); afterCanvasChange();
+}
+function clearCanvas() {
+  if (!strokes.length) return;
+  pushHistory();
+  strokes = [];
+  sizeInk(); redraw(); afterCanvasChange();
+  toast('캔버스를 비웠습니다.', { label: '되돌리기', run: undo });
+}
+
+function eraseAt(pt, radius = 12) {
+  let changed = false;
+  const next = [];
+  for (const s of strokes) {
+    if (!s.points.some((p) => Math.hypot(p.x - pt.x, p.y - pt.y) <= radius)) { next.push(s); continue; }
+    changed = true;
+    let seg = [];
+    for (const p of s.points) {
+      if (Math.hypot(p.x - pt.x, p.y - pt.y) <= radius) {
+        if (seg.length >= 2) next.push({ color: s.color, width: s.width, points: seg });
+        seg = [];
+      } else seg.push(p);
+    }
+    if (seg.length >= 2) next.push({ color: s.color, width: s.width, points: seg });
+  }
+  if (changed) { strokes = next; redraw(); }
+}
+
+ink.addEventListener('pointerdown', (e) => {
+  if (e.pointerType === 'touch' && prefs.penOnly) {
+    // Pen-only: a finger scrolls the page instead of drawing
+    if (!touchScroll) touchScroll = { id: e.pointerId, y: e.clientY, top: scroller.scrollTop };
+    if (!palmNoticeShown) {
+      palmNoticeShown = true;
+      toast('지금은 펜 전용입니다. 손가락으로 쓰려면 도구막대의 ✋ 버튼을 켜세요.');
+    }
+    return;
+  }
+  if (active || e.button > 0) return;
+  e.preventDefault();
+  try { ink.setPointerCapture(e.pointerId); } catch {}
+  const pt = pos(e);
+  const before = strokes;
+  pushHistory();
+  if (eraser) {
+    active = { id: e.pointerId, erase: true, before };
+    eraseAt(pt);
+    return;
+  }
+  const s = { color: pen.color, width: pen.width, points: [pt] };
+  strokes = [...strokes, s];
+  active = { id: e.pointerId, stroke: s, before };
+  ictx.lineCap = 'round'; ictx.lineJoin = 'round';
+  drawDot(ictx, s, pt);
+});
+
+ink.addEventListener('pointermove', (e) => {
+  if (touchScroll && e.pointerId === touchScroll.id) {
+    scroller.scrollTop = touchScroll.top - (e.clientY - touchScroll.y);
+    return;
+  }
+  if (!active || e.pointerId !== active.id) return;
+  let evs = e.getCoalescedEvents ? e.getCoalescedEvents() : null;
+  if (!evs || !evs.length) evs = [e];
+  for (const ce of evs) {
+    const pt = pos(ce);
+    if (active.erase) { eraseAt(pt); continue; }
+    const s = active.stroke;
+    const prev = s.points[s.points.length - 1];
+    if (Math.hypot(pt.x - prev.x, pt.y - prev.y) >= 1.2) {
+      s.points.push(pt);
+      drawSegment(ictx, s, prev, pt);
+    }
+  }
+  // Page-less: grow the paper when writing near the bottom
+  if (!active.erase) {
+    const last = active.stroke.points[active.stroke.points.length - 1];
+    if (last.y > inkH - prefs.gap * 3) sizeInk(inkH + prefs.gap * 10);
+  }
+});
+
+function endPointer(e) {
+  if (touchScroll && e.pointerId === touchScroll.id) { touchScroll = null; return; }
+  if (!active || e.pointerId !== active.id) return;
+  const unchanged = strokes === active.before;
+  active = null;
+  if (unchanged) undoStack.pop(); // eraser touched nothing
+  afterCanvasChange();
+}
+ink.addEventListener('pointerup', endPointer);
+ink.addEventListener('pointercancel', endPointer);
+ink.addEventListener('lostpointercapture', endPointer);
+
+/* ----- Symbol buttons: put the symbol on the next empty line ----- */
+function symbolTemplate(tag) {
+  const circle = [];
+  for (let i = 0; i <= 24; i++) {
+    const a = -Math.PI / 2 + (i / 24) * Math.PI * 2;
+    circle.push([0.5 + 0.5 * Math.cos(a), 0.5 + 0.5 * Math.sin(a)]);
+  }
+  return {
+    todo: [[[0, 0], [1, 0], [1, 1], [0, 1], [0, 0]]],
+    fact: [circle],
+    ref: [[[0.5, 0], [0.5, 1]], [[0.07, 0.25], [0.93, 0.75]], [[0.93, 0.25], [0.07, 0.75]]],
+    idea: [[[0.5, 0], [0.5, 1]], [[0, 0.5], [1, 0.5]]],
+    question: [[[0.5, 0], [1, 1], [0, 1], [0.5, 0]]],
+    decision: [[[0.5, 0], [0.5, 0.66]], [[0.5, 0.92], [0.5, 0.97]]]
+  }[tag];
+}
+function densify(poly, step = 2) {
+  const out = [poly[0]];
+  for (let i = 1; i < poly.length; i++) {
+    const [x0, y0] = poly[i - 1], [x1, y1] = poly[i];
+    const n = Math.max(1, Math.ceil(Math.hypot(x1 - x0, y1 - y0) / step));
+    for (let k = 1; k <= n; k++) out.push([x0 + (x1 - x0) * k / n, y0 + (y1 - y0) * k / n]);
+  }
+  return out;
+}
+function stampSymbol(tag) {
+  setEraser(false);
+  const g = prefs.gap;
+  const row = strokes.length ? Math.floor(contentBottom() / g) + 1 : 1;
+  const size = Math.min(20, g * 0.6);
+  const x0 = MARGIN_X / 2 - size / 2;
+  const y0 = row * g + (g - size) / 2 - 1;
+  const newStrokes = symbolTemplate(tag).map((poly) => ({
+    color: pen.color,
+    width: 2.4,
+    points: densify(poly.map(([x, y]) => [x0 + x * size, y0 + y * size])).map(([x, y]) => ({ x, y, p: 0.5 }))
+  }));
+  pushHistory();
+  strokes = [...strokes, ...newStrokes];
+  sizeInk(); redraw(); afterCanvasChange();
+  const top = row * g;
+  if (top < scroller.scrollTop || top + g * 2 > scroller.scrollTop + scroller.clientHeight) {
+    scroller.scrollTo({ top: Math.max(0, top - g * 2), behavior: 'smooth' });
+  }
+}
+
+/* ----- Live status ----- */
+function updateStatus() {
+  const el = $('#status');
+  const parts = splitIntoBlocks(strokes, prefs.gap);
+  const saveBtn = $('#saveBtn');
+  saveBtn.disabled = !parts.length || saving;
+  $('#saveLabel').textContent = saving ? '저장 중…' : (parts.length > 1 ? `노트 ${parts.length}개 저장` : '저장');
+  if (!parts.length) {
+    el.innerHTML = '<span>기호로 시작하면 자동으로 분류돼요</span>';
+    return;
+  }
+  el.innerHTML = parts.map((p) => {
+    if (!p.tagType) return `<span class="pill" title="기호가 없어서 메모로 저장돼요">기호 없음 → ${TAGS.idea.symbol} 메모</span>`;
+    const t = TAGS[p.tagType];
+    return `<span class="pill" style="--c:${t.color}">${t.symbol} ${t.label}</span>`;
+  }).join('');
+}
+
+/* ----- Save ----- */
+let saving = false;
+async function saveCanvas() {
+  if (saving || active) return;
+  const parts = splitIntoBlocks(strokes, prefs.gap);
+  if (!parts.length) { toast('먼저 캔버스에 필기를 써 주세요.'); return; }
+
+  // Take exactly these strokes off the canvas right away, so anything
+  // written while the AI is working stays on the canvas.
+  const taken = new Set(parts.flatMap((p) => p.strokes));
+  strokes = strokes.filter((s) => !taken.has(s));
+  undoStack = []; redoStack = [];
+  sizeInk(); redraw();
+
+  const base = Date.now();
+  const created = parts.map((p, i) => sanitizeBlock({
+    id: uid(),
+    tagType: p.tagType || 'idea',
+    tagSource: p.tagType ? 'symbol' : 'auto',
+    status: 'open',
+    priority: p.strokes.some((s) => s.color === HIGH_COLOR) ? 'high' : 'normal',
+    createdAt: new Date(base - i).toISOString(), // keeps top-to-bottom order
+    text: '', keywords: [], gap: prefs.gap,
+    strokes: p.strokes
+  }));
+  blocks.unshift(...created);
+  persist();
+  renderNotes();
+  renderKeywordChips();
+  toast(`노트 ${created.length}개 저장: ${created.map((b) => TAGS[b.tagType].symbol + ' ' + TAGS[b.tagType].label).join(', ')}`);
+
+  if (!prefs.key) { afterCanvasChange(); return; }
+
+  saving = true;
+  afterCanvasChange();
+  let failed = null;
+  await Promise.all(created.map(async (b) => {
     try {
-      geminiApiKey = localStorage.getItem('cronota_gemini_key') || '';
-      geminiModel = localStorage.getItem('cronota_gemini_model') || 'gemini-3.5-flash-lite';
-    } catch (e) {}
+      const r = await analyzeInk(b.strokes);
+      const live = blocks.find((x) => x.id === b.id);
+      if (!live) return; // deleted meanwhile
+      if (!live.text && r.text) live.text = r.text;
+      if (!live.keywords.length) live.keywords = r.keywords;
+      if (live.tagSource === 'auto' && r.tagType) { live.tagType = r.tagType; live.tagSource = 'ai'; }
+    } catch (err) { failed = err; }
+  }));
+  saving = false;
+  persist();
+  renderNotes();
+  renderKeywordChips();
+  afterCanvasChange();
+  if (failed) toast('AI 인식 실패: ' + aiErrorMessage(failed) + ' (노트는 저장됨)');
+}
 
-    // Canvas drawing state
-    const canvas = document.getElementById('inkCanvas');
-    const ctx = canvas.getContext('2d');
-    let canvasStrokes = [];
-    let currentStroke = null;
-    let isDrawing = false;
-    let isErasing = false;
-    let eraserMode = false;
-    let penColor = '#1E293B';
-    let penWidth = 2.8;
-    let detectedSymbol = null;
+/* =========================================================
+   Gemini
+   ========================================================= */
+async function gemini(parts, { json = false, model = prefs.model, key = prefs.key } = {}) {
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
+  const body = { contents: [{ parts }] };
+  if (json) body.generationConfig = { responseMimeType: 'application/json' };
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
+    body: JSON.stringify(body)
+  });
+  if (!res.ok) {
+    const err = new Error('HTTP ' + res.status);
+    err.status = res.status;
+    throw err;
+  }
+  const data = await res.json();
+  const out = data?.candidates?.[0]?.content?.parts;
+  return Array.isArray(out) ? out.map((p) => (typeof p?.text === 'string' ? p.text : '')).join('') : '';
+}
+function aiErrorMessage(e) {
+  if (e.status === 400 || e.status === 401 || e.status === 403) return 'API 키를 확인해 주세요';
+  if (e.status === 404) return '모델 이름을 확인해 주세요';
+  if (e.status === 429) return '요청 한도를 넘었어요. 잠시 후 다시 시도하세요';
+  if (e.status >= 500) return 'Gemini 서버 오류';
+  if (e instanceof SyntaxError) return 'AI 응답을 읽지 못했어요';
+  return '네트워크 연결을 확인해 주세요';
+}
+function parseJsonLoose(raw) {
+  const cleaned = String(raw).replace(/```json|```/gi, '').trim();
+  try { return JSON.parse(cleaned); } catch {}
+  const m = cleaned.match(/\{[\s\S]*\}/);
+  return m ? JSON.parse(m[0]) : {};
+}
+async function analyzeInk(list) {
+  const prompt = '손글씨 노트 이미지입니다. 왼쪽 첫 기호(□=todo, ○=fact, *=ref, +=idea, △=question, !=decision, 없으면 none)와 내용을 읽고 JSON으로만 답하세요. ' +
+    '형식: {"tagType":"todo|fact|ref|idea|question|decision|none","text":"기호를 뺀 손글씨 전체 내용","keywords":["검색용 키워드 3~6개"]}';
+  const raw = await gemini([{ text: prompt }, { inline_data: { mime_type: 'image/png', data: renderPng(list) } }], { json: true });
+  const obj = parseJsonLoose(raw) || {};
+  return {
+    tagType: TAGS[obj.tagType] ? obj.tagType : null,
+    text: toStr(obj.text ?? obj.ocrText).trim(),
+    keywords: toKeywords(obj.keywords)
+  };
+}
 
-    const MARGIN_X = 84;
+/* =========================================================
+   Notes list
+   ========================================================= */
+let filter = 'all';      // 'all' | tag | 'board:<name>'
+let query = '';
+let editingId = null;
 
-    function saveToStorage() {
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(blocks));
-      } catch (e) {}
-    }
+function matchesQuery(b, q) {
+  return b.text.toLowerCase().includes(q) ||
+    b.keywords.some((k) => k.toLowerCase().includes(q)) ||
+    TAGS[b.tagType].label.includes(q);
+}
+function visibleBlocks() {
+  let list = blocks;
+  if (filter.startsWith('board:')) {
+    const tags = BOARDS[filter.slice(6)].tags;
+    list = list.filter((b) => tags.includes(b.tagType));
+  } else if (filter !== 'all') {
+    list = list.filter((b) => b.tagType === filter);
+  }
+  const q = query.trim().toLowerCase();
+  if (q) list = list.filter((b) => matchesQuery(b, q));
+  return [...list].sort((a, b) => {
+    const d = Date.parse(b.createdAt) - Date.parse(a.createdAt);
+    return prefs.sortDesc ? d : -d;
+  });
+}
+function highlight(text, q) {
+  if (!q) return escapeHtml(text);
+  const lower = text.toLowerCase();
+  let i = 0, out = '';
+  while (true) {
+    const j = lower.indexOf(q, i);
+    if (j < 0) { out += escapeHtml(text.slice(i)); break; }
+    out += escapeHtml(text.slice(i, j)) + '<mark>' + escapeHtml(text.slice(j, j + q.length)) + '</mark>';
+    i = j + q.length;
+  }
+  return out;
+}
 
-    function showToast(msg) {
-      const el = document.getElementById('toast');
-      el.textContent = msg;
-      el.classList.remove('hidden');
-      clearTimeout(el._timer);
-      el._timer = setTimeout(() => el.classList.add('hidden'), 2600);
-    }
+function renderFilters() {
+  const counts = Object.fromEntries(TAG_KEYS.map((k) => [k, 0]));
+  for (const b of blocks) counts[b.tagType]++;
+  $('#tagChips').innerHTML =
+    `<button class="chip" data-filter="all" aria-pressed="${filter === 'all'}">전체 <span class="n">${blocks.length}</span></button>` +
+    TAG_KEYS.map((k) => `<button class="chip" data-filter="${k}" style="--c:${TAGS[k].color}" aria-pressed="${filter === k}"><b>${TAGS[k].symbol}</b>${TAGS[k].label}${counts[k] ? ` <span class="n">${counts[k]}</span>` : ''}</button>`).join('');
+  $('#boardChips').innerHTML = `<span class="cap">보드</span>` +
+    Object.entries(BOARDS).map(([key, bd]) => `<button class="chip board" data-filter="board:${key}" aria-pressed="${filter === 'board:' + key}" title="${bd.tags.map((t) => TAGS[t].symbol + ' ' + TAGS[t].label).join(' + ')}">${bd.label} <span class="n">${bd.tags.map((t) => TAGS[t].symbol).join('')}</span></button>`).join('');
+  $('#mtabCount').textContent = blocks.length ? `(${blocks.length})` : '';
+  $('#textToggleBtn').setAttribute('aria-pressed', String(prefs.showText));
+  $('#sortLabel').textContent = prefs.sortDesc ? '최신순' : '오래된순';
+}
 
-    // ---------- Canvas Sizing & Rendering ----------
-    let lastCanvasW = 0, lastCanvasH = 0;
-    function resizeCanvas(force = false) {
-      const rect = canvas.parentElement.getBoundingClientRect();
-      if (rect.width === 0 || rect.height === 0) return;
-      const w = Math.max(300, Math.floor(rect.width));
-      const h = Math.max(360, Math.floor(rect.height));
-      if (!force && Math.abs(w - lastCanvasW) < 4 && Math.abs(h - lastCanvasH) < 4) return;
-      lastCanvasW = w;
-      lastCanvasH = h;
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      canvas.width = w * dpr;
-      canvas.height = h * dpr;
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      redrawCanvas();
-    }
-
-    function drawStrokeList(context, strokes, offsetX = 0, offsetY = 0, scale = 1) {
-      context.lineCap = 'round';
-      context.lineJoin = 'round';
-      for (const s of strokes) {
-        if (!s.points || s.points.length === 0) continue;
-        context.strokeStyle = s.color || '#1E293B';
-        if (s.points.length === 1) {
-          context.fillStyle = s.color || '#1E293B';
-          context.beginPath();
-          context.arc((s.points[0].x + offsetX) * scale, (s.points[0].y + offsetY) * scale, (s.width || 2.5) * scale / 2, 0, Math.PI * 2);
-          context.fill();
-          continue;
-        }
-        for (let i = 1; i < s.points.length; i++) {
-          const p0 = s.points[i - 1];
-          const p1 = s.points[i];
-          const pressure = p1.p !== undefined ? p1.p : 0.5;
-          context.lineWidth = Math.max(0.8, (s.width || 2.8) * (0.35 + Math.pow(pressure, 0.85) * 1.45) * scale);
-          context.beginPath();
-          context.moveTo((p0.x + offsetX) * scale, (p0.y + offsetY) * scale);
-          context.lineTo((p1.x + offsetX) * scale, (p1.y + offsetY) * scale);
-          context.stroke();
-        }
-      }
-    }
-
-    function redrawCanvas() {
-      const rect = canvas.getBoundingClientRect();
-      ctx.clearRect(0, 0, rect.width, rect.height);
-      drawStrokeList(ctx, canvasStrokes);
-    }
-
-    // ---------- Geometric Symbol Classifier & Multi-Block Splitter ----------
-    function classifySymbolCluster(symStrokes) {
-      if (!symStrokes || symStrokes.length === 0) return null;
-      let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-      const allPts = [];
-      for (const s of symStrokes) {
-        for (const p of s.points) {
-          allPts.push(p);
-          if (p.x < minX) minX = p.x;
-          if (p.y < minY) minY = p.y;
-          if (p.x > maxX) maxX = p.x;
-          if (p.y > maxY) maxY = p.y;
-        }
-      }
-      const w = Math.max(1, maxX - minX);
-      const h = Math.max(1, maxY - minY);
-      const aspect = w / h;
-
-      if (aspect < 0.38) return 'decision'; // ! (tall narrow)
-
-      // Check how many points pass through the inner center (distinguishes * / + from □ / ○ / △)
-      const centerPts = allPts.filter(p =>
-        p.x > minX + w * 0.28 && p.x < maxX - w * 0.28 &&
-        p.y > minY + h * 0.28 && p.y < maxY - h * 0.28
-      );
-      const centerRatio = centerPts.length / Math.max(1, allPts.length);
-
-      if (symStrokes.length >= 3 && centerRatio > 0.12) {
-        return 'ref'; // * (strokes cross through center)
-      }
-
-      if (symStrokes.length === 2) {
-        const b0 = getBox(symStrokes[0].points);
-        const b1 = getBox(symStrokes[1].points);
-        const isDot1 = b1.w < 12 && b1.h < 12 && b1.minY > b0.maxY - 4;
-        const isDot0 = b0.w < 12 && b0.h < 12 && b0.minY > b1.maxY - 4;
-        if (isDot1 || isDot0) return 'decision'; // !
-
-        if (centerRatio > 0.12) {
-          return 'idea'; // + (2 strokes crossing center)
-        }
-      }
-
-      // Perimeter shapes (1, 2, 3, or 4 strokes): △ vs □ vs ○
-      const topPts = allPts.filter(p => p.y < minY + h * 0.35);
-      const botPts = allPts.filter(p => p.y > minY + h * 0.65);
-      const topSpan = topPts.length ? (Math.max(...topPts.map(p => p.x)) - Math.min(...topPts.map(p => p.x))) : w;
-      const botSpan = botPts.length ? (Math.max(...botPts.map(p => p.x)) - Math.min(...botPts.map(p => p.x))) : w;
-      if (botSpan > 1.7 * Math.max(4, topSpan)) return 'question'; // △
-
-      let cornerHits = 0;
-      const threshold = Math.min(w, h) * 0.26;
-      const corners = [[minX, minY], [maxX, minY], [minX, maxY], [maxX, maxY]];
-      for (const [cx, cy] of corners) {
-        if (allPts.some(p => Math.hypot(p.x - cx, p.y - cy) < threshold)) cornerHits++;
-      }
-      if (cornerHits >= 3) return 'todo'; // □ (1~4 strokes)
-      return 'fact'; // ○
-    }
-
-    function splitCanvasIntoBlocks(strokes) {
-      if (!strokes || strokes.length === 0) return [];
-      const withMeta = strokes.filter(s => s.points && s.points.length > 0).map(s => {
-        const box = getBox(s.points);
-        const centerY = (box.minY + box.maxY) / 2;
-        return { stroke: s, box, centerY };
-      });
-      if (withMeta.length === 0) return [];
-
-      // 1. Group strokes into horizontal rows by vertical overlap / proximity
-      const byY = [...withMeta].sort((a, b) => a.box.minY - b.box.minY);
-      const rows = [];
-      for (const item of byY) {
-        const lastRow = rows[rows.length - 1];
-        if (lastRow && item.box.minY <= lastRow.maxY + 14) {
-          lastRow.items.push(item);
-          lastRow.minY = Math.min(lastRow.minY, item.box.minY);
-          lastRow.maxY = Math.max(lastRow.maxY, item.box.maxY);
-        } else {
-          rows.push({ items: [item], minY: item.box.minY, maxY: item.box.maxY });
-        }
-      }
-
-      // 2. For each row, detect if it starts with an isolated leading symbol cluster anywhere on X
-      const blocksOut = [];
-      for (const row of rows) {
-        const byX = [...row.items].sort((a, b) => a.box.minX - b.box.minX);
-        const first = byX[0];
-        const firstPts = first.stroke.points;
-        const firstDiag = Math.hypot(first.box.w, first.box.h);
-        const startEndDist = Math.hypot(
-          firstPts[0].x - firstPts[firstPts.length - 1].x,
-          firstPts[0].y - firstPts[firstPts.length - 1].y
-        );
-        const isFirstClosedLoop = firstDiag > 12 && startEndDist < firstDiag * 0.48;
-
-        const leadingCluster = [first];
-        let clusterMaxX = first.box.maxX;
-        let clusterMinX = first.box.minX;
-
-        if (!isFirstClosedLoop) {
-          for (let i = 1; i < byX.length; i++) {
-            const cand = byX[i];
-            // Only merge strokes that horizontally overlap or nearly touch (for +, *, !, multi-stroke □)
-            const overlapsX = cand.box.minX <= clusterMaxX + 2 && cand.box.maxX >= clusterMinX - 2;
-            if (overlapsX && (cand.box.maxX - clusterMinX) <= 72 && leadingCluster.length < 4) {
-              leadingCluster.push(cand);
-              clusterMaxX = Math.max(clusterMaxX, cand.box.maxX);
-              clusterMinX = Math.min(clusterMinX, cand.box.minX);
-            } else {
-              break;
-            }
-          }
-        }
-
-        const clusterW = clusterMaxX - clusterMinX;
-        const hasRest = byX.length > leadingCluster.length;
-        const gapAfterSymbol = hasRest ? (byX[leadingCluster.length].box.minX - clusterMaxX) : 99;
-        const isStandaloneSymbol = clusterW <= 76 && gapAfterSymbol >= 2;
-
-        if (isStandaloneSymbol) {
-          const tag = classifySymbolCluster(leadingCluster.map(i => i.stroke));
-          blocksOut.push({
-            tagType: tag,
-            minY: row.minY,
-            maxY: row.maxY,
-            strokes: row.items.map(i => i.stroke)
-          });
-        } else if (blocksOut.length > 0) {
-          // Continuation line without a new symbol -> append to previous block
-          const prev = blocksOut[blocksOut.length - 1];
-          prev.maxY = Math.max(prev.maxY, row.maxY);
-          prev.strokes.push(...row.items.map(i => i.stroke));
-        } else {
-          blocksOut.push({
-            tagType: null,
-            minY: row.minY,
-            maxY: row.maxY,
-            strokes: row.items.map(i => i.stroke)
-          });
-        }
-      }
-
-      return blocksOut;
-    }
-
-    function getBox(pts) {
-      let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-      for (const p of pts) {
-        if (p.x < minX) minX = p.x;
-        if (p.y < minY) minY = p.y;
-        if (p.x > maxX) maxX = p.x;
-        if (p.y > maxY) maxY = p.y;
-      }
-      return { minX, minY, maxX, maxY, w: maxX - minX, h: maxY - minY };
-    }
-
-    function updateLiveDetectionBadge() {
-      const badge = document.getElementById('liveDetectBadge');
-      const detectedBlocks = splitCanvasIntoBlocks(canvasStrokes).filter(b => b.tagType);
-      if (detectedBlocks.length === 0) {
-        detectedSymbol = null;
-        badge.textContent = '기호(□ ○ * + △ !)로 시작하기';
-        badge.className = 'text-[11px] font-medium px-2 py-0.5 rounded-full bg-stone-200 text-stone-600';
-      } else if (detectedBlocks.length === 1) {
-        detectedSymbol = detectedBlocks[0].tagType;
-        const meta = TAG_META[detectedSymbol];
-        badge.textContent = `인식됨: ${meta.symbol} ${meta.label}`;
-        badge.className = `text-[11px] font-semibold px-2.5 py-0.5 rounded-full border ${meta.badgeClass}`;
-      } else {
-        detectedSymbol = detectedBlocks[0].tagType;
-        const summary = detectedBlocks.map(b => TAG_META[b.tagType].symbol).join(' · ');
-        badge.textContent = `${detectedBlocks.length}개 블록 분리됨 (${summary})`;
-        badge.className = 'text-[11px] font-semibold px-2.5 py-0.5 rounded-full border bg-blue-50 text-blue-700 border-blue-200';
-      }
-    }
-
-    // ---------- Pointer Events for Apple Pencil / S-Pen / Mouse ----------
-    function getPointerPos(e) {
-      const rect = canvas.getBoundingClientRect();
-      return {
-        x: e.clientX - rect.left,
-        y: e.clientY - rect.top,
-        p: e.pointerType === 'pen' ? (e.pressure || 0.5) : 0.5
-      };
-    }
-
-    function drawIncrementalSegment(context, color, baseWidth, p0, p1) {
-      context.lineCap = 'round';
-      context.lineJoin = 'round';
-      context.strokeStyle = color;
-      const pressure = p1.p !== undefined ? p1.p : 0.5;
-      context.lineWidth = Math.max(0.8, baseWidth * (0.35 + Math.pow(pressure, 0.85) * 1.45));
-      context.beginPath();
-      context.moveTo(p0.x, p0.y);
-      context.lineTo(p1.x, p1.y);
-      context.stroke();
-    }
-
-    function eraseAtPoint(ex, ey, radius = 14) {
-      let changed = false;
-      const nextStrokes = [];
-      for (const st of canvasStrokes) {
-        let segment = [];
-        let hitThisStroke = false;
-        for (const pt of st.points) {
-          if (Math.hypot(pt.x - ex, pt.y - ey) <= radius) {
-            hitThisStroke = true;
-            changed = true;
-            if (segment.length >= 2) {
-              nextStrokes.push({ color: st.color, width: st.width, points: segment });
-            }
-            segment = [];
-          } else {
-            segment.push(pt);
-          }
-        }
-        if (hitThisStroke) {
-          if (segment.length >= 2) {
-            nextStrokes.push({ color: st.color, width: st.width, points: segment });
-          }
-        } else {
-          nextStrokes.push(st);
-        }
-      }
-      if (changed) {
-        canvasStrokes = nextStrokes;
-        redrawCanvas();
-      }
-    }
-
-    canvas.addEventListener('pointerdown', (e) => {
-      if (penOnlyMode && e.pointerType === 'touch') {
-        if (!palmNoticeShown) {
-          palmNoticeShown = true;
-          showToast('펜 전용 모드입니다. 손가락으로 그리려면 상단 [펜 전용]을 끄세요.');
-        }
-        return;
-      }
-      e.preventDefault();
-      try { canvas.setPointerCapture(e.pointerId); } catch (err) {}
-      const pt = getPointerPos(e);
-
-      if (eraserMode) {
-        isErasing = true;
-        eraseAtPoint(pt.x, pt.y);
-        return;
-      }
-
-      isDrawing = true;
-      currentStroke = { color: penColor, width: penWidth, points: [pt] };
-      canvasStrokes.push(currentStroke);
-      const r = Math.max(0.8, penWidth * (0.35 + Math.pow(pt.p, 0.85) * 1.45)) / 2;
-      ctx.fillStyle = penColor;
-      ctx.beginPath();
-      ctx.arc(pt.x, pt.y, r, 0, Math.PI * 2);
-      ctx.fill();
-    });
-
-    canvas.addEventListener('pointermove', (e) => {
-      if (penOnlyMode && e.pointerType === 'touch') return;
-      if (isErasing && eraserMode) {
-        const coalesced = e.getCoalescedEvents ? e.getCoalescedEvents() : [e];
-        for (const ce of coalesced) {
-          const pt = getPointerPos(ce);
-          eraseAtPoint(pt.x, pt.y);
-        }
-        return;
-      }
-      if (!isDrawing || !currentStroke) return;
-      const coalesced = e.getCoalescedEvents ? e.getCoalescedEvents() : [e];
-      for (const ce of coalesced) {
-        const pt = getPointerPos(ce);
-        const prev = currentStroke.points[currentStroke.points.length - 1];
-        if (Math.hypot(pt.x - prev.x, pt.y - prev.y) >= 1.5) {
-          currentStroke.points.push(pt);
-          drawIncrementalSegment(ctx, currentStroke.color, currentStroke.width, prev, pt);
-        }
-      }
-    });
-
-    function endStroke() {
-      if (isErasing) {
-        isErasing = false;
-        updateLiveDetectionBadge();
-        return;
-      }
-      if (!isDrawing) return;
-      isDrawing = false;
-      currentStroke = null;
-      updateLiveDetectionBadge();
-    }
-    canvas.addEventListener('pointerup', endStroke);
-    canvas.addEventListener('pointercancel', endStroke);
-
-    // ---------- Stamp Symbol Helper (for quick testing) ----------
-    function stampSymbol(type) {
-      // Clear any previous margin strokes so user can test cleanly
-      canvasStrokes = canvasStrokes.filter(s => {
-        const avgX = s.points.reduce((sum, p) => sum + p.x, 0) / s.points.length;
-        return avgX > MARGIN_X;
-      });
-      const yBase = 48;
-      const templates = {
-        todo: [[[26,yBase-12],[54,yBase-12],[54,yBase+16],[26,yBase+16],[26,yBase-12]]],
-        fact: [[[40,yBase-14],[52,yBase-9],[55,yBase+2],[50,yBase+13],[39,yBase+16],[28,yBase+11],[25,yBase],[30,yBase-10],[40,yBase-14]]],
-        ref: [[[40,yBase-15],[40,yBase+15]], [[26,yBase-7],[54,yBase+7]], [[54,yBase-7],[26,yBase+7]]],
-        idea: [[[40,yBase-14],[40,yBase+14]], [[26,yBase],[54,yBase]]],
-        question: [[[40,yBase-14],[55,yBase+14],[25,yBase+14],[40,yBase-14]]],
-        decision: [[[40,yBase-15],[40,yBase+5]], [[40,yBase+12],[40,yBase+14]]]
-      };
-      const newStrokes = makeStrokeText(templates[type], penColor, 2.8);
-      canvasStrokes = [...newStrokes, ...canvasStrokes];
-      redrawCanvas();
-      updateLiveDetectionBadge();
-    }
-
-    // ---------- Commit Block to Tag Note ----------
-    function normalizeStrokes(strokes) {
-      let minX = Infinity, minY = Infinity;
-      for (const s of strokes) {
-        for (const p of s.points) {
-          if (p.x < minX) minX = p.x;
-          if (p.y < minY) minY = p.y;
-        }
-      }
-      const padX = 18 - minX;
-      const padY = 16 - minY;
-      return strokes.map(s => ({
-        color: s.color,
-        width: s.width,
-        points: s.points.map(p => ({ x: Math.round(p.x + padX), y: Math.round(p.y + padY), p: p.p }))
-      }));
-    }
-
-    function renderStrokesToBase64(strokes) {
-      const norm = normalizeStrokes(strokes);
-      let maxX = 320, maxY = 120;
-      for (const st of norm) {
-        for (const pt of st.points) {
-          if (pt.x > maxX) maxX = pt.x;
-          if (pt.y > maxY) maxY = pt.y;
-        }
-      }
-      const tmp = document.createElement('canvas');
-      tmp.width = Math.min(1600, maxX + 40);
-      tmp.height = Math.min(900, maxY + 40);
-      const tctx = tmp.getContext('2d');
-      tctx.fillStyle = '#FFFFFF';
-      tctx.fillRect(0, 0, tmp.width, tmp.height);
-      drawStrokeList(tctx, norm, 10, 10, 1);
-      return tmp.toDataURL('image/png').split(',')[1];
-    }
-
-    async function callGeminiVision(model, parts) {
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(geminiApiKey)}`;
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ contents: [{ parts }] })
-      });
-      if (!res.ok) {
-        const errBody = await res.text().catch(() => '');
-        throw new Error(`HTTP ${res.status}: ${errBody.slice(0, 120)}`);
-      }
-      const data = await res.json();
-      return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-    }
-
-    async function analyzeInkWithGemini(strokes) {
-      const b64 = renderStrokesToBase64(strokes);
-      const prompt = '이 손글씨 이미지를 읽고 반드시 아래 JSON 형식으로만 답하세요. 마크다운이나 다른 설명은 쓰지 마세요. {"tagType":"todo|fact|ref|idea|question|decision 중 하나 (왼쪽 첫 기호 기준: □=todo, ○=fact, *=ref, +=idea, △=question, !=decision)","ocrText":"손글씨 전체 내용","keywords":["키워드1","키워드2","키워드3"]}';
-      const parts = [{ text: prompt }, { inline_data: { mime_type: 'image/png', data: b64 } }];
-      let raw = '';
-      try {
-        raw = await callGeminiVision(geminiModel, parts);
-      } catch (e1) {
-        const fallback = geminiModel === 'gemini-3.8-flash' ? 'gemini-3.5-flash-lite' : 'gemini-3.8-flash';
-        raw = await callGeminiVision(fallback, parts);
-      }
-      const cleaned = raw.replace(/```json\s*|```/gi, '').trim();
-      const match = cleaned.match(/\{[\s\S]*\}/);
-      return JSON.parse(match ? match[0] : cleaned);
-    }
-
-    async function commitCurrentBlock() {
-      if (canvasStrokes.length === 0) {
-        showToast('먼저 캔버스에 기호와 필기를 작성해 주세요.');
-        return;
-      }
-      const commitBtn = document.getElementById('commitBlockBtn');
-      const manualSel = document.getElementById('manualTagSelect').value;
-      const hintInput = document.getElementById('hiddenHintInput');
-      const baseHintText = hintInput.value.trim();
-
-      const splitBlocks = splitCanvasIntoBlocks(canvasStrokes);
-      const isSingle = splitBlocks.length === 1;
-
-      if (geminiApiKey) {
-        commitBtn.disabled = true;
-        commitBtn.classList.add('opacity-60');
-        showToast(`AI가 ${splitBlocks.length}개 블록을 분석 중입니다...`);
-      }
-
-      const createdSummary = [];
-      const baseTime = Date.now();
-
-      try {
-        for (let i = splitBlocks.length - 1; i >= 0; i--) {
-          const blk = splitBlocks[i];
-          let finalTag = (isSingle && manualSel !== 'auto') ? manualSel : (blk.tagType || (manualSel !== 'auto' ? manualSel : 'idea'));
-          let hintText = isSingle ? baseHintText : '';
-          let aiKeywords = null;
-
-          if (!hintText && geminiApiKey) {
-            try {
-              const parsed = await analyzeInkWithGemini(blk.strokes);
-              if (parsed.ocrText) hintText = parsed.ocrText;
-              if (Array.isArray(parsed.keywords)) aiKeywords = parsed.keywords;
-              if ((manualSel === 'auto' || !isSingle) && parsed.tagType && TAG_META[parsed.tagType]) {
-                finalTag = parsed.tagType;
-              }
-            } catch (err) {
-              showToast('AI 인식 오류: ' + (err.message || 'API 키를 확인하세요'));
-            }
-          }
-
-          const hasRedInk = blk.strokes.some(s => s.color === '#DC2626');
-          const meta = TAG_META[finalTag];
-          const nowIso = new Date(baseTime + (splitBlocks.length - i)).toISOString();
-          const autoText = hintText || `${meta.label} 손글씨 메모 (${new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })})`;
-          const autoKeywords = aiKeywords || (hintText
-            ? hintText.split(/[\s,]+/).filter(w => w.length >= 1)
-            : [meta.label, '손글씨', '새메모']);
-
-          blocks.unshift({
-            id: 'blk_' + baseTime + '_' + i,
-            tagType: finalTag,
-            status: 'open',
-            priority: hasRedInk ? 'high' : 'normal',
-            createdAt: nowIso,
-            ocrText: autoText,
-            keywords: autoKeywords,
-            strokes: normalizeStrokes(blk.strokes)
-          });
-          createdSummary.unshift(`${meta.symbol} ${meta.label}`);
-        }
-      } finally {
-        commitBtn.disabled = false;
-        commitBtn.classList.remove('opacity-60');
-      }
-
-      saveToStorage();
-      canvasStrokes = [];
-      hintInput.value = '';
-      document.getElementById('manualTagSelect').value = 'auto';
-      redrawCanvas();
-      updateLiveDetectionBadge();
-      renderNotes();
-      showToast(`${createdSummary.length}개 블록 분류 저장됨: ${createdSummary.join(', ')}`);
-    }
-
-    // ---------- Render Notes & Mini Ink Canvases ----------
-    function filterBlocks() {
-      let list = [...blocks];
-
-      if (currentView === 'board_action') {
-        list = list.filter(b => b.tagType === 'todo' || b.tagType === 'question');
-      } else if (currentView === 'board_knowledge') {
-        list = list.filter(b => b.tagType === 'fact' || b.tagType === 'ref');
-      } else if (currentView === 'board_insight') {
-        list = list.filter(b => b.tagType === 'idea' || b.tagType === 'decision');
-      } else if (currentView !== 'all') {
-        list = list.filter(b => b.tagType === currentView);
-      }
-
-      const q = searchQuery.trim().toLowerCase();
-      if (q) {
-        list = list.filter(b =>
-          b.ocrText.toLowerCase().includes(q) ||
-          b.keywords.some(k => k.toLowerCase().includes(q)) ||
-          TAG_META[b.tagType].label.includes(q)
-        );
-      }
-
-      list.sort((a, b) => {
-        const ta = new Date(a.createdAt).getTime();
-        const tb = new Date(b.createdAt).getTime();
-        return sortDesc ? tb - ta : ta - tb;
-      });
-
-      return list;
-    }
-
-    function updateCounts() {
-      document.querySelectorAll('.count-badge').forEach(el => {
-        const key = el.dataset.count;
-        const cnt = blocks.filter(b => b.tagType === key).length;
-        el.textContent = cnt > 0 ? cnt : '';
-      });
-    }
-
-    function formatDate(iso) {
-      const d = new Date(iso);
-      const m = d.getMonth() + 1;
-      const day = d.getDate();
-      const hh = String(d.getHours()).padStart(2, '0');
-      const mm = String(d.getMinutes()).padStart(2, '0');
-      return `${m}월 ${day}일 ${hh}:${mm}`;
-    }
-
-    function renderUnifiedPage(listEl, filtered, q) {
-      const SCALE = 1.0;
-      const PADDING_TOP = 18;
-      const BLOCK_GAP = 18;
-
-      const layoutItems = filtered.map(b => {
-        let maxX = 160, maxY = 56;
-        for (const st of b.strokes) {
-          for (const pt of st.points) {
-            if (pt.x > maxX) maxX = pt.x;
-            if (pt.y > maxY) maxY = pt.y;
-          }
-        }
-        const h = Math.max(64, Math.ceil((maxY + 14) * SCALE));
-        const extraAi = peekAi ? 18 : 0;
-        return { block: b, maxX, h, extraAi };
-      });
-
-      const totalH = Math.max(380, PADDING_TOP + layoutItems.reduce((sum, it) => sum + it.h + it.extraAi + BLOCK_GAP, 0) + 20);
-      const maxContentW = Math.max(...layoutItems.map(it => Math.ceil((it.maxX + 30) * SCALE)), 340);
-
-      listEl.innerHTML = `
-        <div class="lined-paper rounded-xl border border-stone-200 shadow-inner overflow-x-auto">
-          <canvas id="unifiedPageCanvas" class="block" style="height:${totalH}px;"></canvas>
+function cardHtml(b, q) {
+  const t = TAGS[b.tagType];
+  const done = b.status === 'done';
+  const doneBtn = t.doneLabel
+    ? `<button class="done-btn" data-act="done" aria-pressed="${done}">${icon(done ? 'check' : 'circle', 'sm')}${t.doneLabel[done ? 1 : 0]}</button>`
+    : '';
+  let textPart = '';
+  if (editingId === b.id) {
+    textPart = `<div class="edit-row"><input data-edit-input value="${escapeHtml(b.text)}" placeholder="이 노트의 검색용 텍스트" aria-label="검색용 텍스트" /><button class="btn primary" data-act="edit-save">저장</button></div>`;
+  } else if (prefs.showText || q) {
+    textPart = `<div class="ai-text">${b.text ? highlight(b.text, q) : '<span class="muted">인식된 텍스트 없음 · 연필 버튼으로 직접 넣을 수 있어요</span>'}` +
+      b.keywords.map((k) => `<span class="kw">#${highlight(k, q)}</span>`).join('') + `</div>`;
+  }
+  return `
+    <article class="card${done ? ' done' : ''}" data-id="${escapeHtml(b.id)}">
+      <div class="card-head">
+        <label class="tag-pick" style="--c:${t.color}" title="종류 바꾸기">${t.symbol} ${t.label}${icon('chevron')}
+          <select data-act="tag" aria-label="노트 종류 바꾸기">${TAG_KEYS.map((k) => `<option value="${k}"${k === b.tagType ? ' selected' : ''}>${TAGS[k].symbol} ${TAGS[k].label}</option>`).join('')}</select>
+        </label>
+        ${b.priority === 'high' ? '<span class="badge-high">중요</span>' : ''}
+        <time class="date" datetime="${escapeHtml(b.createdAt)}">${formatDate(b.createdAt)}</time>
+        <div class="card-actions">
+          ${doneBtn}
+          <button class="icon-btn" data-act="edit" title="텍스트 편집" aria-label="텍스트 편집">${icon('type', 'sm')}</button>
+          <button class="icon-btn danger" data-act="delete" title="삭제" aria-label="삭제">${icon('trash', 'sm')}</button>
         </div>
-      `;
+      </div>
+      <div class="ink-wrap"><canvas class="paper" data-ink></canvas></div>
+      ${textPart}
+    </article>`;
+}
 
-      const uc = document.getElementById('unifiedPageCanvas');
-      const parentW = uc.parentElement ? uc.parentElement.clientWidth : 480;
-      const canvasW = Math.max(parentW, maxContentW);
-      uc.style.width = canvasW + 'px';
-      uc.style.height = totalH + 'px';
+function drawCardInk(canvas, b) {
+  const g = b.gap;
+  const box = strokesBox(b.strokes);
+  const offY = -Math.floor(Math.max(0, box.minY) / g) * g;
+  const h = Math.max(g, Math.ceil((box.maxY + offY + 6) / g) * g);
+  const w = Math.max(canvas.parentElement.clientWidth, Math.ceil(box.maxX + 16));
+  const dpr = dprOf();
+  canvas.width = Math.round(w * dpr);
+  canvas.height = Math.round(h * dpr);
+  canvas.style.width = w + 'px';
+  canvas.style.height = h + 'px';
+  canvas.style.setProperty('--gap', g + 'px');
+  const c = canvas.getContext('2d');
+  c.setTransform(dpr, 0, 0, dpr, 0, 0);
+  drawStrokes(c, b.strokes, 0, offY);
+}
 
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      uc.width = canvasW * dpr;
-      uc.height = totalH * dpr;
-      const uctx = uc.getContext('2d');
-      uctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+function renderNotes() {
+  renderFilters();
+  const listEl = $('#list');
+  const q = query.trim().toLowerCase();
+  const list = visibleBlocks();
 
-      let curY = PADDING_TOP;
-      layoutItems.forEach((it, idx) => {
-        const b = it.block;
-        if (q) {
-          uctx.fillStyle = 'rgba(59, 130, 246, 0.08)';
-          uctx.fillRect(8, curY - 4, canvasW - 16, it.h + it.extraAi + 4);
-        }
+  $('#banner').classList.toggle('show', !!q);
+  $('#bannerText').textContent = q ? `"${query.trim()}" 검색 결과 ${list.length}건` : '';
 
-        uctx.save();
-        if (b.status === 'done') uctx.globalAlpha = 0.45;
-        drawStrokeList(uctx, b.strokes, 12, curY / SCALE, SCALE);
-        uctx.restore();
+  if (!list.length) {
+    listEl.innerHTML = blocks.length === 0
+      ? '<div class="empty"><b>아직 노트가 없어요</b>왼쪽 캔버스에 기호와 함께 써 보세요.</div>'
+      : q ? '<div class="empty"><b>검색 결과가 없어요</b>다른 단어로 찾아보거나 필터를 "전체"로 바꿔 보세요.</div>'
+          : '<div class="empty"><b>이 분류에는 노트가 없어요</b></div>';
+    return;
+  }
+  listEl.innerHTML = list.map((b) => cardHtml(b, q)).join('');
+  const byId = new Map(list.map((b) => [b.id, b]));
+  listEl.querySelectorAll('.card').forEach((card) => {
+    const b = byId.get(card.dataset.id);
+    if (b) drawCardInk(card.querySelector('canvas[data-ink]'), b);
+  });
+  const input = listEl.querySelector('[data-edit-input]');
+  if (input) { input.focus(); input.setSelectionRange(input.value.length, input.value.length); }
+}
 
-        uctx.fillStyle = '#9CA3AF';
-        uctx.font = '11px Inter, sans-serif';
-        uctx.textAlign = 'right';
-        uctx.fillText(formatDate(b.createdAt), canvasW - 14, curY + 14);
-        uctx.textAlign = 'left';
+function findBlock(el) {
+  const card = el.closest('.card');
+  return card ? blocks.find((b) => b.id === card.dataset.id) : null;
+}
+function saveEdit(input) {
+  const b = blocks.find((x) => x.id === editingId);
+  editingId = null;
+  if (b) { b.text = toStr(input.value).trim(); persist(); }
+  renderNotes();
+}
 
-        if (peekAi) {
-          uctx.fillStyle = '#2563EB';
-          uctx.font = '11px Inter, sans-serif';
-          uctx.fillText('AI: ' + b.ocrText, 16, curY + it.h + 10);
-        }
+$('#list').addEventListener('click', (e) => {
+  const btn = e.target.closest('[data-act]');
+  if (!btn || btn.tagName === 'SELECT') return;
+  const b = findBlock(btn);
+  if (!b) return;
+  const act = btn.dataset.act;
+  if (act === 'done') {
+    b.status = b.status === 'done' ? 'open' : 'done';
+    persist(); renderNotes();
+  } else if (act === 'delete') {
+    const idx = blocks.indexOf(b);
+    blocks.splice(idx, 1);
+    persist(); renderNotes(); renderKeywordChips();
+    toast('노트를 삭제했습니다.', { label: '되돌리기', run: () => {
+      blocks.splice(Math.min(idx, blocks.length), 0, b);
+      persist(); renderNotes(); renderKeywordChips();
+    } });
+  } else if (act === 'edit') {
+    editingId = editingId === b.id ? null : b.id;
+    renderNotes();
+  } else if (act === 'edit-save') {
+    saveEdit(btn.parentElement.querySelector('[data-edit-input]'));
+  }
+});
+$('#list').addEventListener('change', (e) => {
+  if (e.target.dataset.act !== 'tag') return;
+  const b = findBlock(e.target);
+  if (!b || !TAGS[e.target.value]) return;
+  b.tagType = e.target.value;
+  b.tagSource = 'user';
+  if (!TAGS[b.tagType].doneLabel) b.status = 'open';
+  persist(); renderNotes();
+});
+$('#list').addEventListener('keydown', (e) => {
+  if (!e.target.matches('[data-edit-input]')) return;
+  if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); saveEdit(e.target); }
+  if (e.key === 'Escape') { editingId = null; renderNotes(); }
+});
 
+/* =========================================================
+   Search & handwriting search pad
+   ========================================================= */
+const searchInput = $('#searchInput');
+function setQuery(q) {
+  query = q;
+  searchInput.value = q;
+  $('#clearSearchBtn').hidden = !q;
+  if (q.trim()) setTab('notes');
+  renderNotes();
+}
+searchInput.addEventListener('input', () => setQuery(searchInput.value));
+$('#clearSearchBtn').addEventListener('click', () => { setQuery(''); searchInput.focus(); });
+$('#bannerClear').addEventListener('click', () => setQuery(''));
 
+const pad = $('#padCanvas');
+const pctx = pad.getContext('2d');
+let padStrokes = [];
+let padActive = null;
+function sizePad() {
+  const r = pad.getBoundingClientRect();
+  if (!r.width) return;
+  const dpr = dprOf();
+  pad.width = Math.round(r.width * dpr);
+  pad.height = Math.round(r.height * dpr);
+  pctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  pctx.clearRect(0, 0, r.width, r.height);
+  drawStrokes(pctx, padStrokes);
+}
+function openPad(open) {
+  $('#padPop').classList.toggle('open', open);
+  $('#padToggleBtn').setAttribute('aria-pressed', String(open));
+  $('#padToggleBtn').setAttribute('aria-expanded', String(open));
+  if (open) {
+    $('#padNote').textContent = prefs.key ? '검색어를 펜으로 쓰세요' : 'AI 연결 후 쓸 수 있어요 · 아래 키워드는 바로 검색돼요';
+    renderKeywordChips();
+    requestAnimationFrame(sizePad);
+  }
+}
+function renderKeywordChips() {
+  const freq = new Map();
+  for (const b of blocks) for (const k of b.keywords) freq.set(k, (freq.get(k) || 0) + 1);
+  const top = [...freq.entries()].sort((a, b) => b[1] - a[1]).slice(0, 14).map(([k]) => k);
+  $('#kwRow').innerHTML = top.length
+    ? '<span class="muted">자주 쓴 키워드</span>' + top.map((k) => `<button class="kw-chip" data-kw="${escapeHtml(k)}">#${escapeHtml(k)}</button>`).join('')
+    : '<span class="muted">키워드가 생기면 여기에 표시돼요</span>';
+}
+$('#padToggleBtn').addEventListener('click', () => openPad(!$('#padPop').classList.contains('open')));
+$('#kwRow').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-kw]');
+  if (!b) return;
+  setQuery(b.dataset.kw);
+  openPad(false);
+});
+$('#padClearBtn').addEventListener('click', () => { padStrokes = []; sizePad(); });
+document.addEventListener('pointerdown', (e) => {
+  if ($('#padPop').classList.contains('open') && !e.target.closest('#searchBox')) openPad(false);
+});
 
-        curY += it.h + it.extraAi + BLOCK_GAP;
-      });
+pad.addEventListener('pointerdown', (e) => {
+  if ((e.pointerType === 'touch' && prefs.penOnly) || padActive) return;
+  e.preventDefault();
+  try { pad.setPointerCapture(e.pointerId); } catch {}
+  const r = pad.getBoundingClientRect();
+  const s = { color: '#1E293B', width: 2.6, points: [{ x: e.clientX - r.left, y: e.clientY - r.top, p: e.pointerType === 'pen' ? (e.pressure || 0.5) : 0.5 }] };
+  padStrokes.push(s);
+  padActive = { id: e.pointerId, s };
+  pctx.lineCap = 'round'; pctx.lineJoin = 'round';
+  drawDot(pctx, s, s.points[0]);
+});
+pad.addEventListener('pointermove', (e) => {
+  if (!padActive || e.pointerId !== padActive.id) return;
+  const r = pad.getBoundingClientRect();
+  let evs = e.getCoalescedEvents ? e.getCoalescedEvents() : null;
+  if (!evs || !evs.length) evs = [e];
+  for (const ce of evs) {
+    const pt = { x: ce.clientX - r.left, y: ce.clientY - r.top, p: ce.pointerType === 'pen' ? (ce.pressure || 0.5) : 0.5 };
+    const s = padActive.s, prev = s.points[s.points.length - 1];
+    if (Math.hypot(pt.x - prev.x, pt.y - prev.y) >= 1.2) { s.points.push(pt); drawSegment(pctx, s, prev, pt); }
+  }
+});
+const endPad = (e) => { if (padActive && e.pointerId === padActive.id) padActive = null; };
+pad.addEventListener('pointerup', endPad);
+pad.addEventListener('pointercancel', endPad);
+
+$('#padRunBtn').addEventListener('click', async () => {
+  if (!padStrokes.length) { toast('먼저 검색어를 써 주세요.'); return; }
+  if (!prefs.key) { toast('손글씨 검색은 설정에서 AI를 연결하면 쓸 수 있어요.'); return; }
+  const btn = $('#padRunBtn');
+  btn.disabled = true;
+  try {
+    const raw = await gemini([
+      { text: '이 손글씨 이미지에 적힌 검색어만 출력하세요. 다른 말은 쓰지 마세요.' },
+      { inline_data: { mime_type: 'image/png', data: renderPng(padStrokes) } }
+    ]);
+    const text = raw.trim().split('\n')[0].replace(/^["'“”]+|["'“”]+$/g, '').slice(0, 60);
+    if (text) {
+      padStrokes = []; sizePad();
+      openPad(false);
+      setQuery(text);
+      toast(`"${text}"(으)로 검색했어요.`);
+    } else {
+      toast('글씨를 읽지 못했어요. 조금 더 크게 써 보세요.');
     }
+  } catch (err) {
+    toast('손글씨 검색 실패: ' + aiErrorMessage(err));
+  } finally {
+    btn.disabled = false;
+  }
+});
 
-    function renderNotes() {
-      updateCounts();
-      const listEl = document.getElementById('notesList');
-      const filtered = filterBlocks();
-      const q = searchQuery.trim();
+/* =========================================================
+   Toolbar wiring
+   ========================================================= */
+function setEraser(on) {
+  eraser = on;
+  $('#eraserBtn').setAttribute('aria-pressed', String(on));
+  ink.classList.toggle('erasing', on);
+}
+function setPenOnly(on) {
+  prefs.penOnly = on;
+  lsSet('cronota_pen_only', on ? '1' : '0');
+  $('#fingerBtn').setAttribute('aria-pressed', String(!on));
+  $('#fingerCheck').checked = !on;
+}
 
-      const statusBanner = document.getElementById('searchStatusBanner');
-      if (q) {
-        statusBanner.classList.remove('hidden');
-        document.getElementById('searchStatusText').textContent = `숨김 AI 태그 "${q}" 검색 결과: ${filtered.length}건의 원본 필기`;
-      } else {
-        statusBanner.classList.add('hidden');
-      }
+$('#colorBtns').innerHTML = PEN_COLORS.map((p, i) =>
+  `<button class="swatch" data-color="${p.c}" style="--c:${p.c}" title="${p.name}" aria-label="${p.name}" aria-pressed="${i === 0}"><span></span></button>`).join('');
+$('#widthBtns').innerHTML = PEN_WIDTHS.map((p, i) =>
+  `<button class="wbtn" data-width="${p.w}" title="${p.name}" aria-label="${p.name}" aria-pressed="${i === 1}"><span style="width:${p.d}px;height:${p.d}px"></span></button>`).join('');
+$('#colorBtns').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-color]'); if (!b) return;
+  pen.color = b.dataset.color; setEraser(false);
+  $('#colorBtns').querySelectorAll('[data-color]').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+});
+$('#widthBtns').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-width]'); if (!b) return;
+  pen.width = parseFloat(b.dataset.width); setEraser(false);
+  $('#widthBtns').querySelectorAll('[data-width]').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+});
+$('#symbar').insertAdjacentHTML('beforeend', TAG_KEYS.map((k) =>
+  `<button class="sym-btn" data-stamp="${k}" style="--c:${TAGS[k].color}" title="다음 줄에 ${TAGS[k].symbol} 기호 넣기"><b>${TAGS[k].symbol}</b>${TAGS[k].label}</button>`).join(''));
+$('#symbar').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-stamp]'); if (b) stampSymbol(b.dataset.stamp);
+});
+$('#eraserBtn').addEventListener('click', () => setEraser(!eraser));
+$('#undoBtn').addEventListener('click', undo);
+$('#redoBtn').addEventListener('click', redo);
+$('#clearBtn').addEventListener('click', clearCanvas);
+$('#fingerBtn').addEventListener('click', () => {
+  setPenOnly(!prefs.penOnly);
+  toast(prefs.penOnly ? '펜 전용: 손바닥·손가락 터치는 무시하고, 손가락으로는 스크롤합니다.' : '손가락으로도 쓸 수 있어요.');
+});
+$('#saveBtn').addEventListener('click', saveCanvas);
 
-      if (filtered.length === 0) {
-        listEl.innerHTML = `
-          <div class="text-center py-14 text-stone-400 text-sm">
-            <p class="font-medium text-stone-500">해당하는 필기 조각이 없습니다.</p>
-            <p class="text-xs mt-1">왼쪽 무페이지 캔버스에 기호를 그려 추가해 보세요.</p>
-          </div>
-        `;
-        return;
-      }
+$('#tagChips').addEventListener('click', onFilterClick);
+$('#boardChips').addEventListener('click', onFilterClick);
+function onFilterClick(e) {
+  const b = e.target.closest('[data-filter]'); if (!b) return;
+  filter = (filter === b.dataset.filter && filter !== 'all') ? 'all' : b.dataset.filter;
+  renderNotes();
+}
+$('#textToggleBtn').addEventListener('click', () => {
+  prefs.showText = !prefs.showText;
+  lsSet('cronota_show_text', prefs.showText ? '1' : '0');
+  renderNotes();
+});
+$('#sortBtn').addEventListener('click', () => {
+  prefs.sortDesc = !prefs.sortDesc;
+  lsSet('cronota_sort', prefs.sortDesc ? 'desc' : 'asc');
+  renderNotes();
+});
 
-      if (displayMode === 'page') {
-        renderUnifiedPage(listEl, filtered, q);
-        return;
-      }
+/* mobile tabs */
+function setTab(tab) {
+  document.body.dataset.tab = tab;
+  document.querySelectorAll('.mtab').forEach((t) => t.setAttribute('aria-selected', String(t.dataset.tab === tab)));
+  requestAnimationFrame(() => { sizeInk(); if (tab === 'notes') renderNotes(); });
+}
+document.querySelectorAll('.mtab').forEach((t) => t.addEventListener('click', () => setTab(t.dataset.tab)));
 
-      listEl.innerHTML = filtered.map(b => {
-        const meta = TAG_META[b.tagType];
-        const isDone = b.status === 'done';
-        const isActionable = b.tagType === 'todo' || b.tagType === 'question';
-        const glowClass = q ? 'glow-match' : '';
-        const priorityBadge = b.priority === 'high'
-          ? `<span class="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-red-50 text-red-600 border border-red-200">중요</span>`
-          : '';
-        const statusBtn = isActionable
-          ? `<button data-toggle-status="${b.id}" class="text-[11px] font-medium px-2 py-0.5 rounded-md border transition ${isDone ? 'bg-stone-800 text-white border-stone-800' : 'bg-white text-stone-600 border-stone-200 hover:bg-stone-100'}">${isDone ? '✓ 완료됨' : '진행중'}</button>`
-          : '';
-        const hiddenLayerHtml = peekAi
-          ? `<div class="mt-2 pt-2 border-t border-dashed border-stone-200 text-[11px] text-stone-500 flex flex-wrap items-center gap-1.5">
-               <span class="font-semibold text-blue-600">숨김 AI:</span>
-               <span>${escapeHtml(b.ocrText)}</span>
-               ${b.keywords.map(k => `<span class="px-1.5 py-0.5 rounded bg-stone-100 text-stone-500">#${escapeHtml(k)}</span>`).join('')}
-             </div>`
-          : '';
+/* keyboard shortcuts */
+document.addEventListener('keydown', (e) => {
+  if (e.target.closest('input, textarea, select, dialog')) return;
+  const mod = e.ctrlKey || e.metaKey;
+  if (mod && e.key.toLowerCase() === 'z') { e.preventDefault(); e.shiftKey ? redo() : undo(); }
+  else if (mod && e.key.toLowerCase() === 'y') { e.preventDefault(); redo(); }
+  else if (mod && e.key === 'Enter') { e.preventDefault(); saveCanvas(); }
+  else if (!mod && e.key.toLowerCase() === 'e') setEraser(!eraser);
+});
 
-        return `
-          <div class="bg-white rounded-xl border border-stone-200 p-3 transition ${glowClass} ${isDone ? 'opacity-60' : ''}">
-            <div class="flex items-center justify-between gap-2 mb-2">
-              <div class="flex items-center gap-1.5">
-                <span class="text-xs font-semibold px-2 py-0.5 rounded-full border ${meta.badgeClass}">${meta.symbol} ${meta.label}</span>
-                ${priorityBadge}
-                <span class="text-[11px] text-stone-400">${formatDate(b.createdAt)}</span>
-              </div>
-              <div class="flex items-center gap-1.5">
-                ${statusBtn}
-                <button data-delete-id="${b.id}" class="p-1 text-stone-400 hover:text-red-500 rounded" title="삭제">
-                  <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-                </button>
-              </div>
-            </div>
-            <div class="lined-paper rounded-lg border border-stone-200/80 overflow-x-auto overflow-y-hidden relative">
-              <canvas data-mini-canvas="${b.id}" class="block" style="height:88px;"></canvas>
-              ${isDone ? '<div class="absolute inset-0 flex items-center pointer-events-none px-4"><div class="w-full h-0.5 bg-stone-500/50"></div></div>' : ''}
-            </div>
-            ${hiddenLayerHtml}
-          </div>
-        `;
-      }).join('');
+/* =========================================================
+   Settings dialog
+   ========================================================= */
+const dlg = $('#settings');
+function showResult(text, kind) {
+  const r = $('#aiResult');
+  r.textContent = text;
+  r.className = 'result show ' + kind;
+}
+function updateAiBadge() { $('#settingsBtn').classList.toggle('ai-on', !!prefs.key); $('#settingsBtn').title = prefs.key ? '설정 (AI 연결됨)' : '설정'; }
+$('#settingsBtn').addEventListener('click', () => {
+  $('#keyInput').value = prefs.key;
+  $('#modelInput').value = prefs.model;
+  $('#gapRange').value = prefs.gap;
+  $('#gapLabel').textContent = prefs.gap + 'px';
+  $('#fingerCheck').checked = !prefs.penOnly;
+  $('#aiResult').className = 'result';
+  dlg.showModal();
+});
+$('#settingsClose').addEventListener('click', () => dlg.close());
+dlg.addEventListener('click', (e) => { if (e.target === dlg) dlg.close(); });
 
-      // Draw each block's raw strokes at 1:1 original input scale
-      const FIXED_CARD_SCALE = 1.0;
-      filtered.forEach(b => {
-        const mc = listEl.querySelector(`canvas[data-mini-canvas="${b.id}"]`);
-        if (!mc) return;
-        const parentW = mc.parentElement ? mc.parentElement.clientWidth : 340;
-        let maxX = 160, maxY = 56;
-        for (const st of b.strokes) {
-          for (const pt of st.points) {
-            if (pt.x > maxX) maxX = pt.x;
-            if (pt.y > maxY) maxY = pt.y;
-          }
-        }
-        const neededH = Math.max(96, Math.ceil((maxY + 20) * FIXED_CARD_SCALE));
-        const neededW = Math.max(parentW, Math.ceil((maxX + 28) * FIXED_CARD_SCALE));
-        mc.style.width = neededW + 'px';
-        mc.style.height = neededH + 'px';
+$('#keyTestBtn').addEventListener('click', async () => {
+  const key = $('#keyInput').value.trim();
+  const model = $('#modelInput').value.trim() || DEFAULT_MODEL;
+  if (!key) { showResult('API 키를 먼저 넣어 주세요.', 'err'); return; }
+  showResult(`${model} 연결 확인 중…`, 'info');
+  try {
+    await gemini([{ text: 'OK라고만 답하세요.' }], { key, model });
+    showResult(`연결 성공 (${model}). 저장을 누르면 적용돼요.`, 'ok');
+  } catch (err) {
+    showResult('연결 실패: ' + aiErrorMessage(err), 'err');
+  }
+});
+$('#keySaveBtn').addEventListener('click', () => {
+  prefs.key = $('#keyInput').value.trim();
+  prefs.model = $('#modelInput').value.trim() || DEFAULT_MODEL;
+  lsSet('cronota_gemini_key', prefs.key);
+  lsSet('cronota_gemini_model', prefs.model);
+  updateAiBadge();
+  dlg.close();
+  toast(prefs.key ? 'AI 손글씨 인식을 켰어요.' : 'AI 손글씨 인식을 껐어요.');
+});
+$('#keyClearBtn').addEventListener('click', () => {
+  prefs.key = '';
+  $('#keyInput').value = '';
+  lsDel('cronota_gemini_key');
+  updateAiBadge();
+  showResult('키를 삭제했어요.', 'info');
+});
+function applyGap(px) {
+  prefs.gap = px;
+  document.documentElement.style.setProperty('--gap', px + 'px');
+  $('#gapLabel').textContent = px + 'px';
+  inkH = 0; sizeInk(); updateStatus();
+}
+$('#gapRange').addEventListener('input', (e) => {
+  const v = parseInt(e.target.value, 10);
+  applyGap(v);
+  lsSet('cronota_line_gap', String(v));
+});
+$('#fingerCheck').addEventListener('change', (e) => setPenOnly(!e.target.checked));
 
-        const dpr = Math.min(window.devicePixelRatio || 1, 2);
-        mc.width = neededW * dpr;
-        mc.height = neededH * dpr;
-        const mctx = mc.getContext('2d');
-        mctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+$('#exportBtn').addEventListener('click', () => {
+  const blob = new Blob([JSON.stringify({ app: 'cronota', version: 2, exportedAt: new Date().toISOString(), blocks }, null, 0)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `cronota-backup-${new Date().toISOString().slice(0, 10)}.json`;
+  document.body.append(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+});
+$('#importBtn').addEventListener('click', () => $('#importFile').click());
+$('#importFile').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  e.target.value = '';
+  if (!file) return;
+  try {
+    const data = JSON.parse(await file.text());
+    const list = (Array.isArray(data) ? data : data.blocks || []).map(sanitizeBlock).filter(Boolean);
+    const have = new Set(blocks.map((b) => b.id));
+    const added = list.filter((b) => !have.has(b.id));
+    blocks.push(...added);
+    persist(); renderNotes(); renderKeywordChips();
+    toast(`노트 ${added.length}개를 가져왔어요.`);
+  } catch {
+    toast('백업 파일을 읽지 못했어요.');
+  }
+});
+$('#sampleBtn').addEventListener('click', () => {
+  const have = new Set(blocks.map((b) => b.id));
+  const added = createSampleBlocks().map(sanitizeBlock).filter((b) => !have.has(b.id));
+  blocks.push(...added);
+  persist(); renderNotes(); renderKeywordChips();
+  toast(added.length ? `샘플 노트 ${added.length}개를 추가했어요.` : '샘플 노트가 이미 있어요.');
+});
 
-        drawStrokeList(mctx, b.strokes, 8, 8, FIXED_CARD_SCALE);
-      });
+/* =========================================================
+   Init
+   ========================================================= */
+document.querySelectorAll('i[data-icon]').forEach((el) => {
+  el.outerHTML = icon(el.dataset.icon, el.className);
+});
+document.documentElement.style.setProperty('--gap', prefs.gap + 'px');
+document.documentElement.style.setProperty('--margin-x', MARGIN_X + 'px');
+setPenOnly(prefs.penOnly);
+updateAiBadge();
 
-      if (window.lucide) lucide.createIcons();
-    }
+let resizeTimer = null;
+new ResizeObserver(() => sizeInk()).observe(scroller);
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => { renderNotes(); if ($('#padPop').classList.contains('open')) sizePad(); }, 150);
+});
 
-    function escapeHtml(str) {
-      return str.replace(/[&<>"']/g, m => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]));
-    }
-
-    // ---------- Event Wiring ----------
-    const eraserModeBtn = document.getElementById('eraserModeBtn');
-    function setEraserMode(active) {
-      eraserMode = active;
-      if (eraserMode) {
-        eraserModeBtn.className = 'px-2 py-1 rounded-lg text-[11px] font-semibold text-white bg-amber-600 border border-amber-600 flex items-center gap-1 transition';
-        canvas.style.cursor = 'cell';
-      } else {
-        eraserModeBtn.className = 'px-2 py-1 rounded-lg text-[11px] font-medium text-stone-700 bg-white border border-stone-200 hover:bg-stone-100 flex items-center gap-1 transition';
-        canvas.style.cursor = 'crosshair';
-      }
-    }
-    eraserModeBtn.addEventListener('click', () => setEraserMode(!eraserMode));
-
-    document.querySelectorAll('.pen-color-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        setEraserMode(false);
-        penColor = btn.dataset.color;
-        document.querySelectorAll('.pen-color-btn').forEach(b => b.classList.remove('ring-2', 'ring-blue-500'));
-        btn.classList.add('ring-2', 'ring-blue-500');
-      });
-    });
-
-    document.querySelectorAll('.pen-width-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        setEraserMode(false);
-        penWidth = parseFloat(btn.dataset.width) || 2.8;
-        document.querySelectorAll('.pen-width-btn').forEach(b => b.classList.remove('bg-stone-200', 'ring-1', 'ring-stone-400'));
-        btn.classList.add('bg-stone-200', 'ring-1', 'ring-stone-400');
-      });
-    });
-
-    document.getElementById('undoStrokeBtn').addEventListener('click', () => {
-      canvasStrokes.pop();
-      redrawCanvas();
-      updateLiveDetectionBadge();
-    });
-
-    document.getElementById('clearCanvasBtn').addEventListener('click', () => {
-      canvasStrokes = [];
-      redrawCanvas();
-      updateLiveDetectionBadge();
-    });
-
-    document.querySelectorAll('.stamp-btn').forEach(btn => {
-      btn.addEventListener('click', () => stampSymbol(btn.dataset.stamp));
-    });
-
-    document.getElementById('commitBlockBtn').addEventListener('click', commitCurrentBlock);
-
-    document.querySelectorAll('.view-tab').forEach(tab => {
-      tab.addEventListener('click', () => {
-        currentView = tab.dataset.view;
-        document.querySelectorAll('.view-tab').forEach(t => {
-          t.classList.remove('ring-2', 'ring-stone-900');
-        });
-        tab.classList.add('ring-2', 'ring-stone-900');
-        renderNotes();
-      });
-    });
-
-    const dispCardBtn = document.getElementById('dispCardBtn');
-    const dispPageBtn = document.getElementById('dispPageBtn');
-    function updateDisplayModeUI() {
-      if (displayMode === 'card') {
-        dispCardBtn.className = 'px-2 py-0.5 rounded-md bg-white text-stone-900 shadow-xs transition';
-        dispPageBtn.className = 'px-2 py-0.5 rounded-md text-stone-600 hover:text-stone-900 transition';
-      } else {
-        dispPageBtn.className = 'px-2 py-0.5 rounded-md bg-white text-stone-900 shadow-xs transition';
-        dispCardBtn.className = 'px-2 py-0.5 rounded-md text-stone-600 hover:text-stone-900 transition';
-      }
-    }
-    dispCardBtn.addEventListener('click', () => {
-      displayMode = 'card';
-      updateDisplayModeUI();
-      renderNotes();
-    });
-    dispPageBtn.addEventListener('click', () => {
-      displayMode = 'page';
-      updateDisplayModeUI();
-      renderNotes();
-    });
-
-    document.getElementById('sortOrderBtn').addEventListener('click', () => {
-      sortDesc = !sortDesc;
-      document.getElementById('sortOrderLabel').textContent = sortDesc ? '최신순' : '오래된순';
-      renderNotes();
-    });
-
-    const searchInput = document.getElementById('searchInput');
-    const clearSearchBtn = document.getElementById('clearSearchBtn');
-    searchInput.addEventListener('input', (e) => {
-      searchQuery = e.target.value;
-      clearSearchBtn.classList.toggle('hidden', !searchQuery);
-      if (searchQuery.trim() && currentLayoutMode === 'canvas') {
-        setLayoutMode('split');
-      }
-      renderNotes();
-    });
-    function clearSearch() {
-      searchQuery = '';
-      searchInput.value = '';
-      clearSearchBtn.classList.add('hidden');
-      renderNotes();
-    }
-    clearSearchBtn.addEventListener('click', clearSearch);
-    document.getElementById('resetSearchBannerBtn').addEventListener('click', clearSearch);
-
-    document.getElementById('peekAiToggle').addEventListener('change', (e) => {
-      peekAi = e.target.checked;
-      renderNotes();
-    });
-
-    // Event delegation on notesList for status toggle & delete
-    document.getElementById('notesList').addEventListener('click', (e) => {
-      const toggleBtn = e.target.closest('[data-toggle-status]');
-      if (toggleBtn) {
-        const id = toggleBtn.dataset.toggleStatus;
-        const target = blocks.find(b => b.id === id);
-        if (target) {
-          target.status = target.status === 'done' ? 'open' : 'done';
-          if (target.tagType === 'question' && target.status === 'done') {
-            showToast('질문이 해결됨으로 표시되었습니다.');
-          }
-          saveToStorage();
-          renderNotes();
-        }
-        return;
-      }
-      const delBtn = e.target.closest('[data-delete-id]');
-      if (delBtn) {
-        const id = delBtn.dataset.deleteId;
-        blocks = blocks.filter(b => b.id !== id);
-        saveToStorage();
-        renderNotes();
-        showToast('필기 블록을 삭제했습니다.');
-      }
-    });
-
-    document.getElementById('resetDemoBtn').addEventListener('click', () => {
-      blocks = createInitialBlocks();
-      saveToStorage();
-      renderNotes();
-      showToast('초기 샘플 필기 데이터를 복원했습니다.');
-    });
-
-    // Layout mode switcher (Split / Canvas only / Notes only)
-    const canvasSec = document.getElementById('canvasSection');
-    const notesSec = document.getElementById('notesSection');
-    const modeBtns = [
-      document.getElementById('modeSplitBtn'),
-      document.getElementById('modeCanvasBtn'),
-      document.getElementById('modeNotesBtn')
-    ];
-    function setLayoutMode(mode) {
-      currentLayoutMode = mode;
-      modeBtns.forEach(b => b.classList.remove('bg-white', 'text-stone-900', 'shadow-sm'));
-      if (mode === 'split') {
-        modeBtns[0].classList.add('bg-white', 'text-stone-900', 'shadow-sm');
-        canvasSec.classList.remove('hidden', 'lg:col-span-12');
-        canvasSec.classList.add('lg:col-span-6');
-        notesSec.classList.remove('hidden', 'lg:col-span-12');
-        notesSec.classList.add('lg:col-span-6');
-      } else if (mode === 'canvas') {
-        modeBtns[1].classList.add('bg-white', 'text-stone-900', 'shadow-sm');
-        canvasSec.classList.remove('hidden', 'lg:col-span-6');
-        canvasSec.classList.add('lg:col-span-12');
-        notesSec.classList.add('hidden');
-      } else {
-        modeBtns[2].classList.add('bg-white', 'text-stone-900', 'shadow-sm');
-        notesSec.classList.remove('hidden', 'lg:col-span-6');
-        notesSec.classList.add('lg:col-span-12');
-        canvasSec.classList.add('hidden');
-      }
-      setTimeout(() => {
-        resizeCanvas();
-        renderNotes();
-      }, 50);
-    }
-    document.getElementById('modeSplitBtn').addEventListener('click', () => setLayoutMode('split'));
-    document.getElementById('modeCanvasBtn').addEventListener('click', () => setLayoutMode('canvas'));
-    document.getElementById('modeNotesBtn').addEventListener('click', () => setLayoutMode('notes'));
-
-    let resizeTimer = null;
-    window.addEventListener('resize', () => {
-      clearTimeout(resizeTimer);
-      resizeTimer = setTimeout(() => {
-        resizeCanvas(false);
-        renderNotes();
-      }, 200);
-    });
-
-    // Pen-only toggle
-    const penOnlyBtn = document.getElementById('penOnlyBtn');
-    function updatePenOnlyUI() {
-      if (penOnlyMode) {
-        penOnlyBtn.className = 'px-2 py-1 rounded-lg text-[11px] font-semibold bg-stone-900 text-white flex items-center gap-1 transition';
-        penOnlyBtn.querySelector('span').textContent = '펜 전용';
-      } else {
-        penOnlyBtn.className = 'px-2 py-1 rounded-lg text-[11px] font-medium bg-stone-200 text-stone-700 flex items-center gap-1 transition';
-        penOnlyBtn.querySelector('span').textContent = '펜+손 모두';
-      }
-    }
-    penOnlyBtn.addEventListener('click', () => {
-      penOnlyMode = !penOnlyMode;
-      updatePenOnlyUI();
-      showToast(penOnlyMode ? '펜 전용 모드: 손바닥 터치를 무시합니다.' : '펜+손 모드: 손가락으로도 그릴 수 있습니다.');
-    });
-
-    // AI Modal wiring
-    const aiModal = document.getElementById('aiModal');
-    const aiStatusLabel = document.getElementById('aiStatusLabel');
-    const geminiKeyInput = document.getElementById('geminiKeyInput');
-    function updateAiStatusUI() {
-      if (geminiApiKey) {
-        aiStatusLabel.textContent = 'AI 연결됨';
-        aiStatusLabel.parentElement.classList.add('text-blue-700', 'bg-blue-50');
-      } else {
-        aiStatusLabel.textContent = 'AI 연결';
-        aiStatusLabel.parentElement.classList.remove('text-blue-700', 'bg-blue-50');
-      }
-    }
-    const geminiModelSelect = document.getElementById('geminiModelSelect');
-    document.getElementById('openAiModalBtn').addEventListener('click', () => {
-      geminiKeyInput.value = geminiApiKey;
-      geminiModelSelect.value = geminiModel;
-      aiModal.classList.remove('hidden');
-    });
-    document.getElementById('closeAiModalBtn').addEventListener('click', () => aiModal.classList.add('hidden'));
-    document.getElementById('testGeminiKeyBtn').addEventListener('click', async () => {
-      const testKey = geminiKeyInput.value.trim();
-      const chosenModel = geminiModelSelect.value;
-      const resEl = document.getElementById('aiTestResult');
-      if (!testKey) {
-        resEl.textContent = 'API 키를 먼저 입력해 주세요.';
-        resEl.className = 'text-xs px-3 py-2 rounded-lg bg-amber-50 text-amber-800';
-        resEl.classList.remove('hidden');
-        return;
-      }
-      resEl.textContent = `${chosenModel} 연결 확인 중...`;
-      resEl.className = 'text-xs px-3 py-2 rounded-lg bg-stone-100 text-stone-600';
-      resEl.classList.remove('hidden');
-      const prevKey = geminiApiKey;
-      geminiApiKey = testKey;
-      try {
-        await callGeminiVision(chosenModel, [{ text: 'OK라고만 답하세요.' }]);
-        resEl.textContent = `연결 성공 (${chosenModel})! 저장하기를 누르면 손글씨 AI 인식이 작동합니다.`;
-        resEl.className = 'text-xs px-3 py-2 rounded-lg bg-emerald-50 text-emerald-700 font-medium';
-      } catch (err) {
-        geminiApiKey = prevKey;
-        resEl.textContent = '연결 실패: ' + (err.message || '키나 모델을 확인해 주세요.');
-        resEl.className = 'text-xs px-3 py-2 rounded-lg bg-red-50 text-red-700';
-      }
-    });
-
-    document.getElementById('saveGeminiKeyBtn').addEventListener('click', () => {
-      geminiApiKey = geminiKeyInput.value.trim();
-      geminiModel = geminiModelSelect.value;
-      try {
-        localStorage.setItem('cronota_gemini_key', geminiApiKey);
-        localStorage.setItem('cronota_gemini_model', geminiModel);
-      } catch (e) {}
-      updateAiStatusUI();
-      aiModal.classList.add('hidden');
-      showToast(geminiApiKey ? 'Gemini AI 손글씨 인식이 활성화되었습니다.' : 'API 키가 비워졌습니다.');
-    });
-    document.getElementById('clearGeminiKeyBtn').addEventListener('click', () => {
-      geminiApiKey = '';
-      geminiKeyInput.value = '';
-      try { localStorage.removeItem('cronota_gemini_key'); } catch (e) {}
-      updateAiStatusUI();
-      aiModal.classList.add('hidden');
-      showToast('API 키를 삭제했습니다.');
-    });
-
-    // ---------- Handwriting Search Pad & Quick Keyword Chips ----------
-    const handSearchPanel = document.getElementById('handSearchPanel');
-    const handSearchCanvas = document.getElementById('handSearchCanvas');
-    const hsCtx = handSearchCanvas.getContext('2d');
-    let hsStrokes = [];
-    let hsCurrent = null;
-    let hsDrawing = false;
-
-    function resizeHandSearchCanvas() {
-      if (handSearchPanel.classList.contains('hidden')) return;
-      const rect = handSearchCanvas.parentElement.getBoundingClientRect();
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      handSearchCanvas.width = Math.max(260, Math.floor(rect.width * dpr));
-      handSearchCanvas.height = Math.floor(88 * dpr);
-      hsCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      hsCtx.clearRect(0, 0, rect.width, 88);
-      drawStrokeList(hsCtx, hsStrokes);
-    }
-
-    function renderQuickKeywordChips() {
-      const container = document.getElementById('quickKeywordChips');
-      const kwSet = new Set();
-      blocks.forEach(b => (b.keywords || []).forEach(k => kwSet.add(k)));
-      const kws = Array.from(kwSet).slice(0, 14);
-      container.innerHTML = `<span class="text-[11px] text-stone-400 shrink-0">추천 키워드:</span>` +
-        kws.map(k => `<button data-quick-kw="${escapeHtml(k)}" class="shrink-0 px-2 py-0.5 rounded-full bg-stone-100 hover:bg-blue-50 hover:text-blue-700 text-stone-600 text-[11px] font-medium transition">#${escapeHtml(k)}</button>`).join('');
-    }
-
-    document.getElementById('quickKeywordChips').addEventListener('click', (e) => {
-      const btn = e.target.closest('[data-quick-kw]');
-      if (!btn) return;
-      const kw = btn.dataset.quickKw;
-      searchInput.value = kw;
-      searchQuery = kw;
-      clearSearchBtn.classList.remove('hidden');
-      if (currentLayoutMode === 'canvas') setLayoutMode('split');
-      renderNotes();
-    });
-
-    document.getElementById('toggleHandSearchBtn').addEventListener('click', () => {
-      handSearchPanel.classList.toggle('hidden');
-      if (!handSearchPanel.classList.contains('hidden')) {
-        renderQuickKeywordChips();
-        resizeHandSearchCanvas();
-      }
-    });
-    document.getElementById('closeHandSearchBtn').addEventListener('click', () => {
-      handSearchPanel.classList.add('hidden');
-    });
-    document.getElementById('clearHandSearchBtn').addEventListener('click', () => {
-      hsStrokes = [];
-      resizeHandSearchCanvas();
-    });
-
-    handSearchCanvas.addEventListener('pointerdown', (e) => {
-      if (penOnlyMode && e.pointerType === 'touch') return;
-      e.preventDefault();
-      handSearchCanvas.setPointerCapture(e.pointerId);
-      hsDrawing = true;
-      const rect = handSearchCanvas.getBoundingClientRect();
-      hsCurrent = { color: '#1E293B', width: 2.5, points: [{ x: e.clientX - rect.left, y: e.clientY - rect.top, p: e.pointerType === 'pen' ? (e.pressure || 0.5) : 0.5 }] };
-      hsStrokes.push(hsCurrent);
-      resizeHandSearchCanvas();
-    });
-    handSearchCanvas.addEventListener('pointermove', (e) => {
-      if (!hsDrawing || !hsCurrent) return;
-      if (penOnlyMode && e.pointerType === 'touch') return;
-      const rect = handSearchCanvas.getBoundingClientRect();
-      const coalesced = e.getCoalescedEvents ? e.getCoalescedEvents() : [e];
-      for (const ce of coalesced) {
-        const pt = { x: ce.clientX - rect.left, y: ce.clientY - rect.top, p: ce.pointerType === 'pen' ? (ce.pressure || 0.5) : 0.5 };
-        const prev = hsCurrent.points[hsCurrent.points.length - 1];
-        if (Math.hypot(pt.x - prev.x, pt.y - prev.y) >= 1.5) {
-          hsCurrent.points.push(pt);
-          drawIncrementalSegment(hsCtx, hsCurrent.color, hsCurrent.width, prev, pt);
-        }
-      }
-    });
-    function endHsStroke() { hsDrawing = false; hsCurrent = null; }
-    handSearchCanvas.addEventListener('pointerup', endHsStroke);
-    handSearchCanvas.addEventListener('pointercancel', endHsStroke);
-
-    document.getElementById('runHandSearchBtn').addEventListener('click', async () => {
-      if (hsStrokes.length === 0) {
-        showToast('먼저 필기 검색 패드에 단어를 적어주세요.');
-        return;
-      }
-      if (!geminiApiKey) {
-        showToast('필기 검색어 인식은 우측 상단 [AI 연결] 설정 후 작동합니다. 아래 키워드 칩을 눌러보세요!');
-        return;
-      }
-      showToast('필기 검색어를 읽고 있습니다...');
-      try {
-        const b64 = renderStrokesToBase64(hsStrokes);
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${encodeURIComponent(geminiApiKey)}`;
-        const res = await fetch(url, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: '이 손글씨 이미지에 적힌 검색 단어만 짧게 텍스트로 출력하세요. 다른 설명은 쓰지 마세요.' }, { inline_data: { mime_type: 'image/png', data: b64 } }] }]
-          })
-        });
-        const data = await res.json();
-        const text = (data.candidates?.[0]?.content?.parts?.[0]?.text || '').trim();
-        if (text) {
-          searchInput.value = text;
-          searchQuery = text;
-          clearSearchBtn.classList.remove('hidden');
-          if (currentLayoutMode === 'canvas') setLayoutMode('split');
-          renderNotes();
-          showToast(`"${text}" 검색 결과를 표시합니다.`);
-        } else {
-          showToast('글씨를 인식하지 못했습니다.');
-        }
-      } catch (err) {
-        showToast('필기 검색 중 오류가 발생했습니다.');
-      }
-    });
-
-    // Line spacing slider wiring
-    const lineGapSlider = document.getElementById('lineGapSlider');
-    const lineGapLabel = document.getElementById('lineGapLabel');
-    function applyLineGap(px) {
-      document.documentElement.style.setProperty('--line-gap', px + 'px');
-      lineGapSlider.value = px;
-      lineGapLabel.textContent = px + 'px';
-    }
-    lineGapSlider.addEventListener('input', (e) => {
-      const val = e.target.value;
-      applyLineGap(val);
-      try { localStorage.setItem('cronota_line_gap', val); } catch (err) {}
-    });
-
-    window.addEventListener('load', () => {
-      try {
-        const savedGap = localStorage.getItem('cronota_line_gap');
-        if (savedGap) applyLineGap(savedGap);
-      } catch (err) {}
-      updatePenOnlyUI();
-      updateAiStatusUI();
-      updateDisplayModeUI();
-      resizeCanvas();
-      renderNotes();
-      if (window.lucide) lucide.createIcons();
-    });
-  </script>
+(async () => {
+  await loadBlocks();
+  sizeInk();
+  afterCanvasChange();
+  renderNotes();
+  renderKeywordChips();
+})();
+</script>
 </body>
 </html>
