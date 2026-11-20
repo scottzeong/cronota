@@ -1617,7 +1617,8 @@ function visibleBlocks() {
   const q = query.trim().toLowerCase();
   if (q) list = list.filter((b) => matchesQuery(b, q));
   return [...list].sort((a, b) => {
-    const d = Date.parse(b.createdAt) - Date.parse(a.createdAt);
+    // Same order on every device: by time written, then by id when times are equal.
+    const d = (Date.parse(b.createdAt) - Date.parse(a.createdAt)) || (b.id < a.id ? -1 : b.id > a.id ? 1 : 0);
     return prefs.sortDesc ? d : -d;
   });
 }
