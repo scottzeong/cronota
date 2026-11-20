@@ -128,6 +128,9 @@
   .pen-mode.off { color: var(--ink-2); opacity: .32; }
   .pen-mode.off:hover { opacity: .6; background: var(--hover); }
   #saveBtn { height: 34px; padding: 0 14px 0 12px; margin-left: auto; gap: 6px; border-radius: 999px; }
+  #cancelEditBtn { margin-left: auto; }
+  #cancelEditBtn:not([hidden]) + #saveBtn { margin-left: 4px; }
+  .pnote.editing canvas { opacity: .3; }
 
   .canvas-wrap { position: relative; flex: 1; min-height: 300px; }
   .canvas-scroll { position: absolute; inset: 0; overflow-y: auto; overflow-x: hidden; background: var(--paper); scroll-snap-type: y mandatory; scrollbar-width: none; overscroll-behavior: contain; }
@@ -322,6 +325,7 @@
         <button class="tool" id="pageVBtn" data-i18n-title="pageModeV"><i data-icon="pagesV"></i></button>
         <button class="pen-mode" id="penModeBtn"><i data-icon="penTip"></i></button>
       </div>
+      <button class="tool" id="cancelEditBtn" hidden data-i18n-title="cancelEdit" data-i18n-aria="cancelEdit"><i data-icon="x"></i></button>
       <button class="btn primary" id="saveBtn" disabled><i data-icon="check" class="sm"></i><span id="saveLabel"></span></button>
     </div>
 
@@ -409,11 +413,6 @@
         <input id="gapRange" type="range" min="24" max="56" step="2" />
         <span id="gapLabel" style="width:36px;text-align:right"></span>
       </div>
-      <div class="range-row">
-        <span data-i18n="pressureSetting"></span>
-        <input id="pressureRange" type="range" min="0" max="100" step="10" />
-        <span id="pressureLabel" style="width:36px;text-align:right"></span>
-      </div>
       <label class="switch-row"><span data-i18n="fingerSetting"></span>
         <input type="checkbox" id="fingerCheck" />
       </label>
@@ -452,7 +451,7 @@ const I18N = {
     widths: ['가는 펜', '보통 펜', '굵은 펜'],
     eraser: '지우개 (E)', undo: '되돌리기 (Ctrl+Z)', redo: '다시 실행 (Ctrl+Shift+Z)', clearCanvas: '캔버스 비우기',
     penOnlyOn: '펜 전용 (손바닥 터치 무시) · 누르면 손가락으로도 쓰기', penOnlyOff: '손가락으로도 쓰는 중 · 누르면 펜 전용',
-    save: '저장', saving: '저장 중…', saveN: '노트 {n}개 저장', saveTitle: '저장 (Ctrl+Enter)',
+    save: '저장', reedit: '다시 쓰기', saveEdit: '수정', cancelEdit: '취소', saveFirst: '쓰기 화면의 글을 먼저 저장하거나 비워 주세요.', updated: '노트를 수정했습니다.', saving: '저장 중…', saveN: '노트 {n}개 저장', saveTitle: '저장 (Ctrl+Enter)',
     sortNew: '최신순', sortOld: '오래된순', all: '전체',
     results: '"{q}" 검색 결과 {n}건',
     emptyNone: '아직 노트가 없어요', emptyNoneSub: '왼쪽 캔버스에 써 보세요.',
@@ -474,7 +473,7 @@ const I18N = {
     apiKey: 'API 키', model: '모델 이름', keyClear: '키 삭제', keyTest: '연결 테스트',
     testing: '{m} 연결 확인 중…', testOk: '연결 성공 ({m}). 저장을 누르면 적용돼요.', testFail: '연결 실패: {msg}',
     needKey: 'API 키를 먼저 넣어 주세요.', keyDeleted: '키를 삭제했어요.', aiOn: 'AI 손글씨 인식을 켰어요.', aiOff: 'AI 손글씨 인식을 껐어요.',
-    writing: '필기', lineGap: '줄 간격', pressureSetting: '필압 감도', pressureOff: '끔', fingerSetting: '손가락으로도 쓰기 (끄면 손바닥 터치 무시)',
+    writing: '필기', lineGap: '줄 간격', fingerSetting: '손가락으로도 쓰기 (끄면 손바닥 터치 무시)',
     data: '데이터', dataDesc: '노트는 이 브라우저에 저장됩니다. 브라우저 데이터를 지우면 함께 사라지니 가끔 백업해 두세요.',
     export: '백업 내보내기', import: '백업 가져오기', addSamples: '샘플 노트 추가',
     imported: '노트 {n}개를 가져왔어요.', importFail: '백업 파일을 읽지 못했어요.',
@@ -507,7 +506,7 @@ const I18N = {
     widths: ['Fine pen', 'Medium pen', 'Bold pen'],
     eraser: 'Eraser (E)', undo: 'Undo (Ctrl+Z)', redo: 'Redo (Ctrl+Shift+Z)', clearCanvas: 'Clear canvas',
     penOnlyOn: 'Pen only (palm ignored) · tap to allow finger', penOnlyOff: 'Finger writing on · tap for pen only',
-    save: 'Save', saving: 'Saving…', saveN: 'Save {n} notes', saveTitle: 'Save (Ctrl+Enter)',
+    save: 'Save', reedit: 'Open in writing', saveEdit: 'Update', cancelEdit: 'Cancel', saveFirst: 'Save or clear the writing page first.', updated: 'Note updated.', saving: 'Saving…', saveN: 'Save {n} notes', saveTitle: 'Save (Ctrl+Enter)',
     sortNew: 'Newest', sortOld: 'Oldest', all: 'All',
     results: '{n} results for "{q}"',
     emptyNone: 'No notes yet', emptyNoneSub: 'Write something on the canvas.',
@@ -529,7 +528,7 @@ const I18N = {
     apiKey: 'API key', model: 'Model name', keyClear: 'Delete key', keyTest: 'Test connection',
     testing: 'Checking {m}…', testOk: 'Connected ({m}). Press Save to use it.', testFail: 'Connection failed: {msg}',
     needKey: 'Enter an API key first.', keyDeleted: 'Key deleted.', aiOn: 'AI handwriting recognition is on.', aiOff: 'AI handwriting recognition is off.',
-    writing: 'Writing', lineGap: 'Line spacing', pressureSetting: 'Pen pressure', pressureOff: 'Off', fingerSetting: 'Allow finger writing (off ignores palm touches)',
+    writing: 'Writing', lineGap: 'Line spacing', fingerSetting: 'Allow finger writing (off ignores palm touches)',
     data: 'Data', dataDesc: 'Notes are stored in this browser. Clearing browser data deletes them, so back up now and then.',
     export: 'Export backup', import: 'Import backup', addSamples: 'Add sample notes',
     imported: 'Imported {n} notes.', importFail: 'Could not read the backup file.',
@@ -562,7 +561,7 @@ const I18N = {
     widths: ['細いペン', '普通のペン', '太いペン'],
     eraser: '消しゴム (E)', undo: '元に戻す (Ctrl+Z)', redo: 'やり直す (Ctrl+Shift+Z)', clearCanvas: 'キャンバスを消去',
     penOnlyOn: 'ペン専用(手のひらを無視)· 押すと指でも書けます', penOnlyOff: '指でも書けます · 押すとペン専用',
-    save: '保存', saving: '保存中…', saveN: 'ノート{n}件を保存', saveTitle: '保存 (Ctrl+Enter)',
+    save: '保存', reedit: '書き直す', saveEdit: '更新', cancelEdit: 'キャンセル', saveFirst: '先に書く画面を保存するか消去してください。', updated: 'ノートを更新しました。', saving: '保存中…', saveN: 'ノート{n}件を保存', saveTitle: '保存 (Ctrl+Enter)',
     sortNew: '新しい順', sortOld: '古い順', all: 'すべて',
     results: '「{q}」の検索結果 {n}件',
     emptyNone: 'まだノートがありません', emptyNoneSub: 'キャンバスに書いてみましょう。',
@@ -584,7 +583,7 @@ const I18N = {
     apiKey: 'APIキー', model: 'モデル名', keyClear: 'キーを削除', keyTest: '接続テスト',
     testing: '{m} に接続中…', testOk: '接続成功({m})。保存を押すと適用されます。', testFail: '接続失敗: {msg}',
     needKey: '先にAPIキーを入力してください。', keyDeleted: 'キーを削除しました。', aiOn: 'AI手書き認識をオンにしました。', aiOff: 'AI手書き認識をオフにしました。',
-    writing: '手書き', lineGap: '行間', pressureSetting: '筆圧感度', pressureOff: 'オフ', fingerSetting: '指でも書く(オフで手のひらを無視)',
+    writing: '手書き', lineGap: '行間', fingerSetting: '指でも書く(オフで手のひらを無視)',
     data: 'データ', dataDesc: 'ノートはこのブラウザに保存されます。ブラウザのデータを消すと一緒に消えるので、時々バックアップしてください。',
     export: 'バックアップを書き出す', import: 'バックアップを読み込む', addSamples: 'サンプルノートを追加',
     imported: 'ノート{n}件を読み込みました。', importFail: 'バックアップファイルを読めませんでした。',
@@ -617,7 +616,7 @@ const I18N = {
     widths: ['细笔', '中笔', '粗笔'],
     eraser: '橡皮擦 (E)', undo: '撤销 (Ctrl+Z)', redo: '重做 (Ctrl+Shift+Z)', clearCanvas: '清空画布',
     penOnlyOn: '仅限笔(忽略手掌)· 点击后手指也能写', penOnlyOff: '手指也能书写 · 点击切换为仅限笔',
-    save: '保存', saving: '保存中…', saveN: '保存 {n} 条笔记', saveTitle: '保存 (Ctrl+Enter)',
+    save: '保存', reedit: '重新编辑', saveEdit: '更新', cancelEdit: '取消', saveFirst: '请先保存或清空书写页。', updated: '已更新笔记。', saving: '保存中…', saveN: '保存 {n} 条笔记', saveTitle: '保存 (Ctrl+Enter)',
     sortNew: '最新', sortOld: '最早', all: '全部',
     results: '“{q}”的搜索结果 {n} 条',
     emptyNone: '还没有笔记', emptyNoneSub: '在画布上写点什么吧。',
@@ -639,7 +638,7 @@ const I18N = {
     apiKey: 'API 密钥', model: '模型名称', keyClear: '删除密钥', keyTest: '测试连接',
     testing: '正在检查 {m}…', testOk: '连接成功({m})。点击保存后生效。', testFail: '连接失败:{msg}',
     needKey: '请先填入 API 密钥。', keyDeleted: '已删除密钥。', aiOn: '已开启 AI 手写识别。', aiOff: '已关闭 AI 手写识别。',
-    writing: '书写', lineGap: '行距', pressureSetting: '压感灵敏度', pressureOff: '关', fingerSetting: '允许手指书写(关闭时忽略手掌)',
+    writing: '书写', lineGap: '行距', fingerSetting: '允许手指书写(关闭时忽略手掌)',
     data: '数据', dataDesc: '笔记保存在此浏览器中。清除浏览器数据会一并删除,请不时备份。',
     export: '导出备份', import: '导入备份', addSamples: '添加示例笔记',
     imported: '已导入 {n} 条笔记。', importFail: '无法读取备份文件。',
@@ -780,7 +779,7 @@ const prefs = {
   penOnly: lsGet('cronota_pen_only', '1') === '1',
   sortDesc: lsGet('cronota_sort', 'desc') !== 'asc',
   pageMode: lsGet('cronota_page_mode', 'v') === 'h' ? 'h' : 'v',
-  pressure: Math.min(100, Math.max(0, parseInt(lsGet('cronota_pressure', '60'), 10) || 0)),
+  pressure: 100, // fixed (Scott 2026-11-20)
   key: lsGet('cronota_gemini_key', ''),
   model: lsGet('cronota_gemini_model', DEFAULT_MODEL) || DEFAULT_MODEL
 };
@@ -1410,6 +1409,8 @@ ink.addEventListener('lostpointercapture', endPointer);
 function updateStatus() {
   const parts = splitIntoBlocks(strokes, prefs.gap);
   $('#saveBtn').disabled = !parts.length || saving;
+  $('#cancelEditBtn').hidden = !editNoteId;
+  if (editNoteId) { $('#saveLabel').textContent = t('saveEdit'); $('#saveBtn').title = t('saveEdit') + ' (Ctrl+Enter)'; return; }
   $('#saveLabel').textContent = saving ? t('saving') : (parts.length > 1 ? `${t('save')} (${parts.length})` : t('save'));
   $('#saveBtn').title = parts.length > 1
     ? t('saveTitleN', { n: parts.length }) + '\n' + parts.map((p) => tagName(p.tagType || 'none')).join(', ')
@@ -1418,8 +1419,56 @@ function updateStatus() {
 
 /* ----- Save ----- */
 let saving = false;
+
+/* ----- Re-open a saved note on the writing page (add highlights, underlines, more ink) ----- */
+let editNoteId = null;
+function openNoteForEditing(b) {
+  if (active || saving) return;
+  if (editNoteId === b.id) { setTab('write'); return; }
+  if (strokes.length) { toast(t('saveFirst')); return; }
+  const g = b.gap, k = prefs.gap / g;
+  const box = strokesBox(b.strokes);
+  const top = Math.floor(Math.max(0, box.minY) / g) * g;
+  strokes = b.strokes.map((s) => ({ ...s, points: s.points.map((p) => ({ x: Math.round(p.x * k * 10) / 10, y: Math.round(((p.y - top) * k + prefs.gap) * 10) / 10, p: p.p })) }));
+  undoStack = []; redoStack = [];
+  editNoteId = b.id;
+  selectedId = null; editingId = null;
+  setTab('write');
+  layoutPages(true); redraw(); afterCanvasChange();
+  goToPage(0, false);
+  renderNotes();
+}
+function endNoteEditing() {
+  editNoteId = null;
+  strokes = []; undoStack = []; redoStack = [];
+  layoutPages(true); redraw(); afterCanvasChange();
+  goToPage(0, false);
+  renderNotes();
+}
+$('#cancelEditBtn').addEventListener('click', () => { if (!active && !saving) endNoteEditing(); });
+function saveEditedNote() {
+  const parts = splitIntoBlocks(strokes, prefs.gap);
+  if (!parts.length) { toast(t('writeFirst')); return; }
+  const fresh = sanitizeBlock({ gap: prefs.gap, strokes });
+  let b = blocks.find((x) => x.id === editNoteId);
+  if (!b) { // deleted while editing: keep it as a new note
+    b = sanitizeBlock({ id: editNoteId, tagType: parts[0].tagType || 'none', tagSource: parts[0].tagType ? 'symbol' : 'auto', createdAt: new Date().toISOString(), gap: prefs.gap, strokes });
+    blocks.unshift(b);
+  }
+  b.strokes = fresh.strokes;
+  b.gap = prefs.gap;
+  b.priority = b.strokes.some((s) => !s.hl && s.color === HIGH_COLOR) ? 'high' : 'normal';
+  const sym = parts.find((p) => p.tagType);
+  if (b.tagSource === 'symbol' && sym) b.tagType = sym.tagType;
+  persist();
+  endNoteEditing();
+  renderKeywordChips();
+  toast(t('updated'));
+}
+
 async function saveCanvas() {
   if (saving || active) return;
+  if (editNoteId) { saveEditedNote(); return; }
   const parts = splitIntoBlocks(strokes, prefs.gap);
   if (!parts.length) { toast(t('writeFirst')); return; }
 
@@ -1577,6 +1626,7 @@ function noteHtml(b, inSearch) {
         <select data-act="tag" aria-label="${escapeHtml(t('changeTag'))}">${TAG_KEYS.map((k) => `<option value="${k}"${k === b.tagType ? ' selected' : ''}>${escapeHtml(tagName(k))}</option>`).join('')}</select>
       </label>
       ${tg.canDone ? `<button class="done-btn" data-act="done" aria-pressed="${done}">${icon(done ? 'check' : 'circle', 'sm')}${escapeHtml(t('doneLabel')[done ? 1 : 0])}</button>` : ''}
+      <button class="icon-btn" data-act="reedit" title="${escapeHtml(t('reedit'))}" aria-label="${escapeHtml(t('reedit'))}">${icon('pen', 'sm')}</button>
       <button class="icon-btn" data-act="edit" title="${escapeHtml(t('editKw'))}" aria-label="${escapeHtml(t('editKw'))}">${icon('type', 'sm')}</button>
       <button class="icon-btn danger" data-act="delete" title="${escapeHtml(t('del'))}" aria-label="${escapeHtml(t('del'))}">${icon('trash', 'sm')}</button>
     </div>` : '';
@@ -1584,7 +1634,7 @@ function noteHtml(b, inSearch) {
     ? `<div class="edit-row"><input data-edit-input value="${escapeHtml(b.text)}" placeholder="${escapeHtml(t('editPh'))}" aria-label="${escapeHtml(t('editKw'))}" /><button class="btn primary" data-act="edit-save">${escapeHtml(t('save'))}</button></div>`
     : '';
   const time = inSearch && !sel ? `<span class="note-time">${timeLabel(b.createdAt)}</span>` : '';
-  return `<div class="pnote${done ? ' done' : ''}${sel ? ' selected' : ''}" data-id="${escapeHtml(b.id)}">${time}${actions}<canvas class="paper" data-ink></canvas>${edit}</div>`;
+  return `<div class="pnote${done ? ' done' : ''}${sel ? ' selected' : ''}${editNoteId === b.id ? ' editing' : ''}" data-id="${escapeHtml(b.id)}">${time}${actions}<canvas class="paper" data-ink></canvas>${edit}</div>`;
 }
 
 /** Draw a note as a slice of lined paper: one blank line on top, then its ink rows. */
@@ -1686,6 +1736,8 @@ $('#list').addEventListener('click', (e) => {
       blocks.splice(Math.min(idx, blocks.length), 0, b);
       persist(); renderNotes(); renderKeywordChips();
     } });
+  } else if (act === 'reedit') {
+    openNoteForEditing(b);
   } else if (act === 'edit') {
     editingId = editingId === b.id ? null : b.id;
     renderNotes();
@@ -1938,8 +1990,6 @@ $('#settingsBtn').addEventListener('click', () => {
   $('#gapRange').value = prefs.gap;
   $('#gapLabel').textContent = prefs.gap + 'px';
   $('#fingerCheck').checked = !prefs.penOnly;
-  $('#pressureRange').value = prefs.pressure;
-  showPressure();
   $('#aiResult').className = 'result';
   dlg.showModal();
 });
@@ -1984,13 +2034,7 @@ $('#gapRange').addEventListener('input', (e) => {
   lsSet('cronota_line_gap', String(v));
 });
 $('#fingerCheck').addEventListener('change', (e) => setPenOnly(!e.target.checked));
-function showPressure() { $('#pressureLabel').textContent = prefs.pressure ? String(prefs.pressure) : t('pressureOff'); }
-$('#pressureRange').addEventListener('input', (e) => {
-  prefs.pressure = parseInt(e.target.value, 10) || 0;
-  lsSet('cronota_pressure', String(prefs.pressure));
-  showPressure();
-  redraw();
-});
+
 
 $('#exportBtn').addEventListener('click', () => {
   const blob = new Blob([JSON.stringify({ app: 'cronota', version: 4, exportedAt: new Date().toISOString(), blocks })], { type: 'application/json' });
