@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>cronota — 무페이지 필기 & 숨김 AI 태그 프로토타입</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    :root {
+      --paper-bg: #FAF9F6;
+      --dot-color: #E2E0D8;
+    }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+      background-color: #F3F2EE;
+      color: #1F2937;
+      overscroll-behavior: none;
+    }
+    .dot-grid {
+      background-color: var(--paper-bg);
+      background-image: radial-gradient(var(--dot-color) 1.25px, transparent 1.25px);
+      background-size: 20px 20px;
+    }
+    canvas#inkCanvas {
+      touch-action: none;
+      cursor: crosshair;
+    }
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+    .glow-match {
+      box-shadow: 0 0 0 2px #3B82F6, 0 8px 20px -4px rgba(59, 130, 246, 0.25);
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+  <!-- Top Navigation & Hidden Search -->
+  <header class="sticky top-0 z-30 bg-white/90 backdrop-blur border-b border-stone-200 px-3 sm:px-5 py-2.5">
+    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2.5">
+      <div class="flex items-center gap-2.5">
+        <div class="w-8 h-8 rounded-lg bg-stone-900 text-white flex items-center justify-center font-bold text-sm tracking-tight">
+          cr
+        </div>
+        <div>
+          <h1 class="text-sm sm:text-base font-bold text-stone-900 leading-tight">cronota</h1>
+          <p class="text-[11px] text-stone-500 hidden sm:block">무페이지 필기 · 6대 기호 · 숨김 AI 태그</p>
+        </div>
+      </div>
+
+      <!-- Hidden AI Search Bar -->
+      <div class="relative flex-1 min-w-[200px] max-w-md">
+        <i data-lucide="search" class="w-4 h-4 text-stone-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+        <input
+          id="searchInput"
+          type="text"
+          placeholder="숨김 AI 태그 검색 (예: 견적, 아이패드, 예산, API)..."
+          class="w-full pl-9 pr-8 py-1.5 text-sm bg-stone-100 hover:bg-stone-200/70 focus:bg-white border border-transparent focus:border-blue-500 rounded-full outline-none transition"
+        />
+        <button id="clearSearchBtn" class="hidden absolute right-2.5 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-700" title="검색어 지우기">
+          <i data-lucide="x" class="w-3.5 h-3.5"></i>
+        </button>
+      </div>
+
+      <!-- Controls -->
+      <div class="flex items-center gap-2">
+        <label class="flex items-center gap-1.5 text-xs font-medium text-stone-600 bg-stone-100 px-2.5 py-1.5 rounded-full cursor-pointer select-none hover:bg-stone-200/70 transition" title="이면에 저장된 AI 변환 텍스트를 확인합니다">
+          <input id="peekAiToggle" type="checkbox" class="accent-blue-600 rounded" />
+          <span>숨김 태그 보기</span>
+        </label>
+        <div class="flex bg-stone-100 p-0.5 rounded-full text-xs font-medium">
+          <button id="modeSplitBtn" class="px-2.5 py-1 rounded-full bg-white text-stone-900 shadow-sm transition">분할 보기</button>
+          <button id="modeCanvasBtn" class="px-2.5 py-1 rounded-full text-stone-600 hover:text-stone-900 transition">필기만</button>
+          <button id="modeNotesBtn" class="px-2.5 py-1 rounded-full text-stone-600 hover:text-stone-900 transition">노트만</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Toast Banner -->
+  <div id="toast" class="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 hidden bg-stone-900 text-white text-xs sm:text-sm px-4 py-2 rounded-full shadow-lg transition-opacity"></div>
+
+  <!-- Main Workspace -->
+  <main class="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-4 grid grid-cols-1 lg:grid-cols-12 gap-4">
+
+    <!-- LEFT: Page-less Ink Input Canvas -->
+    <section id="canvasSection" class="lg:col-span-6 flex flex-col bg-white rounded-2xl border border-stone-200 shadow-sm overflow-hidden">
+      <!-- Pen Toolbar -->
+      <div class="px-3 py-2 border-b border-stone-200 bg-stone-50/80 flex flex-wrap items-center justify-between gap-2">
+        <div class="flex items-center gap-1.5">
+          <span class="text-xs font-semibold text-stone-700 mr-1">무페이지 입력</span>
+          <button data-color="#1E293B" class="pen-color-btn w-6 h-6 rounded-full bg-slate-800 ring-2 ring-offset-1 ring-blue-500 transition" title="기본 검정 잉크"></button>
+          <button data-color="#DC2626" class="pen-color-btn w-6 h-6 rounded-full bg-red-600 ring-offset-1 transition" title="중요 강조(빨강) — 우선순위 높음으로 태깅"></button>
+          <button data-color="#2563EB" class="pen-color-btn w-6 h-6 rounded-full bg-blue-600 ring-offset-1 transition" title="파랑 잉크"></button>
+          <div class="h-4 w-px bg-stone-300 mx-1"></div>
+          <button id="undoStrokeBtn" class="p-1.5 rounded-lg text-stone-600 hover:bg-stone-200 transition" title="획 되돌리기">
+            <i data-lucide="undo-2" class="w-4 h-4"></i>
+          </button>
+          <button id="clearCanvasBtn" class="p-1.5 rounded-lg text-stone-600 hover:bg-stone-200 transition" title="캔버스 비우기">
+            <i data-lucide="eraser" class="w-4 h-4"></i>
+          </button>
+        </div>
+
+        <div class="flex items-center gap-1.5">
+          <span id="liveDetectBadge" class="text-[11px] font-medium px-2 py-0.5 rounded-full bg-stone-200 text-stone-600">
+            왼쪽 구역에 기호 그리기
+          </span>
+          <button id="commitBlockBtn" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg shadow-sm flex items-center gap-1 transition">
+            <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+            <span>블록 태깅 & 저장</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Symbol Quick Guide Strip -->
+      <div class="px-3 py-1.5 bg-amber-50/60 border-b border-amber-100 flex items-center gap-2 overflow-x-auto no-scrollbar text-[11px] text-stone-600">
+        <span class="font-semibold text-amber-800 shrink-0">6대 기호:</span>
+        <button data-stamp="todo" class="stamp-btn shrink-0 px-1.5 py-0.5 rounded bg-white border border-stone-200 hover:border-blue-400"><b>□</b> 할일</button>
+        <button data-stamp="fact" class="stamp-btn shrink-0 px-1.5 py-0.5 rounded bg-white border border-stone-200 hover:border-blue-400"><b>○</b> 정보</button>
+        <button data-stamp="ref" class="stamp-btn shrink-0 px-1.5 py-0.5 rounded bg-white border border-stone-200 hover:border-blue-400"><b>*</b> 참고</button>
+        <button data-stamp="idea" class="stamp-btn shrink-0 px-1.5 py-0.5 rounded bg-white border border-stone-200 hover:border-blue-400"><b>+</b> 메모</button>
+        <button data-stamp="question" class="stamp-btn shrink-0 px-1.5 py-0.5 rounded bg-white border border-stone-200 hover:border-blue-400"><b>△</b> 질문</button>
+        <button data-stamp="decision" class="stamp-btn shrink-0 px-1.5 py-0.5 rounded bg-white border border-stone-200 hover:border-blue-400"><b>!</b> 결정</button>
+        <span class="text-stone-400 shrink-0 ml-auto hidden sm:inline">클릭 시 기호 스탬프 입력 가능</span>
+      </div>
+
+      <!-- Canvas Container -->
+      <div class="relative flex-1 min-h-[360px] sm:min-h-[440px] dot-grid select-none">
+        <!-- Left Margin Anchor Guide -->
+        <div class="absolute top-0 bottom-0 left-0 w-[84px] bg-amber-500/[0.04] border-r border-dashed border-amber-400/50 pointer-events-none flex flex-col items-center pt-2">
+          <span class="text-[10px] font-medium text-amber-700/80 bg-amber-100/80 px-1.5 py-0.5 rounded">기호 구역</span>
+        </div>
+        <div class="absolute top-2 left-[94px] pointer-events-none text-[11px] text-stone-400">
+          여기에 손글씨나 그림을 자유롭게 적으세요 (Apple Pencil · S-Pen · 마우스)
+        </div>
+        <canvas id="inkCanvas" class="w-full h-full block"></canvas>
+      </div>
+
+      <!-- Hidden AI Tagging Simulation Bar (Optional OCR hint on commit) -->
+      <div class="px-3 py-2 bg-stone-50 border-t border-stone-200 flex flex-wrap items-center gap-2">
+        <span class="text-[11px] text-stone-500 shrink-0">인식 기호 보정:</span>
+        <select id="manualTagSelect" class="text-xs bg-white border border-stone-200 rounded-lg px-2 py-1 outline-none focus:border-blue-500">
+          <option value="auto">자동 인식 결과 사용</option>
+          <option value="todo">□ 할일 (Action)</option>
+          <option value="fact">○ 정보 (Fact)</option>
+          <option value="ref">* 참고 (Reference)</option>
+          <option value="idea">+ 메모 (Idea)</option>
+          <option value="question">△ 질문 (Pending)</option>
+          <option value="decision">! 결정 (Decision)</option>
+        </select>
+        <input
+          id="hiddenHintInput"
+          type="text"
+          placeholder="(선택) 숨김 AI 검색용 텍스트 입력 — 비워두면 자동 태깅"
+          class="flex-1 min-w-[180px] text-xs bg-white border border-stone-200 rounded-lg px-2.5 py-1 outline-none focus:border-blue-500"
+        />
+      </div>
+    </section>
+
+    <!-- RIGHT: Tag-Based Notes & Smart Views -->
+    <section id="notesSection" class="lg:col-span-6 flex flex-col bg-white rounded-2xl border border-stone-200 shadow-sm overflow-hidden">
+      <!-- Tabs: Smart Boards & 6 Tag Notes -->
+      <div class="px-3 pt-2.5 pb-2 border-b border-stone-200 bg-stone-50/80 space-y-2">
+        <div class="flex items-center justify-between gap-2">
+          <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+            <button data-view="all" class="view-tab shrink-0 px-2.5 py-1 rounded-lg text-xs font-semibold bg-stone-900 text-white">전체 스트림</button>
+            <button data-view="board_action" class="view-tab shrink-0 px-2.5 py-1 rounded-lg text-xs font-medium bg-indigo-50 text-indigo-700 hover:bg-indigo-100">실행 보드 (□+△)</button>
+            <button data-view="board_knowledge" class="view-tab shrink-0 px-2.5 py-1 rounded-lg text-xs font-medium bg-emerald-50 text-emerald-700 hover:bg-emerald-100">지식 아카이브 (○+*)</button>
+            <button data-view="board_insight" class="view-tab shrink-0 px-2.5 py-1 rounded-lg text-xs font-medium bg-amber-50 text-amber-800 hover:bg-amber-100">인사이트 (+ + !)</button>
+          </div>
+
+          <button id="sortOrderBtn" class="shrink-0 flex items-center gap-1 text-xs font-medium text-stone-600 bg-white border border-stone-200 hover:bg-stone-100 px-2.5 py-1 rounded-lg transition">
+            <i data-lucide="arrow-up-down" class="w-3.5 h-3.5"></i>
+            <span id="sortOrderLabel">최신순</span>
+          </button>
+        </div>
+
+        <!-- 6 Individual Tag Note Filters -->
+        <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-0.5">
+          <button data-view="todo" class="view-tab shrink-0 px-2.5 py-1 rounded-full text-xs font-medium bg-white border border-stone-200 text-stone-700 hover:border-stone-400">□ 할일 <span class="count-badge text-stone-400 ml-0.5" data-count="todo"></span></button>
+          <button data-view="fact" class="view-tab shrink-0 px-2.5 py-1 rounded-full text-xs font-medium bg-white border border-stone-200 text-stone-700 hover:border-stone-400">○ 정보 <span class="count-badge text-stone-400 ml-0.5" data-count="fact"></span></button>
+          <button data-view="ref" class="view-tab shrink-0 px-2.5 py-1 rounded-full text-xs font-medium bg-white border border-stone-200 text-stone-700 hover:border-stone-400">* 참고 <span class="count-badge text-stone-400 ml-0.5" data-count="ref"></span></button>
+          <button data-view="idea" class="view-tab shrink-0 px-2.5 py-1 rounded-full text-xs font-medium bg-white border border-stone-200 text-stone-700 hover:border-stone-400">+ 메모 <span class="count-badge text-stone-400 ml-0.5" data-count="idea"></span></button>
+          <button data-view="question" class="view-tab shrink-0 px-2.5 py-1 rounded-full text-xs font-medium bg-white border border-stone-200 text-stone-700 hover:border-stone-400">△ 질문 <span class="count-badge text-stone-400 ml-0.5" data-count="question"></span></button>
+          <button data-view="decision" class="view-tab shrink-0 px-2.5 py-1 rounded-full text-xs font-medium bg-white border border-stone-200 text-stone-700 hover:border-stone-400">! 결정 <span class="count-badge text-stone-400 ml-0.5" data-count="decision"></span></button>
+        </div>
+      </div>
+
+      <!-- Search Status Bar -->
+      <div id="searchStatusBanner" class="hidden px-3 py-1.5 bg-blue-50 border-b border-blue-100 text-xs text-blue-800 flex items-center justify-between">
+        <span id="searchStatusText"></span>
+        <button id="resetSearchBannerBtn" class="underline font-medium">초기화</button>
+      </div>
+
+      <!-- Note Cards List -->
+      <div id="notesList" class="flex-1 p-3 space-y-3 overflow-y-auto max-h-[540px] bg-stone-50/40">
+        <!-- Rendered dynamically -->
+      </div>
+
+      <!-- Footer Helper -->
+      <div class="px-3 py-2 border-t border-stone-200 bg-white flex items-center justify-between text-[11px] text-stone-500">
+        <span>카드 클릭 시 상태 변경 · 원본 손글씨 그대로 보관됨</span>
+        <button id="resetDemoBtn" class="text-stone-500 hover:text-stone-800 underline">샘플 데이터 복원</button>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    // ---------- Tag Definitions ----------
+    const TAG_META = {
+      todo:     { symbol: '□', label: '할일',   badgeClass: 'bg-blue-50 text-blue-700 border-blue-200' },
+      fact:     { symbol: '○', label: '정보',   badgeClass: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+      ref:      { symbol: '*', label: '참고',   badgeClass: 'bg-purple-50 text-purple-700 border-purple-200' },
+      idea:     { symbol: '+', label: '메모',   badgeClass: 'bg-amber-50 text-amber-800 border-amber-200' },
+      question: { symbol: '△', label: '질문',   badgeClass: 'bg-orange-50 text-orange-700 border-orange-200' },
+      decision: { symbol: '!', label: '결정',   badgeClass: 'bg-rose-50 text-rose-700 border-rose-200' }
+    };
+
+    // Helper: generate realistic vector stroke handwriting for sample cards
+    function makeStrokeText(pointsList, color = '#1E293B', width = 2.6) {
+      return pointsList.map(pts => ({ color, width, points: pts.map(([x, y]) => ({ x, y, p: 0.5 })) }));
+    }
+
+    // Pre-built clean sample ink blocks so the prototype opens rich and testable
+    function createInitialBlocks() {
+      return [
+        {
+          id: 'blk_1',
+          tagType: 'todo',
+          status: 'open',
+          priority: 'high',
+          createdAt: '2026-11-20T09:15:00',
+          ocrText: '디자인 시안 견적서 회신하기 (오후 4시 전)',
+          keywords: ['견적서', '회신', '디자인', '마감'],
+          strokes: makeStrokeText([
+            // □ box
+            [[22,20],[44,20],[44,42],[22,42],[22,20]],
+            // Stylized handwritten strokes for "견적서 회신"
+            [[68,24],[82,22],[80,38]], [[66,33],[84,31]], [[88,20],[88,42]],
+            [[98,22],[112,22],[100,36]], [[106,30],[114,40]], [[120,20],[120,42]],
+            [[130,24],[126,38]], [[132,26],[138,38]], [[144,20],[144,42]],
+            [[162,22],[170,22]], [[158,28],[174,28]], [[166,34],[166,42]],
+            [[182,22],[182,36],[196,36]], [[188,40],[204,40]]
+          ], '#DC2626', 2.8)
+        },
+        {
+          id: 'blk_2',
+          tagType: 'fact',
+          status: 'open',
+          priority: 'normal',
+          createdAt: '2026-11-19T16:40:00',
+          ocrText: '아이패드 프로 12.9 PencilKit + 갤럭시탭 S8 S-Pen 좌표 동기화 회의',
+          keywords: ['아이패드', '갤럭시탭', 'S-Pen', '동기화', '회의'],
+          strokes: makeStrokeText([
+            // ○ circle
+            [[33,18],[44,22],[46,33],[39,43],[27,43],[20,33],[23,22],[33,18]],
+            // Handwriting-like waves
+            [[66,24],[66,40]], [[66,24],[78,24],[78,40]],
+            [[88,22],[88,42]], [[98,22],[94,38]], [[96,30],[108,30]], [[108,22],[108,42]],
+            [[120,24],[134,24],[122,38],[136,38]], [[146,22],[146,42]],
+            [[160,26],[178,24],[194,28],[212,24],[230,27]]
+          ], '#1E293B', 2.5)
+        },
+        {
+          id: 'blk_3',
+          tagType: 'ref',
+          status: 'open',
+          priority: 'normal',
+          createdAt: '2026-11-18T11:20:00',
+          ocrText: '참고: Pointer Events getCoalescedEvents() API 문서 & Perfect Freehand',
+          keywords: ['API', 'Pointer', '참고', '필기엔진'],
+          strokes: makeStrokeText([
+            // * asterisk
+            [[33,16],[33,44]], [[21,23],[45,37]], [[45,23],[21,37]],
+            // Ink text
+            [[66,26],[76,22],[84,38]], [[92,24],[106,24],[106,38],[92,38]],
+            [[116,22],[116,42]], [[128,26],[142,26],[130,38],[144,38]],
+            [[156,28],[176,25],[192,31],[214,26]]
+          ], '#1E293B', 2.5)
+        },
+        {
+          id: 'blk_4',
+          tagType: 'idea',
+          status: 'open',
+          priority: 'normal',
+          createdAt: '2026-11-20T13:05:00',
+          ocrText: '아이디어: 검색 결과에 변환 텍스트 대신 원본 필기 크롭 카드를 띄우기',
+          keywords: ['아이디어', '검색', '원본필기', 'UI'],
+          strokes: makeStrokeText([
+            // + plus
+            [[33,18],[33,44]], [[20,31],[46,31]],
+            // Ink text
+            [[66,30],[74,22],[82,30],[74,38],[66,30]], [[92,20],[92,42]],
+            [[104,24],[120,24],[112,38]], [[130,26],[150,24],[170,29],[194,25],[218,28]]
+          ], '#2563EB', 2.6)
+        },
+        {
+          id: 'blk_5',
+          tagType: 'question',
+          status: 'open',
+          priority: 'normal',
+          createdAt: '2026-11-19T10:10:00',
+          ocrText: '질문: 월 예산 한도 내에서 비전 AI API 호출 비용이 얼마나 나올까?',
+          keywords: ['예산', '비용', 'AI', '질문'],
+          strokes: makeStrokeText([
+            // △ triangle
+            [[33,18],[46,42],[20,42],[33,18]],
+            // Ink text
+            [[66,24],[82,24],[82,36]], [[68,38],[84,38]],
+            [[96,22],[96,42]], [[108,24],[124,26],[140,22],[158,28]],
+            // ? mark
+            [[172,22],[180,20],[182,27],[175,32],[175,36]], [[175,41],[175,42]]
+          ], '#1E293B', 2.5)
+        },
+        {
+          id: 'blk_6',
+          tagType: 'decision',
+          status: 'open',
+          priority: 'high',
+          createdAt: '2026-11-20T14:00:00',
+          ocrText: '결정: MVP는 두 태블릿 동시 지원을 위해 PWA 웹앱으로 확정',
+          keywords: ['결정', 'MVP', 'PWA', '웹앱', '확정'],
+          strokes: makeStrokeText([
+            // ! exclamation
+            [[33,17],[33,35]], [[33,42],[33,44]],
+            // Ink text
+            [[66,22],[84,22],[84,36]], [[94,20],[94,42]],
+            [[108,26],[128,24],[146,29],[166,25],[188,28]]
+          ], '#DC2626', 2.8)
+        }
+      ];
+    }
+
+    // ---------- App State ----------
+    const STORAGE_KEY = 'shadowink_blocks_v1';
+    let blocks = [];
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      blocks = saved ? JSON.parse(saved) : createInitialBlocks();
+    } catch (e) {
+      blocks = createInitialBlocks();
+    }
+
+    let currentView = 'all';
+    let sortDesc = true;
+    let searchQuery = '';
+    let peekAi = false;
+
+    // Canvas drawing state
+    const canvas = document.getElementById('inkCanvas');
+    const ctx = canvas.getContext('2d');
+    let canvasStrokes = [];
+    let currentStroke = null;
+    let isDrawing = false;
+    let penColor = '#1E293B';
+    let detectedSymbol = null;
+
+    const MARGIN_X = 84;
+
+    function saveToStorage() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(blocks));
+      } catch (e) {}
+    }
+
+    function showToast(msg) {
+      const el = document.getElementById('toast');
+      el.textContent = msg;
+      el.classList.remove('hidden');
+      clearTimeout(el._timer);
+      el._timer = setTimeout(() => el.classList.add('hidden'), 2600);
+    }
+
+    // ---------- Canvas Sizing & Rendering ----------
+    function resizeCanvas() {
+      const rect = canvas.parentElement.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = Math.max(300, Math.floor(rect.width * dpr));
+      canvas.height = Math.max(360, Math.floor(rect.height * dpr));
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      redrawCanvas();
+    }
+
+    function drawStrokeList(context, strokes, offsetX = 0, offsetY = 0, scale = 1) {
+      context.lineCap = 'round';
+      context.lineJoin = 'round';
+      for (const s of strokes) {
+        if (!s.points || s.points.length === 0) continue;
+        context.strokeStyle = s.color || '#1E293B';
+        if (s.points.length === 1) {
+          context.fillStyle = s.color || '#1E293B';
+          context.beginPath();
+          context.arc((s.points[0].x + offsetX) * scale, (s.points[0].y + offsetY) * scale, (s.width || 2.5) * scale / 2, 0, Math.PI * 2);
+          context.fill();
+          continue;
+        }
+        for (let i = 1; i < s.points.length; i++) {
+          const p0 = s.points[i - 1];
+          const p1 = s.points[i];
+          const pressure = p1.p !== undefined ? p1.p : 0.5;
+          context.lineWidth = Math.max(1.2, (s.width || 2.5) * (0.65 + pressure * 0.7) * scale);
+          context.beginPath();
+          context.moveTo((p0.x + offsetX) * scale, (p0.y + offsetY) * scale);
+          context.lineTo((p1.x + offsetX) * scale, (p1.y + offsetY) * scale);
+          context.stroke();
+        }
+      }
+    }
+
+    function redrawCanvas() {
+      const rect = canvas.getBoundingClientRect();
+      ctx.clearRect(0, 0, rect.width, rect.height);
+      drawStrokeList(ctx, canvasStrokes);
+    }
+
+    // ---------- Geometric Symbol Classifier (for Left Margin Zone) ----------
+    function classifyMarginSymbol(strokes) {
+      const marginStrokes = strokes.filter(s => {
+        if (!s.points.length) return false;
+        const avgX = s.points.reduce((sum, p) => sum + p.x, 0) / s.points.length;
+        return avgX <= MARGIN_X + 12;
+      });
+
+      if (marginStrokes.length === 0) return null;
+
+      // Bounding box of margin strokes
+      let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+      for (const s of marginStrokes) {
+        for (const p of s.points) {
+          if (p.x < minX) minX = p.x;
+          if (p.y < minY) minY = p.y;
+          if (p.x > maxX) maxX = p.x;
+          if (p.y > maxY) maxY = p.y;
+        }
+      }
+      const w = Math.max(1, maxX - minX);
+      const h = Math.max(1, maxY - minY);
+      const aspect = w / h;
+
+      // Multi-stroke checks
+      if (marginStrokes.length >= 3) {
+        return 'ref'; // *
+      }
+      if (marginStrokes.length === 2) {
+        // Distinguish + vs ! vs □ (if drawn in 2 strokes)
+        const s0 = marginStrokes[0].points;
+        const s1 = marginStrokes[1].points;
+        const b0 = getBox(s0);
+        const b1 = getBox(s1);
+        // Check if one is tall vertical and the other is a tiny dot below -> !
+        const isDot1 = b1.w < 10 && b1.h < 10 && b1.minY > b0.maxY - 4;
+        const isDot0 = b0.w < 10 && b0.h < 10 && b0.minY > b1.maxY - 4;
+        if (isDot1 || isDot0 || aspect < 0.42) return 'decision'; // !
+
+        // Check if two lines cross roughly in the middle -> +
+        const mid0x = (b0.minX + b0.maxX) / 2, mid0y = (b0.minY + b0.maxY) / 2;
+        const mid1x = (b1.minX + b1.maxX) / 2, mid1y = (b1.minY + b1.maxY) / 2;
+        if (Math.abs(mid0x - mid1x) < w * 0.35 && Math.abs(mid0y - mid1y) < h * 0.35) {
+          return 'idea'; // +
+        }
+        return 'todo'; // □ drawn with 2 L-shapes
+      }
+
+      // Single stroke checks: □ vs ○ vs △ vs !
+      const pts = marginStrokes[0].points;
+      if (aspect < 0.38) return 'decision'; // !
+
+      // Check top width vs bottom width for △ vs □/○
+      const topPts = pts.filter(p => p.y < minY + h * 0.35);
+      const botPts = pts.filter(p => p.y > minY + h * 0.65);
+      const topSpan = topPts.length ? (Math.max(...topPts.map(p => p.x)) - Math.min(...topPts.map(p => p.x))) : w;
+      const botSpan = botPts.length ? (Math.max(...botPts.map(p => p.x)) - Math.min(...botPts.map(p => p.x))) : w;
+      if (botSpan > 1.7 * Math.max(4, topSpan)) {
+        return 'question'; // △
+      }
+
+      // Distinguish □ vs ○ by diagonal corner occupancy
+      let cornerHits = 0;
+      const threshold = Math.min(w, h) * 0.24;
+      const corners = [
+        [minX, minY], [maxX, minY], [minX, maxY], [maxX, maxY]
+      ];
+      for (const [cx, cy] of corners) {
+        if (pts.some(p => Math.hypot(p.x - cx, p.y - cy) < threshold)) {
+          cornerHits++;
+        }
+      }
+      if (cornerHits >= 3) return 'todo'; // □
+      return 'fact'; // ○
+    }
+
+    function getBox(pts) {
+      let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+      for (const p of pts) {
+        if (p.x < minX) minX = p.x;
+        if (p.y < minY) minY = p.y;
+        if (p.x > maxX) maxX = p.x;
+        if (p.y > maxY) maxY = p.y;
+      }
+      return { minX, minY, maxX, maxY, w: maxX - minX, h: maxY - minY };
+    }
+
+    function updateLiveDetectionBadge() {
+      const badge = document.getElementById('liveDetectBadge');
+      detectedSymbol = classifyMarginSymbol(canvasStrokes);
+      if (!detectedSymbol) {
+        badge.textContent = '왼쪽 구역에 기호 그리기';
+        badge.className = 'text-[11px] font-medium px-2 py-0.5 rounded-full bg-stone-200 text-stone-600';
+      } else {
+        const meta = TAG_META[detectedSymbol];
+        badge.textContent = `인식됨: ${meta.symbol} ${meta.label}`;
+        badge.className = `text-[11px] font-semibold px-2.5 py-0.5 rounded-full border ${meta.badgeClass}`;
+      }
+    }
+
+    // ---------- Pointer Events for Apple Pencil / S-Pen / Mouse ----------
+    function getPointerPos(e) {
+      const rect = canvas.getBoundingClientRect();
+      return {
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top,
+        p: e.pointerType === 'pen' ? (e.pressure || 0.5) : 0.5
+      };
+    }
+
+    canvas.addEventListener('pointerdown', (e) => {
+      // Allow palm rejection feel: if a pen is active or touch is used, still draw on desktop/touch for testing
+      e.preventDefault();
+      canvas.setPointerCapture(e.pointerId);
+      isDrawing = true;
+      const pt = getPointerPos(e);
+      currentStroke = { color: penColor, width: 2.6, points: [pt] };
+      canvasStrokes.push(currentStroke);
+      redrawCanvas();
+    });
+
+    canvas.addEventListener('pointermove', (e) => {
+      if (!isDrawing || !currentStroke) return;
+      const coalesced = e.getCoalescedEvents ? e.getCoalescedEvents() : [e];
+      for (const ce of coalesced) {
+        currentStroke.points.push(getPointerPos(ce));
+      }
+      redrawCanvas();
+    });
+
+    function endStroke() {
+      if (!isDrawing) return;
+      isDrawing = false;
+      currentStroke = null;
+      updateLiveDetectionBadge();
+    }
+    canvas.addEventListener('pointerup', endStroke);
+    canvas.addEventListener('pointercancel', endStroke);
+
+    // ---------- Stamp Symbol Helper (for quick testing) ----------
+    function stampSymbol(type) {
+      // Clear any previous margin strokes so user can test cleanly
+      canvasStrokes = canvasStrokes.filter(s => {
+        const avgX = s.points.reduce((sum, p) => sum + p.x, 0) / s.points.length;
+        return avgX > MARGIN_X;
+      });
+      const yBase = 48;
+      const templates = {
+        todo: [[[26,yBase-12],[54,yBase-12],[54,yBase+16],[26,yBase+16],[26,yBase-12]]],
+        fact: [[[40,yBase-14],[52,yBase-9],[55,yBase+2],[50,yBase+13],[39,yBase+16],[28,yBase+11],[25,yBase],[30,yBase-10],[40,yBase-14]]],
+        ref: [[[40,yBase-15],[40,yBase+15]], [[26,yBase-7],[54,yBase+7]], [[54,yBase-7],[26,yBase+7]]],
+        idea: [[[40,yBase-14],[40,yBase+14]], [[26,yBase],[54,yBase]]],
+        question: [[[40,yBase-14],[55,yBase+14],[25,yBase+14],[40,yBase-14]]],
+        decision: [[[40,yBase-15],[40,yBase+5]], [[40,yBase+12],[40,yBase+14]]]
+      };
+      const newStrokes = makeStrokeText(templates[type], penColor, 2.8);
+      canvasStrokes = [...newStrokes, ...canvasStrokes];
+      redrawCanvas();
+      updateLiveDetectionBadge();
+    }
+
+    // ---------- Commit Block to Tag Note ----------
+    function normalizeStrokes(strokes) {
+      let minX = Infinity, minY = Infinity;
+      for (const s of strokes) {
+        for (const p of s.points) {
+          if (p.x < minX) minX = p.x;
+          if (p.y < minY) minY = p.y;
+        }
+      }
+      const padX = 18 - minX;
+      const padY = 16 - minY;
+      return strokes.map(s => ({
+        color: s.color,
+        width: s.width,
+        points: s.points.map(p => ({ x: Math.round(p.x + padX), y: Math.round(p.y + padY), p: p.p }))
+      }));
+    }
+
+    function commitCurrentBlock() {
+      if (canvasStrokes.length === 0) {
+        showToast('먼저 캔버스에 기호와 필기를 작성해 주세요.');
+        return;
+      }
+      const manualSel = document.getElementById('manualTagSelect').value;
+      const finalTag = manualSel !== 'auto' ? manualSel : (detectedSymbol || 'idea');
+      const hintInput = document.getElementById('hiddenHintInput');
+      const hintText = hintInput.value.trim();
+
+      const hasRedInk = canvasStrokes.some(s => s.color === '#DC2626');
+      const meta = TAG_META[finalTag];
+      const nowIso = new Date().toISOString();
+
+      const autoText = hintText || `${meta.label} 손글씨 메모 (${new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })})`;
+      const autoKeywords = hintText
+        ? hintText.split(/[\s,]+/).filter(w => w.length >= 1)
+        : [meta.label, '손글씨', '새메모'];
+
+      const newBlock = {
+        id: 'blk_' + Date.now(),
+        tagType: finalTag,
+        status: 'open',
+        priority: hasRedInk ? 'high' : 'normal',
+        createdAt: nowIso,
+        ocrText: autoText,
+        keywords: autoKeywords,
+        strokes: normalizeStrokes(canvasStrokes)
+      };
+
+      blocks.unshift(newBlock);
+      saveToStorage();
+
+      // Clear canvas for next page-less entry
+      canvasStrokes = [];
+      hintInput.value = '';
+      document.getElementById('manualTagSelect').value = 'auto';
+      redrawCanvas();
+      updateLiveDetectionBadge();
+      renderNotes();
+      showToast(`${meta.symbol} ${meta.label} 노트에 분류되어 저장되었습니다.`);
+    }
+
+    // ---------- Render Notes & Mini Ink Canvases ----------
+    function filterBlocks() {
+      let list = [...blocks];
+
+      if (currentView === 'board_action') {
+        list = list.filter(b => b.tagType === 'todo' || b.tagType === 'question');
+      } else if (currentView === 'board_knowledge') {
+        list = list.filter(b => b.tagType === 'fact' || b.tagType === 'ref');
+      } else if (currentView === 'board_insight') {
+        list = list.filter(b => b.tagType === 'idea' || b.tagType === 'decision');
+      } else if (currentView !== 'all') {
+        list = list.filter(b => b.tagType === currentView);
+      }
+
+      const q = searchQuery.trim().toLowerCase();
+      if (q) {
+        list = list.filter(b =>
+          b.ocrText.toLowerCase().includes(q) ||
+          b.keywords.some(k => k.toLowerCase().includes(q)) ||
+          TAG_META[b.tagType].label.includes(q)
+        );
+      }
+
+      list.sort((a, b) => {
+        const ta = new Date(a.createdAt).getTime();
+        const tb = new Date(b.createdAt).getTime();
+        return sortDesc ? tb - ta : ta - tb;
+      });
+
+      return list;
+    }
+
+    function updateCounts() {
+      document.querySelectorAll('.count-badge').forEach(el => {
+        const key = el.dataset.count;
+        const cnt = blocks.filter(b => b.tagType === key).length;
+        el.textContent = cnt > 0 ? cnt : '';
+      });
+    }
+
+    function formatDate(iso) {
+      const d = new Date(iso);
+      const m = d.getMonth() + 1;
+      const day = d.getDate();
+      const hh = String(d.getHours()).padStart(2, '0');
+      const mm = String(d.getMinutes()).padStart(2, '0');
+      return `${m}월 ${day}일 ${hh}:${mm}`;
+    }
+
+    function renderNotes() {
+      updateCounts();
+      const listEl = document.getElementById('notesList');
+      const filtered = filterBlocks();
+      const q = searchQuery.trim();
+
+      const statusBanner = document.getElementById('searchStatusBanner');
+      if (q) {
+        statusBanner.classList.remove('hidden');
+        document.getElementById('searchStatusText').textContent = `숨김 AI 태그 "${q}" 검색 결과: ${filtered.length}건의 원본 필기`;
+      } else {
+        statusBanner.classList.add('hidden');
+      }
+
+      if (filtered.length === 0) {
+        listEl.innerHTML = `
+          <div class="text-center py-14 text-stone-400 text-sm">
+            <p class="font-medium text-stone-500">해당하는 필기 조각이 없습니다.</p>
+            <p class="text-xs mt-1">왼쪽 무페이지 캔버스에 기호를 그려 추가해 보세요.</p>
+          </div>
+        `;
+        return;
+      }
+
+      listEl.innerHTML = filtered.map(b => {
+        const meta = TAG_META[b.tagType];
+        const isDone = b.status === 'done';
+        const isActionable = b.tagType === 'todo' || b.tagType === 'question';
+        const glowClass = q ? 'glow-match' : '';
+        const priorityBadge = b.priority === 'high'
+          ? `<span class="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-red-50 text-red-600 border border-red-200">중요</span>`
+          : '';
+        const statusBtn = isActionable
+          ? `<button data-toggle-status="${b.id}" class="text-[11px] font-medium px-2 py-0.5 rounded-md border transition ${isDone ? 'bg-stone-800 text-white border-stone-800' : 'bg-white text-stone-600 border-stone-200 hover:bg-stone-100'}">${isDone ? '✓ 완료됨' : '진행중'}</button>`
+          : '';
+        const hiddenLayerHtml = peekAi
+          ? `<div class="mt-2 pt-2 border-t border-dashed border-stone-200 text-[11px] text-stone-500 flex flex-wrap items-center gap-1.5">
+               <span class="font-semibold text-blue-600">숨김 AI:</span>
+               <span>${escapeHtml(b.ocrText)}</span>
+               ${b.keywords.map(k => `<span class="px-1.5 py-0.5 rounded bg-stone-100 text-stone-500">#${escapeHtml(k)}</span>`).join('')}
+             </div>`
+          : '';
+
+        return `
+          <div class="bg-white rounded-xl border border-stone-200 p-3 transition ${glowClass} ${isDone ? 'opacity-60' : ''}">
+            <div class="flex items-center justify-between gap-2 mb-2">
+              <div class="flex items-center gap-1.5">
+                <span class="text-xs font-semibold px-2 py-0.5 rounded-full border ${meta.badgeClass}">${meta.symbol} ${meta.label}</span>
+                ${priorityBadge}
+                <span class="text-[11px] text-stone-400">${formatDate(b.createdAt)}</span>
+              </div>
+              <div class="flex items-center gap-1.5">
+                ${statusBtn}
+                <button data-delete-id="${b.id}" class="p-1 text-stone-400 hover:text-red-500 rounded" title="삭제">
+                  <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                </button>
+              </div>
+            </div>
+            <div class="dot-grid rounded-lg border border-stone-200/80 overflow-hidden relative">
+              <canvas data-mini-canvas="${b.id}" class="w-full h-[84px] block"></canvas>
+              ${isDone ? '<div class="absolute inset-0 flex items-center pointer-events-none px-4"><div class="w-full h-0.5 bg-stone-500/50"></div></div>' : ''}
+            </div>
+            ${hiddenLayerHtml}
+          </div>
+        `;
+      }).join('');
+
+      // Draw each block's raw strokes onto its mini canvas
+      filtered.forEach(b => {
+        const mc = listEl.querySelector(`canvas[data-mini-canvas="${b.id}"]`);
+        if (!mc) return;
+        const rect = mc.getBoundingClientRect();
+        const dpr = window.devicePixelRatio || 1;
+        const w = Math.max(240, rect.width || 360);
+        const h = 84;
+        mc.width = w * dpr;
+        mc.height = h * dpr;
+        const mctx = mc.getContext('2d');
+        mctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+        // Compute stroke bounds to fit cleanly
+        let maxX = 100, maxY = 50;
+        for (const s of b.strokes) {
+          for (const p of s.points) {
+            if (p.x > maxX) maxX = p.x;
+            if (p.y > maxY) maxY = p.y;
+          }
+        }
+        const scale = Math.min(1, (w - 20) / (maxX + 12), (h - 14) / (maxY + 10));
+        drawStrokeList(mctx, b.strokes, 4, 6, scale);
+      });
+
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function escapeHtml(str) {
+      return str.replace(/[&<>"']/g, m => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]));
+    }
+
+    // ---------- Event Wiring ----------
+    document.querySelectorAll('.pen-color-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        penColor = btn.dataset.color;
+        document.querySelectorAll('.pen-color-btn').forEach(b => b.classList.remove('ring-2', 'ring-blue-500'));
+        btn.classList.add('ring-2', 'ring-blue-500');
+      });
+    });
+
+    document.getElementById('undoStrokeBtn').addEventListener('click', () => {
+      canvasStrokes.pop();
+      redrawCanvas();
+      updateLiveDetectionBadge();
+    });
+
+    document.getElementById('clearCanvasBtn').addEventListener('click', () => {
+      canvasStrokes = [];
+      redrawCanvas();
+      updateLiveDetectionBadge();
+    });
+
+    document.querySelectorAll('.stamp-btn').forEach(btn => {
+      btn.addEventListener('click', () => stampSymbol(btn.dataset.stamp));
+    });
+
+    document.getElementById('commitBlockBtn').addEventListener('click', commitCurrentBlock);
+
+    document.querySelectorAll('.view-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        currentView = tab.dataset.view;
+        document.querySelectorAll('.view-tab').forEach(t => {
+          t.classList.remove('ring-2', 'ring-stone-900');
+        });
+        tab.classList.add('ring-2', 'ring-stone-900');
+        renderNotes();
+      });
+    });
+
+    document.getElementById('sortOrderBtn').addEventListener('click', () => {
+      sortDesc = !sortDesc;
+      document.getElementById('sortOrderLabel').textContent = sortDesc ? '최신순' : '오래된순';
+      renderNotes();
+    });
+
+    const searchInput = document.getElementById('searchInput');
+    const clearSearchBtn = document.getElementById('clearSearchBtn');
+    searchInput.addEventListener('input', (e) => {
+      searchQuery = e.target.value;
+      clearSearchBtn.classList.toggle('hidden', !searchQuery);
+      renderNotes();
+    });
+    function clearSearch() {
+      searchQuery = '';
+      searchInput.value = '';
+      clearSearchBtn.classList.add('hidden');
+      renderNotes();
+    }
+    clearSearchBtn.addEventListener('click', clearSearch);
+    document.getElementById('resetSearchBannerBtn').addEventListener('click', clearSearch);
+
+    document.getElementById('peekAiToggle').addEventListener('change', (e) => {
+      peekAi = e.target.checked;
+      renderNotes();
+    });
+
+    // Event delegation on notesList for status toggle & delete
+    document.getElementById('notesList').addEventListener('click', (e) => {
+      const toggleBtn = e.target.closest('[data-toggle-status]');
+      if (toggleBtn) {
+        const id = toggleBtn.dataset.toggleStatus;
+        const target = blocks.find(b => b.id === id);
+        if (target) {
+          target.status = target.status === 'done' ? 'open' : 'done';
+          if (target.tagType === 'question' && target.status === 'done') {
+            showToast('질문이 해결됨으로 표시되었습니다.');
+          }
+          saveToStorage();
+          renderNotes();
+        }
+        return;
+      }
+      const delBtn = e.target.closest('[data-delete-id]');
+      if (delBtn) {
+        const id = delBtn.dataset.deleteId;
+        blocks = blocks.filter(b => b.id !== id);
+        saveToStorage();
+        renderNotes();
+        showToast('필기 블록을 삭제했습니다.');
+      }
+    });
+
+    document.getElementById('resetDemoBtn').addEventListener('click', () => {
+      blocks = createInitialBlocks();
+      saveToStorage();
+      renderNotes();
+      showToast('초기 샘플 필기 데이터를 복원했습니다.');
+    });
+
+    // Layout mode switcher (Split / Canvas only / Notes only)
+    const canvasSec = document.getElementById('canvasSection');
+    const notesSec = document.getElementById('notesSection');
+    const modeBtns = [
+      document.getElementById('modeSplitBtn'),
+      document.getElementById('modeCanvasBtn'),
+      document.getElementById('modeNotesBtn')
+    ];
+    function setLayoutMode(mode) {
+      modeBtns.forEach(b => b.classList.remove('bg-white', 'text-stone-900', 'shadow-sm'));
+      if (mode === 'split') {
+        modeBtns[0].classList.add('bg-white', 'text-stone-900', 'shadow-sm');
+        canvasSec.classList.remove('hidden', 'lg:col-span-12');
+        canvasSec.classList.add('lg:col-span-6');
+        notesSec.classList.remove('hidden', 'lg:col-span-12');
+        notesSec.classList.add('lg:col-span-6');
+      } else if (mode === 'canvas') {
+        modeBtns[1].classList.add('bg-white', 'text-stone-900', 'shadow-sm');
+        canvasSec.classList.remove('hidden', 'lg:col-span-6');
+        canvasSec.classList.add('lg:col-span-12');
+        notesSec.classList.add('hidden');
+      } else {
+        modeBtns[2].classList.add('bg-white', 'text-stone-900', 'shadow-sm');
+        notesSec.classList.remove('hidden', 'lg:col-span-6');
+        notesSec.classList.add('lg:col-span-12');
+        canvasSec.classList.add('hidden');
+      }
+      setTimeout(() => {
+        resizeCanvas();
+        renderNotes();
+      }, 50);
+    }
+    document.getElementById('modeSplitBtn').addEventListener('click', () => setLayoutMode('split'));
+    document.getElementById('modeCanvasBtn').addEventListener('click', () => setLayoutMode('canvas'));
+    document.getElementById('modeNotesBtn').addEventListener('click', () => setLayoutMode('notes'));
+
+    window.addEventListener('resize', () => {
+      resizeCanvas();
+      renderNotes();
+    });
+
+    window.addEventListener('load', () => {
+      resizeCanvas();
+      renderNotes();
+      if (window.lucide) lucide.createIcons();
+    });
+  </script>
+</body>
+</html>
