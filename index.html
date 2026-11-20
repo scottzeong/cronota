@@ -10,7 +10,8 @@
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
     :root {
       --paper-bg: #FAF9F6;
-      --dot-color: #E2E0D8;
+      --line-color: #E2E0D8;
+      --line-gap: 32px;
     }
     html, body {
       overscroll-behavior: none;
@@ -21,10 +22,10 @@
       background-color: #F3F2EE;
       color: #1F2937;
     }
-    .dot-grid {
+    .lined-paper {
       background-color: var(--paper-bg);
-      background-image: radial-gradient(var(--dot-color) 1.25px, transparent 1.25px);
-      background-size: 20px 20px;
+      background-image: linear-gradient(to bottom, transparent calc(var(--line-gap) - 1px), var(--line-color) calc(var(--line-gap) - 1px));
+      background-size: 100% var(--line-gap);
     }
     canvas#inkCanvas {
       touch-action: none;
@@ -114,7 +115,7 @@
           <button id="closeHandSearchBtn" class="p-1 text-stone-400 hover:text-stone-700"><i data-lucide="x" class="w-4 h-4"></i></button>
         </div>
       </div>
-      <div class="dot-grid rounded-xl border border-stone-300 overflow-hidden h-[88px] relative">
+      <div class="lined-paper rounded-xl border border-stone-300 overflow-hidden h-[88px] relative">
         <canvas id="handSearchCanvas" class="w-full h-full block" style="touch-action:none;"></canvas>
       </div>
       <div id="quickKeywordChips" class="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-0.5 text-xs">
@@ -221,11 +222,15 @@
         <button data-stamp="idea" class="stamp-btn shrink-0 px-1.5 py-0.5 rounded bg-white border border-stone-200 hover:border-blue-400"><b>+</b> 메모</button>
         <button data-stamp="question" class="stamp-btn shrink-0 px-1.5 py-0.5 rounded bg-white border border-stone-200 hover:border-blue-400"><b>△</b> 질문</button>
         <button data-stamp="decision" class="stamp-btn shrink-0 px-1.5 py-0.5 rounded bg-white border border-stone-200 hover:border-blue-400"><b>!</b> 결정</button>
-        <span class="text-stone-400 shrink-0 ml-auto hidden sm:inline">클릭 시 기호 스탬프 입력 가능</span>
+        <div class="flex items-center gap-1.5 shrink-0 ml-auto pl-2 border-l border-amber-200/80">
+          <span class="text-[11px] font-medium text-stone-600">줄간격</span>
+          <input id="lineGapSlider" type="range" min="20" max="56" step="2" value="32" class="w-16 sm:w-20 accent-stone-700 cursor-pointer" title="선노트 줄 간격 조절" />
+          <span id="lineGapLabel" class="text-[11px] text-stone-500 w-7 text-right">32px</span>
+        </div>
       </div>
 
       <!-- Canvas Container -->
-      <div class="relative flex-1 min-h-[360px] sm:min-h-[440px] dot-grid select-none">
+      <div class="relative flex-1 min-h-[360px] sm:min-h-[440px] lined-paper select-none">
         <div class="absolute top-2 left-3 pointer-events-none text-[11px] text-stone-400">
           어디서든 기호(□ ○ * + △ !)를 먼저 그리고 이어서 손글씨를 적어보세요
         </div>
@@ -1048,19 +1053,19 @@
     }
 
     function renderUnifiedPage(listEl, filtered, q) {
-      const SCALE = 0.62;
+      const SCALE = 1.0;
       const PADDING_TOP = 18;
-      const BLOCK_GAP = 16;
+      const BLOCK_GAP = 18;
 
       const layoutItems = filtered.map(b => {
-        let maxX = 120, maxY = 44;
+        let maxX = 160, maxY = 56;
         for (const st of b.strokes) {
           for (const pt of st.points) {
             if (pt.x > maxX) maxX = pt.x;
             if (pt.y > maxY) maxY = pt.y;
           }
         }
-        const h = Math.max(54, Math.ceil((maxY + 14) * SCALE));
+        const h = Math.max(64, Math.ceil((maxY + 14) * SCALE));
         const extraAi = peekAi ? 18 : 0;
         return { block: b, maxX, h, extraAi };
       });
@@ -1069,7 +1074,7 @@
       const maxContentW = Math.max(...layoutItems.map(it => Math.ceil((it.maxX + 30) * SCALE)), 340);
 
       listEl.innerHTML = `
-        <div class="dot-grid rounded-xl border border-stone-200 shadow-inner overflow-x-auto">
+        <div class="lined-paper rounded-xl border border-stone-200 shadow-inner overflow-x-auto">
           <canvas id="unifiedPageCanvas" class="block" style="height:${totalH}px;"></canvas>
         </div>
       `;
@@ -1180,7 +1185,7 @@
                 </button>
               </div>
             </div>
-            <div class="dot-grid rounded-lg border border-stone-200/80 overflow-x-auto overflow-y-hidden relative">
+            <div class="lined-paper rounded-lg border border-stone-200/80 overflow-x-auto overflow-y-hidden relative">
               <canvas data-mini-canvas="${b.id}" class="block" style="height:88px;"></canvas>
               ${isDone ? '<div class="absolute inset-0 flex items-center pointer-events-none px-4"><div class="w-full h-0.5 bg-stone-500/50"></div></div>' : ''}
             </div>
@@ -1189,35 +1194,31 @@
         `;
       }).join('');
 
-      // Draw each block's raw strokes at a CONSISTENT scale across all cards
-      const FIXED_CARD_SCALE = 0.62;
+      // Draw each block's raw strokes at 1:1 original input scale
+      const FIXED_CARD_SCALE = 1.0;
       filtered.forEach(b => {
         const mc = listEl.querySelector(`canvas[data-mini-canvas="${b.id}"]`);
         if (!mc) return;
         const parentW = mc.parentElement ? mc.parentElement.clientWidth : 340;
-        let maxX = 120, maxY = 50;
+        let maxX = 160, maxY = 56;
         for (const st of b.strokes) {
           for (const pt of st.points) {
             if (pt.x > maxX) maxX = pt.x;
             if (pt.y > maxY) maxY = pt.y;
           }
         }
-        const neededH = Math.max(88, Math.min(210, Math.ceil((maxY + 18) * FIXED_CARD_SCALE)));
-        const neededW = Math.max(parentW, Math.ceil((maxX + 24) * FIXED_CARD_SCALE));
+        const neededH = Math.max(96, Math.ceil((maxY + 20) * FIXED_CARD_SCALE));
+        const neededW = Math.max(parentW, Math.ceil((maxX + 28) * FIXED_CARD_SCALE));
         mc.style.width = neededW + 'px';
         mc.style.height = neededH + 'px';
 
-        const dpr = window.devicePixelRatio || 1;
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
         mc.width = neededW * dpr;
         mc.height = neededH * dpr;
         const mctx = mc.getContext('2d');
         mctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-        // Keep vertical scale consistent; only downscale if excessively tall
-        const fitScale = (maxY + 18) * FIXED_CARD_SCALE > 210
-          ? 195 / (maxY + 18)
-          : FIXED_CARD_SCALE;
-        drawStrokeList(mctx, b.strokes, 8, 8, fitScale);
+        drawStrokeList(mctx, b.strokes, 8, 8, FIXED_CARD_SCALE);
       });
 
       if (window.lucide) lucide.createIcons();
@@ -1621,7 +1622,25 @@
       }
     });
 
+    // Line spacing slider wiring
+    const lineGapSlider = document.getElementById('lineGapSlider');
+    const lineGapLabel = document.getElementById('lineGapLabel');
+    function applyLineGap(px) {
+      document.documentElement.style.setProperty('--line-gap', px + 'px');
+      lineGapSlider.value = px;
+      lineGapLabel.textContent = px + 'px';
+    }
+    lineGapSlider.addEventListener('input', (e) => {
+      const val = e.target.value;
+      applyLineGap(val);
+      try { localStorage.setItem('cronota_line_gap', val); } catch (err) {}
+    });
+
     window.addEventListener('load', () => {
+      try {
+        const savedGap = localStorage.getItem('cronota_line_gap');
+        if (savedGap) applyLineGap(savedGap);
+      } catch (err) {}
       updatePenOnlyUI();
       updateAiStatusUI();
       updateDisplayModeUI();
