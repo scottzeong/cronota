@@ -216,6 +216,13 @@
   .btn-row { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
   .result { font-size: 12px; padding: 9px 12px; border-radius: var(--r-sm); margin-bottom: 12px; display: none; }
   .result.show { display: block; }
+  .gd-uri { font-size: 12px !important; word-break: break-all; }
+  .gd-uri code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11.5px; background: var(--hover); padding: 2px 6px; border-radius: 6px; color: var(--ink-2); user-select: all; -webkit-user-select: all; }
+  #syncBtn { position: relative; }
+  #syncBtn .dot { position: absolute; top: 7px; right: 7px; width: 7px; height: 7px; border-radius: 999px; background: #D97706; box-shadow: 0 0 0 2px var(--bg); display: none; }
+  #syncBtn.warn .dot { display: block; }
+  #syncBtn.busy svg { animation: syncPulse 1s ease-in-out infinite; }
+  @keyframes syncPulse { 50% { opacity: .3; } }
   .result.ok { background: #EEF6F1; color: #23704F; }
   .result.err { background: #FBEFEE; color: #A3302A; }
   .result.info { background: var(--hover); color: var(--muted); }
@@ -256,7 +263,13 @@
     .lang-pick .code { display: none; }
     .lang-pick { padding: 0 8px; }
     .icon-btn { width: 32px; }
-    .search input { padding-right: 72px; }
+    .search { min-width: 0; }
+    .search input { padding: 0 38px 0 12px; }
+    .search .s-icon { display: none; }
+    .search:has(#clearSearchBtn:not([hidden])) input { padding-right: 70px; }
+    .head-actions { gap: 0; }
+    .head-actions .icon-btn { width: 30px; }
+    .top-inner { gap: 6px; }
   }
 </style>
 </head>
@@ -293,6 +306,7 @@
           <option value="zh">中文</option>
         </select>
       </label>
+      <button id="syncBtn" class="icon-btn" hidden data-i18n-title="gdSyncNow"><i data-icon="cloud"></i><span class="dot"></span></button>
       <button id="helpBtn" class="icon-btn" data-i18n-title="help"><i data-icon="help"></i></button>
       <button id="settingsBtn" class="icon-btn settings-btn" data-i18n-title="settings"><i data-icon="sliders"></i><span class="dot"></span></button>
     </div>
@@ -413,9 +427,30 @@
         <input id="gapRange" type="range" min="24" max="56" step="2" />
         <span id="gapLabel" style="width:36px;text-align:right"></span>
       </div>
+      <div class="range-row">
+        <span data-i18n="pressureSetting"></span>
+        <input id="pressureRange" type="range" min="0" max="100" step="10" />
+        <span id="pressureLabel" style="width:36px;text-align:right"></span>
+      </div>
       <label class="switch-row"><span data-i18n="fingerSetting"></span>
         <input type="checkbox" id="fingerCheck" />
       </label>
+    </div>
+    <hr class="div" />
+    <div class="sec" id="gdSec">
+      <h3 data-i18n="gdTitle"></h3>
+      <p data-i18n="gdDesc"></p>
+      <div class="field">
+        <label for="gdClientInput" data-i18n="gdClient"></label>
+        <input id="gdClientInput" type="text" placeholder="1234567890-xxxx.apps.googleusercontent.com" autocomplete="off" spellcheck="false" />
+      </div>
+      <p class="gd-uri"><span data-i18n="gdRedirect"></span> <code id="gdUri"></code></p>
+      <div class="result" id="gdResult"></div>
+      <div class="btn-row">
+        <button class="btn ghost" id="gdDisconnectBtn" data-i18n="gdDisconnect"></button>
+        <button class="btn" id="gdSyncBtn" data-i18n="gdSyncNow"></button>
+        <button class="btn primary" id="gdConnectBtn" data-i18n="gdConnect"></button>
+      </div>
     </div>
     <hr class="div" />
     <div class="sec">
@@ -424,7 +459,6 @@
       <div class="btn-row" style="justify-content:flex-start">
         <button class="btn" id="exportBtn" data-i18n="export"></button>
         <button class="btn" id="importBtn" data-i18n="import"></button>
-        <button class="btn ghost" id="sampleBtn" data-i18n="addSamples"></button>
         <input type="file" id="importFile" accept="application/json,.json" hidden />
       </div>
     </div>
@@ -473,11 +507,11 @@ const I18N = {
     apiKey: 'API 키', model: '모델 이름', keyClear: '키 삭제', keyTest: '연결 테스트',
     testing: '{m} 연결 확인 중…', testOk: '연결 성공 ({m}). 저장을 누르면 적용돼요.', testFail: '연결 실패: {msg}',
     needKey: 'API 키를 먼저 넣어 주세요.', keyDeleted: '키를 삭제했어요.', aiOn: 'AI 손글씨 인식을 켰어요.', aiOff: 'AI 손글씨 인식을 껐어요.',
-    writing: '필기', lineGap: '줄 간격', fingerSetting: '손가락으로도 쓰기 (끄면 손바닥 터치 무시)',
+    writing: '필기', lineGap: '줄 간격', pressureSetting: '필압 감도', pressureOff: '끔', fingerSetting: '손가락으로도 쓰기 (끄면 손바닥 터치 무시)',
+    gdTitle: '구글 드라이브 동기화', gdDesc: '구글 드라이브의 앱 전용 폴더에 노트를 저장해 다른 기기와 맞춥니다. 이 폴더는 cronota만 읽고 쓸 수 있고, 노트는 이 기기에도 그대로 남아 있어요.', gdClient: 'OAuth 클라이언트 ID', gdRedirect: '승인된 리디렉션 URI:', gdConnect: '구글로 연결', gdSyncNow: '지금 동기화', gdDisconnect: '연결 해제', gdNeedHttps: 'https 주소에 올린 페이지에서만 연결할 수 있어요. 지금은 파일로 열려 있어요.', gdNeedClient: 'OAuth 클라이언트 ID를 먼저 넣어 주세요.', gdOff: '연결되어 있지 않아요.', gdOn: '연결됨 · 마지막 동기화 {time}', gdOnNever: '연결됨 · 아직 동기화 전', gdExpired: '로그인이 만료됐어요. 지금 동기화를 누르면 다시 로그인해요.', gdSyncing: '동기화 중…', gdDone: '드라이브와 동기화했어요.', gdFail: '동기화 실패: {msg}', gdDenied: '구글 로그인이 취소됐어요.', gdConnected: '구글 드라이브에 연결했어요.', gdDisconnected: '구글 드라이브 연결을 해제했어요. 노트는 이 기기에 그대로 있어요.',
     data: '데이터', dataDesc: '노트는 이 브라우저에 저장됩니다. 브라우저 데이터를 지우면 함께 사라지니 가끔 백업해 두세요.',
-    export: '백업 내보내기', import: '백업 가져오기', addSamples: '샘플 노트 추가',
+    export: '백업 내보내기', import: '백업 가져오기',
     imported: '노트 {n}개를 가져왔어요.', importFail: '백업 파일을 읽지 못했어요.',
-    samplesAdded: '샘플 노트 {n}개를 추가했어요.', samplesExist: '샘플 노트가 이미 있어요.',
     helpSymbols: '기호', helpSymbolsIntro: '빨간 선 왼쪽에 기호를 그리고 오른쪽에 내용을 쓰면 기호별로 자동 분류됩니다.',
     insert: '넣기',
     symDesc: { todo: '해야 할 일 · 완료 표시 가능', fact: '사실, 알게 된 정보', ref: '참고 자료, 출처, 링크', idea: '떠오른 생각, 짧은 메모', decision: '정한 것, 결론', none: '기호 없이 쓰면 일반 노트' },
@@ -528,11 +562,11 @@ const I18N = {
     apiKey: 'API key', model: 'Model name', keyClear: 'Delete key', keyTest: 'Test connection',
     testing: 'Checking {m}…', testOk: 'Connected ({m}). Press Save to use it.', testFail: 'Connection failed: {msg}',
     needKey: 'Enter an API key first.', keyDeleted: 'Key deleted.', aiOn: 'AI handwriting recognition is on.', aiOff: 'AI handwriting recognition is off.',
-    writing: 'Writing', lineGap: 'Line spacing', fingerSetting: 'Allow finger writing (off ignores palm touches)',
+    writing: 'Writing', lineGap: 'Line spacing', pressureSetting: 'Pen pressure', pressureOff: 'Off', fingerSetting: 'Allow finger writing (off ignores palm touches)',
+    gdTitle: 'Google Drive sync', gdDesc: 'Saves your notes to a private app folder in your Google Drive so your devices stay in step. Only cronota can read that folder, and your notes also stay on this device.', gdClient: 'OAuth client ID', gdRedirect: 'Authorized redirect URI:', gdConnect: 'Connect Google', gdSyncNow: 'Sync now', gdDisconnect: 'Disconnect', gdNeedHttps: 'Connecting only works when the page is served from an https address. It is open as a local file now.', gdNeedClient: 'Enter the OAuth client ID first.', gdOff: 'Not connected.', gdOn: 'Connected · last synced {time}', gdOnNever: 'Connected · not synced yet', gdExpired: 'Sign-in expired. Tap Sync now to sign in again.', gdSyncing: 'Syncing…', gdDone: 'Synced with Drive.', gdFail: 'Sync failed: {msg}', gdDenied: 'Google sign-in was cancelled.', gdConnected: 'Connected to Google Drive.', gdDisconnected: 'Disconnected from Google Drive. Your notes stay on this device.',
     data: 'Data', dataDesc: 'Notes are stored in this browser. Clearing browser data deletes them, so back up now and then.',
-    export: 'Export backup', import: 'Import backup', addSamples: 'Add sample notes',
+    export: 'Export backup', import: 'Import backup',
     imported: 'Imported {n} notes.', importFail: 'Could not read the backup file.',
-    samplesAdded: 'Added {n} sample notes.', samplesExist: 'Sample notes are already there.',
     helpSymbols: 'Symbols', helpSymbolsIntro: 'Draw a symbol left of the red line and write to the right; notes are sorted by symbol.',
     insert: 'Insert',
     symDesc: { todo: 'Something to do · can be marked done', fact: 'Facts and information', ref: 'References, sources, links', idea: 'Ideas and quick memos', decision: 'Decisions and conclusions', none: 'Write without a symbol for a plain note' },
@@ -583,11 +617,11 @@ const I18N = {
     apiKey: 'APIキー', model: 'モデル名', keyClear: 'キーを削除', keyTest: '接続テスト',
     testing: '{m} に接続中…', testOk: '接続成功({m})。保存を押すと適用されます。', testFail: '接続失敗: {msg}',
     needKey: '先にAPIキーを入力してください。', keyDeleted: 'キーを削除しました。', aiOn: 'AI手書き認識をオンにしました。', aiOff: 'AI手書き認識をオフにしました。',
-    writing: '手書き', lineGap: '行間', fingerSetting: '指でも書く(オフで手のひらを無視)',
+    writing: '手書き', lineGap: '行間', pressureSetting: '筆圧感度', pressureOff: 'オフ', fingerSetting: '指でも書く(オフで手のひらを無視)',
+    gdTitle: 'Googleドライブ同期', gdDesc: 'Googleドライブのアプリ専用フォルダにノートを保存し、他の端末と同期します。このフォルダはcronotaだけが読み書きでき、ノートはこの端末にも残ります。', gdClient: 'OAuthクライアントID', gdRedirect: '承認済みのリダイレクトURI:', gdConnect: 'Googleに接続', gdSyncNow: '今すぐ同期', gdDisconnect: '接続を解除', gdNeedHttps: 'https のアドレスで公開したページでのみ接続できます。今はファイルとして開かれています。', gdNeedClient: '先にOAuthクライアントIDを入力してください。', gdOff: '接続されていません。', gdOn: '接続済み · 最終同期 {time}', gdOnNever: '接続済み · まだ同期していません', gdExpired: 'ログインの期限が切れました。「今すぐ同期」で再ログインします。', gdSyncing: '同期中…', gdDone: 'ドライブと同期しました。', gdFail: '同期に失敗しました: {msg}', gdDenied: 'Googleログインがキャンセルされました。', gdConnected: 'Googleドライブに接続しました。', gdDisconnected: 'Googleドライブとの接続を解除しました。ノートはこの端末に残っています。',
     data: 'データ', dataDesc: 'ノートはこのブラウザに保存されます。ブラウザのデータを消すと一緒に消えるので、時々バックアップしてください。',
-    export: 'バックアップを書き出す', import: 'バックアップを読み込む', addSamples: 'サンプルノートを追加',
+    export: 'バックアップを書き出す', import: 'バックアップを読み込む',
     imported: 'ノート{n}件を読み込みました。', importFail: 'バックアップファイルを読めませんでした。',
-    samplesAdded: 'サンプルノート{n}件を追加しました。', samplesExist: 'サンプルノートはすでにあります。',
     helpSymbols: '記号', helpSymbolsIntro: '赤い線の左に記号を書き、右に内容を書くと記号ごとに自動で分類されます。',
     insert: '入れる',
     symDesc: { todo: 'やること · 完了にできます', fact: '事実、わかった情報', ref: '参考資料、出典、リンク', idea: '思いつき、短いメモ', decision: '決めたこと、結論', none: '記号なしで書くと普通のノート' },
@@ -638,11 +672,11 @@ const I18N = {
     apiKey: 'API 密钥', model: '模型名称', keyClear: '删除密钥', keyTest: '测试连接',
     testing: '正在检查 {m}…', testOk: '连接成功({m})。点击保存后生效。', testFail: '连接失败:{msg}',
     needKey: '请先填入 API 密钥。', keyDeleted: '已删除密钥。', aiOn: '已开启 AI 手写识别。', aiOff: '已关闭 AI 手写识别。',
-    writing: '书写', lineGap: '行距', fingerSetting: '允许手指书写(关闭时忽略手掌)',
+    writing: '书写', lineGap: '行距', pressureSetting: '压感灵敏度', pressureOff: '关', fingerSetting: '允许手指书写(关闭时忽略手掌)',
+    gdTitle: 'Google 云端硬盘同步', gdDesc: '把笔记保存到 Google 云端硬盘的应用专用文件夹,让各设备保持一致。只有 cronota 能读写该文件夹,笔记也会保留在本设备上。', gdClient: 'OAuth 客户端 ID', gdRedirect: '已获授权的重定向 URI:', gdConnect: '连接 Google', gdSyncNow: '立即同步', gdDisconnect: '断开连接', gdNeedHttps: '只有通过 https 地址打开页面时才能连接。现在是以本地文件打开的。', gdNeedClient: '请先填写 OAuth 客户端 ID。', gdOff: '未连接。', gdOn: '已连接 · 上次同步 {time}', gdOnNever: '已连接 · 尚未同步', gdExpired: '登录已过期。点“立即同步”重新登录。', gdSyncing: '同步中…', gdDone: '已与云端硬盘同步。', gdFail: '同步失败:{msg}', gdDenied: '已取消 Google 登录。', gdConnected: '已连接 Google 云端硬盘。', gdDisconnected: '已断开 Google 云端硬盘。笔记仍保留在本设备上。',
     data: '数据', dataDesc: '笔记保存在此浏览器中。清除浏览器数据会一并删除,请不时备份。',
-    export: '导出备份', import: '导入备份', addSamples: '添加示例笔记',
+    export: '导出备份', import: '导入备份',
     imported: '已导入 {n} 条笔记。', importFail: '无法读取备份文件。',
-    samplesAdded: '已添加 {n} 条示例笔记。', samplesExist: '示例笔记已存在。',
     helpSymbols: '符号', helpSymbolsIntro: '在红线左侧画符号,右侧书写内容,笔记会按符号自动分类。',
     insert: '插入',
     symDesc: { todo: '待办事项 · 可标记完成', fact: '事实、获得的信息', ref: '参考资料、出处、链接', idea: '想法、简短备忘', decision: '决定、结论', none: '不画符号即为普通笔记' },
@@ -699,6 +733,7 @@ const ICONS = {
   pen: '<path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/>',
   penTip: '<path d="m12 19 7-7 3 3-7 7-3-3Z"/><path d="m18 13-1.5-7.5L2 2l3.5 14.5L13 18l5-5Z"/><path d="m2 2 7.586 7.586"/><circle cx="11" cy="11" r="2"/>',
   x: '<path d="M18 6 6 18M6 6l12 12"/>',
+  cloud: '<path d="M7 18.5h10.5a4 4 0 0 0 .6-7.95A6 6 0 0 0 6.6 9.2 4.65 4.65 0 0 0 7 18.5Z"/>',
   sliders: '<path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/>',
   help: '<circle cx="12" cy="12" r="9"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><path d="M12 17h.01"/>',
   globe: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a14 14 0 0 1 0 18a14 14 0 0 1 0-18"/>',
@@ -779,7 +814,7 @@ const prefs = {
   penOnly: lsGet('cronota_pen_only', '1') === '1',
   sortDesc: lsGet('cronota_sort', 'desc') !== 'asc',
   pageMode: lsGet('cronota_page_mode', 'v') === 'h' ? 'h' : 'v',
-  pressure: 100, // fixed (Scott 2026-11-20)
+  pressure: (() => { const v = parseInt(lsGet('cronota_pressure', '100'), 10); return Number.isFinite(v) ? Math.min(100, Math.max(0, v)) : 100; })(),
   key: lsGet('cronota_gemini_key', ''),
   model: lsGet('cronota_gemini_model', DEFAULT_MODEL) || DEFAULT_MODEL
 };
@@ -852,6 +887,8 @@ function sanitizeBlock(b) {
     status: b.status === 'done' ? 'done' : 'open',
     priority: b.priority === 'high' ? 'high' : 'normal',
     createdAt: Number.isFinite(Date.parse(b.createdAt)) ? new Date(b.createdAt).toISOString() : new Date().toISOString(),
+    updatedAt: Number.isFinite(Date.parse(b.updatedAt)) ? new Date(b.updatedAt).toISOString()
+      : Number.isFinite(Date.parse(b.createdAt)) ? new Date(b.createdAt).toISOString() : new Date().toISOString(),
     text: toStr(b.text ?? b.ocrText).trim(),
     keywords: toKeywords(b.keywords),
     gap: Math.min(56, Math.max(20, +b.gap || 32)),
@@ -879,14 +916,47 @@ async function loadBlocks() {
       if (old) list = JSON.parse(old);
     } catch {}
   }
-  if (!Array.isArray(list)) list = createSampleBlocks();
+  if (!Array.isArray(list)) list = [];
   blocks = list.map(sanitizeBlock).filter(Boolean);
+  tombs = sanitizeTombs(chosen && chosen.deleted);
+  sigs = new Map(blocks.map((b) => [b.id, blockSig(b)]));
   if (!chosen) persist();
 }
 
+/* Change tracking for sync: every note carries updatedAt, deleted notes leave a
+   tombstone (id -> time) so a deletion on one device also reaches the others. */
+let tombs = {};
+let sigs = new Map();
+function blockSig(b) {
+  const pts = b.strokes.reduce((n, s) => n + s.points.length, 0);
+  const last = b.strokes.length ? b.strokes[b.strokes.length - 1].points.slice(-1)[0] : null;
+  return JSON.stringify([b.tagType, b.tagSource, b.status, b.priority, b.text, b.keywords, b.gap, b.createdAt, b.strokes.length, pts, last && last.x, last && last.y]);
+}
+function sanitizeTombs(o) {
+  const out = {};
+  const cutoff = Date.now() - 180 * 864e5;
+  if (o && typeof o === 'object') for (const [id, ts] of Object.entries(o)) if (typeof id === 'string' && +ts > cutoff) out[id.slice(0, 80)] = +ts;
+  return out;
+}
+function trackChanges() {
+  const now = Date.now();
+  const seen = new Set();
+  for (const b of blocks) {
+    seen.add(b.id);
+    const sig = blockSig(b);
+    if (sigs.get(b.id) === sig) continue;
+    if (sigs.has(b.id) || tombs[b.id] || !b.updatedAt) b.updatedAt = new Date(now).toISOString();
+    delete tombs[b.id];
+    sigs.set(b.id, sig);
+  }
+  for (const id of [...sigs.keys()]) if (!seen.has(id)) { sigs.delete(id); tombs[id] = now; }
+}
+
 let saveChain = Promise.resolve();
-function persist() {
-  const payload = { savedAt: Date.now(), blocks: blocks.map((b) => ({ ...b })) };
+function persist(fromSync = false) {
+  trackChanges();
+  if (!fromSync) gdSchedule();
+  const payload = { savedAt: Date.now(), blocks: blocks.map((b) => ({ ...b })), deleted: { ...tombs } };
   saveChain = saveChain.then(async () => {
     try {
       await idb.set('notes', payload);
@@ -900,55 +970,6 @@ function persist() {
     storageWarned = false;
   });
   return saveChain;
-}
-
-/* =========================================================
-   Sample data
-   ========================================================= */
-function mk(pointsList, color, width, dy = 16) {
-  return pointsList.map((pts) => ({ color, width, points: pts.map(([x, y]) => ({ x, y: y + dy, p: 0.5 })) }));
-}
-function createSampleBlocks() {
-  return [
-    { id: 'sample_1', tagType: 'todo', priority: 'high', createdAt: '2026-11-20T09:15:00',
-      text: '디자인 시안 견적서 회신하기 (오후 4시 전)', keywords: ['견적서', '회신', '디자인', '마감'],
-      strokes: [
-        ...mk([[[64, 37], [210, 37]]], '#FACC15', 16).map((s) => ({ ...s, hl: true })),
-        ...mk([[[22,20],[44,20],[44,42],[22,42],[22,20]],
-        [[68,24],[82,22],[80,38]], [[66,33],[84,31]], [[88,20],[88,42]],
-        [[98,22],[112,22],[100,36]], [[106,30],[114,40]], [[120,20],[120,42]],
-        [[130,24],[126,38]], [[132,26],[138,38]], [[144,20],[144,42]],
-        [[162,22],[170,22]], [[158,28],[174,28]], [[166,34],[166,42]],
-        [[182,22],[182,36],[196,36]], [[188,40],[204,40]]], HIGH_COLOR, 2.8)] },
-    { id: 'sample_2', tagType: 'fact', createdAt: '2026-11-19T16:40:00',
-      text: '아이패드 PencilKit + 갤럭시탭 S-Pen 좌표 동기화 회의', keywords: ['아이패드', '갤럭시탭', 'S-Pen', '동기화', '회의'],
-      strokes: mk([[[33,18],[44,22],[46,33],[39,43],[27,43],[20,33],[23,22],[33,18]],
-        [[66,24],[66,40]], [[66,24],[78,24],[78,40]],
-        [[88,22],[88,42]], [[98,22],[94,38]], [[96,30],[108,30]], [[108,22],[108,42]],
-        [[120,24],[134,24],[122,38],[136,38]], [[146,22],[146,42]],
-        [[160,26],[178,24],[194,28],[212,24],[230,27]]], '#1E293B', 2.5) },
-    { id: 'sample_3', tagType: 'ref', createdAt: '2026-11-18T11:20:00',
-      text: 'Pointer Events getCoalescedEvents() 문서 & Perfect Freehand', keywords: ['API', 'Pointer', '필기엔진'],
-      strokes: mk([[[33,18],[46,42],[20,42],[33,18]],
-        [[66,26],[76,22],[84,38]], [[92,24],[106,24],[106,38],[92,38]],
-        [[116,22],[116,42]], [[128,26],[142,26],[130,38],[144,38]],
-        [[156,28],[176,25],[192,31],[214,26]]], '#1E293B', 2.5) },
-    { id: 'sample_4', tagType: 'idea', createdAt: '2026-11-20T08:05:00',
-      text: '검색 결과에 변환 텍스트 대신 원본 필기 카드를 띄우기', keywords: ['검색', '원본필기', 'UI'],
-      strokes: mk([[[33,18],[33,44]], [[20,31],[46,31]],
-        [[66,30],[74,22],[82,30],[74,38],[66,30]], [[92,20],[92,42]],
-        [[104,24],[120,24],[112,38]], [[130,26],[150,24],[170,29],[194,25],[218,28]]], '#2563EB', 2.6) },
-    { id: 'sample_5', tagType: 'none', createdAt: '2026-11-19T10:10:00',
-      text: '주간 회고: 비전 AI 호출 비용 정리', keywords: ['회고', '비용', 'AI'],
-      strokes: mk([[[68,24],[82,24],[82,36]], [[70,38],[86,38]],
-        [[96,22],[96,42]], [[108,24],[124,26],[140,22],[158,28]],
-        [[172,24],[190,26],[210,22],[232,28]]], '#16A34A', 2.5) },
-    { id: 'sample_6', tagType: 'decision', priority: 'high', createdAt: '2026-11-20T07:00:00',
-      text: 'MVP는 두 태블릿 동시 지원을 위해 PWA 웹앱으로 확정', keywords: ['MVP', 'PWA', '웹앱', '확정'],
-      strokes: mk([[[33,17],[46,30],[33,43],[20,30],[33,17]],
-        [[66,22],[84,22],[84,36]], [[94,20],[94,42]],
-        [[108,26],[128,24],[146,29],[166,25],[188,28]]], HIGH_COLOR, 2.8) }
-  ].map((b) => ({ status: 'open', priority: 'normal', gap: 32, tagSource: 'symbol', ...b }));
 }
 
 /* =========================================================
@@ -1990,6 +2011,9 @@ $('#settingsBtn').addEventListener('click', () => {
   $('#gapRange').value = prefs.gap;
   $('#gapLabel').textContent = prefs.gap + 'px';
   $('#fingerCheck').checked = !prefs.penOnly;
+  $('#pressureRange').value = prefs.pressure;
+  showPressure();
+  gdRenderSettings();
   $('#aiResult').className = 'result';
   dlg.showModal();
 });
@@ -2034,6 +2058,13 @@ $('#gapRange').addEventListener('input', (e) => {
   lsSet('cronota_line_gap', String(v));
 });
 $('#fingerCheck').addEventListener('change', (e) => setPenOnly(!e.target.checked));
+function showPressure() { $('#pressureLabel').textContent = prefs.pressure ? String(prefs.pressure) : t('pressureOff'); }
+$('#pressureRange').addEventListener('input', (e) => {
+  prefs.pressure = parseInt(e.target.value, 10) || 0;
+  lsSet('cronota_pressure', String(prefs.pressure));
+  showPressure();
+  redraw();
+});
 
 
 $('#exportBtn').addEventListener('click', () => {
@@ -2061,12 +2092,215 @@ $('#importFile').addEventListener('change', async (e) => {
     toast(t('importFail'));
   }
 });
-$('#sampleBtn').addEventListener('click', () => {
-  const have = new Set(blocks.map((b) => b.id));
-  const added = createSampleBlocks().map(sanitizeBlock).filter((b) => !have.has(b.id));
-  blocks.push(...added);
-  persist(); renderNotes(); renderKeywordChips();
-  toast(added.length ? t('samplesAdded', { n: added.length }) : t('samplesExist'));
+
+/* =========================================================
+   Google Drive sync (optional). OAuth implicit flow by page
+   redirect (no external script); notes live in one JSON file
+   in the Drive appDataFolder and are merged per note.
+   ========================================================= */
+const GD_SCOPE = 'https://www.googleapis.com/auth/drive.appdata';
+const GD_FILE = 'cronota-notes.json';
+const gd = {
+  client: lsGet('cronota_gd_client', ''),
+  on: lsGet('cronota_gd_on', '0') === '1',
+  token: '', exp: 0,
+  fileId: lsGet('cronota_gd_file', ''),
+  last: +lsGet('cronota_gd_last', '0') || 0,
+  busy: false, queued: false, timer: null, state: ''
+};
+try { const tk = JSON.parse(lsGet('cronota_gd_token', 'null')); if (tk && tk.exp > Date.now()) { gd.token = tk.token; gd.exp = tk.exp; } } catch {}
+function gdRedirectUri() { return location.origin + location.pathname; }
+function gdCanConnect() { return location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1'; }
+function gdTokenOk() { return !!gd.token && gd.exp - 60000 > Date.now(); }
+
+function gdConnect() {
+  if (!gdCanConnect()) { toast(t('gdNeedHttps')); return; }
+  if (!gd.client) { toast(t('gdNeedClient')); return; }
+  const state = uid();
+  try {
+    sessionStorage.setItem('cronota_gd_state', state);
+    if (strokes.length) sessionStorage.setItem('cronota_draft', JSON.stringify({ strokes, editNoteId }));
+  } catch {}
+  const q = new URLSearchParams({ client_id: gd.client, redirect_uri: gdRedirectUri(), response_type: 'token', scope: GD_SCOPE, include_granted_scopes: 'true', state });
+  location.assign('https://accounts.google.com/o/oauth2/v2/auth?' + q);
+}
+/** Called once at start: picks up the token Google returns in the URL fragment. */
+function gdTakeRedirect() {
+  if (!location.hash || !/(access_token|error)=/.test(location.hash)) return null;
+  const h = new URLSearchParams(location.hash.slice(1));
+  let expected = null;
+  try { expected = sessionStorage.getItem('cronota_gd_state'); sessionStorage.removeItem('cronota_gd_state'); } catch {}
+  history.replaceState(null, '', location.pathname + location.search);
+  if (!expected || h.get('state') !== expected) return null;
+  if (h.get('error')) return 'denied';
+  const token = h.get('access_token');
+  if (!token) return null;
+  gd.token = token;
+  gd.exp = Date.now() + (parseInt(h.get('expires_in'), 10) || 3600) * 1000;
+  lsSet('cronota_gd_token', JSON.stringify({ token: gd.token, exp: gd.exp }));
+  gd.on = true; lsSet('cronota_gd_on', '1');
+  return 'ok';
+}
+function gdRestoreDraft() {
+  let d = null;
+  try { d = JSON.parse(sessionStorage.getItem('cronota_draft') || 'null'); sessionStorage.removeItem('cronota_draft'); } catch {}
+  if (!d || !Array.isArray(d.strokes) || !d.strokes.length) return;
+  strokes = d.strokes.map(sanitizeStroke).filter(Boolean);
+  if (d.editNoteId && blocks.some((b) => b.id === d.editNoteId)) editNoteId = d.editNoteId;
+}
+
+async function gdApi(url, opts = {}) {
+  let r;
+  try {
+    r = await fetch(url, { ...opts, headers: { Authorization: 'Bearer ' + gd.token, ...(opts.headers || {}) } });
+  } catch { throw Object.assign(new Error(t('errNet')), { code: 'net' }); }
+  if (r.status === 401) { gd.token = ''; gd.exp = 0; lsDel('cronota_gd_token'); throw Object.assign(new Error('401'), { code: 'auth' }); }
+  if (!r.ok) {
+    let msg = 'HTTP ' + r.status;
+    try { const j = await r.json(); if (j.error && j.error.message) msg += ' ' + j.error.message; } catch {}
+    throw Object.assign(new Error(msg), { code: r.status === 404 ? 'gone' : 'http', status: r.status });
+  }
+  return r;
+}
+async function gdFindFile() {
+  const q = new URLSearchParams({ spaces: 'appDataFolder', q: `name='${GD_FILE}' and trashed=false`, fields: 'files(id,modifiedTime)', orderBy: 'modifiedTime desc', pageSize: '10' });
+  const r = await gdApi('https://www.googleapis.com/drive/v3/files?' + q);
+  const j = await r.json();
+  return j.files && j.files[0] ? j.files[0].id : '';
+}
+async function gdDownload(id) {
+  const r = await gdApi(`https://www.googleapis.com/drive/v3/files/${encodeURIComponent(id)}?alt=media`);
+  try { return JSON.parse(await r.text()); } catch { return null; }
+}
+async function gdUpload(id, data) {
+  const body = JSON.stringify(data);
+  if (id) {
+    await gdApi(`https://www.googleapis.com/upload/drive/v3/files/${encodeURIComponent(id)}?uploadType=media`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body });
+    return id;
+  }
+  const bd = 'cronota' + uid();
+  const meta = JSON.stringify({ name: GD_FILE, parents: ['appDataFolder'], mimeType: 'application/json' });
+  const multipart = `--${bd}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${meta}\r\n--${bd}\r\nContent-Type: application/json\r\n\r\n${body}\r\n--${bd}--`;
+  const r = await gdApi('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id', { method: 'POST', headers: { 'Content-Type': `multipart/related; boundary=${bd}` }, body: multipart });
+  return (await r.json()).id;
+}
+
+/** Per-note merge: newer updatedAt wins; a deletion wins over edits made before it. */
+function mergeData(local, remote) {
+  const byId = new Map();
+  for (const b of local.blocks) byId.set(b.id, b);
+  for (const raw of remote.blocks) {
+    const b = sanitizeBlock(raw);
+    if (!b) continue;
+    const mine = byId.get(b.id);
+    if (!mine || Date.parse(b.updatedAt) > Date.parse(mine.updatedAt)) byId.set(b.id, b);
+  }
+  const del = { ...sanitizeTombs(remote.deleted) };
+  for (const [id, ts] of Object.entries(local.deleted)) del[id] = Math.max(del[id] || 0, ts);
+  const out = [];
+  for (const b of byId.values()) {
+    if (del[b.id] && del[b.id] >= Date.parse(b.updatedAt)) continue;
+    delete del[b.id];
+    out.push(b);
+  }
+  return { blocks: out, deleted: del };
+}
+function dataSig(d) {
+  return JSON.stringify([d.blocks.map((b) => b.id + '@' + b.updatedAt).sort(), Object.keys(d.deleted).sort()]);
+}
+
+function gdSetState(st) {
+  gd.state = st;
+  const btn = $('#syncBtn');
+  btn.hidden = !gd.on;
+  btn.classList.toggle('busy', st === 'busy');
+  btn.classList.toggle('warn', st === 'auth' || st === 'err' || (gd.on && !gdTokenOk() && st !== 'busy'));
+  if (dlg.open) gdRenderSettings();
+}
+function gdRenderSettings() {
+  $('#gdClientInput').value = gd.client;
+  $('#gdUri').textContent = gdRedirectUri();
+  $('#gdSyncBtn').hidden = !gd.on;
+  $('#gdDisconnectBtn').hidden = !gd.on;
+  $('#gdConnectBtn').hidden = gd.on && gdTokenOk();
+  const r = $('#gdResult');
+  let text = '', kind = 'info';
+  if (!gdCanConnect()) { text = t('gdNeedHttps'); kind = 'err'; }
+  else if (gd.state === 'busy') text = t('gdSyncing');
+  else if (!gd.on) text = t('gdOff');
+  else if (!gdTokenOk()) { text = t('gdExpired'); kind = 'err'; }
+  else if (gd.last) { text = t('gdOn', { time: `${dayLabel(new Date(gd.last).toISOString())} ${timeLabel(new Date(gd.last).toISOString())}` }); kind = 'ok'; }
+  else text = t('gdOnNever');
+  r.textContent = text;
+  r.className = 'result show ' + kind;
+}
+
+function gdSchedule() {
+  if (!gd.on || !gdTokenOk()) return;
+  clearTimeout(gd.timer);
+  gd.timer = setTimeout(() => gdSync(), 2500);
+}
+async function gdSync(interactive = false) {
+  if (!gd.on) return;
+  if (!gdTokenOk()) { gdSetState('auth'); if (interactive) gdConnect(); return; }
+  if (gd.busy) { gd.queued = true; return; }
+  gd.busy = true; gdSetState('busy');
+  try {
+    await saveChain;
+    let id = gd.fileId || await gdFindFile();
+    let remote = null;
+    if (id) {
+      try { remote = await gdDownload(id); }
+      catch (e) { if (e.code !== 'gone') throw e; id = await gdFindFile(); remote = id ? await gdDownload(id) : null; }
+    }
+    const remoteData = { blocks: remote && Array.isArray(remote.blocks) ? remote.blocks : [], deleted: remote && remote.deleted || {} };
+    const local = { blocks, deleted: tombs };
+    const merged = mergeData(local, remoteData);
+    const mSig = dataSig(merged);
+    if (mSig !== dataSig(local)) {
+      blocks = merged.blocks;
+      tombs = merged.deleted;
+      sigs = new Map(blocks.map((b) => [b.id, blockSig(b)]));
+      if (selectedId && !blocks.some((b) => b.id === selectedId)) selectedId = null;
+      persist(true);
+      renderNotes(); renderKeywordChips();
+    }
+    if (!remote || mSig !== dataSig({ blocks: remoteData.blocks.map(sanitizeBlock).filter(Boolean), deleted: sanitizeTombs(remoteData.deleted) })) {
+      id = await gdUpload(id, { app: 'cronota', version: 1, savedAt: Date.now(), blocks: blocks.map((b) => ({ ...b })), deleted: { ...tombs } });
+    }
+    gd.fileId = id; lsSet('cronota_gd_file', id);
+    gd.last = Date.now(); lsSet('cronota_gd_last', String(gd.last));
+    gd.busy = false; gdSetState('ok');
+    if (interactive) toast(t('gdDone'));
+  } catch (e) {
+    gd.busy = false;
+    gdSetState(e.code === 'auth' ? 'auth' : 'err');
+    if (e.code === 'auth') { if (interactive) gdConnect(); }
+    else if (interactive) toast(t('gdFail', { msg: e.message }));
+  }
+  if (gd.queued) { gd.queued = false; gdSync(); }
+}
+function gdDisconnect() {
+  if (gd.token) fetch('https://oauth2.googleapis.com/revoke?token=' + encodeURIComponent(gd.token), { method: 'POST' }).catch(() => {});
+  gd.on = false; gd.token = ''; gd.exp = 0; gd.fileId = ''; gd.last = 0;
+  ['cronota_gd_on', 'cronota_gd_token', 'cronota_gd_file', 'cronota_gd_last'].forEach(lsDel);
+  gdSetState('');
+  toast(t('gdDisconnected'));
+}
+$('#gdClientInput').addEventListener('change', (e) => {
+  gd.client = e.target.value.trim();
+  lsSet('cronota_gd_client', gd.client);
+});
+$('#gdConnectBtn').addEventListener('click', () => {
+  gd.client = $('#gdClientInput').value.trim();
+  lsSet('cronota_gd_client', gd.client);
+  gdConnect();
+});
+$('#gdSyncBtn').addEventListener('click', () => gdSync(true));
+$('#gdDisconnectBtn').addEventListener('click', gdDisconnect);
+$('#syncBtn').addEventListener('click', () => gdSync(true));
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && gd.on && gdTokenOk() && Date.now() - gd.last > 30000) gdSync();
 });
 
 /* =========================================================
@@ -2115,12 +2349,18 @@ window.addEventListener('resize', () => {
   resizeTimer = setTimeout(() => { renderNotes(); if (padIsOpen()) sizePad(); }, 150);
 });
 
+const gdReturn = gdTakeRedirect();
 (async () => {
   await loadBlocks();
+  gdRestoreDraft();
   layoutPages(true);
   afterCanvasChange();
   renderNotes();
   renderKeywordChips();
+  gdSetState('');
+  if (gdReturn === 'denied') toast(t('gdDenied'));
+  if (gdReturn === 'ok') toast(t('gdConnected'));
+  if (gd.on && gdTokenOk()) gdSync();
 })();
 </script>
 </body>
