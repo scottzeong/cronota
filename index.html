@@ -166,9 +166,10 @@
   .banner.show { display: flex; }
   .banner button { font-weight: 600; color: var(--ink); white-space: nowrap; text-decoration: underline; text-underline-offset: 3px; }
 
-  .list { flex: 1; min-height: 0; overflow-y: auto; padding: 14px; background: var(--surface); }
+  .list { flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; overscroll-behavior-x: none; touch-action: pan-y; scrollbar-gutter: stable; padding: 14px; background: var(--surface); }
   .page { border-radius: 14px; overflow: hidden; background: var(--paper); box-shadow: 0 0 0 1px var(--hair); }
-  .page-scroll { overflow-x: auto; }
+  .page-scroll { overflow: hidden; width: 100%; }
+  .pnote canvas { max-width: 100%; }
   .pnote { position: relative; cursor: pointer; }
   .pnote canvas { display: block; }
   .pnote.done canvas { opacity: .35; }
@@ -217,6 +218,8 @@
   .result.info { background: var(--hover); color: var(--muted); }
   .range-row { display: flex; align-items: center; gap: 12px; font-size: 13px; }
   .range-row input { flex: 1; accent-color: var(--dark); }
+  .range-row > span:first-child { min-width: 72px; }
+  .range-row + .range-row { margin-top: 8px; }
   .switch-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 13px; padding: 10px 0 0; }
   .switch-row input { width: 18px; height: 18px; accent-color: var(--dark); }
   hr.div { border: 0; border-top: 1px solid var(--hair); margin: 0; }
@@ -406,6 +409,11 @@
         <input id="gapRange" type="range" min="24" max="56" step="2" />
         <span id="gapLabel" style="width:36px;text-align:right"></span>
       </div>
+      <div class="range-row">
+        <span data-i18n="pressureSetting"></span>
+        <input id="pressureRange" type="range" min="0" max="100" step="10" />
+        <span id="pressureLabel" style="width:36px;text-align:right"></span>
+      </div>
       <label class="switch-row"><span data-i18n="fingerSetting"></span>
         <input type="checkbox" id="fingerCheck" />
       </label>
@@ -466,7 +474,7 @@ const I18N = {
     apiKey: 'API 키', model: '모델 이름', keyClear: '키 삭제', keyTest: '연결 테스트',
     testing: '{m} 연결 확인 중…', testOk: '연결 성공 ({m}). 저장을 누르면 적용돼요.', testFail: '연결 실패: {msg}',
     needKey: 'API 키를 먼저 넣어 주세요.', keyDeleted: '키를 삭제했어요.', aiOn: 'AI 손글씨 인식을 켰어요.', aiOff: 'AI 손글씨 인식을 껐어요.',
-    writing: '필기', lineGap: '줄 간격', fingerSetting: '손가락으로도 쓰기 (끄면 손바닥 터치 무시)',
+    writing: '필기', lineGap: '줄 간격', pressureSetting: '필압 감도', pressureOff: '끔', fingerSetting: '손가락으로도 쓰기 (끄면 손바닥 터치 무시)',
     data: '데이터', dataDesc: '노트는 이 브라우저에 저장됩니다. 브라우저 데이터를 지우면 함께 사라지니 가끔 백업해 두세요.',
     export: '백업 내보내기', import: '백업 가져오기', addSamples: '샘플 노트 추가',
     imported: '노트 {n}개를 가져왔어요.', importFail: '백업 파일을 읽지 못했어요.',
@@ -521,7 +529,7 @@ const I18N = {
     apiKey: 'API key', model: 'Model name', keyClear: 'Delete key', keyTest: 'Test connection',
     testing: 'Checking {m}…', testOk: 'Connected ({m}). Press Save to use it.', testFail: 'Connection failed: {msg}',
     needKey: 'Enter an API key first.', keyDeleted: 'Key deleted.', aiOn: 'AI handwriting recognition is on.', aiOff: 'AI handwriting recognition is off.',
-    writing: 'Writing', lineGap: 'Line spacing', fingerSetting: 'Allow finger writing (off ignores palm touches)',
+    writing: 'Writing', lineGap: 'Line spacing', pressureSetting: 'Pen pressure', pressureOff: 'Off', fingerSetting: 'Allow finger writing (off ignores palm touches)',
     data: 'Data', dataDesc: 'Notes are stored in this browser. Clearing browser data deletes them, so back up now and then.',
     export: 'Export backup', import: 'Import backup', addSamples: 'Add sample notes',
     imported: 'Imported {n} notes.', importFail: 'Could not read the backup file.',
@@ -576,7 +584,7 @@ const I18N = {
     apiKey: 'APIキー', model: 'モデル名', keyClear: 'キーを削除', keyTest: '接続テスト',
     testing: '{m} に接続中…', testOk: '接続成功({m})。保存を押すと適用されます。', testFail: '接続失敗: {msg}',
     needKey: '先にAPIキーを入力してください。', keyDeleted: 'キーを削除しました。', aiOn: 'AI手書き認識をオンにしました。', aiOff: 'AI手書き認識をオフにしました。',
-    writing: '手書き', lineGap: '行間', fingerSetting: '指でも書く(オフで手のひらを無視)',
+    writing: '手書き', lineGap: '行間', pressureSetting: '筆圧感度', pressureOff: 'オフ', fingerSetting: '指でも書く(オフで手のひらを無視)',
     data: 'データ', dataDesc: 'ノートはこのブラウザに保存されます。ブラウザのデータを消すと一緒に消えるので、時々バックアップしてください。',
     export: 'バックアップを書き出す', import: 'バックアップを読み込む', addSamples: 'サンプルノートを追加',
     imported: 'ノート{n}件を読み込みました。', importFail: 'バックアップファイルを読めませんでした。',
@@ -631,7 +639,7 @@ const I18N = {
     apiKey: 'API 密钥', model: '模型名称', keyClear: '删除密钥', keyTest: '测试连接',
     testing: '正在检查 {m}…', testOk: '连接成功({m})。点击保存后生效。', testFail: '连接失败:{msg}',
     needKey: '请先填入 API 密钥。', keyDeleted: '已删除密钥。', aiOn: '已开启 AI 手写识别。', aiOff: '已关闭 AI 手写识别。',
-    writing: '书写', lineGap: '行距', fingerSetting: '允许手指书写(关闭时忽略手掌)',
+    writing: '书写', lineGap: '行距', pressureSetting: '压感灵敏度', pressureOff: '关', fingerSetting: '允许手指书写(关闭时忽略手掌)',
     data: '数据', dataDesc: '笔记保存在此浏览器中。清除浏览器数据会一并删除,请不时备份。',
     export: '导出备份', import: '导入备份', addSamples: '添加示例笔记',
     imported: '已导入 {n} 条笔记。', importFail: '无法读取备份文件。',
@@ -772,6 +780,7 @@ const prefs = {
   penOnly: lsGet('cronota_pen_only', '1') === '1',
   sortDesc: lsGet('cronota_sort', 'desc') !== 'asc',
   pageMode: lsGet('cronota_page_mode', 'v') === 'h' ? 'h' : 'v',
+  pressure: Math.min(100, Math.max(0, parseInt(lsGet('cronota_pressure', '60'), 10) || 0)),
   key: lsGet('cronota_gemini_key', ''),
   model: lsGet('cronota_gemini_model', DEFAULT_MODEL) || DEFAULT_MODEL
 };
@@ -946,10 +955,19 @@ function createSampleBlocks() {
 /* =========================================================
    Stroke rendering (highlighter strokes go under the ink)
    ========================================================= */
-function lineWidthFor(base, p) { return Math.max(0.8, base * (0.35 + Math.pow(p ?? 0.5, 0.85) * 1.45)); }
+/* Pressure → width. Pressure 0.5 draws the nominal width; the sensitivity setting
+   (0–100) sets how far light/heavy pressure moves away from it (up to ~×0.25 … ×4). */
+function pressureFactor(p) {
+  const sens = prefs.pressure / 100;
+  if (sens <= 0) return 1;
+  const q = Math.min(1, Math.max(0, ((p ?? 0.5) - 0.1) / 0.8));
+  const R = 1 + sens * 3;
+  return Math.pow(R, 2 * q - 1);
+}
+function lineWidthFor(base, p) { return Math.max(0.6, base * pressureFactor(p)); }
 function drawSegment(ctx, s, p0, p1, dx = 0, dy = 0) {
   ctx.strokeStyle = s.color;
-  ctx.lineWidth = lineWidthFor(s.width, p1.p);
+  ctx.lineWidth = lineWidthFor(s.width, ((p0.p ?? 0.5) + (p1.p ?? 0.5)) / 2);
   ctx.beginPath();
   ctx.moveTo(p0.x + dx, p0.y + dy);
   ctx.lineTo(p1.x + dx, p1.y + dy);
@@ -1575,17 +1593,20 @@ function drawNoteInk(canvas, b, width) {
   const box = strokesBox(b.strokes);
   const offY = -Math.floor(Math.max(0, box.minY) / g) * g + g;
   const h = Math.ceil((box.maxY + offY + 6) / g) * g;
-  const w = Math.max(width, Math.ceil(box.maxX + 16));
+  // Notes written on a wider screen are shrunk to fit, so the page never scrolls sideways.
+  const k = Math.min(1, width / Math.max(1, Math.ceil(box.maxX + 16)));
+  const w = Math.max(1, Math.floor(width));
+  const hh = Math.round(h * k);
   const dpr = dprOf();
   canvas.width = Math.round(w * dpr);
-  canvas.height = Math.round(h * dpr);
+  canvas.height = Math.round(hh * dpr);
   canvas.style.width = w + 'px';
-  canvas.style.height = h + 'px';
-  canvas.style.setProperty('--gap', g + 'px');
+  canvas.style.height = hh + 'px';
+  canvas.style.setProperty('--gap', (g * k) + 'px');
+  canvas.style.setProperty('--margin-x', (60 * k) + 'px');
   const c = canvas.getContext('2d');
-  c.setTransform(dpr, 0, 0, dpr, 0, 0);
+  c.setTransform(dpr * k, 0, 0, dpr * k, 0, 0);
   drawStrokes(c, b.strokes, 0, offY);
-  return w;
 }
 
 function renderNotes() {
@@ -1618,13 +1639,11 @@ function renderNotes() {
 
   const scrollEl = listEl.querySelector('.page-scroll');
   const baseW = scrollEl.clientWidth;
-  let maxW = baseW;
   const byId = new Map(list.map((b) => [b.id, b]));
   scrollEl.querySelectorAll('.pnote').forEach((el) => {
     const b = byId.get(el.dataset.id);
-    if (b) maxW = Math.max(maxW, drawNoteInk(el.querySelector('canvas[data-ink]'), b, baseW));
+    if (b) drawNoteInk(el.querySelector('canvas[data-ink]'), b, baseW);
   });
-  if (maxW > baseW) scrollEl.querySelectorAll('.pnote, .page-end, .day-head').forEach((el) => { el.style.width = maxW + 'px'; });
   const input = listEl.querySelector('[data-edit-input]');
   if (input) { input.focus(); input.setSelectionRange(input.value.length, input.value.length); }
 }
@@ -1919,6 +1938,8 @@ $('#settingsBtn').addEventListener('click', () => {
   $('#gapRange').value = prefs.gap;
   $('#gapLabel').textContent = prefs.gap + 'px';
   $('#fingerCheck').checked = !prefs.penOnly;
+  $('#pressureRange').value = prefs.pressure;
+  showPressure();
   $('#aiResult').className = 'result';
   dlg.showModal();
 });
@@ -1963,6 +1984,13 @@ $('#gapRange').addEventListener('input', (e) => {
   lsSet('cronota_line_gap', String(v));
 });
 $('#fingerCheck').addEventListener('change', (e) => setPenOnly(!e.target.checked));
+function showPressure() { $('#pressureLabel').textContent = prefs.pressure ? String(prefs.pressure) : t('pressureOff'); }
+$('#pressureRange').addEventListener('input', (e) => {
+  prefs.pressure = parseInt(e.target.value, 10) || 0;
+  lsSet('cronota_pressure', String(prefs.pressure));
+  showPressure();
+  redraw();
+});
 
 $('#exportBtn').addEventListener('click', () => {
   const blob = new Blob([JSON.stringify({ app: 'cronota', version: 4, exportedAt: new Date().toISOString(), blocks })], { type: 'application/json' });
