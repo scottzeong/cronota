@@ -12,11 +12,14 @@
       --paper-bg: #FAF9F6;
       --dot-color: #E2E0D8;
     }
+    html, body {
+      overscroll-behavior: none;
+      overscroll-behavior-y: contain;
+    }
     body {
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
       background-color: #F3F2EE;
       color: #1F2937;
-      overscroll-behavior: none;
     }
     .dot-grid {
       background-color: var(--paper-bg);
@@ -447,11 +450,18 @@
     }
 
     // ---------- Canvas Sizing & Rendering ----------
-    function resizeCanvas() {
+    let lastCanvasW = 0, lastCanvasH = 0;
+    function resizeCanvas(force = false) {
       const rect = canvas.parentElement.getBoundingClientRect();
-      const dpr = window.devicePixelRatio || 1;
-      canvas.width = Math.max(300, Math.floor(rect.width * dpr));
-      canvas.height = Math.max(360, Math.floor(rect.height * dpr));
+      if (rect.width === 0 || rect.height === 0) return;
+      const w = Math.max(300, Math.floor(rect.width));
+      const h = Math.max(360, Math.floor(rect.height));
+      if (!force && Math.abs(w - lastCanvasW) < 4 && Math.abs(h - lastCanvasH) < 4) return;
+      lastCanvasW = w;
+      lastCanvasH = h;
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      canvas.width = w * dpr;
+      canvas.height = h * dpr;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       redrawCanvas();
     }
@@ -598,6 +608,18 @@
       };
     }
 
+    function drawIncrementalSegment(context, color, baseWidth, p0, p1) {
+      context.lineCap = 'round';
+      context.lineJoin = 'round';
+      context.strokeStyle = color;
+      const pressure = p1.p !== undefined ? p1.p : 0.5;
+      context.lineWidth = Math.max(1.2, baseWidth * (0.65 + pressure * 0.7));
+      context.beginPath();
+      context.moveTo(p0.x, p0.y);
+      context.lineTo(p1.x, p1.y);
+      context.stroke();
+    }
+
     canvas.addEventListener('pointerdown', (e) => {
       if (penOnlyMode && e.pointerType === 'touch') {
         if (!palmNoticeShown) {
@@ -607,12 +629,15 @@
         return;
       }
       e.preventDefault();
-      canvas.setPointerCapture(e.pointerId);
+      try { canvas.setPointerCapture(e.pointerId); } catch (err) {}
       isDrawing = true;
       const pt = getPointerPos(e);
       currentStroke = { color: penColor, width: 2.6, points: [pt] };
       canvasStrokes.push(currentStroke);
-      redrawCanvas();
+      ctx.fillStyle = penColor;
+      ctx.beginPath();
+      ctx.arc(pt.x, pt.y, 1.3, 0, Math.PI * 2);
+      ctx.fill();
     });
 
     canvas.addEventListener('pointermove', (e) => {
@@ -620,9 +645,14 @@
       if (penOnlyMode && e.pointerType === 'touch') return;
       const coalesced = e.getCoalescedEvents ? e.getCoalescedEvents() : [e];
       for (const ce of coalesced) {
-        currentStroke.points.push(getPointerPos(ce));
+        const pt = getPointerPos(ce);
+        const prev = currentStroke.points[currentStroke.points.length - 1];
+        // Thin points closer than 1.5px to keep memory & CPU ultra-light
+        if (Math.hypot(pt.x - prev.x, pt.y - prev.y) >= 1.5) {
+          currentStroke.points.push(pt);
+          drawIncrementalSegment(ctx, currentStroke.color, currentStroke.width, prev, pt);
+        }
       }
-      redrawCanvas();
     });
 
     function endStroke() {
@@ -1062,9 +1092,13 @@
     document.getElementById('modeCanvasBtn').addEventListener('click', () => setLayoutMode('canvas'));
     document.getElementById('modeNotesBtn').addEventListener('click', () => setLayoutMode('notes'));
 
+    let resizeTimer = null;
     window.addEventListener('resize', () => {
-      resizeCanvas();
-      renderNotes();
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => {
+        resizeCanvas(false);
+        renderNotes();
+      }, 200);
     });
 
     // Pen-only toggle
@@ -1129,7 +1163,7 @@
     function resizeHandSearchCanvas() {
       if (handSearchPanel.classList.contains('hidden')) return;
       const rect = handSearchCanvas.parentElement.getBoundingClientRect();
-      const dpr = window.devicePixelRatio || 1;
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
       handSearchCanvas.width = Math.max(260, Math.floor(rect.width * dpr));
       handSearchCanvas.height = Math.floor(88 * dpr);
       hsCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -1188,9 +1222,13 @@
       const rect = handSearchCanvas.getBoundingClientRect();
       const coalesced = e.getCoalescedEvents ? e.getCoalescedEvents() : [e];
       for (const ce of coalesced) {
-        hsCurrent.points.push({ x: ce.clientX - rect.left, y: ce.clientY - rect.top, p: ce.pointerType === 'pen' ? (ce.pressure || 0.5) : 0.5 });
+        const pt = { x: ce.clientX - rect.left, y: ce.clientY - rect.top, p: ce.pointerType === 'pen' ? (ce.pressure || 0.5) : 0.5 };
+        const prev = hsCurrent.points[hsCurrent.points.length - 1];
+        if (Math.hypot(pt.x - prev.x, pt.y - prev.y) >= 1.5) {
+          hsCurrent.points.push(pt);
+          drawIncrementalSegment(hsCtx, hsCurrent.color, hsCurrent.width, prev, pt);
+        }
       }
-      resizeHandSearchCanvas();
     });
     function endHsStroke() { hsDrawing = false; hsCurrent = null; }
     handSearchCanvas.addEventListener('pointerup', endHsStroke);
