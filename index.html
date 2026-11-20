@@ -137,8 +137,10 @@
         <label class="block text-[11px] font-semibold text-stone-600 mb-1">Gemini API Key</label>
         <input id="geminiKeyInput" type="password" placeholder="AIza..." class="w-full text-xs border border-stone-300 rounded-lg px-3 py-2 outline-none focus:border-blue-500" />
       </div>
+      <div id="aiTestResult" class="hidden text-xs px-3 py-2 rounded-lg"></div>
       <div class="flex items-center justify-end gap-2 pt-1">
         <button id="clearGeminiKeyBtn" class="px-3 py-1.5 text-xs text-stone-600 hover:bg-stone-100 rounded-lg">키 삭제</button>
+        <button id="testGeminiKeyBtn" class="px-3 py-1.5 text-xs font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-lg">연결 테스트</button>
         <button id="saveGeminiKeyBtn" class="px-3.5 py-1.5 text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white rounded-lg">저장하기</button>
       </div>
     </div>
@@ -582,25 +584,37 @@
       for (const row of rows) {
         const byX = [...row.items].sort((a, b) => a.box.minX - b.box.minX);
         const first = byX[0];
+        const firstPts = first.stroke.points;
+        const firstDiag = Math.hypot(first.box.w, first.box.h);
+        const startEndDist = Math.hypot(
+          firstPts[0].x - firstPts[firstPts.length - 1].x,
+          firstPts[0].y - firstPts[firstPts.length - 1].y
+        );
+        const isFirstClosedLoop = firstDiag > 12 && startEndDist < firstDiag * 0.48;
+
         const leadingCluster = [first];
         let clusterMaxX = first.box.maxX;
         let clusterMinX = first.box.minX;
 
-        for (let i = 1; i < byX.length; i++) {
-          const cand = byX[i];
-          // Join strokes that belong to the same multi-stroke symbol (*, +, !)
-          if (cand.box.minX <= clusterMaxX + 6 && (cand.box.maxX - clusterMinX) <= 58 && leadingCluster.length < 4) {
-            leadingCluster.push(cand);
-            clusterMaxX = Math.max(clusterMaxX, cand.box.maxX);
-          } else {
-            break;
+        if (!isFirstClosedLoop) {
+          for (let i = 1; i < byX.length; i++) {
+            const cand = byX[i];
+            // Only merge strokes that horizontally overlap or nearly touch (for +, *, !, multi-stroke □)
+            const overlapsX = cand.box.minX <= clusterMaxX + 2 && cand.box.maxX >= clusterMinX - 2;
+            if (overlapsX && (cand.box.maxX - clusterMinX) <= 72 && leadingCluster.length < 4) {
+              leadingCluster.push(cand);
+              clusterMaxX = Math.max(clusterMaxX, cand.box.maxX);
+              clusterMinX = Math.min(clusterMinX, cand.box.minX);
+            } else {
+              break;
+            }
           }
         }
 
         const clusterW = clusterMaxX - clusterMinX;
         const hasRest = byX.length > leadingCluster.length;
         const gapAfterSymbol = hasRest ? (byX[leadingCluster.length].box.minX - clusterMaxX) : 99;
-        const isStandaloneSymbol = clusterW <= 60 && gapAfterSymbol >= 6;
+        const isStandaloneSymbol = clusterW <= 76 && gapAfterSymbol >= 2;
 
         if (isStandaloneSymbol) {
           const tag = classifySymbolCluster(leadingCluster.map(i => i.stroke));
@@ -766,32 +780,52 @@
     }
 
     function renderStrokesToBase64(strokes) {
+      const norm = normalizeStrokes(strokes);
+      let maxX = 320, maxY = 120;
+      for (const st of norm) {
+        for (const pt of st.points) {
+          if (pt.x > maxX) maxX = pt.x;
+          if (pt.y > maxY) maxY = pt.y;
+        }
+      }
       const tmp = document.createElement('canvas');
-      tmp.width = 720;
-      tmp.height = 280;
+      tmp.width = Math.min(1600, maxX + 40);
+      tmp.height = Math.min(900, maxY + 40);
       const tctx = tmp.getContext('2d');
-      tctx.fillStyle = '#FAF9F6';
+      tctx.fillStyle = '#FFFFFF';
       tctx.fillRect(0, 0, tmp.width, tmp.height);
-      drawStrokeList(tctx, normalizeStrokes(strokes), 10, 10, 1);
+      drawStrokeList(tctx, norm, 10, 10, 1);
       return tmp.toDataURL('image/png').split(',')[1];
+    }
+
+    async function callGeminiVision(model, parts) {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(geminiApiKey)}`;
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contents: [{ parts }] })
+      });
+      if (!res.ok) {
+        const errBody = await res.text().catch(() => '');
+        throw new Error(`HTTP ${res.status}: ${errBody.slice(0, 120)}`);
+      }
+      const data = await res.json();
+      return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
     }
 
     async function analyzeInkWithGemini(strokes) {
       const b64 = renderStrokesToBase64(strokes);
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(geminiApiKey)}`;
-      const prompt = '이 손글씨 이미지를 읽고 JSON으로만 답하세요. {"tagType":"todo|fact|ref|idea|question|decision 중 하나 (□=todo, ○=fact, *=ref, +=idea, △=question, !=decision)","ocrText":"손글씨 전체 텍스트","keywords":["핵심키워드1","핵심키워드2"]}';
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }, { inline_data: { mime_type: 'image/png', data: b64 } }] }],
-          generationConfig: { responseMimeType: 'application/json' }
-        })
-      });
-      if (!res.ok) throw new Error('API Error ' + res.status);
-      const data = await res.json();
-      const raw = data.candidates?.[0]?.content?.parts?.[0]?.text || '{}';
-      return JSON.parse(raw);
+      const prompt = '이 손글씨 이미지를 읽고 반드시 아래 JSON 형식으로만 답하세요. 마크다운이나 다른 설명은 쓰지 마세요. {"tagType":"todo|fact|ref|idea|question|decision 중 하나 (왼쪽 첫 기호 기준: □=todo, ○=fact, *=ref, +=idea, △=question, !=decision)","ocrText":"손글씨 전체 내용","keywords":["키워드1","키워드2","키워드3"]}';
+      const parts = [{ text: prompt }, { inline_data: { mime_type: 'image/png', data: b64 } }];
+      let raw = '';
+      try {
+        raw = await callGeminiVision('gemini-2.5-flash', parts);
+      } catch (e1) {
+        raw = await callGeminiVision('gemini-2.0-flash', parts);
+      }
+      const cleaned = raw.replace(/```json\s*|```/gi, '').trim();
+      const match = cleaned.match(/\{[\s\S]*\}/);
+      return JSON.parse(match ? match[0] : cleaned);
     }
 
     async function commitCurrentBlock() {
@@ -831,7 +865,9 @@
               if ((manualSel === 'auto' || !isSingle) && parsed.tagType && TAG_META[parsed.tagType]) {
                 finalTag = parsed.tagType;
               }
-            } catch (err) {}
+            } catch (err) {
+              showToast('AI 인식 오류: ' + (err.message || 'API 키를 확인하세요'));
+            }
           }
 
           const hasRedInk = blk.strokes.some(s => s.color === '#DC2626');
@@ -1205,6 +1241,37 @@
       aiModal.classList.remove('hidden');
     });
     document.getElementById('closeAiModalBtn').addEventListener('click', () => aiModal.classList.add('hidden'));
+    document.getElementById('testGeminiKeyBtn').addEventListener('click', async () => {
+      const testKey = geminiKeyInput.value.trim();
+      const resEl = document.getElementById('aiTestResult');
+      if (!testKey) {
+        resEl.textContent = 'API 키를 먼저 입력해 주세요.';
+        resEl.className = 'text-xs px-3 py-2 rounded-lg bg-amber-50 text-amber-800';
+        resEl.classList.remove('hidden');
+        return;
+      }
+      resEl.textContent = 'Gemini API 연결 확인 중...';
+      resEl.className = 'text-xs px-3 py-2 rounded-lg bg-stone-100 text-stone-600';
+      resEl.classList.remove('hidden');
+      const prevKey = geminiApiKey;
+      geminiApiKey = testKey;
+      try {
+        await callGeminiVision('gemini-2.5-flash', [{ text: 'OK라고만 답하세요.' }]);
+        resEl.textContent = '연결 성공! 이제 저장하기를 누르시면 손글씨 AI 인식이 작동합니다.';
+        resEl.className = 'text-xs px-3 py-2 rounded-lg bg-emerald-50 text-emerald-700 font-medium';
+      } catch (err) {
+        try {
+          await callGeminiVision('gemini-2.0-flash', [{ text: 'OK라고만 답하세요.' }]);
+          resEl.textContent = '연결 성공! 이제 저장하기를 누르시면 손글씨 AI 인식이 작동합니다.';
+          resEl.className = 'text-xs px-3 py-2 rounded-lg bg-emerald-50 text-emerald-700 font-medium';
+        } catch (err2) {
+          geminiApiKey = prevKey;
+          resEl.textContent = '연결 실패: ' + (err2.message || '키가 올바른지 확인해 주세요.');
+          resEl.className = 'text-xs px-3 py-2 rounded-lg bg-red-50 text-red-700';
+        }
+      }
+    });
+
     document.getElementById('saveGeminiKeyBtn').addEventListener('click', () => {
       geminiApiKey = geminiKeyInput.value.trim();
       try { localStorage.setItem('cronota_gemini_key', geminiApiKey); } catch (e) {}
