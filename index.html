@@ -98,31 +98,38 @@
   .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
 
   /* ---------- Write panel ---------- */
-  .toolbar { display: flex; align-items: center; gap: 2px; padding: 8px 10px; border-bottom: 1px solid var(--border); flex-wrap: wrap; row-gap: 6px; }
+  .toolbar { display: flex; align-items: center; gap: 0; padding: 8px 8px; border-bottom: 1px solid var(--border); flex-wrap: wrap; row-gap: 6px; }
   .tgroup { display: flex; align-items: center; gap: 1px; }
-  .sep { width: 1px; height: 20px; background: var(--border); margin: 0 4px; }
-  .swatch { width: 26px; height: 30px; border-radius: 999px; display: grid; place-items: center; }
+  .sep { width: 1px; height: 20px; background: var(--border); margin: 0 3px; }
+  .swatch { width: 24px; height: 30px; border-radius: 999px; display: grid; place-items: center; }
   .swatch span { width: 15px; height: 15px; border-radius: 999px; background: var(--c); transition: box-shadow .15s; }
   .swatch.hl span { width: 17px; height: 10px; border-radius: 3px; opacity: .55; }
   .swatch[aria-pressed="true"] span { box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--c); }
   .swatch.hl[aria-pressed="true"] span { opacity: .8; }
-  .wbtn { width: 26px; height: 30px; border-radius: 8px; display: grid; place-items: center; }
+  .wbtn { width: 24px; height: 30px; border-radius: 8px; display: grid; place-items: center; }
   .wbtn span { border-radius: 999px; background: #44403C; }
   .wbtn:hover { background: var(--hover); }
   .wbtn[aria-pressed="true"] { background: #E8E6E1; }
-  .tool { height: 30px; min-width: 28px; padding: 0 4px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; gap: 5px; color: #44403C; font-size: 12px; font-weight: 600; }
+  .tool { height: 30px; min-width: 27px; padding: 0 3px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; gap: 5px; color: #44403C; font-size: 12px; font-weight: 600; }
   .tool:hover:not(:disabled) { background: var(--hover); }
   .tool[aria-pressed="true"] { background: var(--dark); color: #fff; }
-  .pen-mode { height: 30px; width: 30px; border-radius: 8px; display: grid; place-items: center; transition: background .15s, color .15s, opacity .15s; }
+  #pageHBtn[aria-pressed="true"], #pageVBtn[aria-pressed="true"] { background: #E2DFD8; color: var(--ink); }
+  .pen-mode { height: 30px; width: 28px; border-radius: 8px; display: grid; place-items: center; transition: background .15s, color .15s, opacity .15s; }
   .pen-mode.on { background: var(--dark); color: #fff; }
   .pen-mode.off { color: #44403C; opacity: .3; }
   .pen-mode.off:hover { opacity: .55; background: var(--hover); }
   .spacer { flex: 1; }
-  .status { display: flex; align-items: center; gap: 3px; margin-right: 4px; }
-  .status .pill { display: inline-grid; place-items: center; min-width: 22px; height: 22px; padding: 0 5px; border-radius: 999px; border: 1px solid var(--c, var(--border)); color: var(--c, var(--muted)); font-weight: 700; font-size: 11px; background: #fff; }
-  #saveBtn { height: 32px; padding: 0 12px; margin-left: auto; }
+  #saveBtn { height: 32px; padding: 0 10px; margin-left: auto; gap: 4px; }
 
-  .canvas-scroll { position: relative; flex: 1; min-height: 300px; overflow-y: auto; overflow-x: hidden; background: var(--paper); scrollbar-gutter: stable; }
+  .canvas-wrap { position: relative; flex: 1; min-height: 300px; }
+  .canvas-scroll { position: absolute; inset: 0; overflow-y: auto; overflow-x: hidden; background: var(--paper); scroll-snap-type: y mandatory; scrollbar-width: none; overscroll-behavior: contain; }
+  .canvas-scroll::-webkit-scrollbar { display: none; }
+  .canvas-scroll.h { overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; }
+  #pageSnaps { position: absolute; left: 0; top: 0; pointer-events: none; }
+  #pageSnaps i { position: absolute; display: block; scroll-snap-align: start; }
+  .page-nav { position: absolute; right: 10px; bottom: 10px; z-index: 2; display: flex; align-items: center; gap: 2px; padding: 2px; background: rgba(255,255,255,.94); border: 1px solid var(--border); border-radius: 999px; box-shadow: 0 4px 14px -6px rgba(0,0,0,.2); font-size: 12px; color: var(--muted); }
+  .page-nav span { min-width: 44px; text-align: center; font-variant-numeric: tabular-nums; font-weight: 600; }
+  .page-nav .icon-btn { width: 28px; height: 28px; }
   .paper {
     background-color: var(--paper);
     background-image:
@@ -131,8 +138,9 @@
     background-size: 100% 100%, 100% var(--gap);
     background-repeat: no-repeat, repeat;
   }
-  #ink { display: block; width: 100%; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; cursor: crosshair; }
+  #ink { display: block; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; cursor: crosshair; }
   #ink.erasing { cursor: cell; }
+  #ink.paper { background-size: var(--page-w, 100%) 100%, 100% var(--gap); background-repeat: repeat-x, repeat; }
 
   /* ---------- Notes panel ---------- */
   .filters { padding: 10px 12px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 6px; }
@@ -203,11 +211,9 @@
 
   .sym-list { display: flex; flex-direction: column; gap: 4px; }
   .sym-row { display: flex; align-items: center; gap: 12px; padding: 8px 10px; border-radius: 10px; text-align: left; width: 100%; }
-  button.sym-row:hover { background: var(--hover); }
   .sym-row .glyph { width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--border); display: grid; place-items: center; font-size: 17px; font-weight: 700; color: var(--c); background: #fff; flex: none; }
   .sym-row .name { font-weight: 700; font-size: 13px; color: var(--c); min-width: 56px; }
   .sym-row .desc { font-size: 12px; color: var(--muted); flex: 1; }
-  .sym-row .add { font-size: 11px; color: var(--faint); white-space: nowrap; }
   .tips { margin: 0; padding-left: 18px; font-size: 12px; color: var(--muted); line-height: 1.8; }
 
   /* ---------- Responsive ---------- */
@@ -275,24 +281,35 @@
     <div class="toolbar">
       <div class="tgroup" id="penBtns"></div>
       <div class="sep"></div>
-      <div class="tgroup" id="hlBtns"></div>
-      <div class="sep"></div>
       <div class="tgroup" id="widthBtns"></div>
+      <div class="sep"></div>
+      <div class="tgroup" id="hlBtns"></div>
       <div class="sep"></div>
       <div class="tgroup">
         <button class="tool" id="eraserBtn" aria-pressed="false" data-i18n-title="eraser"><i data-icon="eraser"></i></button>
         <button class="tool" id="undoBtn" data-i18n-title="undo" disabled><i data-icon="undo"></i></button>
         <button class="tool" id="redoBtn" data-i18n-title="redo" disabled><i data-icon="redo"></i></button>
         <button class="tool" id="clearBtn" data-i18n-title="clearCanvas" disabled><i data-icon="trash"></i></button>
+      </div>
+      <div class="sep"></div>
+      <div class="tgroup">
+        <button class="tool" id="pageHBtn" data-i18n-title="pageModeH"><i data-icon="pagesH"></i></button>
+        <button class="tool" id="pageVBtn" data-i18n-title="pageModeV"><i data-icon="pagesV"></i></button>
         <button class="pen-mode" id="penModeBtn"><i data-icon="penTip"></i></button>
       </div>
-      <div class="spacer"></div>
-      <div class="status" id="status" aria-live="polite"></div>
       <button class="btn primary" id="saveBtn" disabled><i data-icon="check" class="sm"></i><span id="saveLabel"></span></button>
     </div>
 
-    <div class="canvas-scroll" id="canvasScroll">
-      <canvas id="ink" class="paper"></canvas>
+    <div class="canvas-wrap">
+      <div class="canvas-scroll" id="canvasScroll">
+        <canvas id="ink" class="paper"></canvas>
+        <div id="pageSnaps"></div>
+      </div>
+      <div class="page-nav">
+        <button class="icon-btn" id="prevPageBtn" data-i18n-title="prevPage"></button>
+        <span id="pageLabel">1 / 1</span>
+        <button class="icon-btn" id="nextPageBtn" data-i18n-title="nextPage"></button>
+      </div>
     </div>
   </section>
 
@@ -398,6 +415,7 @@ const I18N = {
     padNote: '검색어를 펜으로 쓰세요', padNoteNoAi: 'AI 연결 후 쓸 수 있어요 · 아래 키워드는 바로 검색돼요',
     clear: '지우기', search: '검색', kwTop: '자주 쓴 키워드', kwNone: '키워드가 생기면 여기에 표시돼요',
     language: '언어', help: '도움말', settings: '설정', close: '닫기',
+    pageModeH: '가로 페이지 이동', pageModeV: '세로 페이지 이동', prevPage: '이전 페이지', nextPage: '다음 페이지', saveTitleN: '노트 {n}개로 나눠 저장 (Ctrl+Enter)',
     tabWrite: '쓰기', tabNotes: '노트',
     pens: ['검정', '빨강 (중요 표시)', '파랑', '초록'],
     hls: ['형광펜 노랑', '형광펜 주황', '형광펜 하늘', '형광펜 회색'],
@@ -431,7 +449,7 @@ const I18N = {
     export: '백업 내보내기', import: '백업 가져오기', addSamples: '샘플 노트 추가',
     imported: '노트 {n}개를 가져왔어요.', importFail: '백업 파일을 읽지 못했어요.',
     samplesAdded: '샘플 노트 {n}개를 추가했어요.', samplesExist: '샘플 노트가 이미 있어요.',
-    helpSymbols: '기호', helpSymbolsIntro: '빨간 선 왼쪽에 기호를 그리고 오른쪽에 내용을 쓰면 기호별로 자동 분류됩니다. 아래 기호를 누르면 캔버스 다음 줄에 넣어 줍니다.',
+    helpSymbols: '기호', helpSymbolsIntro: '빨간 선 왼쪽에 기호를 그리고 오른쪽에 내용을 쓰면 기호별로 자동 분류됩니다.',
     insert: '넣기',
     symDesc: { todo: '해야 할 일 · 완료 표시 가능', fact: '사실, 알게 된 정보', ref: '참고 자료, 출처, 링크', idea: '떠오른 생각, 짧은 메모', decision: '정한 것, 결론', none: '기호 없이 쓰면 일반 노트' },
     helpTips: '쓰는 법',
@@ -440,6 +458,7 @@ const I18N = {
       '빨간 펜으로 쓴 노트는 "중요"로 표시됩니다.',
       '형광펜은 글씨 아래에 칠해지고 분류에는 영향을 주지 않습니다.',
       '펜 버튼이 진하면 펜 전용(손바닥 무시, 손가락은 스크롤), 흐리면 손가락으로도 쓸 수 있어요.',
+      '캔버스는 화면 크기 페이지로 나뉩니다. 도구막대의 가로/세로 페이지 버튼으로 넘기는 방향을 고르고, 펜 전용일 때는 손가락으로 밀어서, 아니면 오른쪽 아래 화살표로 넘기세요.',
       '노트를 누르면 종류 바꾸기, 완료, 검색어 편집, 삭제를 할 수 있어요.',
       '단축키: Ctrl+Z 되돌리기 · Ctrl+Shift+Z 다시 실행 · Ctrl+Enter 저장 · E 지우개'
     ],
@@ -451,6 +470,7 @@ const I18N = {
     padNote: 'Write your search with the pen', padNoteNoAi: 'Needs AI in Settings · keywords below work now',
     clear: 'Clear', search: 'Search', kwTop: 'Frequent keywords', kwNone: 'Keywords will appear here',
     language: 'Language', help: 'Help', settings: 'Settings', close: 'Close',
+    pageModeH: 'Turn pages sideways', pageModeV: 'Turn pages up and down', prevPage: 'Previous page', nextPage: 'Next page', saveTitleN: 'Save as {n} notes (Ctrl+Enter)',
     tabWrite: 'Write', tabNotes: 'Notes',
     pens: ['Black', 'Red (important)', 'Blue', 'Green'],
     hls: ['Highlighter yellow', 'Highlighter orange', 'Highlighter sky blue', 'Highlighter gray'],
@@ -484,7 +504,7 @@ const I18N = {
     export: 'Export backup', import: 'Import backup', addSamples: 'Add sample notes',
     imported: 'Imported {n} notes.', importFail: 'Could not read the backup file.',
     samplesAdded: 'Added {n} sample notes.', samplesExist: 'Sample notes are already there.',
-    helpSymbols: 'Symbols', helpSymbolsIntro: 'Draw a symbol left of the red line and write to the right; notes are sorted by symbol. Tap a symbol below to put it on the next line.',
+    helpSymbols: 'Symbols', helpSymbolsIntro: 'Draw a symbol left of the red line and write to the right; notes are sorted by symbol.',
     insert: 'Insert',
     symDesc: { todo: 'Something to do · can be marked done', fact: 'Facts and information', ref: 'References, sources, links', idea: 'Ideas and quick memos', decision: 'Decisions and conclusions', none: 'Write without a symbol for a plain note' },
     helpTips: 'How to write',
@@ -493,6 +513,7 @@ const I18N = {
       'Notes written in red ink are marked important.',
       'Highlighter goes under your ink and does not affect sorting.',
       'Pen button dark = pen only (palm ignored, finger scrolls). Faded = finger can write.',
+      'The canvas is split into screen-sized pages. Pick sideways or up-and-down paging in the toolbar; swipe with a finger in pen-only mode, or use the arrows at the bottom right.',
       'Tap a note to change its type, mark it done, edit search words or delete it.',
       'Shortcuts: Ctrl+Z undo · Ctrl+Shift+Z redo · Ctrl+Enter save · E eraser'
     ],
@@ -504,6 +525,7 @@ const I18N = {
     padNote: 'ペンで検索語を書いてください', padNoteNoAi: '設定でAI接続が必要 · 下のキーワードはすぐ検索できます',
     clear: '消去', search: '検索', kwTop: 'よく使うキーワード', kwNone: 'キーワードがここに表示されます',
     language: '言語', help: 'ヘルプ', settings: '設定', close: '閉じる',
+    pageModeH: '横にページ移動', pageModeV: '縦にページ移動', prevPage: '前のページ', nextPage: '次のページ', saveTitleN: 'ノート{n}件に分けて保存 (Ctrl+Enter)',
     tabWrite: '書く', tabNotes: 'ノート',
     pens: ['黒', '赤(重要)', '青', '緑'],
     hls: ['蛍光ペン 黄', '蛍光ペン オレンジ', '蛍光ペン 水色', '蛍光ペン グレー'],
@@ -537,7 +559,7 @@ const I18N = {
     export: 'バックアップを書き出す', import: 'バックアップを読み込む', addSamples: 'サンプルノートを追加',
     imported: 'ノート{n}件を読み込みました。', importFail: 'バックアップファイルを読めませんでした。',
     samplesAdded: 'サンプルノート{n}件を追加しました。', samplesExist: 'サンプルノートはすでにあります。',
-    helpSymbols: '記号', helpSymbolsIntro: '赤い線の左に記号を書き、右に内容を書くと記号ごとに自動で分類されます。下の記号を押すとキャンバスの次の行に入ります。',
+    helpSymbols: '記号', helpSymbolsIntro: '赤い線の左に記号を書き、右に内容を書くと記号ごとに自動で分類されます。',
     insert: '入れる',
     symDesc: { todo: 'やること · 完了にできます', fact: '事実、わかった情報', ref: '参考資料、出典、リンク', idea: '思いつき、短いメモ', decision: '決めたこと、結論', none: '記号なしで書くと普通のノート' },
     helpTips: '書き方',
@@ -546,6 +568,7 @@ const I18N = {
       '赤ペンで書いたノートは「重要」になります。',
       '蛍光ペンは文字の下に塗られ、分類には影響しません。',
       'ペンボタンが濃いとペン専用(手のひら無視、指でスクロール)、薄いと指でも書けます。',
+      'キャンバスは画面サイズのページに分かれます。ツールバーの横/縦ページボタンでめくる方向を選び、ペン専用のときは指でスワイプ、それ以外は右下の矢印でめくります。',
       'ノートを押すと種類の変更、完了、検索語の編集、削除ができます。',
       'ショートカット: Ctrl+Z 元に戻す · Ctrl+Shift+Z やり直す · Ctrl+Enter 保存 · E 消しゴム'
     ],
@@ -557,6 +580,7 @@ const I18N = {
     padNote: '用笔写下搜索词', padNoteNoAi: '需在设置中连接 AI · 下方关键词可直接搜索',
     clear: '清除', search: '搜索', kwTop: '常用关键词', kwNone: '关键词会显示在这里',
     language: '语言', help: '帮助', settings: '设置', close: '关闭',
+    pageModeH: '横向翻页', pageModeV: '纵向翻页', prevPage: '上一页', nextPage: '下一页', saveTitleN: '分成 {n} 条笔记保存 (Ctrl+Enter)',
     tabWrite: '书写', tabNotes: '笔记',
     pens: ['黑色', '红色(重要)', '蓝色', '绿色'],
     hls: ['荧光笔 黄色', '荧光笔 橙色', '荧光笔 天蓝', '荧光笔 灰色'],
@@ -590,7 +614,7 @@ const I18N = {
     export: '导出备份', import: '导入备份', addSamples: '添加示例笔记',
     imported: '已导入 {n} 条笔记。', importFail: '无法读取备份文件。',
     samplesAdded: '已添加 {n} 条示例笔记。', samplesExist: '示例笔记已存在。',
-    helpSymbols: '符号', helpSymbolsIntro: '在红线左侧画符号,右侧书写内容,笔记会按符号自动分类。点击下方符号可插入到画布的下一行。',
+    helpSymbols: '符号', helpSymbolsIntro: '在红线左侧画符号,右侧书写内容,笔记会按符号自动分类。',
     insert: '插入',
     symDesc: { todo: '待办事项 · 可标记完成', fact: '事实、获得的信息', ref: '参考资料、出处、链接', idea: '想法、简短备忘', decision: '决定、结论', none: '不画符号即为普通笔记' },
     helpTips: '书写方法',
@@ -599,6 +623,7 @@ const I18N = {
       '用红笔写的笔记会标记为“重要”。',
       '荧光笔涂在文字下方,不影响分类。',
       '笔按钮深色 = 仅限笔(忽略手掌,手指滚动);浅色 = 手指也能写。',
+      '画布按屏幕大小分页。在工具栏选择横向或纵向翻页;仅限笔模式下用手指滑动,否则用右下角的箭头翻页。',
       '点击笔记可更改类型、标记完成、编辑搜索词或删除。',
       '快捷键:Ctrl+Z 撤销 · Ctrl+Shift+Z 重做 · Ctrl+Enter 保存 · E 橡皮擦'
     ],
@@ -637,7 +662,7 @@ const tagName = (k) => (TAGS[k].symbol ? TAGS[k].symbol + ' ' : '') + tagLabel(k
 const PEN_COLORS = ['#1E293B', HIGH_COLOR, '#2563EB', '#16A34A'];
 const HL_COLORS = ['#FACC15', '#FB923C', '#38BDF8', '#9CA3AF'];
 const HL_ALPHA = 0.38;
-const PEN_WIDTHS = [{ w: 1.6, d: 4 }, { w: 2.8, d: 7 }, { w: 5.0, d: 11 }];
+const PEN_WIDTHS = [{ w: 1.6 }, { w: 2.8 }, { w: 5.0 }];
 const DEFAULT_MODEL = 'gemini-3.5-flash-lite';
 
 const ICONS = {
@@ -656,7 +681,12 @@ const ICONS = {
   circle: '<circle cx="12" cy="12" r="8"/>',
   sort: '<path d="m3 16 4 4 4-4"/><path d="M7 20V4"/><path d="m21 8-4-4-4 4"/><path d="M17 4v16"/>',
   type: '<path d="M4 7V4h16v3"/><path d="M9 20h6"/><path d="M12 4v16"/>',
-  chevron: '<path d="m6 9 6 6 6-6"/>'
+  chevron: '<path d="m6 9 6 6 6-6"/>',
+  chevUp: '<path d="m18 15-6-6-6 6"/>',
+  chevLeft: '<path d="m15 18-6-6 6-6"/>',
+  chevRight: '<path d="m9 18 6-6-6-6"/>',
+  pagesH: '<rect x="2.5" y="5" width="8.5" height="14" rx="1.5"/><rect x="13" y="5" width="8.5" height="14" rx="1.5"/>',
+  pagesV: '<rect x="5" y="2.5" width="14" height="8.5" rx="1.5"/><rect x="5" y="13" width="14" height="8.5" rx="1.5"/>'
 };
 function icon(name, cls = '') {
   return `<svg class="i ${cls}" viewBox="0 0 24 24" aria-hidden="true">${ICONS[name] || ''}</svg>`;
@@ -719,6 +749,7 @@ const prefs = {
   gap: Math.min(56, Math.max(24, parseInt(lsGet('cronota_line_gap', '32'), 10) || 32)),
   penOnly: lsGet('cronota_pen_only', '1') === '1',
   sortDesc: lsGet('cronota_sort', 'desc') !== 'asc',
+  pageMode: lsGet('cronota_page_mode', 'v') === 'h' ? 'h' : 'v',
   key: lsGet('cronota_gemini_key', ''),
   model: lsGet('cronota_gemini_model', DEFAULT_MODEL) || DEFAULT_MODEL
 };
@@ -1058,7 +1089,10 @@ function splitIntoBlocks(list, gap) {
 }
 
 /* =========================================================
-   Writing canvas
+   Writing canvas, divided into screen-sized pages.
+   Strokes keep logical coordinates with pages stacked top to
+   bottom (page k covers y = k*pageH ... (k+1)*pageH). In sideways
+   mode the same pages are only laid out next to each other.
    ========================================================= */
 const ink = $('#ink');
 const ictx = ink.getContext('2d');
@@ -1066,34 +1100,76 @@ const scroller = $('#canvasScroll');
 let strokes = [];          // never mutated in place except the stroke being drawn
 let undoStack = [], redoStack = [];
 const tool = { mode: 'pen', penColor: PEN_COLORS[0], hlColor: HL_COLORS[0], width: PEN_WIDTHS[1].w };
-let active = null;         // { id, erase, stroke, before }
-let touchScroll = null;
+let active = null;         // { id, erase, stroke, before, page }
+let touchNav = null;
 let palmNoticeShown = false;
-let inkW = 0, inkH = 0;
+let pageW = 0, pageH = 0, pageCount = 1, curPage = 0;
 let redrawQueued = false;
+const horizontal = () => prefs.pageMode === 'h';
 
-function contentBottom() {
-  let m = 0;
-  for (const s of strokes) for (const p of s.points) if (p.y > m) m = p.y;
+function pageOfY(y) { return pageH ? Math.max(0, Math.floor(y / pageH)) : 0; }
+function strokePage(s) { return pageOfY(s.points[0].y); }
+function lastContentPage() {
+  let m = -1;
+  for (const s of strokes) for (const p of s.points) { const k = pageOfY(p.y); if (k > m) m = k; }
   return m;
 }
-function sizeInk(minH = 0) {
-  const w = scroller.clientWidth;
-  if (!w) return;
+function pageOffset(k) { return horizontal() ? { dx: k * pageW, dy: -k * pageH } : { dx: 0, dy: 0 }; }
+
+function layoutPages(force = false) {
+  const w = scroller.clientWidth, hRaw = scroller.clientHeight;
+  if (!w || !hRaw) return;
   const g = prefs.gap;
-  const h = Math.max(scroller.clientHeight, minH, Math.ceil((contentBottom() + g * 6) / g) * g);
-  if (w === inkW && h === inkH) return;
-  inkW = w; inkH = h;
+  const h = Math.max(g * 4, Math.floor(hRaw / g) * g);
+  const sizeChanged = w !== pageW || h !== pageH;
+  pageW = w; pageH = h;
+  const count = Math.max(1, lastContentPage() + 2); // always one blank page after the last written one
+  if (!force && !sizeChanged && count === pageCount) return;
+  pageCount = count;
+  const cw = horizontal() ? w * count : w;
+  const ch = horizontal() ? h : h * count;
   const dpr = dprOf();
-  ink.width = Math.round(w * dpr);
-  ink.height = Math.round(h * dpr);
-  ink.style.height = h + 'px';
+  ink.width = Math.round(cw * dpr);
+  ink.height = Math.round(ch * dpr);
+  ink.style.width = cw + 'px';
+  ink.style.height = ch + 'px';
+  ink.style.setProperty('--page-w', w + 'px');
   ictx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  $('#pageSnaps').innerHTML = Array.from({ length: count }, (_, k) => horizontal()
+    ? `<i style="left:${k * w}px;top:0;width:${w}px;height:${h}px"></i>`
+    : `<i style="left:0;top:${k * h}px;width:${w}px;height:${h}px"></i>`).join('');
   redraw();
+  if (curPage > count - 1) curPage = count - 1;
+  if (sizeChanged || force) goToPage(curPage, false);
+  updatePageNav();
 }
+function sizeInk() { layoutPages(); }
+
 function redraw() {
-  ictx.clearRect(0, 0, inkW, inkH);
-  drawStrokes(ictx, strokes);
+  const cw = horizontal() ? pageW * pageCount : pageW;
+  const ch = horizontal() ? pageH : pageH * pageCount;
+  ictx.clearRect(0, 0, cw, ch);
+  // page breaks
+  ictx.save();
+  ictx.strokeStyle = '#CFCBC1';
+  ictx.lineWidth = 1;
+  ictx.setLineDash([6, 5]);
+  for (let k = 1; k < pageCount; k++) {
+    ictx.beginPath();
+    if (horizontal()) { ictx.moveTo(k * pageW + 0.5, 0); ictx.lineTo(k * pageW + 0.5, ch); }
+    else { ictx.moveTo(0, k * pageH + 0.5); ictx.lineTo(cw, k * pageH + 0.5); }
+    ictx.stroke();
+  }
+  ictx.restore();
+  if (!horizontal()) { drawStrokes(ictx, strokes); return; }
+  const byPage = new Map();
+  for (const s of strokes) {
+    if (!s.points.length) continue;
+    const k = strokePage(s);
+    if (!byPage.has(k)) byPage.set(k, []);
+    byPage.get(k).push(s);
+  }
+  for (const [k, list] of byPage) { const o = pageOffset(k); drawStrokes(ictx, list, o.dx, o.dy); }
 }
 function queueRedraw() {
   if (redrawQueued) return;
@@ -1101,10 +1177,67 @@ function queueRedraw() {
   requestAnimationFrame(() => { redrawQueued = false; redraw(); });
 }
 function hlWidth() { return Math.round(prefs.gap * 0.55); }
-function pos(e) {
+
+/** Page under the pointer, from screen position. */
+function pageAt(e) {
   const r = ink.getBoundingClientRect();
-  return { x: e.clientX - r.left, y: e.clientY - r.top, p: e.pointerType === 'pen' ? (e.pressure || 0.5) : 0.5 };
+  const k = horizontal() ? Math.floor((e.clientX - r.left) / pageW) : Math.floor((e.clientY - r.top) / pageH);
+  return Math.min(pageCount - 1, Math.max(0, k));
 }
+/** Logical point for a pointer event on page k, kept inside that page. */
+function posOnPage(e, k) {
+  const r = ink.getBoundingClientRect();
+  let x = e.clientX - r.left, y = e.clientY - r.top;
+  if (horizontal()) { x -= k * pageW; y += k * pageH; }
+  return {
+    x: Math.min(pageW - 1, Math.max(0, x)),
+    y: Math.min((k + 1) * pageH - 1, Math.max(k * pageH, y)),
+    p: e.pointerType === 'pen' ? (e.pressure || 0.5) : 0.5
+  };
+}
+
+/* ----- page navigation ----- */
+function goToPage(k, smooth = true) {
+  curPage = Math.min(pageCount - 1, Math.max(0, k));
+  scroller.scrollTo({ left: horizontal() ? curPage * pageW : 0, top: horizontal() ? 0 : curPage * pageH, behavior: smooth ? 'smooth' : 'auto' });
+  updatePageNav();
+}
+function updatePageNav() {
+  $('#pageLabel').textContent = `${curPage + 1} / ${pageCount}`;
+  $('#prevPageBtn').disabled = curPage <= 0;
+  $('#nextPageBtn').disabled = curPage >= pageCount - 1;
+}
+scroller.addEventListener('scroll', () => {
+  if (touchNav || !pageW || !pageH) return;
+  const k = horizontal() ? Math.round(scroller.scrollLeft / pageW) : Math.round(scroller.scrollTop / pageH);
+  if (k !== curPage) { curPage = Math.min(pageCount - 1, Math.max(0, k)); updatePageNav(); }
+});
+let wheelLock = 0;
+scroller.addEventListener('wheel', (e) => {
+  if (!horizontal() || Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return;
+  e.preventDefault();
+  const now = Date.now();
+  if (now < wheelLock) return;
+  wheelLock = now + 450;
+  goToPage(curPage + (e.deltaY > 0 ? 1 : -1));
+}, { passive: false });
+$('#prevPageBtn').addEventListener('click', () => goToPage(curPage - 1));
+$('#nextPageBtn').addEventListener('click', () => goToPage(curPage + 1));
+
+function setPageMode(mode) {
+  prefs.pageMode = mode === 'h' ? 'h' : 'v';
+  lsSet('cronota_page_mode', prefs.pageMode);
+  scroller.classList.toggle('h', horizontal());
+  $('#pageHBtn').setAttribute('aria-pressed', String(horizontal()));
+  $('#pageVBtn').setAttribute('aria-pressed', String(!horizontal()));
+  $('#prevPageBtn').innerHTML = icon(horizontal() ? 'chevLeft' : 'chevUp', 'sm');
+  $('#nextPageBtn').innerHTML = icon(horizontal() ? 'chevRight' : 'chevron', 'sm');
+  layoutPages(true);
+}
+$('#pageHBtn').addEventListener('click', () => setPageMode('h'));
+$('#pageVBtn').addEventListener('click', () => setPageMode('v'));
+
+/* ----- history ----- */
 function pushHistory() {
   undoStack.push(strokes);
   if (undoStack.length > 200) undoStack.shift();
@@ -1120,19 +1253,20 @@ function undo() {
   if (!undoStack.length || active) return;
   redoStack.push(strokes);
   strokes = undoStack.pop();
-  sizeInk(); redraw(); afterCanvasChange();
+  layoutPages(); redraw(); afterCanvasChange();
 }
 function redo() {
   if (!redoStack.length || active) return;
   undoStack.push(strokes);
   strokes = redoStack.pop();
-  sizeInk(); redraw(); afterCanvasChange();
+  layoutPages(); redraw(); afterCanvasChange();
 }
 function clearCanvas() {
   if (!strokes.length) return;
   pushHistory();
   strokes = [];
-  sizeInk(); redraw(); afterCanvasChange();
+  layoutPages(); redraw(); afterCanvasChange();
+  goToPage(0);
   toast(t('cleared'), { label: t('undoBtn'), run: undo });
 }
 
@@ -1155,20 +1289,26 @@ function eraseAt(pt, radius = 12) {
   if (changed) { strokes = next; redraw(); }
 }
 
+/* ----- pointer input ----- */
 ink.addEventListener('pointerdown', (e) => {
   if (e.pointerType === 'touch' && prefs.penOnly) {
-    if (!touchScroll) touchScroll = { id: e.pointerId, y: e.clientY, top: scroller.scrollTop };
+    // pen-only: a finger turns pages instead of drawing
+    if (!touchNav) {
+      touchNav = { id: e.pointerId, x: e.clientX, y: e.clientY, left: scroller.scrollLeft, top: scroller.scrollTop, start: curPage };
+      scroller.style.scrollSnapType = 'none';
+    }
     if (!palmNoticeShown) { palmNoticeShown = true; toast(t('palm')); }
     return;
   }
   if (active || e.button > 0) return;
   e.preventDefault();
   try { ink.setPointerCapture(e.pointerId); } catch {}
-  const pt = pos(e);
+  const page = pageAt(e);
+  const pt = posOnPage(e, page);
   const before = strokes;
   pushHistory();
   if (tool.mode === 'eraser') {
-    active = { id: e.pointerId, erase: true, before };
+    active = { id: e.pointerId, erase: true, before, page };
     eraseAt(pt);
     return;
   }
@@ -1176,103 +1316,64 @@ ink.addEventListener('pointerdown', (e) => {
     ? { color: tool.hlColor, width: hlWidth(), points: [pt], hl: true }
     : { color: tool.penColor, width: tool.width, points: [pt] };
   strokes = [...strokes, s];
-  active = { id: e.pointerId, stroke: s, before };
+  active = { id: e.pointerId, stroke: s, before, page };
   if (s.hl) queueRedraw();
-  else { ictx.lineCap = 'round'; ictx.lineJoin = 'round'; drawDot(ictx, s, pt); }
+  else { const o = pageOffset(page); ictx.lineCap = 'round'; ictx.lineJoin = 'round'; drawDot(ictx, s, pt, o.dx, o.dy); }
 });
 
 ink.addEventListener('pointermove', (e) => {
-  if (touchScroll && e.pointerId === touchScroll.id) {
-    scroller.scrollTop = touchScroll.top - (e.clientY - touchScroll.y);
+  if (touchNav && e.pointerId === touchNav.id) {
+    if (horizontal()) scroller.scrollLeft = touchNav.left - (e.clientX - touchNav.x);
+    else scroller.scrollTop = touchNav.top - (e.clientY - touchNav.y);
     return;
   }
   if (!active || e.pointerId !== active.id) return;
   let evs = e.getCoalescedEvents ? e.getCoalescedEvents() : null;
   if (!evs || !evs.length) evs = [e];
+  const o = pageOffset(active.page);
   for (const ce of evs) {
-    const pt = pos(ce);
+    const pt = posOnPage(ce, active.page);
     if (active.erase) { eraseAt(pt); continue; }
     const s = active.stroke;
     const prev = s.points[s.points.length - 1];
     if (Math.hypot(pt.x - prev.x, pt.y - prev.y) >= 1.2) {
       s.points.push(pt);
-      if (!s.hl) drawSegment(ictx, s, prev, pt);
+      if (!s.hl) drawSegment(ictx, s, prev, pt, o.dx, o.dy);
     }
   }
-  if (!active.erase) {
-    if (active.stroke.hl) queueRedraw(); // redraw so the highlight stays under the ink
-    const last = active.stroke.points[active.stroke.points.length - 1];
-    if (last.y > inkH - prefs.gap * 3) sizeInk(inkH + prefs.gap * 10); // page-less: grow the paper
-  }
+  if (!active.erase && active.stroke.hl) queueRedraw(); // keeps the highlight under the ink
 });
 
 function endPointer(e) {
-  if (touchScroll && e.pointerId === touchScroll.id) { touchScroll = null; return; }
+  if (touchNav && e.pointerId === touchNav.id) {
+    const d = horizontal() ? e.clientX - touchNav.x : e.clientY - touchNav.y;
+    const size = horizontal() ? pageW : pageH;
+    let k = touchNav.start;
+    if (Math.abs(d) > Math.min(60, size * 0.15)) k += d < 0 ? 1 : -1;
+    touchNav = null;
+    goToPage(k);
+    setTimeout(() => { scroller.style.scrollSnapType = ''; }, 450);
+    return;
+  }
   if (!active || e.pointerId !== active.id) return;
   const unchanged = strokes === active.before;
   active = null;
   if (unchanged) undoStack.pop();
+  layoutPages(); // adds a fresh blank page after the last written one
   afterCanvasChange();
 }
 ink.addEventListener('pointerup', endPointer);
 ink.addEventListener('pointercancel', endPointer);
 ink.addEventListener('lostpointercapture', endPointer);
 
-/* ----- Insert a symbol on the next empty line (from Help) ----- */
-function symbolTemplate(tag) {
-  const circle = [];
-  for (let i = 0; i <= 24; i++) {
-    const a = -Math.PI / 2 + (i / 24) * Math.PI * 2;
-    circle.push([0.5 + 0.5 * Math.cos(a), 0.5 + 0.5 * Math.sin(a)]);
-  }
-  return {
-    todo: [[[0, 0], [1, 0], [1, 1], [0, 1], [0, 0]]],
-    fact: [circle],
-    ref: [[[0.5, 0], [1, 1], [0, 1], [0.5, 0]]],
-    idea: [[[0.5, 0], [0.5, 1]], [[0, 0.5], [1, 0.5]]],
-    decision: [[[0.5, 0], [1, 0.5], [0.5, 1], [0, 0.5], [0.5, 0]]]
-  }[tag];
-}
-function densify(poly, step = 2) {
-  const out = [poly[0]];
-  for (let i = 1; i < poly.length; i++) {
-    const [x0, y0] = poly[i - 1], [x1, y1] = poly[i];
-    const n = Math.max(1, Math.ceil(Math.hypot(x1 - x0, y1 - y0) / step));
-    for (let k = 1; k <= n; k++) out.push([x0 + (x1 - x0) * k / n, y0 + (y1 - y0) * k / n]);
-  }
-  return out;
-}
-function stampSymbol(tag) {
-  if (tool.mode === 'eraser') setMode('pen');
-  const g = prefs.gap;
-  const row = strokes.length ? Math.floor(contentBottom() / g) + 1 : 1;
-  const size = Math.min(20, g * 0.6);
-  const x0 = MARGIN_X / 2 - size / 2;
-  const y0 = row * g + (g - size) / 2 - 1;
-  const newStrokes = symbolTemplate(tag).map((poly) => ({
-    color: tool.penColor,
-    width: 2.4,
-    points: densify(poly.map(([x, y]) => [x0 + x * size, y0 + y * size])).map(([x, y]) => ({ x, y, p: 0.5 }))
-  }));
-  pushHistory();
-  strokes = [...strokes, ...newStrokes];
-  sizeInk(); redraw(); afterCanvasChange();
-  setTab('write');
-  const top = row * g;
-  if (top < scroller.scrollTop || top + g * 2 > scroller.scrollTop + scroller.clientHeight) {
-    scroller.scrollTo({ top: Math.max(0, top - g * 2), behavior: 'smooth' });
-  }
-}
-
-/* ----- Live status (detected symbols, next to Save) ----- */
+/* ----- Save button label (number of notes the canvas will become) ----- */
 function updateStatus() {
   const parts = splitIntoBlocks(strokes, prefs.gap);
   $('#saveBtn').disabled = !parts.length || saving;
-  $('#saveLabel').textContent = saving ? t('saving') : (parts.length > 1 ? t('saveN', { n: parts.length }) : t('save'));
-  $('#status').innerHTML = parts.map((p) => {
-    const k = p.tagType || 'none';
-    return `<span class="pill" style="--c:${TAGS[k].color}" title="${escapeHtml(tagLabel(k))}">${TAGS[k].symbol || escapeHtml(tagLabel(k))}</span>`;
-  }).join('');
+  $('#saveLabel').textContent = saving ? t('saving') : (parts.length > 1 ? `${t('save')} (${parts.length})` : t('save'));
+  $('#saveBtn').title = parts.length > 1
+    ? t('saveTitleN', { n: parts.length }) + '\n' + parts.map((p) => tagName(p.tagType || 'none')).join(', ')
+    : t('saveTitle');
 }
 
 /* ----- Save ----- */
@@ -1682,13 +1783,15 @@ $('#padRunBtn').addEventListener('click', async () => {
 /* =========================================================
    Toolbar
    ========================================================= */
+/** Diameter a pen actually draws at normal pressure, so the toolbar dot matches the ink. */
+function realDot(w) { return Math.max(2, Math.round(lineWidthFor(w, 0.5) * 10) / 10); }
 function buildToolbar() {
   $('#penBtns').innerHTML = PEN_COLORS.map((c, i) =>
     `<button class="swatch" data-pen="${c}" style="--c:${c}" title="${escapeHtml(t('pens')[i])}" aria-label="${escapeHtml(t('pens')[i])}"><span></span></button>`).join('');
   $('#hlBtns').innerHTML = HL_COLORS.map((c, i) =>
     `<button class="swatch hl" data-hl="${c}" style="--c:${c}" title="${escapeHtml(t('hls')[i])}" aria-label="${escapeHtml(t('hls')[i])}"><span></span></button>`).join('');
   $('#widthBtns').innerHTML = PEN_WIDTHS.map((p, i) =>
-    `<button class="wbtn" data-width="${p.w}" title="${escapeHtml(t('widths')[i])}" aria-label="${escapeHtml(t('widths')[i])}"><span style="width:${p.d}px;height:${p.d}px"></span></button>`).join('');
+    `<button class="wbtn" data-width="${p.w}" title="${escapeHtml(t('widths')[i])}" aria-label="${escapeHtml(t('widths')[i])}"><span style="width:${realDot(p.w)}px;height:${realDot(p.w)}px"></span></button>`).join('');
   syncToolbar();
 }
 function syncToolbar() {
@@ -1769,20 +1872,11 @@ document.addEventListener('keydown', (e) => {
    ========================================================= */
 const helpDlg = $('#help');
 function renderHelp() {
-  $('#symList').innerHTML = TAG_KEYS.map((k) => {
-    const inner = `<span class="glyph">${TAGS[k].symbol || '—'}</span><span class="name">${escapeHtml(tagLabel(k))}</span><span class="desc">${escapeHtml(t('symDesc')[k])}</span>`;
-    return TAGS[k].symbol
-      ? `<button class="sym-row" data-stamp="${k}" style="--c:${TAGS[k].color}">${inner}<span class="add">+ ${escapeHtml(t('insert'))}</span></button>`
-      : `<div class="sym-row" style="--c:${TAGS[k].color}">${inner}</div>`;
-  }).join('');
+  $('#symList').innerHTML = TAG_KEYS.map((k) =>
+    `<div class="sym-row" style="--c:${TAGS[k].color}"><span class="glyph">${TAGS[k].symbol}</span><span class="name">${escapeHtml(tagLabel(k))}</span><span class="desc">${escapeHtml(t('symDesc')[k])}</span></div>`).join('');
   $('#tipList').innerHTML = t('tips').map((x) => `<li>${escapeHtml(x)}</li>`).join('');
 }
 $('#helpBtn').addEventListener('click', () => { renderHelp(); helpDlg.showModal(); });
-$('#symList').addEventListener('click', (e) => {
-  const b = e.target.closest('[data-stamp]'); if (!b) return;
-  helpDlg.close();
-  stampSymbol(b.dataset.stamp);
-});
 
 /* =========================================================
    Settings dialog
@@ -1839,7 +1933,7 @@ function applyGap(px) {
   prefs.gap = px;
   document.documentElement.style.setProperty('--gap', px + 'px');
   $('#gapLabel').textContent = px + 'px';
-  inkH = 0; sizeInk(); updateStatus();
+  layoutPages(true); updateStatus();
 }
 $('#gapRange').addEventListener('input', (e) => {
   const v = parseInt(e.target.value, 10);
@@ -1916,7 +2010,9 @@ document.querySelectorAll('i[data-icon]').forEach((el) => {
 document.documentElement.style.setProperty('--gap', prefs.gap + 'px');
 document.documentElement.style.setProperty('--margin-x', MARGIN_X + 'px');
 updateAiBadge();
+scroller.classList.toggle('h', horizontal());
 applyLanguage(lang);
+setPageMode(prefs.pageMode);
 
 let resizeTimer = null;
 new ResizeObserver(() => sizeInk()).observe(scroller);
@@ -1927,7 +2023,7 @@ window.addEventListener('resize', () => {
 
 (async () => {
   await loadBlocks();
-  sizeInk();
+  layoutPages(true);
   afterCanvasChange();
   renderNotes();
   renderKeywordChips();
