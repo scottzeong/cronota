@@ -175,7 +175,7 @@
 
         <div class="flex items-center gap-1.5">
           <span id="liveDetectBadge" class="text-[11px] font-medium px-2 py-0.5 rounded-full bg-stone-200 text-stone-600">
-            왼쪽 구역에 기호 그리기
+            기호(□ ○ * + △ !)로 시작하기
           </span>
           <button id="commitBlockBtn" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg shadow-sm flex items-center gap-1 transition">
             <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
@@ -198,12 +198,8 @@
 
       <!-- Canvas Container -->
       <div class="relative flex-1 min-h-[360px] sm:min-h-[440px] dot-grid select-none">
-        <!-- Left Margin Anchor Guide -->
-        <div class="absolute top-0 bottom-0 left-0 w-[84px] bg-amber-500/[0.04] border-r border-dashed border-amber-400/50 pointer-events-none flex flex-col items-center pt-2">
-          <span class="text-[10px] font-medium text-amber-700/80 bg-amber-100/80 px-1.5 py-0.5 rounded">기호 구역</span>
-        </div>
-        <div class="absolute top-2 left-[94px] pointer-events-none text-[11px] text-stone-400">
-          여기에 손글씨나 그림을 자유롭게 적으세요 (Apple Pencil · S-Pen · 마우스)
+        <div class="absolute top-2 left-3 pointer-events-none text-[11px] text-stone-400">
+          어디서든 기호(□ ○ * + △ !)를 먼저 그리고 이어서 손글씨를 적어보세요
         </div>
         <canvas id="inkCanvas" class="w-full h-full block"></canvas>
       </div>
@@ -498,19 +494,11 @@
       drawStrokeList(ctx, canvasStrokes);
     }
 
-    // ---------- Geometric Symbol Classifier (for Left Margin Zone) ----------
-    function classifyMarginSymbol(strokes) {
-      const marginStrokes = strokes.filter(s => {
-        if (!s.points.length) return false;
-        const avgX = s.points.reduce((sum, p) => sum + p.x, 0) / s.points.length;
-        return avgX <= MARGIN_X + 12;
-      });
-
-      if (marginStrokes.length === 0) return null;
-
-      // Bounding box of margin strokes
+    // ---------- Geometric Symbol Classifier & Multi-Block Splitter ----------
+    function classifySymbolCluster(symStrokes) {
+      if (!symStrokes || symStrokes.length === 0) return null;
       let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-      for (const s of marginStrokes) {
+      for (const s of symStrokes) {
         for (const p of s.points) {
           if (p.x < minX) minX = p.x;
           if (p.y < minY) minY = p.y;
@@ -522,56 +510,113 @@
       const h = Math.max(1, maxY - minY);
       const aspect = w / h;
 
-      // Multi-stroke checks
-      if (marginStrokes.length >= 3) {
-        return 'ref'; // *
-      }
-      if (marginStrokes.length === 2) {
-        // Distinguish + vs ! vs □ (if drawn in 2 strokes)
-        const s0 = marginStrokes[0].points;
-        const s1 = marginStrokes[1].points;
-        const b0 = getBox(s0);
-        const b1 = getBox(s1);
-        // Check if one is tall vertical and the other is a tiny dot below -> !
-        const isDot1 = b1.w < 10 && b1.h < 10 && b1.minY > b0.maxY - 4;
-        const isDot0 = b0.w < 10 && b0.h < 10 && b0.minY > b1.maxY - 4;
+      if (symStrokes.length >= 3) return 'ref'; // *
+      if (symStrokes.length === 2) {
+        const b0 = getBox(symStrokes[0].points);
+        const b1 = getBox(symStrokes[1].points);
+        const isDot1 = b1.w < 12 && b1.h < 12 && b1.minY > b0.maxY - 4;
+        const isDot0 = b0.w < 12 && b0.h < 12 && b0.minY > b1.maxY - 4;
         if (isDot1 || isDot0 || aspect < 0.42) return 'decision'; // !
 
-        // Check if two lines cross roughly in the middle -> +
         const mid0x = (b0.minX + b0.maxX) / 2, mid0y = (b0.minY + b0.maxY) / 2;
         const mid1x = (b1.minX + b1.maxX) / 2, mid1y = (b1.minY + b1.maxY) / 2;
-        if (Math.abs(mid0x - mid1x) < w * 0.35 && Math.abs(mid0y - mid1y) < h * 0.35) {
+        if (Math.abs(mid0x - mid1x) < w * 0.4 && Math.abs(mid0y - mid1y) < h * 0.4) {
           return 'idea'; // +
         }
-        return 'todo'; // □ drawn with 2 L-shapes
+        return 'todo'; // □
       }
 
-      // Single stroke checks: □ vs ○ vs △ vs !
-      const pts = marginStrokes[0].points;
+      const pts = symStrokes[0].points;
       if (aspect < 0.38) return 'decision'; // !
 
-      // Check top width vs bottom width for △ vs □/○
       const topPts = pts.filter(p => p.y < minY + h * 0.35);
       const botPts = pts.filter(p => p.y > minY + h * 0.65);
       const topSpan = topPts.length ? (Math.max(...topPts.map(p => p.x)) - Math.min(...topPts.map(p => p.x))) : w;
       const botSpan = botPts.length ? (Math.max(...botPts.map(p => p.x)) - Math.min(...botPts.map(p => p.x))) : w;
-      if (botSpan > 1.7 * Math.max(4, topSpan)) {
-        return 'question'; // △
-      }
+      if (botSpan > 1.7 * Math.max(4, topSpan)) return 'question'; // △
 
-      // Distinguish □ vs ○ by diagonal corner occupancy
       let cornerHits = 0;
       const threshold = Math.min(w, h) * 0.24;
-      const corners = [
-        [minX, minY], [maxX, minY], [minX, maxY], [maxX, maxY]
-      ];
+      const corners = [[minX, minY], [maxX, minY], [minX, maxY], [maxX, maxY]];
       for (const [cx, cy] of corners) {
-        if (pts.some(p => Math.hypot(p.x - cx, p.y - cy) < threshold)) {
-          cornerHits++;
-        }
+        if (pts.some(p => Math.hypot(p.x - cx, p.y - cy) < threshold)) cornerHits++;
       }
       if (cornerHits >= 3) return 'todo'; // □
       return 'fact'; // ○
+    }
+
+    function splitCanvasIntoBlocks(strokes) {
+      if (!strokes || strokes.length === 0) return [];
+      const withMeta = strokes.filter(s => s.points && s.points.length > 0).map(s => {
+        const box = getBox(s.points);
+        const centerY = (box.minY + box.maxY) / 2;
+        return { stroke: s, box, centerY };
+      });
+      if (withMeta.length === 0) return [];
+
+      // 1. Group strokes into horizontal rows by vertical overlap / proximity
+      const byY = [...withMeta].sort((a, b) => a.box.minY - b.box.minY);
+      const rows = [];
+      for (const item of byY) {
+        const lastRow = rows[rows.length - 1];
+        if (lastRow && item.box.minY <= lastRow.maxY + 14) {
+          lastRow.items.push(item);
+          lastRow.minY = Math.min(lastRow.minY, item.box.minY);
+          lastRow.maxY = Math.max(lastRow.maxY, item.box.maxY);
+        } else {
+          rows.push({ items: [item], minY: item.box.minY, maxY: item.box.maxY });
+        }
+      }
+
+      // 2. For each row, detect if it starts with an isolated leading symbol cluster anywhere on X
+      const blocksOut = [];
+      for (const row of rows) {
+        const byX = [...row.items].sort((a, b) => a.box.minX - b.box.minX);
+        const first = byX[0];
+        const leadingCluster = [first];
+        let clusterMaxX = first.box.maxX;
+        let clusterMinX = first.box.minX;
+
+        for (let i = 1; i < byX.length; i++) {
+          const cand = byX[i];
+          // Join strokes that belong to the same multi-stroke symbol (*, +, !)
+          if (cand.box.minX <= clusterMaxX + 6 && (cand.box.maxX - clusterMinX) <= 58 && leadingCluster.length < 4) {
+            leadingCluster.push(cand);
+            clusterMaxX = Math.max(clusterMaxX, cand.box.maxX);
+          } else {
+            break;
+          }
+        }
+
+        const clusterW = clusterMaxX - clusterMinX;
+        const hasRest = byX.length > leadingCluster.length;
+        const gapAfterSymbol = hasRest ? (byX[leadingCluster.length].box.minX - clusterMaxX) : 99;
+        const isStandaloneSymbol = clusterW <= 60 && gapAfterSymbol >= 6;
+
+        if (isStandaloneSymbol) {
+          const tag = classifySymbolCluster(leadingCluster.map(i => i.stroke));
+          blocksOut.push({
+            tagType: tag,
+            minY: row.minY,
+            maxY: row.maxY,
+            strokes: row.items.map(i => i.stroke)
+          });
+        } else if (blocksOut.length > 0) {
+          // Continuation line without a new symbol -> append to previous block
+          const prev = blocksOut[blocksOut.length - 1];
+          prev.maxY = Math.max(prev.maxY, row.maxY);
+          prev.strokes.push(...row.items.map(i => i.stroke));
+        } else {
+          blocksOut.push({
+            tagType: null,
+            minY: row.minY,
+            maxY: row.maxY,
+            strokes: row.items.map(i => i.stroke)
+          });
+        }
+      }
+
+      return blocksOut;
     }
 
     function getBox(pts) {
@@ -587,14 +632,21 @@
 
     function updateLiveDetectionBadge() {
       const badge = document.getElementById('liveDetectBadge');
-      detectedSymbol = classifyMarginSymbol(canvasStrokes);
-      if (!detectedSymbol) {
-        badge.textContent = '왼쪽 구역에 기호 그리기';
+      const detectedBlocks = splitCanvasIntoBlocks(canvasStrokes).filter(b => b.tagType);
+      if (detectedBlocks.length === 0) {
+        detectedSymbol = null;
+        badge.textContent = '기호(□ ○ * + △ !)로 시작하기';
         badge.className = 'text-[11px] font-medium px-2 py-0.5 rounded-full bg-stone-200 text-stone-600';
-      } else {
+      } else if (detectedBlocks.length === 1) {
+        detectedSymbol = detectedBlocks[0].tagType;
         const meta = TAG_META[detectedSymbol];
         badge.textContent = `인식됨: ${meta.symbol} ${meta.label}`;
         badge.className = `text-[11px] font-semibold px-2.5 py-0.5 rounded-full border ${meta.badgeClass}`;
+      } else {
+        detectedSymbol = detectedBlocks[0].tagType;
+        const summary = detectedBlocks.map(b => TAG_META[b.tagType].symbol).join(' · ');
+        badge.textContent = `${detectedBlocks.length}개 블록 분리됨 (${summary})`;
+        badge.className = 'text-[11px] font-semibold px-2.5 py-0.5 rounded-full border bg-blue-50 text-blue-700 border-blue-200';
       }
     }
 
@@ -740,64 +792,72 @@
       }
       const commitBtn = document.getElementById('commitBlockBtn');
       const manualSel = document.getElementById('manualTagSelect').value;
-      let finalTag = manualSel !== 'auto' ? manualSel : (detectedSymbol || 'idea');
       const hintInput = document.getElementById('hiddenHintInput');
-      let hintText = hintInput.value.trim();
-      let aiKeywords = null;
+      const baseHintText = hintInput.value.trim();
 
-      if (!hintText && geminiApiKey) {
+      const splitBlocks = splitCanvasIntoBlocks(canvasStrokes);
+      const isSingle = splitBlocks.length === 1;
+
+      if (geminiApiKey) {
         commitBtn.disabled = true;
         commitBtn.classList.add('opacity-60');
-        showToast('AI가 손글씨를 숨김 태그로 변환 중입니다...');
-        try {
-          const parsed = await analyzeInkWithGemini(canvasStrokes);
-          if (parsed.ocrText) hintText = parsed.ocrText;
-          if (Array.isArray(parsed.keywords)) aiKeywords = parsed.keywords;
-          if (manualSel === 'auto' && parsed.tagType && TAG_META[parsed.tagType]) {
-            finalTag = parsed.tagType;
-          }
-        } catch (err) {
-          showToast('AI 인식에 실패해 기본 태그로 저장합니다.');
-        } finally {
-          commitBtn.disabled = false;
-          commitBtn.classList.remove('opacity-60');
-        }
+        showToast(`AI가 ${splitBlocks.length}개 블록을 분석 중입니다...`);
       }
 
-      const hasRedInk = canvasStrokes.some(s => s.color === '#DC2626');
-      const meta = TAG_META[finalTag];
-      const nowIso = new Date().toISOString();
+      const createdSummary = [];
+      const baseTime = Date.now();
 
-      const autoText = hintText || `${meta.label} 손글씨 메모 (${new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })})`;
-      const autoKeywords = aiKeywords || (hintText
-        ? hintText.split(/[\s,]+/).filter(w => w.length >= 1)
-        : [meta.label, '손글씨', '새메모']);
+      try {
+        for (let i = splitBlocks.length - 1; i >= 0; i--) {
+          const blk = splitBlocks[i];
+          let finalTag = (isSingle && manualSel !== 'auto') ? manualSel : (blk.tagType || (manualSel !== 'auto' ? manualSel : 'idea'));
+          let hintText = isSingle ? baseHintText : '';
+          let aiKeywords = null;
 
-      const newBlock = {
-        id: 'blk_' + Date.now(),
-        tagType: finalTag,
-        status: 'open',
-        priority: hasRedInk ? 'high' : 'normal',
-        createdAt: nowIso,
-        ocrText: autoText,
-        keywords: autoKeywords,
-        strokes: normalizeStrokes(canvasStrokes)
-      };
+          if (!hintText && geminiApiKey) {
+            try {
+              const parsed = await analyzeInkWithGemini(blk.strokes);
+              if (parsed.ocrText) hintText = parsed.ocrText;
+              if (Array.isArray(parsed.keywords)) aiKeywords = parsed.keywords;
+              if ((manualSel === 'auto' || !isSingle) && parsed.tagType && TAG_META[parsed.tagType]) {
+                finalTag = parsed.tagType;
+              }
+            } catch (err) {}
+          }
 
-      blocks.unshift(newBlock);
+          const hasRedInk = blk.strokes.some(s => s.color === '#DC2626');
+          const meta = TAG_META[finalTag];
+          const nowIso = new Date(baseTime + (splitBlocks.length - i)).toISOString();
+          const autoText = hintText || `${meta.label} 손글씨 메모 (${new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })})`;
+          const autoKeywords = aiKeywords || (hintText
+            ? hintText.split(/[\s,]+/).filter(w => w.length >= 1)
+            : [meta.label, '손글씨', '새메모']);
+
+          blocks.unshift({
+            id: 'blk_' + baseTime + '_' + i,
+            tagType: finalTag,
+            status: 'open',
+            priority: hasRedInk ? 'high' : 'normal',
+            createdAt: nowIso,
+            ocrText: autoText,
+            keywords: autoKeywords,
+            strokes: normalizeStrokes(blk.strokes)
+          });
+          createdSummary.unshift(`${meta.symbol} ${meta.label}`);
+        }
+      } finally {
+        commitBtn.disabled = false;
+        commitBtn.classList.remove('opacity-60');
+      }
+
       saveToStorage();
-
       canvasStrokes = [];
       hintInput.value = '';
       document.getElementById('manualTagSelect').value = 'auto';
       redrawCanvas();
       updateLiveDetectionBadge();
       renderNotes();
-      if (!hintText && !geminiApiKey) {
-        showToast(`${meta.symbol} ${meta.label} 저장됨 (검색용 텍스트는 하단 입력 또는 AI 연결 필요)`);
-      } else {
-        showToast(`${meta.symbol} ${meta.label} 노트에 분류되어 저장되었습니다.`);
-      }
+      showToast(`${createdSummary.length}개 블록 분류 저장됨: ${createdSummary.join(', ')}`);
     }
 
     // ---------- Render Notes & Mini Ink Canvases ----------
