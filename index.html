@@ -247,10 +247,16 @@
             <button data-view="board_insight" class="view-tab shrink-0 px-2.5 py-1 rounded-lg text-xs font-medium bg-amber-50 text-amber-800 hover:bg-amber-100">인사이트 (+ + !)</button>
           </div>
 
-          <button id="sortOrderBtn" class="shrink-0 flex items-center gap-1 text-xs font-medium text-stone-600 bg-white border border-stone-200 hover:bg-stone-100 px-2.5 py-1 rounded-lg transition">
-            <i data-lucide="arrow-up-down" class="w-3.5 h-3.5"></i>
-            <span id="sortOrderLabel">최신순</span>
-          </button>
+          <div class="shrink-0 flex items-center gap-1.5">
+            <div class="flex bg-stone-200/70 p-0.5 rounded-lg text-[11px] font-medium">
+              <button id="dispCardBtn" class="px-2 py-0.5 rounded-md bg-white text-stone-900 shadow-xs transition">카드</button>
+              <button id="dispPageBtn" class="px-2 py-0.5 rounded-md text-stone-600 hover:text-stone-900 transition">연결 페이지</button>
+            </div>
+            <button id="sortOrderBtn" class="flex items-center gap-1 text-xs font-medium text-stone-600 bg-white border border-stone-200 hover:bg-stone-100 px-2.5 py-1 rounded-lg transition">
+              <i data-lucide="arrow-up-down" class="w-3.5 h-3.5"></i>
+              <span id="sortOrderLabel">최신순</span>
+            </button>
+          </div>
         </div>
 
         <!-- 6 Individual Tag Note Filters -->
@@ -421,6 +427,7 @@
     }
 
     let currentView = 'all';
+    let displayMode = 'card'; // 'card' | 'page'
     let sortDesc = true;
     let searchQuery = '';
     let peekAi = false;
@@ -967,6 +974,83 @@
       return `${m}월 ${day}일 ${hh}:${mm}`;
     }
 
+    function renderUnifiedPage(listEl, filtered, q) {
+      const SCALE = 0.62;
+      const PADDING_TOP = 18;
+      const BLOCK_GAP = 16;
+
+      const layoutItems = filtered.map(b => {
+        let maxX = 120, maxY = 44;
+        for (const st of b.strokes) {
+          for (const pt of st.points) {
+            if (pt.x > maxX) maxX = pt.x;
+            if (pt.y > maxY) maxY = pt.y;
+          }
+        }
+        const h = Math.max(54, Math.ceil((maxY + 14) * SCALE));
+        const extraAi = peekAi ? 18 : 0;
+        return { block: b, maxX, h, extraAi };
+      });
+
+      const totalH = Math.max(380, PADDING_TOP + layoutItems.reduce((sum, it) => sum + it.h + it.extraAi + BLOCK_GAP, 0) + 20);
+      const maxContentW = Math.max(...layoutItems.map(it => Math.ceil((it.maxX + 30) * SCALE)), 340);
+
+      listEl.innerHTML = `
+        <div class="dot-grid rounded-xl border border-stone-200 shadow-inner overflow-x-auto">
+          <canvas id="unifiedPageCanvas" class="block" style="height:${totalH}px;"></canvas>
+        </div>
+      `;
+
+      const uc = document.getElementById('unifiedPageCanvas');
+      const parentW = uc.parentElement ? uc.parentElement.clientWidth : 480;
+      const canvasW = Math.max(parentW, maxContentW);
+      uc.style.width = canvasW + 'px';
+      uc.style.height = totalH + 'px';
+
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      uc.width = canvasW * dpr;
+      uc.height = totalH * dpr;
+      const uctx = uc.getContext('2d');
+      uctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+      let curY = PADDING_TOP;
+      layoutItems.forEach((it, idx) => {
+        const b = it.block;
+        if (q) {
+          uctx.fillStyle = 'rgba(59, 130, 246, 0.08)';
+          uctx.fillRect(8, curY - 4, canvasW - 16, it.h + it.extraAi + 4);
+        }
+
+        uctx.save();
+        if (b.status === 'done') uctx.globalAlpha = 0.45;
+        drawStrokeList(uctx, b.strokes, 12, curY / SCALE, SCALE);
+        uctx.restore();
+
+        uctx.fillStyle = '#9CA3AF';
+        uctx.font = '11px Inter, sans-serif';
+        uctx.textAlign = 'right';
+        uctx.fillText(formatDate(b.createdAt), canvasW - 14, curY + 14);
+        uctx.textAlign = 'left';
+
+        if (peekAi) {
+          uctx.fillStyle = '#2563EB';
+          uctx.font = '11px Inter, sans-serif';
+          uctx.fillText('AI: ' + b.ocrText, 16, curY + it.h + 10);
+        }
+
+        if (idx < layoutItems.length - 1) {
+          uctx.strokeStyle = 'rgba(214, 211, 209, 0.55)';
+          uctx.lineWidth = 1;
+          uctx.beginPath();
+          uctx.moveTo(16, curY + it.h + it.extraAi + BLOCK_GAP / 2);
+          uctx.lineTo(canvasW - 16, curY + it.h + it.extraAi + BLOCK_GAP / 2);
+          uctx.stroke();
+        }
+
+        curY += it.h + it.extraAi + BLOCK_GAP;
+      });
+    }
+
     function renderNotes() {
       updateCounts();
       const listEl = document.getElementById('notesList');
@@ -988,6 +1072,11 @@
             <p class="text-xs mt-1">왼쪽 무페이지 캔버스에 기호를 그려 추가해 보세요.</p>
           </div>
         `;
+        return;
+      }
+
+      if (displayMode === 'page') {
+        renderUnifiedPage(listEl, filtered, q);
         return;
       }
 
@@ -1108,6 +1197,28 @@
         tab.classList.add('ring-2', 'ring-stone-900');
         renderNotes();
       });
+    });
+
+    const dispCardBtn = document.getElementById('dispCardBtn');
+    const dispPageBtn = document.getElementById('dispPageBtn');
+    function updateDisplayModeUI() {
+      if (displayMode === 'card') {
+        dispCardBtn.className = 'px-2 py-0.5 rounded-md bg-white text-stone-900 shadow-xs transition';
+        dispPageBtn.className = 'px-2 py-0.5 rounded-md text-stone-600 hover:text-stone-900 transition';
+      } else {
+        dispPageBtn.className = 'px-2 py-0.5 rounded-md bg-white text-stone-900 shadow-xs transition';
+        dispCardBtn.className = 'px-2 py-0.5 rounded-md text-stone-600 hover:text-stone-900 transition';
+      }
+    }
+    dispCardBtn.addEventListener('click', () => {
+      displayMode = 'card';
+      updateDisplayModeUI();
+      renderNotes();
+    });
+    dispPageBtn.addEventListener('click', () => {
+      displayMode = 'page';
+      updateDisplayModeUI();
+      renderNotes();
     });
 
     document.getElementById('sortOrderBtn').addEventListener('click', () => {
