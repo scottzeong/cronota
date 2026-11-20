@@ -137,6 +137,14 @@
         <label class="block text-[11px] font-semibold text-stone-600 mb-1">Gemini API Key</label>
         <input id="geminiKeyInput" type="password" placeholder="AIza..." class="w-full text-xs border border-stone-300 rounded-lg px-3 py-2 outline-none focus:border-blue-500" />
       </div>
+      <div>
+        <label class="block text-[11px] font-semibold text-stone-600 mb-1">사용할 모델</label>
+        <select id="geminiModelSelect" class="w-full text-xs border border-stone-300 rounded-lg px-3 py-2 bg-white outline-none focus:border-blue-500">
+          <option value="gemini-3.5-flash-lite">gemini-3.5-flash-lite (권장 · 빠르고 가벼움)</option>
+          <option value="gemini-3.8-flash">gemini-3.8-flash (고성능)</option>
+          <option value="gemini-3.6-flash">gemini-3.6-flash</option>
+        </select>
+      </div>
       <div id="aiTestResult" class="hidden text-xs px-3 py-2 rounded-lg"></div>
       <div class="flex items-center justify-end gap-2 pt-1">
         <button id="clearGeminiKeyBtn" class="px-3 py-1.5 text-xs text-stone-600 hover:bg-stone-100 rounded-lg">키 삭제</button>
@@ -420,7 +428,11 @@
     let currentLayoutMode = 'split';
     let palmNoticeShown = false;
     let geminiApiKey = '';
-    try { geminiApiKey = localStorage.getItem('cronota_gemini_key') || ''; } catch (e) {}
+    let geminiModel = 'gemini-3.5-flash-lite';
+    try {
+      geminiApiKey = localStorage.getItem('cronota_gemini_key') || '';
+      geminiModel = localStorage.getItem('cronota_gemini_model') || 'gemini-3.5-flash-lite';
+    } catch (e) {}
 
     // Canvas drawing state
     const canvas = document.getElementById('inkCanvas');
@@ -819,9 +831,10 @@
       const parts = [{ text: prompt }, { inline_data: { mime_type: 'image/png', data: b64 } }];
       let raw = '';
       try {
-        raw = await callGeminiVision('gemini-2.5-flash', parts);
+        raw = await callGeminiVision(geminiModel, parts);
       } catch (e1) {
-        raw = await callGeminiVision('gemini-2.0-flash', parts);
+        const fallback = geminiModel === 'gemini-3.8-flash' ? 'gemini-3.5-flash-lite' : 'gemini-3.8-flash';
+        raw = await callGeminiVision(fallback, parts);
       }
       const cleaned = raw.replace(/```json\s*|```/gi, '').trim();
       const match = cleaned.match(/\{[\s\S]*\}/);
@@ -1236,13 +1249,16 @@
         aiStatusLabel.parentElement.classList.remove('text-blue-700', 'bg-blue-50');
       }
     }
+    const geminiModelSelect = document.getElementById('geminiModelSelect');
     document.getElementById('openAiModalBtn').addEventListener('click', () => {
       geminiKeyInput.value = geminiApiKey;
+      geminiModelSelect.value = geminiModel;
       aiModal.classList.remove('hidden');
     });
     document.getElementById('closeAiModalBtn').addEventListener('click', () => aiModal.classList.add('hidden'));
     document.getElementById('testGeminiKeyBtn').addEventListener('click', async () => {
       const testKey = geminiKeyInput.value.trim();
+      const chosenModel = geminiModelSelect.value;
       const resEl = document.getElementById('aiTestResult');
       if (!testKey) {
         resEl.textContent = 'API 키를 먼저 입력해 주세요.';
@@ -1250,31 +1266,29 @@
         resEl.classList.remove('hidden');
         return;
       }
-      resEl.textContent = 'Gemini API 연결 확인 중...';
+      resEl.textContent = `${chosenModel} 연결 확인 중...`;
       resEl.className = 'text-xs px-3 py-2 rounded-lg bg-stone-100 text-stone-600';
       resEl.classList.remove('hidden');
       const prevKey = geminiApiKey;
       geminiApiKey = testKey;
       try {
-        await callGeminiVision('gemini-2.5-flash', [{ text: 'OK라고만 답하세요.' }]);
-        resEl.textContent = '연결 성공! 이제 저장하기를 누르시면 손글씨 AI 인식이 작동합니다.';
+        await callGeminiVision(chosenModel, [{ text: 'OK라고만 답하세요.' }]);
+        resEl.textContent = `연결 성공 (${chosenModel})! 저장하기를 누르면 손글씨 AI 인식이 작동합니다.`;
         resEl.className = 'text-xs px-3 py-2 rounded-lg bg-emerald-50 text-emerald-700 font-medium';
       } catch (err) {
-        try {
-          await callGeminiVision('gemini-2.0-flash', [{ text: 'OK라고만 답하세요.' }]);
-          resEl.textContent = '연결 성공! 이제 저장하기를 누르시면 손글씨 AI 인식이 작동합니다.';
-          resEl.className = 'text-xs px-3 py-2 rounded-lg bg-emerald-50 text-emerald-700 font-medium';
-        } catch (err2) {
-          geminiApiKey = prevKey;
-          resEl.textContent = '연결 실패: ' + (err2.message || '키가 올바른지 확인해 주세요.');
-          resEl.className = 'text-xs px-3 py-2 rounded-lg bg-red-50 text-red-700';
-        }
+        geminiApiKey = prevKey;
+        resEl.textContent = '연결 실패: ' + (err.message || '키나 모델을 확인해 주세요.');
+        resEl.className = 'text-xs px-3 py-2 rounded-lg bg-red-50 text-red-700';
       }
     });
 
     document.getElementById('saveGeminiKeyBtn').addEventListener('click', () => {
       geminiApiKey = geminiKeyInput.value.trim();
-      try { localStorage.setItem('cronota_gemini_key', geminiApiKey); } catch (e) {}
+      geminiModel = geminiModelSelect.value;
+      try {
+        localStorage.setItem('cronota_gemini_key', geminiApiKey);
+        localStorage.setItem('cronota_gemini_model', geminiModel);
+      } catch (e) {}
       updateAiStatusUI();
       aiModal.classList.add('hidden');
       showToast(geminiApiKey ? 'Gemini AI 손글씨 인식이 활성화되었습니다.' : 'API 키가 비워졌습니다.');
@@ -1382,7 +1396,7 @@
       showToast('필기 검색어를 읽고 있습니다...');
       try {
         const b64 = renderStrokesToBase64(hsStrokes);
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(geminiApiKey)}`;
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${encodeURIComponent(geminiApiKey)}`;
         const res = await fetch(url, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
