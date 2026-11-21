@@ -923,6 +923,7 @@ function sanitizeBlock(b) {
     text: toStr(b.text ?? b.ocrText).trim(),
     keywords: toKeywords(b.keywords),
     gap: Math.min(56, Math.max(20, +b.gap || 32)),
+    ...(Number.isInteger(b.pos) && b.pos >= 0 ? { pos: Math.min(b.pos, 999) } : {}),
     strokes
   };
 }
@@ -1542,7 +1543,7 @@ async function saveCanvas() {
     tagSource: p.tagType ? 'symbol' : 'auto',
     status: 'open',
     priority: p.strokes.some((s) => !s.hl && s.color === HIGH_COLOR) ? 'high' : 'normal',
-    createdAt: new Date(base - i).toISOString(), // keeps top-to-bottom order
+    createdAt: new Date(base).toISOString(), pos: i, // notes saved together share a time; pos keeps top-to-bottom order
     text: '', keywords: [], gap: prefs.gap,
     strokes: p.strokes
   }));
@@ -1635,15 +1636,23 @@ function matchesQuery(b, q) {
     b.keywords.some((k) => k.toLowerCase().includes(q)) ||
     Object.values(I18N).some((L) => L.tags[b.tagType].toLowerCase().includes(q));
 }
+function sortKey(b) {
+  const t = Date.parse(b.createdAt) || 0;
+  if (Number.isInteger(b.pos)) return { t, pos: b.pos };
+  // older notes: one save used times base, base-1ms, base-2ms... from the top down
+  return { t: Math.floor(t / 1000) * 1000, pos: -(t % 1000) };
+}
 function visibleBlocks() {
   let list = blocks;
   if (filter !== 'all') list = list.filter((b) => b.tagType === filter);
   const q = query.trim().toLowerCase();
   if (q) list = list.filter((b) => matchesQuery(b, q));
   return [...list].sort((a, b) => {
-    // Same order on every device: by time written, then by id when times are equal.
-    const d = (Date.parse(b.createdAt) - Date.parse(a.createdAt)) || (b.id < a.id ? -1 : b.id > a.id ? 1 : 0);
-    return prefs.sortDesc ? d : -d;
+    // Newest/oldest first by the time a note was first saved (re-editing never
+    // changes it). Notes saved together stay in reading order in both directions.
+    const ka = sortKey(a), kb = sortKey(b);
+    const d = prefs.sortDesc ? kb.t - ka.t : ka.t - kb.t;
+    return d || (ka.pos - kb.pos) || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
   });
 }
 
