@@ -1705,24 +1705,44 @@ function noteHtml(b, inSearch) {
 
 /** Draw a note as a slice of lined paper: one blank line on top, then its ink rows. */
 function drawNoteInk(canvas, b, width) {
-  const g = b.gap;
-  const box = strokesBox(b.strokes);
-  const offY = -Math.floor(Math.max(0, box.minY) / g) * g + g;
-  const h = Math.ceil((box.maxY + offY + 6) / g) * g;
-  // Notes written on a wider screen are shrunk to fit, so the page never scrolls sideways.
-  const k = Math.min(1, width / Math.max(1, Math.ceil(box.maxX + 16)));
+  // Every note is drawn on the same ruling as the page: the current line gap and
+  // the red margin at MARGIN_X, so lines and the margin run straight down the page.
+  const G = prefs.gap, s0 = G / b.gap;
+  const box0 = strokesBox(b.strokes);
+  const top = Math.floor(Math.max(0, box0.minY) / b.gap) * b.gap;
+  const offY = G - top * s0;
+  const pts = (st, f) => ({ ...st, width: st.width * f.w, points: st.points.map(f.p) });
+  let list = b.strokes.map((st) => pts(st, { w: s0, p: (p) => ({ x: p.x * s0, y: p.y * s0 + offY, p: p.p }) }));
+  // Notes written on a wider screen: shrink only the writing right of the margin,
+  // each line around its own middle, so symbols, margin and lines stay put.
+  const textW = Math.max(...list.filter((st) => !isMarginStroke(st)).flatMap((st) => st.points.map((p) => p.x)), MARGIN_X) + 16;
+  const k = Math.min(1, (width - MARGIN_X) / Math.max(1, textW - MARGIN_X));
+  if (k < 1) {
+    list = list.map((st) => {
+      if (isMarginStroke(st)) return st;
+      const yb = getBox(st.points);
+      const mid = Math.floor((yb.minY + yb.maxY) / 2 / G) * G + G / 2;
+      return pts(st, { w: k, p: (p) => ({ x: MARGIN_X + (p.x - MARGIN_X) * k, y: mid + (p.y - mid) * k, p: p.p }) });
+    });
+  }
+  const box = strokesBox(list);
+  const h = Math.max(G, Math.ceil((box.maxY + 6) / G) * G);
   const w = Math.max(1, Math.floor(width));
-  const hh = Math.round(h * k);
   const dpr = dprOf();
   canvas.width = Math.round(w * dpr);
-  canvas.height = Math.round(hh * dpr);
+  canvas.height = Math.round(h * dpr);
   canvas.style.width = w + 'px';
-  canvas.style.height = hh + 'px';
-  canvas.style.setProperty('--gap', (g * k) + 'px');
-  canvas.style.setProperty('--margin-x', (60 * k) + 'px');
+  canvas.style.height = h + 'px';
+  canvas.style.removeProperty('--gap');
+  canvas.style.removeProperty('--margin-x');
   const c = canvas.getContext('2d');
-  c.setTransform(dpr * k, 0, 0, dpr * k, 0, 0);
-  drawStrokes(c, b.strokes, 0, offY);
+  c.setTransform(dpr, 0, 0, dpr, 0, 0);
+  drawStrokes(c, list, 0, 0);
+}
+function isMarginStroke(st) {
+  if (st.hl) return false;
+  const bx = getBox(st.points);
+  return (bx.minX + bx.maxX) / 2 < MARGIN_X;
 }
 
 function renderNotes() {
