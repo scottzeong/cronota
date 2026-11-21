@@ -149,9 +149,17 @@
   .canvas-scroll.h { overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; }
   #pageSnaps { position: absolute; left: 0; top: 0; pointer-events: none; }
   #pageSnaps i { position: absolute; display: block; scroll-snap-align: start; }
-  .page-nav { position: absolute; right: 14px; bottom: 14px; z-index: 2; display: flex; align-items: center; gap: 0; padding: 3px; background: var(--surface); border-radius: 999px; box-shadow: 0 0 0 1px var(--hair); font-size: 12px; color: var(--muted); }
-  .page-nav span { min-width: 46px; text-align: center; font-variant-numeric: tabular-nums; font-weight: 500; letter-spacing: .02em; }
-  .page-nav .icon-btn { width: 28px; height: 28px; border-radius: 999px; }
+  .pnav { display: flex; align-items: center; flex: none; font-size: 12px; color: var(--muted); }
+  .pnav span { min-width: 38px; text-align: center; font-variant-numeric: tabular-nums; font-weight: 500; white-space: nowrap; }
+  .pnav .tool { width: 26px; }
+  .pnav .tool:disabled { opacity: .3; }
+  #writePanel { container-type: inline-size; }
+  /* Narrow writing panel (e.g. side by side on a laptop): keep the toolbar on one row */
+  @container (max-width: 800px) {
+    .toolbar .sep { margin: 0 4px; }
+    #saveBtn { width: 36px; padding: 0; justify-content: center; }
+    #saveBtn #saveLabel { display: none; }
+  }
   .paper {
     background-color: var(--paper);
     background-image:
@@ -180,7 +188,12 @@
   .banner.show { display: flex; }
   .banner button { font-weight: 600; color: var(--ink); white-space: nowrap; text-decoration: underline; text-underline-offset: 3px; }
 
-  .list { flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; overscroll-behavior-x: none; touch-action: pan-y; scrollbar-gutter: stable; padding: 14px; background: var(--surface); }
+  .list { flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; touch-action: pan-y; padding: 14px; background: var(--surface); scroll-snap-type: y mandatory; scroll-padding: 14px; scrollbar-width: none; }
+  .list::-webkit-scrollbar { display: none; }
+  .list.h { display: flex; gap: 14px; overflow-x: auto; overflow-y: hidden; touch-action: pan-x; scroll-snap-type: x mandatory; }
+  .npage { display: flex; flex-direction: column; flex: none; scroll-snap-align: start; scroll-snap-stop: always; }
+  .list:not(.h) .npage + .npage { margin-top: 14px; }
+  .npage .fill { flex: 1; min-height: 0; }
   .page { border-radius: 14px; overflow: hidden; background: var(--paper); box-shadow: 0 0 0 1px var(--hair); }
   .page-scroll { overflow: hidden; width: 100%; }
   .pnote canvas { max-width: 100%; }
@@ -194,6 +207,7 @@
   .day-head { position: sticky; top: 0; z-index: 3; padding: 10px 14px; font-size: 12px; font-weight: 600; color: var(--muted); background: var(--surface); border-bottom: 1px solid var(--hair); letter-spacing: .01em; }
   .day-head:not(:first-child) { border-top: 1px solid var(--hair); }
   .page-end { height: calc(var(--gap) * 3); }
+  .list.paged .page-end { display: none; }
   .tag-pick { position: relative; display: inline-flex; align-items: center; gap: 4px; height: 28px; padding: 0 8px 0 10px; border-radius: var(--r-sm); color: var(--c); font-weight: 600; font-size: 12px; white-space: nowrap; }
   .tag-pick:hover { background: var(--hover); }
   .tag-pick select { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; }
@@ -349,6 +363,12 @@
         <button class="tool" id="pageVBtn" data-i18n-title="pageModeV"><i data-icon="pagesV"></i></button>
         <button class="pen-mode" id="penModeBtn"><i data-icon="penTip"></i></button>
       </div>
+      <div class="sep"></div>
+      <div class="pnav">
+        <button class="tool" id="prevPageBtn" data-i18n-title="prevPage"></button>
+        <span id="pageLabel">1 / 1</span>
+        <button class="tool" id="nextPageBtn" data-i18n-title="nextPage"></button>
+      </div>
       <button class="tool" id="cancelEditBtn" hidden data-i18n-title="cancelEdit" data-i18n-aria="cancelEdit"><i data-icon="x"></i></button>
       <button class="btn primary" id="saveBtn" disabled><i data-icon="check" class="sm"></i><span id="saveLabel"></span></button>
     </div>
@@ -358,11 +378,6 @@
         <canvas id="ink" class="paper"></canvas>
         <div id="pageSnaps"></div>
       </div>
-      <div class="page-nav">
-        <button class="icon-btn" id="prevPageBtn" data-i18n-title="prevPage"></button>
-        <span id="pageLabel">1 / 1</span>
-        <button class="icon-btn" id="nextPageBtn" data-i18n-title="nextPage"></button>
-      </div>
     </div>
   </section>
 
@@ -371,6 +386,11 @@
     <div class="filters">
       <div class="chips" id="tagChips"></div>
       <button class="btn ghost" id="sortBtn"><i data-icon="sort" class="sm"></i><span id="sortLabel"></span></button>
+      <div class="pnav" id="notesNav" hidden>
+        <button class="tool" id="nPrevBtn" data-i18n-title="prevPage"></button>
+        <span id="nPageLabel">1 / 1</span>
+        <button class="tool" id="nNextBtn" data-i18n-title="nextPage"></button>
+      </div>
     </div>
     <div class="banner" id="banner"><span id="bannerText"></span><button id="bannerClear" data-i18n="clearSearch"></button></div>
     <div class="list" id="list"></div>
@@ -1303,7 +1323,11 @@ function setPageMode(mode) {
   $('#pageVBtn').setAttribute('aria-pressed', String(!horizontal()));
   $('#prevPageBtn').innerHTML = icon(horizontal() ? 'chevLeft' : 'chevUp', 'sm');
   $('#nextPageBtn').innerHTML = icon(horizontal() ? 'chevRight' : 'chevron', 'sm');
+  $('#nPrevBtn').innerHTML = icon(horizontal() ? 'chevLeft' : 'chevUp', 'sm');
+  $('#nNextBtn').innerHTML = icon(horizontal() ? 'chevRight' : 'chevron', 'sm');
   layoutPages(true);
+  nPage = 0;
+  renderNotes();
 }
 $('#pageHBtn').addEventListener('click', () => setPageMode('h'));
 $('#pageVBtn').addEventListener('click', () => setPageMode('v'));
@@ -1702,12 +1726,15 @@ function renderNotes() {
   $('#bannerText').textContent = q ? t('results', { q: query.trim(), n: list.length }) : '';
 
   if (!list.length) {
+    listEl.classList.remove('paged', 'h');
+    nPageCount = 0; updateNotesNav();
     listEl.innerHTML = blocks.length === 0
       ? `<div class="empty"><b>${escapeHtml(t('emptyNone'))}</b>${escapeHtml(t('emptyNoneSub'))}</div>`
       : q ? `<div class="empty"><b>${escapeHtml(t('emptySearch'))}</b>${escapeHtml(t('emptySearchSub'))}</div>`
           : `<div class="empty"><b>${escapeHtml(t('emptyFilter'))}</b></div>`;
     return;
   }
+  listEl.classList.remove('paged', 'h'); // measure notes in the plain one-column layout first
   let html = '<div class="page"><div class="page-scroll">';
   let lastDay = '';
   for (const b of list) {
@@ -1727,9 +1754,91 @@ function renderNotes() {
     const b = byId.get(el.dataset.id);
     if (b) drawNoteInk(el.querySelector('canvas[data-ink]'), b, baseW);
   });
+  if (listEl.clientWidth && listEl.clientHeight) paginateNotes(listEl);
+  else { listEl.classList.remove('paged', 'h'); nPageCount = 0; updateNotesNav(); }
   const input = listEl.querySelector('[data-edit-input]');
   if (input) { input.focus(); input.setSelectionRange(input.value.length, input.value.length); }
 }
+
+/* Notes are shown as screen-sized pages too, turned the same way as the writing
+   page (up/down or sideways). Notes are packed whole; a note taller than a page
+   gets a page of its own. */
+let nPage = 0, nPageCount = 0, nPageW = 0, nPageH = 0, nScrollLock = false;
+function paginateNotes(listEl) {
+  const cs = getComputedStyle(listEl);
+  const padX = parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight);
+  const padY = parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom);
+  const w = listEl.clientWidth - padX;
+  const h = Math.max(160, listEl.clientHeight - padY);
+  const src = listEl.querySelector('.page-scroll');
+  const items = [...src.children].filter((el) => !el.classList.contains('page-end'));
+  const pages = [];
+  let cur = null, used = 0;
+  for (const el of items) {
+    const eh = el.offsetHeight;
+    if (!cur || (used + eh > h && used > 0)) { cur = []; pages.push(cur); used = 0; }
+    cur.push(el); used += eh;
+  }
+  const frag = document.createDocumentFragment();
+  for (const group of pages) {
+    const pg = document.createElement('div');
+    pg.className = 'page npage';
+    pg.style.width = w + 'px';
+    pg.style.minHeight = h + 'px';
+    pg.append(...group);
+    const fill = document.createElement('div');
+    fill.className = 'paper fill';
+    pg.append(fill);
+    frag.append(pg);
+  }
+  listEl.classList.add('paged');
+  listEl.classList.toggle('h', horizontal());
+  listEl.replaceChildren(frag);
+  nPageW = w; nPageH = h; nPageCount = pages.length;
+  // stay on the page being looked at (or the one holding the selected note)
+  let k = Math.min(nPage, nPageCount - 1);
+  const want = selectedId || editingId;
+  if (want) {
+    const at = [...listEl.children].findIndex((pg) => pg.querySelector(`.pnote[data-id="${CSS.escape(want)}"]`));
+    if (at >= 0) k = at;
+  }
+  goToNotesPage(k, false);
+}
+function notesStep() { return (horizontal() ? nPageW : nPageH) + 14; }
+function goToNotesPage(k, smooth = true) {
+  const listEl = $('#list');
+  nPage = Math.min(Math.max(0, nPageCount - 1), Math.max(0, k));
+  const pg = listEl.children[nPage];
+  if (pg && pg.classList.contains('npage')) {
+    nScrollLock = true;
+    listEl.scrollTo({ left: horizontal() ? pg.offsetLeft - 14 : 0, top: horizontal() ? 0 : pg.offsetTop - 14, behavior: smooth ? 'smooth' : 'auto' });
+    setTimeout(() => { nScrollLock = false; }, smooth ? 500 : 50);
+  }
+  updateNotesNav();
+}
+function updateNotesNav() {
+  $('#notesNav').hidden = nPageCount < 1;
+  $('#nPageLabel').textContent = `${Math.min(nPage + 1, nPageCount)} / ${nPageCount}`;
+  $('#nPrevBtn').disabled = nPage <= 0;
+  $('#nNextBtn').disabled = nPage >= nPageCount - 1;
+}
+$('#list').addEventListener('scroll', (e) => {
+  if (nScrollLock || !nPageCount || e.target !== $('#list')) return;
+  const el = $('#list');
+  const k = Math.round((horizontal() ? el.scrollLeft : el.scrollTop) / notesStep());
+  if (k !== nPage) { nPage = Math.min(nPageCount - 1, Math.max(0, k)); updateNotesNav(); }
+});
+let nWheelLock = 0;
+$('#list').addEventListener('wheel', (e) => {
+  if (!horizontal() || !nPageCount || Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return;
+  e.preventDefault();
+  const now = Date.now();
+  if (now < nWheelLock) return;
+  nWheelLock = now + 450;
+  goToNotesPage(nPage + (e.deltaY > 0 ? 1 : -1));
+}, { passive: false });
+$('#nPrevBtn').addEventListener('click', () => goToNotesPage(nPage - 1));
+$('#nNextBtn').addEventListener('click', () => goToNotesPage(nPage + 1));
 
 function findBlock(el) {
   const n = el.closest('.pnote');
@@ -1801,7 +1910,7 @@ function setQuery(q) {
   query = q;
   searchInput.value = q;
   $('#clearSearchBtn').hidden = !q;
-  selectedId = null; editingId = null;
+  selectedId = null; editingId = null; nPage = 0;
   if (q.trim()) setTab('notes');
   renderNotes();
 }
@@ -1965,12 +2074,13 @@ $('#saveBtn').addEventListener('click', saveCanvas);
 $('#tagChips').addEventListener('click', (e) => {
   const b = e.target.closest('[data-filter]'); if (!b) return;
   filter = (filter === b.dataset.filter && filter !== 'all') ? 'all' : b.dataset.filter;
-  selectedId = null; editingId = null;
+  selectedId = null; editingId = null; nPage = 0;
   renderNotes();
 });
 $('#sortBtn').addEventListener('click', () => {
   prefs.sortDesc = !prefs.sortDesc;
   lsSet('cronota_sort', prefs.sortDesc ? 'desc' : 'asc');
+  nPage = 0;
   renderNotes();
 });
 
