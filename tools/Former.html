@@ -1,0 +1,2238 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#F5F1E8" />
+<title>Former · 아웃그리드 문서 양식 작성기</title>
+<meta name="description" content="브라우저 안에서만 동작하는 문서 양식 작성기. 이력서, 자기소개서, 견적서, 거래명세서, 영수증, 청구서, 휴가신청서, 사직서, 위임장, 차용증까지. 입력한 내용은 내 기기에만 저장됩니다." />
+<!-- Fonts: outgrid's own files first (fonts/ next to this page), public CDN as a fallback. -->
+<style>
+  @font-face { font-family: "wantedSans"; src: url("fonts/WantedSansVariable.woff2") format("woff2"); font-weight: 100 800; font-style: normal; font-display: swap; }
+  @font-face { font-family: "maruBuri"; src: url("fonts/MaruBuri-Regular.woff2") format("woff2"); font-weight: 400; font-style: normal; font-display: swap; }
+  @font-face { font-family: "maruBuri"; src: url("fonts/MaruBuri-SemiBold.woff2") format("woff2"); font-weight: 600; font-style: normal; font-display: swap; }
+  @font-face { font-family: "maruBuri"; src: url("fonts/MaruBuri-Bold.woff2") format("woff2"); font-weight: 700; font-style: normal; font-display: swap; }
+</style>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/wanteddev/wanted-sans@v1.0.3/packages/wanted-sans/fonts/webfonts/variable/split/WantedSansVariable.min.css" />
+<link rel="stylesheet" href="https://hangeul.pstatic.net/hangeul_static/css/maru-buri.css" />
+<!-- Handwriting fonts for typed signatures -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nanum+Brush+Script&family=Nanum+Pen+Script&display=swap" />
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23244D3A'/%3E%3Cpath d='M19 13h18l9 9v29H19z' fill='%23F5F1E8'/%3E%3Cpath d='M25 28h15M25 35h15M25 42h9' stroke='%23244D3A' stroke-width='3' stroke-linecap='round'/%3E%3Ccircle cx='42' cy='45' r='6' fill='%238A5A3B'/%3E%3C/svg%3E" />
+<style>
+  :root {
+    /* outgrid palette: paper + deep green */
+    --bg: #F5F1E8;          /* paper-100 */
+    --surface: #FCFAF5;     /* paper-050 */
+    --paper: #FFFDF8;
+    --ink: #1C2824;         /* ink-900 */
+    --ink-2: #33403A;
+    --muted: #5E665F;
+    --faint: #9A9F95;
+    --hair: #E3DCCB;
+    --hover: #F0EADD;
+    --press: #E7DFCD;
+    --dark: #244D3A;        /* forest-700 */
+    --dark-2: #1B3B2C;
+    --river: #3E6F73;
+    --clay: #8A5A3B;
+    --sand: #D9C8A9;
+    --focus: #8A5A3B;
+    --danger: #963F3B;
+    --shadow: 0 1px 0 rgba(28,40,36,.03), 0 18px 40px -30px rgba(28,40,36,.30);
+    --sans: "wantedSans", "Wanted Sans Variable", "Wanted Sans", -apple-system, BlinkMacSystemFont, "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+    --serif: "maruBuri", "MaruBuri", "Batang", "Noto Serif KR", serif;
+    --r-sm: 10px;
+    --r-md: 13px;
+    --r-lg: 20px;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    font-family: var(--sans); word-break: keep-all; background: var(--bg); color: var(--ink);
+    font-size: 14px; letter-spacing: -0.005em; -webkit-font-smoothing: antialiased;
+    min-height: 100dvh; display: flex; flex-direction: column;
+  }
+  [hidden] { display: none !important; }
+  button { font: inherit; color: inherit; cursor: pointer; border: 0; background: none; padding: 0; -webkit-tap-highlight-color: transparent; }
+  button:disabled { cursor: default; opacity: .35; }
+  input, select, textarea { font: inherit; color: inherit; }
+  :focus-visible { outline: 2.5px solid var(--focus); outline-offset: 3px; }
+  ::selection { background: rgba(36,77,58,.16); }
+  svg.i { width: 19px; height: 19px; stroke: currentColor; fill: none; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+  svg.i.sm { width: 16px; height: 16px; }
+  .muted { color: var(--faint); }
+
+  /* ---------- Header ---------- */
+  .top { position: sticky; top: 0; z-index: 40; background: var(--bg); }
+  .top-inner { max-width: 1440px; margin: 0 auto; padding: 14px 24px 8px; display: flex; align-items: center; gap: 14px; }
+  .brand { display: flex; align-items: center; gap: 12px; flex: none; text-decoration: none; color: inherit; }
+  .logo { display: block; height: 34px; width: auto; flex: none; }
+  .app-name { font-family: var(--serif); font-weight: 600; font-size: 23px; letter-spacing: -.02em; color: var(--dark); line-height: 1; padding-left: 12px; border-left: 1.5px solid var(--hair); }
+  .app-name small { display: block; font-family: var(--sans); font-size: 11px; font-weight: 500; color: var(--faint); letter-spacing: 0; margin-top: 4px; }
+  .head-actions { margin-left: auto; display: flex; align-items: center; gap: 6px; min-width: 0; }
+  .fname { position: relative; display: flex; align-items: center; height: 40px; border-radius: 999px; background: var(--surface); box-shadow: inset 0 0 0 1px var(--hair); padding: 0 4px 0 14px; min-width: 0; width: 260px; }
+  .fname input { border: 0; background: none; outline: none; min-width: 0; flex: 1; font-size: 13.5px; height: 100%; }
+  .fname span { color: var(--faint); font-size: 12px; padding-right: 10px; }
+  .fname:focus-within { background: #fff; box-shadow: inset 0 0 0 1.5px var(--dark), 0 0 0 4px rgba(36,77,58,.08); }
+  .icon-btn { width: 38px; height: 38px; border-radius: 999px; display: grid; place-items: center; color: var(--ink-2); transition: background .15s, color .15s; flex: none; }
+  .icon-btn:hover:not(:disabled) { background: var(--hover); color: var(--ink); }
+  .icon-btn.danger:hover:not(:disabled) { color: var(--danger); }
+
+  /* ---------- Buttons ---------- */
+  .btn { height: 38px; padding: 0 16px; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; font-weight: 600; font-size: 13.5px; background: var(--hover); color: var(--ink-2); white-space: nowrap; transition: background .15s, box-shadow .15s; flex: none; }
+  .btn:hover:not(:disabled) { background: var(--press); }
+  .btn.primary { background: var(--dark); color: var(--surface); box-shadow: 0 8px 18px -10px rgba(36,77,58,.7); }
+  .btn.primary:hover:not(:disabled) { background: var(--dark-2); }
+  .btn.clay { background: var(--clay); color: var(--surface); }
+  .btn.clay:hover:not(:disabled) { background: #74492F; }
+  .btn.ghost { background: none; color: var(--muted); }
+  .btn.ghost:hover:not(:disabled) { background: var(--hover); color: var(--ink); }
+  .btn.line { background: var(--surface); box-shadow: inset 0 0 0 1px var(--hair); }
+  .btn.line:hover:not(:disabled) { background: var(--hover); }
+  .btn.sm { height: 32px; padding: 0 12px; font-size: 12.5px; gap: 5px; }
+  .btn.xs { height: 28px; padding: 0 10px; font-size: 12px; gap: 4px; }
+  .btn.block { width: 100%; }
+  .btn.danger { color: var(--danger); }
+
+  /* ---------- Tabs ---------- */
+  .tabs-wrap { max-width: 1440px; margin: 0 auto; padding: 4px 24px 10px; display: flex; align-items: center; gap: 12px; width: 100%; }
+  .tabs { display: flex; gap: 2px; padding: 4px; background: var(--press); border-radius: 999px; overflow-x: auto; scrollbar-width: none; flex: none; max-width: 100%; }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab { height: 34px; padding: 0 15px; border-radius: 999px; font-weight: 600; font-size: 13px; color: var(--muted); white-space: nowrap; display: inline-flex; align-items: center; gap: 6px; transition: background .15s, color .15s; flex: none; }
+  .tab svg.i { width: 16px; height: 16px; }
+  .tab:hover { color: var(--ink); }
+  .tab[aria-selected="true"] { background: var(--dark); color: var(--surface); box-shadow: 0 6px 14px -8px rgba(36,77,58,.6); }
+  .tab .n { font-size: 11px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px; background: rgba(28,40,36,.08); display: inline-grid; place-items: center; }
+  .tab[aria-selected="true"] .n { background: rgba(255,255,255,.18); }
+  .applied { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; min-width: 0; align-items: center; }
+  .applied::-webkit-scrollbar { display: none; }
+  .achip { height: 28px; padding: 0 11px; border-radius: 999px; font-size: 12px; font-weight: 600; background: #E8EFE8; color: var(--dark); white-space: nowrap; display: inline-flex; align-items: center; gap: 5px; flex: none; }
+  .achip.warn { background: #F3E7DC; color: var(--clay); }
+  .achip.plain { background: none; color: var(--faint); font-weight: 500; padding: 0 4px; }
+  .achip svg.i { width: 14px; height: 14px; }
+
+  /* ---------- Layout ---------- */
+  main { flex: 1; width: 100%; max-width: 1440px; margin: 0 auto; padding: 0 24px 24px; min-height: 0; }
+  .view { display: none; }
+  body[data-view="compose"] #vCompose, body[data-view="docs"] #vDocs, body[data-view="profile"] #vProfile { display: grid; }
+  #vCompose { grid-template-columns: 420px minmax(0, 1fr); gap: 16px; height: 100%; min-height: 0; }
+  #vDocs { grid-template-columns: minmax(0, 1fr); height: 100%; min-height: 0; }
+  #vProfile { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; height: 100%; min-height: 0; }
+  body.nodoc #vCompose { grid-template-columns: minmax(0, 1fr); }
+  body.nodoc #formPanel, body.nodoc #prevPanel { display: none; }
+  body:not(.nodoc) #startPanel { display: none; }
+  .panel { background: var(--surface); border-radius: var(--r-lg); display: flex; flex-direction: column; min-height: 0; overflow: hidden; box-shadow: 0 0 0 1px var(--hair), var(--shadow); }
+
+  .ph { padding: 16px 20px 12px; border-bottom: 1px solid var(--hair); display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .ph h2 { margin: 0; font-family: var(--serif); font-size: 19px; font-weight: 600; color: var(--dark); letter-spacing: -.02em; display: flex; align-items: center; gap: 8px; }
+  .ph p { margin: 3px 0 0; font-size: 12px; color: var(--faint); }
+  .ph .tic { width: 34px; height: 34px; border-radius: 11px; background: #E6EEE7; color: var(--dark); display: grid; place-items: center; flex: none; }
+  .ph .tic svg { width: 18px; height: 18px; }
+  .ph .tl { display: flex; align-items: center; gap: 12px; min-width: 0; }
+  .pbody { flex: 1; min-height: 0; overflow-y: auto; padding: 6px 20px 20px; overscroll-behavior: contain; }
+  .sec { padding: 16px 0; border-bottom: 1px solid var(--hair); }
+  .sec:last-child { border-bottom: 0; }
+  .sec h3 { margin: 0 0 12px; font-size: 12px; font-weight: 700; color: var(--clay); letter-spacing: .04em; display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 28px; }
+  .sec h3 .acts { display: flex; gap: 2px; flex-wrap: wrap; justify-content: flex-end; }
+  .sec h3 .btn { color: var(--dark); letter-spacing: 0; }
+  .sec p.hint { margin: -4px 0 12px; font-size: 12.5px; color: var(--muted); line-height: 1.6; }
+  .fgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 8px; }
+  .field { display: flex; flex-direction: column; gap: 6px; grid-column: 1 / -1; min-width: 0; }
+  .field.half { grid-column: auto; }
+  .field > label, .field > .lbl { font-size: 12px; font-weight: 600; color: var(--ink-2); display: flex; justify-content: space-between; gap: 6px; }
+  .field > label .v, .field > .lbl .v { color: var(--faint); font-weight: 500; font-variant-numeric: tabular-nums; }
+  .field .fh { font-size: 11.5px; color: var(--faint); line-height: 1.5; }
+  .inp, select.inp, textarea.inp { width: 100%; height: 40px; border: 0; background: #fff; box-shadow: inset 0 0 0 1px var(--hair); border-radius: 999px; padding: 0 14px; font-size: 13.5px; outline: none; transition: box-shadow .15s; min-width: 0; }
+  textarea.inp { height: auto; min-height: 84px; padding: 10px 14px; border-radius: var(--r-md); resize: vertical; line-height: 1.6; }
+  select.inp { appearance: none; -webkit-appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235E665F' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; background-size: 16px; padding-right: 34px; cursor: pointer; }
+  input[type="date"].inp { padding-right: 8px; }
+  .inp:focus { box-shadow: inset 0 0 0 1.5px var(--dark), 0 0 0 4px rgba(36,77,58,.08); }
+  .inp.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .cnt { font-size: 11.5px; color: var(--faint); text-align: right; font-variant-numeric: tabular-nums; }
+  .seg { display: flex; padding: 3px; gap: 2px; background: var(--press); border-radius: 999px; flex-wrap: wrap; }
+  .seg button { flex: 1; height: 32px; border-radius: 999px; font-size: 12.5px; font-weight: 600; color: var(--muted); padding: 0 8px; white-space: nowrap; }
+  .seg button[aria-pressed="true"] { background: var(--surface); color: var(--dark); box-shadow: 0 2px 6px -3px rgba(28,40,36,.3); }
+  .switch { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 13px; font-weight: 600; color: var(--ink-2); cursor: pointer; padding: 2px 0; }
+  .switch input { appearance: none; -webkit-appearance: none; width: 40px; height: 24px; border-radius: 999px; background: var(--sand); position: relative; cursor: pointer; transition: background .15s; flex: none; margin: 0; }
+  .switch input::after { content: ''; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 999px; background: #fff; transition: transform .15s; box-shadow: 0 1px 3px rgba(0,0,0,.2); }
+  .switch input:checked { background: var(--dark); }
+  .switch input:checked::after { transform: translateX(16px); }
+  .cbs { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip { height: 32px; padding: 0 12px; border-radius: 999px; font-size: 12.5px; font-weight: 600; color: var(--muted); background: #fff; box-shadow: inset 0 0 0 1px var(--hair); display: inline-flex; align-items: center; gap: 5px; }
+  .chip[aria-pressed="true"] { background: #E6EEE7; color: var(--dark); box-shadow: inset 0 0 0 1.5px var(--dark); }
+  .note { font-size: 12px; padding: 10px 12px; border-radius: var(--r-md); background: var(--hover); color: var(--muted); line-height: 1.6; }
+  .note.ok { background: #E8F0E9; color: var(--dark); }
+  .note.warn { background: #F3E7DC; color: #6E4429; }
+  .color-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .sw { width: 30px; height: 30px; border-radius: 999px; display: grid; place-items: center; flex: none; }
+  .sw span { width: 18px; height: 18px; border-radius: 999px; background: var(--c); box-shadow: inset 0 0 0 1px rgba(0,0,0,.12); transition: box-shadow .15s, transform .15s; }
+  .sw:hover span { transform: scale(1.1); }
+  .sw[aria-pressed="true"] span { box-shadow: 0 0 0 2.5px var(--surface), 0 0 0 4px var(--dark); }
+
+  /* table (repeating rows) editor */
+  .tbl { display: flex; flex-direction: column; gap: 8px; }
+  .trow { border-radius: var(--r-md); background: var(--paper); box-shadow: inset 0 0 0 1px var(--hair); padding: 8px 10px 12px; }
+  .trh { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; min-height: 30px; }
+  .trh b { width: 22px; height: 22px; border-radius: 999px; background: var(--hover); color: var(--clay); display: grid; place-items: center; font-size: 11px; flex: none; }
+  .trh .tt { font-size: 12.5px; font-weight: 600; color: var(--ink-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; flex: 1; }
+  .trh .amt { font-size: 12px; color: var(--dark); font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .trh button { width: 28px; height: 28px; border-radius: 999px; display: grid; place-items: center; color: var(--muted); flex: none; }
+  .trh button:hover { background: var(--hover); color: var(--ink); }
+  .trh button.danger:hover { color: var(--danger); }
+  .trh svg.i { width: 15px; height: 15px; }
+  .trow .fgrid { gap: 8px; }
+  .trow .field > label { font-size: 11px; color: var(--muted); }
+  .trow .inp { height: 36px; font-size: 13px; }
+  .trow textarea.inp { min-height: 64px; }
+  .tbl-empty { font-size: 12.5px; color: var(--faint); padding: 4px 2px; }
+
+  /* image field */
+  .imgf { display: flex; gap: 12px; align-items: center; }
+  .imgbox { width: 76px; height: 76px; border-radius: var(--r-md); background: #fff; box-shadow: inset 0 0 0 1px var(--hair); display: grid; place-items: center; flex: none; overflow: hidden; color: var(--faint); font-size: 11px; text-align: center; padding: 6px; background-image: linear-gradient(45deg, #f6f2ea 25%, transparent 25%, transparent 75%, #f6f2ea 75%), linear-gradient(45deg, #f6f2ea 25%, transparent 25%, transparent 75%, #f6f2ea 75%); background-size: 12px 12px; background-position: 0 0, 6px 6px; }
+  .imgbox.photo { width: 66px; height: 88px; padding: 0; }
+  .imgbox.photo img { width: 100%; height: 100%; object-fit: cover; }
+  .imgbox img { max-width: 100%; max-height: 100%; display: block; }
+  .imgbox.sign { width: 120px; }
+  .imgacts { display: flex; flex-wrap: wrap; gap: 4px; }
+
+  .fsum { margin-top: 12px; border-radius: var(--r-md); background: #EEF3EE; padding: 12px 14px; display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; font-size: 12.5px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+  .fsum dt { color: var(--muted); }
+  .fsum dd { margin: 0; text-align: right; font-weight: 600; }
+  .fsum dd.big { font-size: 15px; color: var(--dark); font-weight: 700; }
+  .fsum .ko { grid-column: 1 / -1; text-align: right; color: var(--dark); font-size: 12px; border-top: 1px solid #D7E2D7; padding-top: 6px; margin-top: 2px; }
+
+  /* ---------- Preview ---------- */
+  .wbar { display: flex; align-items: center; gap: 6px; padding: 10px 12px; border-bottom: 1px solid var(--hair); flex-wrap: wrap; row-gap: 8px; min-height: 59px; }
+  .wbar .grow { flex: 1; }
+  .wbar .count { font-size: 13px; color: var(--muted); margin: 0 6px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .wbar .count b { color: var(--ink); font-weight: 600; }
+  .sep { width: 1px; height: 20px; background: var(--hair); margin: 0 4px; flex: none; }
+  .tool { height: 34px; min-width: 34px; padding: 0 8px; border-radius: var(--r-sm); display: inline-flex; align-items: center; justify-content: center; gap: 5px; color: var(--ink-2); font-size: 12.5px; font-weight: 600; transition: background .15s, color .15s; flex: none; }
+  .tool:hover:not(:disabled) { background: var(--hover); color: var(--ink); }
+  .zl { font-size: 12px; color: var(--muted); min-width: 44px; text-align: center; font-variant-numeric: tabular-nums; }
+  .stage { flex: 1; min-height: 0; overflow: auto; background: var(--bg); overscroll-behavior: contain; }
+  .pages { display: flex; flex-direction: column; align-items: center; gap: 22px; padding: 26px 24px 40px; width: max-content; min-width: 100%; }
+  .pages .page { box-shadow: 0 0 0 1px var(--hair), 0 24px 50px -30px rgba(28,40,36,.5); }
+  .page { position: relative; width: 210mm; height: 297mm; background: #fff; overflow: hidden; flex: none; }
+  .page .clip { position: absolute; left: 15mm; top: 16mm; width: 180mm; overflow: hidden; }
+  .page .clip > .dflow { position: absolute; left: 0; }
+  .page .pno { position: absolute; left: 0; right: 0; bottom: 8mm; text-align: center; font-size: 8.5pt; color: #888; font-family: var(--sans); }
+  #measure { position: absolute; left: -10000px; top: 0; width: 180mm; visibility: hidden; pointer-events: none; }
+  #exportRoot { position: fixed; left: -10000px; top: 0; pointer-events: none; }
+  #printRoot { display: none; }
+
+  /* ---------- Document typography (inside the A4 page) ---------- */
+  .dflow { position: relative; width: 180mm; display: flow-root; color: #161616; font-size: var(--dfs, 10pt); line-height: 1.55; word-break: keep-all; overflow-wrap: anywhere; font-family: var(--dff); letter-spacing: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; --line: #3B3B3B; --soft: #9B9B9B; }
+  .dflow.serif { --dff: "maruBuri", "MaruBuri", "Batang", "Noto Serif KR", serif; }
+  .dflow.sans { --dff: "wantedSans", "Wanted Sans Variable", "Wanted Sans", "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif; }
+  .dflow * { box-sizing: border-box; }
+  .dflow p { margin: 0 0 2.5mm; }
+  .dflow b, .dflow .b { font-weight: 700; }
+  .dflow h1.dt { margin: 1mm 0 8mm; text-align: center; font-size: 2.35em; font-weight: 700; letter-spacing: .5em; text-indent: .5em; color: var(--acc); line-height: 1.2; }
+  .dflow h1.dt small { display: block; font-size: .36em; letter-spacing: .12em; text-indent: .12em; color: #777; margin-top: 2mm; font-weight: 400; }
+  .dflow h1.dt.left { text-align: left; text-indent: 0; margin: 4mm 0 0; }
+  .dflow h2.st { font-size: 1.12em; margin: 6mm 0 2.2mm; color: var(--acc); font-weight: 700; display: flex; align-items: center; gap: 2mm; }
+  .dflow h2.st::before { content: ''; width: 1.1mm; height: 1em; background: var(--acc); display: block; }
+  .dflow table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+  .dflow .t { margin-bottom: 5mm; border: .45mm solid var(--line); }
+  .dflow .t th, .dflow .t td { border: .22mm solid var(--line); padding: 1.5mm 2mm; vertical-align: middle; }
+  .dflow .t th { background: var(--accbg); font-weight: 600; text-align: center; color: #222; }
+  .dflow .t th.v { line-height: 1.35; padding: 1mm .5mm; }
+  .dflow .t td.c { text-align: center; }
+  .dflow .t .r, .dflow .r { text-align: right; font-variant-numeric: tabular-nums; }
+  .dflow .t tr.ir td { height: 7.6mm; }
+  .dflow .t tr.sum th, .dflow .t tr.sum td { border-top: .45mm solid var(--line); }
+  .dflow .t.sm { font-size: .86em; }
+  .dflow .t.sm th, .dflow .t.sm td { padding: 1.1mm 1.4mm; }
+  .dflow .t.tall td { height: 10mm; }
+  .dflow .t td.box { height: 34mm; vertical-align: top; }
+  .dflow .t td.pre { vertical-align: top; }
+  .dflow .t.kv { border: 0; }
+  .dflow .t.kv th, .dflow .t.kv td { border: 0; border-bottom: .22mm solid #C9C9C9; background: none; text-align: left; padding: 1.6mm 1mm; }
+  .dflow .t.kv th { color: #666; font-weight: 400; width: 22mm; }
+  .dflow .t.total th { font-size: 1.02em; }
+  .dflow .t.total th small { font-weight: 400; color: #666; font-size: .82em; }
+  .dflow .t.total td { font-size: 1.22em; font-weight: 700; padding: 2.6mm 4mm; }
+  .dflow .t.total td .won { font-weight: 600; color: #444; font-size: .86em; margin-left: 2mm; }
+  .dflow .cols { display: flex; gap: 5mm; margin-bottom: 5mm; align-items: stretch; }
+  .dflow .cols > * { flex: 1; min-width: 0; margin-bottom: 0; }
+  .dflow .cols > .w { flex: 1.25; }
+  .dflow .lead { font-size: 1.05em; margin-top: 5mm; }
+  .dflow .to-line { font-size: 1.35em; font-weight: 700; padding: 2mm 0 2mm; border-bottom: .4mm solid var(--line); margin-bottom: 2mm; display: flex; justify-content: space-between; align-items: baseline; gap: 4mm; }
+  .dflow .to-line small { font-size: .62em; font-weight: 400; color: #444; }
+  .dflow .box { border: .22mm solid var(--line); padding: 3mm 4mm; min-height: 18mm; margin-bottom: 5mm; }
+  .dflow .stmt { text-align: center; margin: 9mm 0 6mm; font-size: 1.1em; line-height: 1.9; }
+  .dflow .when { text-align: center; margin: 6mm 0 8mm; font-size: 1.1em; letter-spacing: .04em; }
+  .dflow .who { display: flex; justify-content: flex-end; align-items: center; gap: 4mm; margin: 3mm 0; font-size: 1.1em; }
+  .dflow .who .lb { color: #333; }
+  .dflow .who .nm { min-width: 32mm; text-align: center; font-weight: 600; letter-spacing: .15em; }
+  .dflow .dest { font-size: 1.35em; font-weight: 700; margin-top: 12mm; letter-spacing: .05em; }
+  .dflow .seal { position: relative; display: inline-block; color: #555; font-weight: 400; letter-spacing: 0; white-space: nowrap; }
+  .dflow .seal img { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); height: 15mm; width: auto; max-width: none; pointer-events: none; }
+  .dflow .seal img.sg { height: 12mm; }
+  .dflow td .seal { float: right; }
+  .dflow td .seal img { height: 13mm; left: auto; right: -2mm; transform: translateY(-50%); }
+  .dflow .blank { display: inline-block; min-width: 18mm; }
+  .dflow .muted { color: #777; }
+  .dflow .mark { font-family: var(--sans); }
+  .dflow .opts span { margin-right: 4mm; white-space: nowrap; }
+  .dflow .photo { width: 30mm; height: 40mm; margin: 0 auto; display: grid; place-items: center; color: #aaa; font-size: .85em; overflow: hidden; }
+  .dflow .photo img { width: 30mm; height: 40mm; display: block; }
+  .dflow td.phc { padding: 1mm; }
+  .dflow .party th { white-space: nowrap; letter-spacing: -.02em; }
+  .dflow .ahead { display: flex; justify-content: space-between; align-items: flex-start; gap: 6mm; margin-bottom: 7mm; }
+  .dflow .ahead h1.dt { flex: 1; text-align: center; margin-top: 6mm; }
+  .dflow .appr { width: auto; border: .45mm solid var(--line); }
+  .dflow .appr th, .dflow .appr td { border: .22mm solid var(--line); text-align: center; font-size: .88em; }
+  .dflow .appr th { background: var(--accbg); padding: 1mm 0; width: 18mm; font-weight: 600; }
+  .dflow .appr th.v { width: 7mm; line-height: 1.4; }
+  .dflow .appr td { height: 15mm; width: 18mm; }
+  .dflow .qa { margin-bottom: 6mm; }
+  .dflow .qa h3 { margin: 0 0 2mm; font-size: 1.05em; font-weight: 700; padding: 1.8mm 3mm; background: var(--accbg); border-left: 1.2mm solid var(--acc); }
+  .dflow .qa .body { padding: 0 1mm; line-height: 1.85; text-align: justify; }
+  .dflow .art { margin: 0 0 3.2mm; line-height: 1.8; }
+  .dflow .art b { margin-right: 1.5mm; }
+  .dflow .amount-box { border: .45mm solid var(--line); padding: 4mm; text-align: center; font-size: 1.3em; font-weight: 700; margin-bottom: 6mm; }
+  .dflow .amount-box small { display: block; font-size: .7em; font-weight: 400; color: #555; margin-top: 1mm; }
+  .dflow .cv-entry { margin-bottom: 6mm; }
+  .dflow .cv-head { display: flex; justify-content: space-between; align-items: baseline; gap: 4mm; border-bottom: .4mm solid var(--acc); padding-bottom: 1.4mm; margin-bottom: 2mm; }
+  .dflow .cv-head b { font-size: 1.12em; }
+  .dflow .cv-head span { color: #555; font-size: .92em; white-space: nowrap; }
+  .dflow .cv-row { display: grid; grid-template-columns: 24mm 1fr; gap: 3mm; margin: 1.2mm 0; }
+  .dflow .cv-row > span:first-child { color: #666; }
+  .dflow .pbreak { height: 0; }
+  /* invoice (modern) */
+  .dflow .inv-top { display: flex; justify-content: space-between; align-items: flex-end; border-bottom: .8mm solid var(--acc); padding-bottom: 4mm; margin-bottom: 6mm; }
+  .dflow .inv-top h1 { margin: 0; font-size: 2.4em; letter-spacing: .1em; color: var(--acc); line-height: 1; font-weight: 700; }
+  .dflow .inv-top h1 small { display: block; font-size: .34em; letter-spacing: .4em; color: #888; margin-top: 2mm; font-weight: 400; }
+  .dflow .inv-meta { font-size: .92em; }
+  .dflow .inv-meta div { display: flex; justify-content: space-between; gap: 6mm; }
+  .dflow .inv-meta span { color: #777; }
+  .dflow .pbox { border-top: .3mm solid #BBB; padding-top: 2.5mm; }
+  .dflow .pbox h3 { margin: 0 0 1.5mm; font-size: .82em; color: var(--acc); letter-spacing: .08em; font-weight: 700; }
+  .dflow .pbox .nm { font-size: 1.15em; font-weight: 700; margin-bottom: 1mm; }
+  .dflow .pbox div { line-height: 1.6; }
+  .dflow .t.inv { border: 0; }
+  .dflow .t.inv th { background: none; border: 0; border-bottom: .45mm solid var(--line); text-align: left; padding: 2mm; color: #555; font-weight: 600; }
+  .dflow .t.inv td { border: 0; border-bottom: .2mm solid #D3D3D3; padding: 2.2mm 2mm; height: 8.5mm; }
+  .dflow .t.inv .r { text-align: right; }
+  .dflow .inv-sum { margin-left: auto; width: 76mm; margin-bottom: 6mm; }
+  .dflow .inv-sum div { display: flex; justify-content: space-between; padding: 1.4mm 2mm; font-variant-numeric: tabular-nums; }
+  .dflow .inv-sum div.tot { border-top: .45mm solid var(--line); font-weight: 700; font-size: 1.18em; color: var(--acc); padding-top: 2.4mm; }
+  .dflow .inv-pay { background: var(--accbg); padding: 3.5mm 4mm; margin-bottom: 5mm; }
+  .dflow .inv-pay b { color: var(--acc); }
+
+  /* ---------- Start screen / gallery ---------- */
+  .start { flex: 1; overflow-y: auto; padding: 34px 28px 40px; }
+  .start-in { max-width: 980px; margin: 0 auto; }
+  .start h2.big { margin: 0 0 6px; font-family: var(--serif); font-weight: 600; font-size: 26px; color: var(--dark); letter-spacing: -.02em; }
+  .start p.sub { margin: 0 0 26px; color: var(--muted); font-size: 13.5px; line-height: 1.7; }
+  .gal-cat { margin: 0 0 22px; }
+  .gal-cat h3 { margin: 0 0 10px; font-size: 12px; font-weight: 700; color: var(--clay); letter-spacing: .04em; }
+  .gal { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
+  .gcard { display: flex; gap: 12px; align-items: flex-start; text-align: left; padding: 14px; border-radius: 16px; background: #fff; box-shadow: inset 0 0 0 1px var(--hair); transition: box-shadow .15s, background .15s, transform .15s; }
+  .gcard:hover { box-shadow: inset 0 0 0 1.5px var(--dark); background: var(--paper); }
+  .gcard .gi { width: 38px; height: 38px; border-radius: 12px; background: #E6EEE7; color: var(--dark); display: grid; place-items: center; flex: none; }
+  .gcard .gi.c2 { background: #F3E7DC; color: var(--clay); }
+  .gcard .gi.c3 { background: #E3ECEC; color: var(--river); }
+  .gcard .gi.c4 { background: #EDEBDD; color: #6B6A2F; }
+  .gcard b { display: block; font-size: 14px; font-weight: 700; color: var(--ink); margin-bottom: 3px; }
+  .gcard small { display: block; font-size: 12px; color: var(--muted); line-height: 1.5; }
+  .recent { display: flex; gap: 8px; flex-wrap: wrap; margin: -10px 0 26px; }
+  .lock-note { margin-top: 10px; font-size: 12px; color: var(--faint); display: inline-flex; gap: 6px; align-items: center; }
+  .lock-note svg { width: 14px; height: 14px; }
+
+  /* ---------- Docs list ---------- */
+  .dgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 18px 14px; padding: 18px; }
+  .dcard { display: flex; flex-direction: column; gap: 8px; padding: 10px; border-radius: 16px; cursor: pointer; transition: background .15s; position: relative; }
+  .dcard:hover { background: var(--hover); }
+  .dcard.on { background: #E6EEE7; }
+  .dthumb { position: relative; width: 100%; aspect-ratio: 210 / 297; background: #fff; border-radius: 4px; overflow: hidden; box-shadow: 0 0 0 1px var(--hair), 0 10px 22px -16px rgba(28,40,36,.45); }
+  .dthumb .page { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
+  .dcard .dt-t { font-size: 13px; font-weight: 600; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .dcard .dt-m { display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--faint); }
+  .dcard .tag { font-size: 11px; font-weight: 700; color: var(--dark); background: #E6EEE7; padding: 2px 8px; border-radius: 999px; }
+  .dcard .more { position: absolute; top: 14px; right: 14px; width: 30px; height: 30px; border-radius: 999px; background: var(--surface); box-shadow: 0 0 0 1px var(--hair); display: grid; place-items: center; color: var(--ink-2); opacity: 0; transition: opacity .15s; }
+  .dcard:hover .more, .dcard:focus-within .more { opacity: 1; }
+  @media (hover: none) { .dcard .more { opacity: 1; } }
+  .search { position: relative; flex: 1; min-width: 160px; max-width: 320px; }
+  .search .inp { padding-left: 38px; height: 36px; }
+  .search svg { position: absolute; left: 12px; top: 9px; width: 18px; height: 18px; color: var(--faint); }
+  .wbar select.inp { width: auto; height: 36px; font-size: 13px; }
+  .docs-empty { padding: 60px 24px; text-align: center; color: var(--muted); font-size: 13.5px; line-height: 1.7; }
+  .docs-empty h3 { font-family: var(--serif); color: var(--dark); font-size: 20px; margin: 0 0 6px; font-weight: 600; }
+
+  /* ---------- Profile view ---------- */
+  .co-list { display: flex; flex-direction: column; gap: 6px; }
+  .co { display: flex; align-items: center; gap: 12px; padding: 10px 8px 10px 12px; border-radius: var(--r-md); background: #fff; box-shadow: inset 0 0 0 1px var(--hair); cursor: pointer; }
+  .co:hover { background: var(--paper); }
+  .co.on { box-shadow: inset 0 0 0 2px var(--dark); background: #F2F6F1; }
+  .co .ic { width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; background: var(--hover); color: var(--clay); flex: none; overflow: hidden; }
+  .co .ic img { max-width: 100%; max-height: 100%; }
+  .co .nm { flex: 1; min-width: 0; }
+  .co .nm b { display: block; font-size: 13.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .co .nm small { display: block; font-size: 12px; color: var(--faint); }
+  .co .kind { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: #E6EEE7; color: var(--dark); white-space: nowrap; }
+  .co .kind.c { background: #F3E7DC; color: var(--clay); }
+  .co-edit { margin-top: 14px; border-radius: var(--r-lg); background: var(--paper); box-shadow: inset 0 0 0 1px var(--hair); padding: 4px 16px 16px; }
+
+  /* ---------- Menus / dialogs ---------- */
+  .menu { position: fixed; z-index: 120; background: var(--surface); border-radius: 16px; padding: 6px; box-shadow: 0 0 0 1px var(--hair), 0 20px 40px -20px rgba(28,40,36,.45); display: flex; flex-direction: column; min-width: 200px; max-width: calc(100vw - 24px); max-height: 60vh; overflow-y: auto; }
+  .menu button { min-height: 38px; padding: 6px 12px; border-radius: 10px; text-align: left; display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 500; }
+  .menu button:hover { background: var(--hover); }
+  .menu button.danger { color: var(--danger); }
+  .menu button small { color: var(--faint); font-size: 11.5px; margin-left: auto; padding-left: 10px; }
+  .menu hr { border: 0; border-top: 1px solid var(--hair); margin: 4px 6px; }
+  .menu .mh { font-size: 11.5px; color: var(--faint); padding: 6px 12px 2px; font-weight: 600; }
+  dialog { border: 0; border-radius: 22px; padding: 0; width: min(520px, calc(100vw - 32px)); background: var(--surface); box-shadow: 0 0 0 1px var(--hair), 0 30px 70px -30px rgba(28,40,36,.45); color: var(--ink); }
+  dialog::backdrop { background: rgba(28,40,36,.32); backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px); }
+  .dlg-head { display: flex; align-items: center; justify-content: space-between; padding: 20px 22px 8px; }
+  .dlg-head h2 { margin: 0; font-family: var(--serif); font-size: 20px; font-weight: 600; letter-spacing: -.02em; color: var(--dark); }
+  .dlg-body { padding: 8px 22px 22px; display: flex; flex-direction: column; gap: 14px; max-height: 76vh; overflow-y: auto; }
+  .dlg-body p { margin: 0; font-size: 13px; color: var(--muted); line-height: 1.65; }
+  .btn-row { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+  #galDlg { width: min(900px, calc(100vw - 24px)); }
+  #galDlg .dlg-body { max-height: 80vh; }
+  #sigDlg { width: min(620px, calc(100vw - 24px)); }
+  .sigpad { position: relative; height: 210px; border-radius: var(--r-md); background: #fff; box-shadow: inset 0 0 0 1px var(--hair); overflow: hidden; }
+  .sigpad canvas { width: 100%; height: 100%; display: block; touch-action: none; cursor: crosshair; }
+  .sigpad .baseline { position: absolute; left: 24px; right: 24px; bottom: 52px; border-bottom: 1.5px dashed var(--sand); pointer-events: none; }
+  .sigpad .x { position: absolute; left: 22px; bottom: 56px; color: var(--sand); font-size: 20px; pointer-events: none; }
+  .sig-fonts { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .sig-fonts button { height: 60px; border-radius: var(--r-md); background: #fff; box-shadow: inset 0 0 0 1px var(--hair); font-size: 26px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; padding: 0 10px; }
+  .sig-fonts button[aria-pressed="true"] { box-shadow: inset 0 0 0 2px var(--dark); background: #F2F6F1; }
+  .stamp-prev { display: grid; place-items: center; height: 200px; border-radius: var(--r-md); background: #fff; box-shadow: inset 0 0 0 1px var(--hair); }
+  .stamp-prev canvas { width: 150px; height: 150px; }
+
+  /* ---------- Toast / Busy ---------- */
+  #toast { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom)); transform: translateX(-50%); background: var(--dark); color: var(--surface); padding: 11px 18px; border-radius: 999px; box-shadow: 0 14px 30px -14px rgba(28,40,36,.55); font-size: 13px; z-index: 200; display: none; align-items: center; gap: 14px; max-width: calc(100vw - 32px); }
+  #toast.show { display: flex; }
+  #toast.err { background: var(--danger); }
+  #toast button { color: var(--sand); font-weight: 600; white-space: nowrap; text-decoration: underline; text-underline-offset: 3px; }
+  #busy { position: fixed; inset: 0; z-index: 150; background: rgba(245,241,232,.72); backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px); display: none; place-items: center; }
+  #busy.show { display: grid; }
+  #busy .bx { width: min(360px, calc(100vw - 48px)); background: var(--surface); border-radius: 22px; padding: 22px; box-shadow: 0 0 0 1px var(--hair), 0 30px 70px -30px rgba(28,40,36,.45); }
+  #busy .t { font-family: var(--serif); font-weight: 600; font-size: 17px; color: var(--dark); margin-bottom: 4px; }
+  #busy .s { font-size: 12.5px; color: var(--muted); min-height: 18px; font-variant-numeric: tabular-nums; }
+  #busy .bar { height: 6px; border-radius: 6px; background: var(--hover); overflow: hidden; margin-top: 12px; }
+  #busy .bar i { display: block; height: 100%; width: 35%; background: var(--dark); border-radius: 6px; animation: ind 1.1s ease-in-out infinite; }
+  @keyframes ind { 0% { transform: translateX(-100%); } 100% { transform: translateX(300%); } }
+
+  .foot { max-width: 1440px; width: 100%; margin: 0 auto; padding: 0 24px 16px; font-size: 11.5px; color: var(--faint); display: flex; gap: 6px; align-items: center; }
+  .foot svg { width: 13px; height: 13px; }
+  .mswitch { display: none; }
+  .mtitle { display: none; }
+
+  /* ---------- Responsive ---------- */
+  @media (min-width: 1000px) {
+    body { height: 100dvh; min-height: 560px; }
+    main { display: flex; flex-direction: column; }
+    main > .view { flex: 1; }
+  }
+  @media (max-width: 1180px) {
+    #vCompose { grid-template-columns: 380px minmax(0, 1fr); }
+    .fname { width: 200px; }
+  }
+  @media (max-width: 999px) {
+    main { padding: 0 12px 16px; }
+    #vCompose, #vProfile { grid-template-columns: minmax(0, 1fr); height: auto; }
+    .pbody { overflow: visible; }
+    .tabs-wrap { padding: 2px 12px 10px; }
+    .top-inner { padding: 12px 12px 6px; gap: 8px; }
+    .mswitch { display: flex; position: sticky; top: 104px; z-index: 30; margin: 0 auto 10px; width: min(360px, 100%); box-shadow: 0 8px 20px -14px rgba(28,40,36,.5); }
+    body.nodoc .mswitch { display: none; }
+    body:not(.mprev) #prevPanel { display: none; }
+    body.mprev #formPanel { display: none; }
+    #prevPanel { min-height: 75vh; }
+    #prevPanel .stage { min-height: 70vh; }
+    .foot { padding: 0 12px 12px; }
+    .fname { display: none; }
+    .mtitle { display: block; }
+    .start { padding: 24px 16px 30px; }
+  }
+  @media (max-width: 760px) {
+    .logo { height: 27px; }
+    .app-name { font-size: 19px; padding-left: 10px; }
+    .app-name small { display: none; }
+    .head-actions .btn .lbl { display: none; }
+    .head-actions .btn { padding: 0 12px; }
+    .dgrid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); padding: 12px; gap: 12px 8px; }
+    .tabs-wrap { flex-direction: column; align-items: stretch; gap: 6px; }
+    .mswitch { top: 140px; }
+  }
+  @media (max-width: 480px) {
+    #undoBtn, #redoBtn { display: none; }
+    .top-inner { gap: 4px; }
+    .brand { gap: 8px; }
+    .logo { height: 22px; }
+    .app-name { font-size: 17px; padding-left: 8px; }
+    .head-actions { gap: 2px; }
+    .head-actions .btn { padding: 0 10px; height: 36px; }
+    .icon-btn { width: 34px; }
+    .fgrid { grid-template-columns: 1fr; }
+    .field.half { grid-column: 1 / -1; }
+    .trow .fgrid { grid-template-columns: 1fr 1fr; }
+    .trow .field.half { grid-column: auto; }
+  }
+
+  /* ---------- Print: only the A4 pages ---------- */
+  @page { size: A4; margin: 0; }
+  @media print {
+    html, body { background: #fff !important; height: auto !important; min-height: 0 !important; display: block !important; }
+    body > *:not(#printRoot) { display: none !important; }
+    #printRoot { display: block !important; }
+    #printRoot .page { box-shadow: none; height: 296.6mm; break-after: page; page-break-after: always; }
+    #printRoot .page:last-child { break-after: auto; page-break-after: auto; }
+  }
+</style>
+</head>
+<body data-view="compose" class="nodoc">
+
+<header class="top">
+  <div class="top-inner">
+    <a class="brand" href="./" aria-label="Former">
+      <img class="logo" alt="OUTGRID" src="data:image/png;base64,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" />
+      <span class="app-name">Former<small>문서 양식 작성기</small></span>
+    </a>
+    <div class="head-actions">
+      <button class="icon-btn" id="undoBtn" title="되돌리기 (Ctrl+Z)" disabled><i data-icon="undo"></i></button>
+      <button class="icon-btn" id="redoBtn" title="다시 하기 (Ctrl+Y)" disabled><i data-icon="redo"></i></button>
+      <label class="fname" id="fnameWrap" title="문서 이름 (저장할 파일 이름)"><input id="docTitle" type="text" value="" placeholder="문서 이름" spellcheck="false" autocomplete="off" /><span>.pdf</span></label>
+      <button class="btn line" id="newBtn" title="새 문서 만들기"><i data-icon="plus"></i><span class="lbl">새 문서</span></button>
+      <button class="btn line" id="printBtn" title="인쇄 · PDF로 저장 (Ctrl+P)" disabled><i data-icon="printer"></i><span class="lbl">인쇄</span></button>
+      <button class="btn primary" id="pdfBtn" title="PDF 파일로 내려받기" disabled><i data-icon="download"></i><span class="lbl">PDF 저장</span></button>
+      <button class="icon-btn" id="moreBtn" title="더 보기" disabled><i data-icon="more"></i></button>
+    </div>
+  </div>
+  <div class="tabs-wrap">
+    <nav class="tabs" id="tabs" role="tablist">
+      <button class="tab" role="tab" data-view="compose" aria-selected="true"><i data-icon="pen"></i>작성</button>
+      <button class="tab" role="tab" data-view="docs"><i data-icon="folder"></i>문서함 <span class="n" id="docCount">0</span></button>
+      <button class="tab" role="tab" data-view="profile"><i data-icon="user"></i>내 정보·업체</button>
+    </nav>
+    <div class="applied" id="applied"></div>
+  </div>
+</header>
+
+<main>
+  <!-- ========== 작성 ========== -->
+  <section class="view" id="vCompose">
+    <div class="seg mswitch" id="mswitch">
+      <button data-m="form" aria-pressed="true">입력</button>
+      <button data-m="prev" aria-pressed="false">미리보기</button>
+    </div>
+
+    <div class="panel" id="startPanel">
+      <div class="start"><div class="start-in">
+        <h2 class="big">어떤 문서를 만들까요?</h2>
+        <p class="sub">양식을 고르고 왼쪽 칸을 채우면 오른쪽 A4 미리보기에 바로 반영됩니다. 합계와 부가세, 한글 금액(일금 ○○원정)은 자동으로 계산돼요.<br/>내 정보와 회사 정보를 한 번 저장해 두면 다음 문서부터는 불러오기 한 번이면 됩니다.</p>
+        <div class="recent" id="recent"></div>
+        <div id="galStart"></div>
+        <div class="lock-note"><i data-icon="shield"></i>입력한 내용은 이 기기의 브라우저에만 저장되고, 어디에도 전송되지 않습니다.</div>
+      </div></div>
+    </div>
+
+    <div class="panel" id="formPanel">
+      <div class="ph">
+        <div class="tl"><span class="tic" id="tplIcon"></span><div><h2 id="tplName">양식</h2><p id="tplDesc"></p></div></div>
+        <button class="btn sm ghost" id="clearBtn" title="입력한 내용 모두 지우기"><i data-icon="eraser" class="sm"></i>비우기</button>
+      </div>
+      <div class="pbody" id="form"></div>
+    </div>
+
+    <div class="panel" id="prevPanel">
+      <div class="wbar">
+        <span class="count" id="pageCount"><b>1</b>쪽 · A4</span>
+        <span class="grow"></span>
+        <button class="tool" id="zoomOut" title="축소"><i data-icon="minus"></i></button>
+        <span class="zl" id="zoomLbl">100%</span>
+        <button class="tool" id="zoomIn" title="확대"><i data-icon="plus"></i></button>
+        <button class="tool" id="zoomFit" title="폭에 맞추기"><i data-icon="fit"></i><span class="t">맞춤</span></button>
+      </div>
+      <div class="stage" id="stage"><div class="pages" id="pages"></div></div>
+    </div>
+  </section>
+
+  <!-- ========== 문서함 ========== -->
+  <section class="view" id="vDocs">
+    <div class="panel">
+      <div class="wbar">
+        <label class="search"><i data-icon="search"></i><input class="inp" id="docSearch" type="search" placeholder="문서 이름·내용 검색" /></label>
+        <select class="inp" id="docFilter"><option value="">모든 양식</option></select>
+        <select class="inp" id="docSort"><option value="upd">최근 수정순</option><option value="new">만든 날짜순</option><option value="name">이름순</option></select>
+        <span class="grow"></span>
+        <button class="btn sm line" id="importBtn" title="JSON 백업 파일에서 불러오기"><i data-icon="upload" class="sm"></i>백업 불러오기</button>
+        <button class="btn sm line" id="exportBtn" title="모든 문서와 내 정보를 JSON 파일 하나로 저장"><i data-icon="download" class="sm"></i>백업 저장</button>
+      </div>
+      <div class="stage" style="background:var(--surface)">
+        <div class="dgrid" id="dgrid"></div>
+        <div class="docs-empty" id="docsEmpty" hidden><h3>아직 저장된 문서가 없어요</h3>문서를 만들면 자동으로 이곳에 저장됩니다.<br/><button class="btn primary" style="margin-top:16px" data-act="new"><i data-icon="plus"></i>새 문서 만들기</button></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== 내 정보 · 업체 ========== -->
+  <section class="view" id="vProfile">
+    <div class="panel">
+      <div class="ph"><div class="tl"><span class="tic"><i data-icon="user"></i></span><div><h2>내 정보</h2><p>이력서·사직서·위임장 같은 개인 문서에 불러옵니다.</p></div></div></div>
+      <div class="pbody" id="meForm"></div>
+    </div>
+    <div class="panel">
+      <div class="ph">
+        <div class="tl"><span class="tic"><i data-icon="building"></i></span><div><h2>업체·거래처</h2><p>견적서·거래명세서·영수증의 공급자와 받는 곳에 불러옵니다.</p></div></div>
+        <button class="btn sm primary" id="addCoBtn"><i data-icon="plus" class="sm"></i>추가</button>
+      </div>
+      <div class="pbody">
+        <div class="sec"><div class="co-list" id="coList"></div></div>
+        <div id="coEdit"></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<div class="foot"><i data-icon="shield"></i>Former는 브라우저 안에서만 동작합니다. 문서·사진·도장은 이 기기에만 저장되고 어디에도 전송되지 않아요.</div>
+
+<input type="file" id="imgInput" accept="image/*" hidden />
+<input type="file" id="jsonInput" accept="application/json,.json" hidden />
+<div id="measure" aria-hidden="true"></div>
+<div id="exportRoot" aria-hidden="true"></div>
+<div id="printRoot"></div>
+
+<!-- Template gallery -->
+<dialog id="galDlg">
+  <div class="dlg-head"><h2>새 문서 만들기</h2><button class="icon-btn" data-close title="닫기"><i data-icon="x"></i></button></div>
+  <div class="dlg-body" id="galDlgBody"></div>
+</dialog>
+
+<!-- Signature pad -->
+<dialog id="sigDlg">
+  <div class="dlg-head"><h2>서명 만들기</h2><button class="icon-btn" data-close title="닫기"><i data-icon="x"></i></button></div>
+  <div class="dlg-body">
+    <div class="seg" id="sigMode"><button data-m="draw" aria-pressed="true">직접 그리기</button><button data-m="type" aria-pressed="false">글자로 만들기</button></div>
+    <div id="sigDraw">
+      <div class="sigpad"><span class="x">×</span><span class="baseline"></span><canvas id="sigCanvas"></canvas></div>
+      <div class="btn-row" style="justify-content:space-between;margin-top:8px">
+        <div class="color-row" id="sigColors">
+          <button class="sw" data-c="#111111" aria-pressed="true" title="검정"><span style="--c:#111111"></span></button>
+          <button class="sw" data-c="#1D3B8F" aria-pressed="false" title="파랑"><span style="--c:#1D3B8F"></span></button>
+        </div>
+        <button class="btn sm ghost" id="sigClear"><i data-icon="eraser" class="sm"></i>지우기</button>
+      </div>
+    </div>
+    <div id="sigType" hidden>
+      <input class="inp" id="sigText" placeholder="이름" maxlength="20" />
+      <div class="sig-fonts" id="sigFonts" style="margin-top:8px">
+        <button data-f="Nanum Pen Script" style="font-family:'Nanum Pen Script'" aria-pressed="true">이름</button>
+        <button data-f="Nanum Brush Script" style="font-family:'Nanum Brush Script'" aria-pressed="false">이름</button>
+      </div>
+    </div>
+    <div class="btn-row"><button class="btn ghost" data-close>취소</button><button class="btn primary" id="sigOk"><i data-icon="check"></i>사용하기</button></div>
+  </div>
+</dialog>
+
+<!-- Stamp maker -->
+<dialog id="stampDlg">
+  <div class="dlg-head"><h2>도장 만들기</h2><button class="icon-btn" data-close title="닫기"><i data-icon="x"></i></button></div>
+  <div class="dlg-body">
+    <p>이름이나 상호를 넣으면 인감 모양의 도장 이미지를 만들어 줍니다. 세 글자 이름은 끝에 ‘인’을 붙여 네 칸으로 새겨요.</p>
+    <div class="field"><label for="stText">새길 글자</label><input class="inp" id="stText" maxlength="16" placeholder="홍길동" /></div>
+    <div class="field"><span class="lbl">모양</span><div class="seg" id="stShape"><button data-v="circle" aria-pressed="true">원형 (개인)</button><button data-v="square" aria-pressed="false">사각 (법인 직인)</button></div></div>
+    <label class="switch">글자 끝에 ‘인’ 붙이기<input type="checkbox" id="stIn" checked /></label>
+    <label class="switch">찍은 듯한 질감<input type="checkbox" id="stTex" checked /></label>
+    <div class="stamp-prev"><canvas id="stCanvas" width="300" height="300"></canvas></div>
+    <div class="btn-row"><button class="btn ghost" data-close>취소</button><button class="btn primary" id="stOk"><i data-icon="check"></i>사용하기</button></div>
+  </div>
+</dialog>
+
+<!-- Confirm -->
+<dialog id="askDlg">
+  <div class="dlg-head"><h2 id="askTitle">확인</h2><button class="icon-btn" data-close title="닫기"><i data-icon="x"></i></button></div>
+  <div class="dlg-body">
+    <p id="askText"></p>
+    <input class="inp" id="askInput" hidden />
+    <div class="btn-row"><button class="btn ghost" data-close>취소</button><button class="btn primary" id="askOk">확인</button></div>
+  </div>
+</dialog>
+
+<div id="toast" role="status" aria-live="polite"><span id="toastMsg"></span><button id="toastAct" hidden></button></div>
+<div id="busy"><div class="bx"><div class="t" id="busyT">처리 중</div><div class="s" id="busyS"></div><div class="bar"><i></i></div></div></div>
+
+<script>
+'use strict';
+/* ================================================================
+   Former — outgrid document form builder. Everything runs locally.
+   ================================================================ */
+
+/* ---------- Icons ---------- */
+const ICONS = {
+  undo: '<path d="M9 14 4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/>',
+  redo: '<path d="m15 14 5-5-5-5"/><path d="M20 9H9a5 5 0 0 0 0 10h3"/>',
+  plus: '<path d="M12 5v14M5 12h14"/>',
+  minus: '<path d="M5 12h14"/>',
+  download: '<path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/>',
+  upload: '<path d="M12 20V9"/><path d="m7 14 5-5 5 5"/><path d="M5 4h14"/>',
+  printer: '<path d="M7 9V4h10v5"/><rect x="4" y="9" width="16" height="8" rx="2"/><path d="M7 14h10v6H7z"/>',
+  pen: '<path d="M14.5 5.5 18.5 9.5"/><path d="M4 20l1-4.5L15.8 4.7a2 2 0 0 1 2.8 0l.7.7a2 2 0 0 1 0 2.8L8.5 19 4 20z"/>',
+  folder: '<path d="M3.5 7.5A1.5 1.5 0 0 1 5 6h4.2l2 2H19a1.5 1.5 0 0 1 1.5 1.5v8A1.5 1.5 0 0 1 19 19H5a1.5 1.5 0 0 1-1.5-1.5z"/>',
+  user: '<circle cx="12" cy="8.5" r="3.5"/><path d="M5 20c.8-3.6 3.6-5.5 7-5.5s6.2 1.9 7 5.5"/>',
+  building: '<path d="M5 20V5.5A1.5 1.5 0 0 1 6.5 4h7A1.5 1.5 0 0 1 15 5.5V20"/><path d="M15 10h3a1.5 1.5 0 0 1 1.5 1.5V20"/><path d="M3.5 20h17M8.5 8h3M8.5 12h3M8.5 16h3"/>',
+  search: '<circle cx="11" cy="11" r="6"/><path d="m20 20-4.5-4.5"/>',
+  more: '<circle cx="5.5" cy="12" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="18.5" cy="12" r="1.2"/>',
+  image: '<rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><circle cx="9" cy="10" r="1.6"/><path d="m20.5 15.5-5-5L5 20"/>',
+  copy: '<rect x="8.5" y="8.5" width="11" height="11" rx="2.2"/><path d="M15.5 8.5V6.2A1.7 1.7 0 0 0 13.8 4.5H6.2A1.7 1.7 0 0 0 4.5 6.2v7.6a1.7 1.7 0 0 0 1.7 1.7h2.3"/>',
+  trash: '<path d="M4.5 7h15"/><path d="M9.5 7V5.2a1.2 1.2 0 0 1 1.2-1.2h2.6a1.2 1.2 0 0 1 1.2 1.2V7"/><path d="m6.5 7 .9 11.3a2 2 0 0 0 2 1.7h5.2a2 2 0 0 0 2-1.7L17.5 7"/>',
+  file: '<path d="M14 3.5H7.5a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2V8z"/><path d="M14 3.5V8h4.5"/>',
+  textfile: '<path d="M14 3.5H7.5a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2V8z"/><path d="M14 3.5V8h4.5"/><path d="M9 12.5h6M9 16h4"/>',
+  shield: '<path d="M12 3.5 5 6.2v5.3c0 4.3 3 7.6 7 9 4-1.4 7-4.7 7-9V6.2z"/><path d="m9.2 12 2 2 3.8-4"/>',
+  check: '<path d="m5 12.5 4.5 4.5L19 7.5"/>',
+  x: '<path d="M6 6l12 12M18 6 6 18"/>',
+  up: '<path d="M12 19V5M6 11l6-6 6 6"/>',
+  down: '<path d="M12 5v14M6 13l6 6 6-6"/>',
+  eraser: '<path d="M8.5 20H20"/><path d="m4.6 15.4 9.8-9.8a2 2 0 0 1 2.8 0l2.2 2.2a2 2 0 0 1 0 2.8L12 18H7.2z"/><path d="m9.5 10.5 5 5"/>',
+  sign: '<path d="M3.5 17.5c2.5 0 3.5-9 6-9 2 0-1 9 1.5 9 1.6 0 2.4-3.5 4-3.5 1.2 0 1 2.5 2.4 2.5"/><path d="M3.5 21h17"/>',
+  stamp: '<path d="M9.5 13.5V11a2.5 2.5 0 1 1 5 0v2.5"/><path d="M5 13.5h14l.5 3.5h-15z"/><path d="M6 20h12"/>',
+  fit: '<path d="M4 9V5h4M20 9V5h-4M4 15v4h4M20 15v4h-4"/>',
+  chevron: '<path d="m6 9 6 6 6-6"/>',
+  save: '<path d="M5 4.5h11l3.5 3.5v11.5H5z"/><path d="M8 4.5v5h7v-5M8 19.5v-6h8v6"/>',
+  receipt: '<path d="M6 3.5h12v17l-2-1.3-2 1.3-2-1.3-2 1.3-2-1.3-2 1.3z"/><path d="M9 8h6M9 11.5h6M9 15h4"/>',
+  calc: '<rect x="5" y="3.5" width="14" height="17" rx="2.5"/><path d="M8.5 7.5h7M8.5 12h.01M12 12h.01M15.5 12h.01M8.5 16h.01M12 16h.01M15.5 16h.01"/>',
+  cart: '<path d="M3.5 4.5h2.2l2 11h10.8l1.8-8H7"/><circle cx="9.5" cy="19" r="1.3"/><circle cx="17" cy="19" r="1.3"/>',
+  coin: '<ellipse cx="12" cy="7" rx="7" ry="3"/><path d="M5 7v5c0 1.7 3.1 3 7 3s7-1.3 7-3V7M5 12v5c0 1.7 3.1 3 7 3s7-1.3 7-3v-5"/>',
+  cal: '<rect x="4" y="5.5" width="16" height="14.5" rx="2.5"/><path d="M8 3.5v4M16 3.5v4M4 10h16"/>',
+  door: '<path d="M6 20.5V4.5A1 1 0 0 1 7 3.5h8.5a1 1 0 0 1 1 1v16"/><path d="M3.5 20.5h17M13 12.5h.01"/>',
+  badge: '<rect x="4.5" y="3.5" width="15" height="17" rx="2.5"/><circle cx="12" cy="10" r="2.6"/><path d="M8.2 16.5c.7-1.8 2.1-2.8 3.8-2.8s3.1 1 3.8 2.8"/>',
+  hand: '<path d="M7.5 11V5.8a1.3 1.3 0 0 1 2.6 0V10M10.1 9.5V4.8a1.3 1.3 0 0 1 2.6 0v4.7M12.7 9.5V5.8a1.3 1.3 0 0 1 2.6 0V11M15.3 10.5V8.3a1.3 1.3 0 0 1 2.6 0v6.2c0 3.3-2.5 6-5.6 6-2.5 0-3.9-1.2-5.2-3.2L5 14.2a1.3 1.3 0 0 1 2.1-1.6l.4.5"/>',
+  money: '<rect x="3" y="6.5" width="18" height="11" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6.5 9.5v.01M17.5 14.5v.01"/>',
+  star: '<path d="m12 4 2.4 5 5.4.7-4 3.7 1 5.4L12 16.2 7.2 18.8l1-5.4-4-3.7 5.4-.7z"/>',
+  list: '<path d="M9 6.5h11M9 12h11M9 17.5h11"/><circle cx="4.8" cy="6.5" r="1"/><circle cx="4.8" cy="12" r="1"/><circle cx="4.8" cy="17.5" r="1"/>',
+  briefcase: '<rect x="3.5" y="7.5" width="17" height="12" rx="2.5"/><path d="M9 7.5V5.8A1.3 1.3 0 0 1 10.3 4.5h3.4A1.3 1.3 0 0 1 15 5.8v1.7M3.5 12.5h17"/>',
+};
+function icon(n, cls = '') { return `<svg class="i ${cls}" viewBox="0 0 24 24" aria-hidden="true">${ICONS[n] || ''}</svg>`; }
+function hydrateIcons(root = document) { root.querySelectorAll('i[data-icon]').forEach(el => { const t = document.createElement('template'); t.innerHTML = icon(el.dataset.icon, el.className); el.replaceWith(t.content.firstChild); }); }
+
+/* ---------- Small helpers ---------- */
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const E = v => esc(v).replace(/\n/g, '<br>');
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+const has = v => v != null && String(v).trim() !== '';
+const pad2 = n => String(n).padStart(2, '0');
+function today() { const d = new Date(); return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`; }
+function addDays(iso, n) { const d = new Date(iso + 'T00:00'); d.setDate(d.getDate() + n); return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`; }
+function num(v) { if (v == null) return 0; const n = parseFloat(String(v).replace(/[^\d.\-]/g, '')); return isFinite(n) ? n : 0; }
+const W = n => (Math.round(n) || 0).toLocaleString('ko-KR');
+function numFmt(v) { if (!has(v)) return ''; const n = num(v); return Number.isInteger(n) ? n.toLocaleString('ko-KR') : String(n); }
+
+/* Korean money in words: 1234500 → 일백이십삼만사천오백 */
+function numKo(n) {
+  n = Math.floor(Math.abs(Number(n) || 0));
+  if (!n) return '';
+  const D = '영일이삼사오육칠팔구', U = ['', '십', '백', '천'], B = ['', '만', '억', '조', '경'];
+  let out = '', i = 0;
+  while (n > 0) {
+    const chunk = n % 10000; n = Math.floor(n / 10000);
+    if (chunk) {
+      let c = '', k = chunk, j = 0;
+      while (k > 0) { const d = k % 10; if (d) c = D[d] + U[j] + c; k = Math.floor(k / 10); j++; }
+      out = c + B[i] + out;
+    }
+    i++;
+  }
+  return out;
+}
+function wonKo(n) { const k = numKo(n); return k ? `일금 ${k}원정` : '일금&emsp;&emsp;&emsp;&emsp;&emsp;원정'; }
+
+/* Dates */
+function parseISO(v) { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(v || ''); return m ? { y: +m[1], m: +m[2], d: +m[3] } : null; }
+function D(v, style = 'ko') {
+  const p = parseISO(v);
+  if (!p) return style === 'dot' ? '&emsp;&emsp;.&emsp;&ensp;.&emsp;&ensp;.' : '&emsp;&emsp;&emsp;년&emsp;&ensp;월&emsp;&ensp;일';
+  if (style === 'dot') return `${p.y}. ${pad2(p.m)}. ${pad2(p.d)}.`;
+  if (style === 'md') return `${p.m}/${p.d}`;
+  return `${p.y}년 ${p.m}월 ${p.d}일`;
+}
+const WD = '일월화수목금토';
+function leaveDays(from, to, type) {
+  if (type && type.includes('반차')) return 0.5;
+  const a = parseISO(from); if (!a) return null;
+  const b = parseISO(to) || a;
+  const s = new Date(a.y, a.m - 1, a.d), e = new Date(b.y, b.m - 1, b.d);
+  if (e < s) return null;
+  let n = 0;
+  for (const d = new Date(s); d <= e; d.setDate(d.getDate() + 1)) { const w = d.getDay(); if (w !== 0 && w !== 6) n++; }
+  return n;
+}
+
+/* Input formatters */
+function fmtTel(v) {
+  const d = String(v).replace(/\D/g, '').slice(0, 12);
+  if (d.startsWith('02')) {
+    if (d.length <= 2) return d;
+    if (d.length <= 5) return d.slice(0, 2) + '-' + d.slice(2);
+    if (d.length <= 9) return d.slice(0, 2) + '-' + d.slice(2, 5) + '-' + d.slice(5);
+    return d.slice(0, 2) + '-' + d.slice(2, 6) + '-' + d.slice(6, 10);
+  }
+  if (d.length === 8 && /^1[5-9]/.test(d)) return d.slice(0, 4) + '-' + d.slice(4);
+  if (d.length <= 3) return d;
+  if (d.length <= 6) return d.slice(0, 3) + '-' + d.slice(3);
+  if (d.length <= 10) return d.slice(0, 3) + '-' + d.slice(3, 6) + '-' + d.slice(6);
+  return d.slice(0, 3) + '-' + d.slice(3, 7) + '-' + d.slice(7, 11);
+}
+function fmtBiz(v) { const d = String(v).replace(/\D/g, '').slice(0, 10); if (d.length <= 3) return d; if (d.length <= 5) return d.slice(0, 3) + '-' + d.slice(3); return d.slice(0, 3) + '-' + d.slice(3, 5) + '-' + d.slice(5); }
+function fmtMoneyInput(v) { const neg = /^\s*-/.test(v); const d = String(v).replace(/\D/g, '').replace(/^0+(?=\d)/, ''); if (!d) return neg ? '-' : ''; return (neg ? '-' : '') + Number(d).toLocaleString('ko-KR'); }
+function reformat(el, fmt) {
+  const pos = el.selectionStart ?? el.value.length;
+  const before = el.value.slice(0, pos).replace(/\D/g, '').length;
+  const nv = fmt(el.value);
+  if (nv === el.value) return;
+  el.value = nv;
+  let i = 0, c = 0;
+  while (i < nv.length && c < before) { if (/\d/.test(nv[i])) c++; i++; }
+  try { el.setSelectionRange(i, i); } catch { }
+}
+
+/* Mix a hex colour with white (no color-mix(): html2canvas can't parse it) */
+function tint(hex, a) {
+  const n = parseInt(hex.slice(1), 16), r = n >> 16, g = (n >> 8) & 255, b = n & 255;
+  const m = c => Math.round(255 - (255 - c) * a).toString(16).padStart(2, '0');
+  return '#' + m(r) + m(g) + m(b);
+}
+
+/* ================================================================
+   Templates
+   ================================================================ */
+const T = {};
+const TPL_ORDER = [];
+function tpl(o) { T[o.id] = o; TPL_ORDER.push(o.id); }
+const f = (k, l, t = 'text', o = {}) => ({ k, l, t, ...o });
+const CATS = [['job', '취업·이직', ''], ['trade', '거래·회계', 'c2'], ['hr', '인사·총무', 'c3'], ['legal', '계약·위임', 'c4']];
+
+const VAT_OPTS = [['ex', '부가세 별도 (공급가액 + 10%)'], ['in', '부가세 포함 (단가에 포함)'], ['none', '부가세 없음 (면세·간이과세)']];
+const ITEM_COLS = [
+  { k: 'name', l: '품명', ph: '예: 홈페이지 디자인' },
+  { k: 'spec', l: '규격·단위', ph: '식, EA, 월', h: 1 },
+  { k: 'qty', l: '수량', t: 'num', ph: '1', h: 1 },
+  { k: 'price', l: '단가', t: 'money', h: 1 },
+  { k: 'note', l: '비고', h: 1 },
+];
+const PARTY = (pre, t, o = {}) => ({
+  t, profile: 'co', auto: o.auto, hint: o.hint, f: [
+    f(pre + 'bizNo', '사업자등록번호', 'biz', { p: 'bizNo', h: 1, ph: '000-00-00000' }),
+    f(pre + 'name', '상호', 'text', { p: 'name', h: 1 }),
+    f(pre + 'ceo', '대표자', 'text', { p: 'ceo', h: 1 }),
+    f(pre + 'tel', '전화', 'tel', { p: 'tel', h: 1 }),
+    f(pre + 'addr', '주소', 'text', { p: 'addr' }),
+    f(pre + 'type', '업태', 'text', { p: 'type', h: 1, ph: '서비스' }),
+    f(pre + 'item', '종목', 'text', { p: 'item', h: 1, ph: '소프트웨어 개발' }),
+    ...(o.email === false ? [] : [f(pre + 'email', '이메일', 'email', { p: 'email' })]),
+    ...(o.stamp === false ? [] : [f(pre + 'stamp', '직인·도장', 'img', { p: 'stamp', kind: 'stamp' })]),
+  ]
+});
+const TO_PARTY = (t, o = {}) => ({
+  t, profile: 'co', f: [
+    f('to_name', o.nameL || '상호·성명', 'text', { p: 'name', h: 1 }),
+    f('to_mgr', '담당자', 'text', { p: 'mgr', h: 1 }),
+    f('to_tel', '연락처', 'tel', { p: 'tel', h: 1 }),
+    f('to_email', '이메일', 'email', { p: 'email', h: 1 }),
+    ...(o.addr ? [f('to_addr', '주소', 'text', { p: 'addr' })] : []),
+  ]
+});
+const STYLE_DEF = { color: '#1C2824', font: 'serif', size: 10, fill: true, pageNo: true };
+
+/* ----- shared render pieces ----- */
+function seal(img, txt = '(인)', sign = false) { return `<span class="seal">${txt}${img ? `<img class="${sign ? 'sg' : ''}" src="${img}" alt="">` : ''}</span>`; }
+function sealFor(d, signK, stampK) { const st = stampK && d[stampK], sg = signK && d[signK]; return st ? seal(st) : sg ? seal(sg, '(서명)', true) : seal(''); }
+function who(label, name, d, signK, stampK) {
+  return `<div class="who keep"><span class="lb">${label}</span><span class="nm">${E(name) || '&emsp;&emsp;&emsp;&emsp;'}</span>${sealFor(d, signK, stampK)}</div>`;
+}
+function approval(str) {
+  const l = String(str || '').split(/[,，]/).map(s => s.trim()).filter(Boolean);
+  if (!l.length) return '';
+  return `<table class="appr"><tr><th rowspan="2" class="v">결<br>재</th>${l.map(x => `<th>${E(x)}</th>`).join('')}</tr><tr>${l.map(() => '<td></td>').join('')}</tr></table>`;
+}
+function vtext(s) { return s.split('').map(esc).join('<br>'); }
+function marks(opts, val) {
+  const set = Array.isArray(val) ? val : [val];
+  return `<span class="opts">${opts.map(o => `<span><span class="mark">${set.includes(o) ? '■' : '□'}</span> ${esc(o)}</span>`).join('')}</span>`;
+}
+function partyTable(d, pre, label, sm) {
+  const g = k => d[pre + k];
+  const contact = [g('tel'), g('email')].filter(has).join(' · ');
+  return `<table class="t party${sm ? ' sm' : ''}"><colgroup><col style="width:7mm"><col style="width:${sm ? 14 : 16}mm"><col><col style="width:${sm ? 11 : 13}mm"><col></colgroup>
+<tr><th rowspan="5" class="v">${vtext(label)}</th><th>등록번호</th><td colspan="3" class="c b">${E(g('bizNo'))}</td></tr>
+<tr><th>상 호</th><td>${E(g('name'))}</td><th>성 명</th><td>${E(g('ceo'))}${pre === 'rc_' ? seal('') : seal(g('stamp'))}</td></tr>
+<tr><th>주 소</th><td colspan="3">${E(g('addr'))}</td></tr>
+<tr><th>업 태</th><td>${E(g('type'))}</td><th>종 목</th><td>${E(g('item'))}</td></tr>
+<tr><th>연락처</th><td colspan="3">${E(contact)}</td></tr></table>`;
+}
+function calcItems(items, vat) {
+  let sup = 0, tax = 0;
+  const rows = (items || []).map(r => {
+    const hasP = has(r.price);
+    const q = has(r.qty) ? num(r.qty) : 1;
+    const amt = hasP ? Math.round(q * num(r.price)) : has(r.amount) ? Math.round(num(r.amount)) : null;
+    let s = null, t = null;
+    if (amt != null) {
+      if (vat === 'in') { s = Math.round(amt / 1.1); t = amt - s; }
+      else if (vat === 'ex') { s = amt; t = Math.floor(amt * 0.1); }
+      else { s = amt; t = 0; }
+      sup += s; tax += t;
+    }
+    return { ...r, _amt: amt, _sup: s, _tax: t, _tot: amt == null ? null : s + t };
+  });
+  return { rows, sup, tax, tot: sup + tax };
+}
+const filled = (rows, keys) => (rows || []).filter(r => keys.some(k => has(r[k])));
+function fillRows(rows, S, min) { const out = rows.slice(); if (S.fill) while (out.length < min) out.push({}); return out; }
+function itemsTable(c, S, o = {}) {
+  const tax = o.tax !== false;
+  const rows = fillRows(c.rows.filter(r => has(r.name) || r._amt != null || has(r.spec)), S, o.min ?? 8);
+  const head = `<tr>${o.date ? '<th style="width:13mm">월/일</th>' : '<th style="width:8mm">No</th>'}<th>품 명</th><th style="width:17mm">규 격</th><th style="width:12mm">수량</th><th style="width:22mm">단 가</th><th style="width:${tax ? 25 : 30}mm">${tax ? '공급가액' : '금 액'}</th>${tax ? '<th style="width:20mm">세 액</th>' : ''}<th style="width:${o.date ? 14 : 18}mm">비 고</th></tr>`;
+  let n = 0;
+  const body = rows.map(r => {
+    const used = has(r.name) || r._amt != null;
+    return `<tr class="ir"><td class="c">${o.date ? E(has(r.date) ? D(r.date, 'md') : '') : used ? ++n : ''}</td><td>${E(r.name)}</td><td class="c">${E(r.spec)}</td><td class="r">${E(numFmt(r.qty))}</td><td class="r">${has(r.price) ? W(num(r.price)) : ''}</td><td class="r">${r._sup != null ? W(r._sup) : ''}</td>${tax ? `<td class="r">${r._tax != null ? W(r._tax) : ''}</td>` : ''}<td class="c">${E(r.note)}</td></tr>`;
+  }).join('');
+  const foot = `<tr class="sum"><th colspan="5">합&emsp;계</th><td class="r b">${W(c.sup)}</td>${tax ? `<td class="r b">${W(c.tax)}</td>` : ''}<td></td></tr>`;
+  return `<table class="t sm">${head}${body}${foot}</table>`;
+}
+function totalLine(tot, vat, label = '합계금액') {
+  return `<table class="t total"><colgroup><col style="width:34mm"><col></colgroup><tr><th>${label}${vat && vat !== 'none' ? '<br><small>(부가세 포함)</small>' : ''}</th><td>${wonKo(tot)}<span class="won">(₩${tot ? W(tot) : '&emsp;&emsp;&emsp;'})</span></td></tr></table>`;
+}
+function kvRows(rows) { return rows.filter(r => r && (has(r[1]) || r[2])).map(r => `<tr><th>${r[0]}</th><td>${r[2] ? r[1] : E(r[1])}</td></tr>`).join(''); }
+const sumBox = rows => `<dl class="fsum">${rows.map(r => r[0] === 'ko' ? `<div class="ko">${r[1]}</div>` : `<dt>${r[0]}</dt><dd class="${r[2] || ''}">${r[1]}</dd>`).join('')}</dl>`;
+function tradeSum(c, vat) {
+  return sumBox([['공급가액', '₩' + W(c.sup)], ...(vat !== 'none' ? [['부가세', '₩' + W(c.tax)]] : []), ['합계', '₩' + W(c.tot), 'big'], ['ko', c.tot ? wonKo(c.tot) : '품목에 단가를 넣으면 금액이 계산됩니다.']]);
+}
+
+/* ================= 취업·이직 ================= */
+tpl({
+  id: 'resume', name: '이력서', cat: 'job', icon: 'badge', desc: '사진, 학력·경력, 자격증, 어학, 병역까지 표준 이력서',
+  sections: [
+    {
+      t: '인적 사항', profile: 'me', auto: true, f: [
+        f('photo', '증명사진 (3×4)', 'img', { p: 'photo', kind: 'photo' }),
+        f('name', '성명', 'text', { p: 'name', h: 1 }), f('nameEn', '영문 이름', 'text', { p: 'nameEn', h: 1 }),
+        f('birth', '생년월일', 'date', { p: 'birth', h: 1 }), f('phone', '휴대전화', 'tel', { p: 'phone', h: 1 }),
+        f('email', '이메일', 'email', { p: 'email' }), f('addr', '주소', 'text', { p: 'addr' }),
+        f('apply', '지원 분야', 'text', { h: 1, ph: '예: 웹 개발' }), f('salary', '희망 연봉', 'text', { h: 1, ph: '회사 내규에 따름' }),
+      ]
+    },
+    { t: '학력', f: [f('edu', '', 'table', { add: '학력 추가', cols: [{ k: 'period', l: '기간', ph: '2015.03 ~ 2019.02' }, { k: 'school', l: '학교명', h: 1 }, { k: 'major', l: '전공', h: 1 }, { k: 'status', l: '구분', h: 1, ph: '졸업' }, { k: 'gpa', l: '학점', h: 1, ph: '3.8 / 4.5' }] })] },
+    { t: '경력', f: [f('work', '', 'table', { add: '경력 추가', cols: [{ k: 'period', l: '기간', ph: '2019.03 ~ 현재' }, { k: 'company', l: '회사명', h: 1 }, { k: 'pos', l: '부서·직위', h: 1 }, { k: 'duty', l: '담당 업무' }] })] },
+    { t: '자격·면허', f: [f('cert', '', 'table', { add: '자격증 추가', cols: [{ k: 'date', l: '취득일', ph: '2020.05', h: 1 }, { k: 'name', l: '자격·면허명', h: 1 }, { k: 'org', l: '발행처' }] })] },
+    { t: '어학', f: [f('lang', '', 'table', { add: '어학 추가', cols: [{ k: 'lang', l: '언어', h: 1, ph: '영어' }, { k: 'test', l: '시험명', h: 1, ph: 'TOEIC' }, { k: 'score', l: '점수·등급', h: 1 }, { k: 'date', l: '취득일', h: 1 }] })] },
+    { t: '수상·대외활동', f: [f('award', '', 'table', { add: '항목 추가', cols: [{ k: 'date', l: '기간·일자', h: 1 }, { k: 'org', l: '기관', h: 1 }, { k: 'title', l: '내용' }] })] },
+    {
+      t: '병역', f: [
+        f('mil', '구분', 'select', { o: ['', '군필', '미필', '면제', '해당 없음'], h: 1 }), f('milBranch', '군별', 'text', { h: 1, ph: '육군' }),
+        f('milRank', '계급', 'text', { h: 1, ph: '병장' }), f('milPeriod', '복무 기간', 'text', { h: 1, ph: '2013.03 ~ 2014.12' }),
+        f('milNote', '면제 사유 등', 'text'),
+      ]
+    },
+    { t: '마무리', profile: 'me', f: [f('date', '작성일', 'date', { h: 1 }), f('sign', '서명', 'img', { p: 'sign', kind: 'sign', h: 1 }), f('stamp', '도장 (있으면 서명 대신)', 'img', { p: 'stamp', kind: 'stamp' })] },
+  ],
+  defaults: () => ({ date: today(), edu: [{}], work: [{}], cert: [{}], lang: [], award: [] }),
+  title: d => `이력서${has(d.name) ? '_' + d.name : ''}`,
+  render(d, S) {
+    const sec = (title, key, cols, keys, min) => {
+      const rows = fillRows(filled(d[key], keys), S, min);
+      if (!rows.length) return '';
+      return `<h2 class="st">${title}</h2><table class="t tall"><colgroup>${cols.map(c => `<col${c[2] ? ` style="width:${c[2]}mm"` : ''}>`).join('')}</colgroup><tr>${cols.map(c => `<th>${c[1]}</th>`).join('')}</tr>${rows.map(r => `<tr>${cols.map(c => `<td class="${c[3] || ''}">${E(r[c[0]])}</td>`).join('')}</tr>`).join('')}</table>`;
+    };
+    const mil = [d.mil, d.milBranch, d.milRank, d.milPeriod, d.milNote].some(has);
+    return `<h1 class="dt">이 력 서</h1>
+<table class="t tall"><colgroup><col style="width:34mm"><col style="width:22mm"><col><col style="width:22mm"><col></colgroup>
+<tr><td rowspan="5" class="phc"><div class="photo">${d.photo ? `<img src="${d.photo}" alt="">` : '사 진<br>(3×4)'}</div></td><th>성 명</th><td class="b">${E(d.name)}</td><th>영 문</th><td>${E(d.nameEn)}</td></tr>
+<tr><th>생년월일</th><td>${has(d.birth) ? D(d.birth) : ''}</td><th>휴대전화</th><td>${E(d.phone)}</td></tr>
+<tr><th>이메일</th><td colspan="3">${E(d.email)}</td></tr>
+<tr><th>주 소</th><td colspan="3">${E(d.addr)}</td></tr>
+<tr><th>지원 분야</th><td>${E(d.apply)}</td><th>희망 연봉</th><td>${E(d.salary)}</td></tr></table>
+${sec('학력 사항', 'edu', [['period', '기 간', 44, 'c'], ['school', '학 교 명'], ['major', '전 공'], ['status', '구 분', 18, 'c'], ['gpa', '학 점', 22, 'c']], ['period', 'school', 'major'], 3)}
+${sec('경력 사항', 'work', [['period', '기 간', 44, 'c'], ['company', '회 사 명', 38], ['pos', '부서·직위', 32], ['duty', '담 당 업 무']], ['period', 'company', 'duty'], 3)}
+${sec('자격·면허', 'cert', [['date', '취 득 일', 30, 'c'], ['name', '자격·면허명'], ['org', '발 행 처', 50]], ['date', 'name', 'org'], 3)}
+${sec('어학', 'lang', [['lang', '언 어', 26, 'c'], ['test', '시 험 명'], ['score', '점수·등급', 34, 'c'], ['date', '취 득 일', 30, 'c']], ['lang', 'test', 'score'], 0)}
+${sec('수상·대외활동', 'award', [['date', '기 간', 40, 'c'], ['title', '내 용'], ['org', '기 관', 44]], ['date', 'title', 'org'], 0)}
+${mil || S.fill ? `<h2 class="st">병역 사항</h2><table class="t tall"><tr><th>구 분</th><th>군 별</th><th>계 급</th><th style="width:44mm">복 무 기 간</th><th>면제 사유</th></tr><tr><td class="c">${E(d.mil)}</td><td class="c">${E(d.milBranch)}</td><td class="c">${E(d.milRank)}</td><td class="c">${E(d.milPeriod)}</td><td class="c">${E(d.milNote)}</td></tr></table>` : ''}
+<div class="keep"><p class="stmt">위의 기재 사항은 사실과 다름없음을 확인합니다.</p>
+<p class="when">${D(d.date)}</p>
+${who('작성자', d.name, d, 'sign', 'stamp')}</div>`;
+  }
+});
+
+tpl({
+  id: 'cover', name: '자기소개서', cat: 'job', icon: 'textfile', desc: '항목별 글자 수 세기, 성장과정·지원동기·입사 후 포부',
+  sections: [
+    { t: '기본 정보', profile: 'me', auto: true, f: [f('name', '성명', 'text', { p: 'name', h: 1 }), f('phone', '연락처', 'tel', { p: 'phone', h: 1 }), f('company', '지원 회사', 'text', { h: 1 }), f('apply', '지원 분야', 'text', { h: 1 })] },
+    { t: '항목', hint: '항목 제목과 내용을 자유롭게 바꾸고 추가할 수 있어요. 글자 수는 공백 포함/제외로 함께 셉니다.', f: [f('qa', '', 'table', { add: '항목 추가', title: 'q', cols: [{ k: 'q', l: '항목 제목' }, { k: 'limit', l: '글자 수 제한 (선택)', t: 'num', h: 1, ph: '예: 1000' }, { k: 'a', l: '내용', t: 'textarea', rows: 8, count: true }] })] },
+    { t: '마무리', f: [f('date', '작성일', 'date', { h: 1 }), f('showDate', '작성일·이름 표시', 'select', { o: [['y', '표시'], ['n', '표시 안 함']], h: 1 })] },
+  ],
+  defaults: () => ({ date: today(), showDate: 'y', qa: [{ q: '성장 과정' }, { q: '성격의 장단점' }, { q: '지원 동기' }, { q: '입사 후 포부' }] }),
+  title: d => `자기소개서${has(d.company) ? '_' + d.company : has(d.name) ? '_' + d.name : ''}`,
+  render(d, S) {
+    const items = (d.qa || []).filter(r => has(r.q) || has(r.a));
+    return `<h1 class="dt">자 기 소 개 서</h1>
+<table class="t"><colgroup><col style="width:24mm"><col><col style="width:24mm"><col></colgroup>
+<tr><th>성 명</th><td>${E(d.name)}</td><th>연 락 처</th><td>${E(d.phone)}</td></tr>
+<tr><th>지원 회사</th><td>${E(d.company)}</td><th>지원 분야</th><td>${E(d.apply)}</td></tr></table>
+${items.map((r, i) => `<div class="qa"><h3>${i + 1}. ${E(r.q)}</h3><div class="body">${E(r.a) || (S.fill ? '<br><br><br><br>' : '')}</div></div>`).join('')}
+${d.showDate !== 'n' ? `<div class="keep"><p class="when" style="margin-top:10mm">${D(d.date)}</p><div class="who"><span class="lb">작성자</span><span class="nm">${E(d.name) || '&emsp;&emsp;&emsp;'}</span></div></div>` : ''}`;
+  }
+});
+
+tpl({
+  id: 'career', name: '경력기술서', cat: 'job', icon: 'briefcase', desc: '회사·프로젝트별 담당 업무와 성과를 정리',
+  sections: [
+    { t: '기본 정보', profile: 'me', auto: true, f: [f('name', '성명', 'text', { p: 'name', h: 1 }), f('phone', '연락처', 'tel', { p: 'phone', h: 1 }), f('email', '이메일', 'email', { p: 'email', h: 1 }), f('total', '총 경력', 'text', { h: 1, ph: '7년 4개월' }), f('apply', '지원 분야', 'text')] },
+    { t: '요약', f: [f('summary', '경력 요약·핵심 역량', 'textarea', { rows: 4, ph: '- 대규모 트래픽 서비스 백엔드 설계 7년\n- 결제 시스템 구축 및 운영' }), f('skills', '보유 기술·툴', 'textarea', { rows: 2, ph: 'Java, Spring, AWS, MySQL' })] },
+    { t: '경력', hint: '줄마다 ‘-’로 시작하면 목록처럼 보여요.', f: [f('jobs', '', 'table', { add: '경력 추가', title: 'company', cols: [{ k: 'company', l: '회사명', h: 1 }, { k: 'period', l: '근무 기간', h: 1, ph: '2019.03 ~ 현재' }, { k: 'pos', l: '부서·직위', h: 1 }, { k: 'type', l: '고용 형태', h: 1, ph: '정규직' }, { k: 'duty', l: '담당 업무', t: 'textarea', rows: 3 }, { k: 'project', l: '주요 프로젝트', t: 'textarea', rows: 3 }, { k: 'result', l: '성과', t: 'textarea', rows: 3 }] })] },
+    { t: '마무리', f: [f('date', '작성일', 'date', { h: 1 })] },
+  ],
+  defaults: () => ({ date: today(), jobs: [{}] }),
+  title: d => `경력기술서${has(d.name) ? '_' + d.name : ''}`,
+  render(d, S) {
+    const jobs = filled(d.jobs, ['company', 'duty', 'project', 'result']);
+    const row = (l, v) => has(v) ? `<div class="cv-row"><span>${l}</span><span>${E(v)}</span></div>` : '';
+    return `<h1 class="dt">경 력 기 술 서</h1>
+<table class="t"><colgroup><col style="width:22mm"><col><col style="width:22mm"><col></colgroup>
+<tr><th>성 명</th><td class="b">${E(d.name)}</td><th>총 경력</th><td>${E(d.total)}</td></tr>
+<tr><th>연 락 처</th><td>${E(d.phone)}</td><th>이 메 일</th><td>${E(d.email)}</td></tr>
+${has(d.apply) ? `<tr><th>지원 분야</th><td colspan="3">${E(d.apply)}</td></tr>` : ''}</table>
+${has(d.summary) ? `<h2 class="st">경력 요약</h2><div class="box">${E(d.summary)}</div>` : ''}
+${has(d.skills) ? `<h2 class="st">보유 기술</h2><p>${E(d.skills)}</p>` : ''}
+${jobs.length ? `<h2 class="st">경력 상세</h2>` : ''}
+${jobs.map(j => `<div class="cv-entry"><div class="cv-head"><b>${E(j.company)}</b><span>${E(j.period)}</span></div>
+${row('부서·직위', [j.pos, j.type].filter(has).join(' · '))}${row('담당 업무', j.duty)}${row('주요 프로젝트', j.project)}${row('성과', j.result)}</div>`).join('')}
+<div class="keep"><p class="stmt" style="margin-top:12mm">위 기재 사항은 사실과 다름없음을 확인합니다.</p><p class="when">${D(d.date)}</p>
+<div class="who"><span class="lb">작성자</span><span class="nm">${E(d.name) || '&emsp;&emsp;&emsp;'}</span></div></div>`;
+  }
+});
+
+/* ================= 거래·회계 ================= */
+tpl({
+  id: 'quote', name: '견적서', cat: 'trade', icon: 'calc', desc: '품목·수량·단가로 공급가액과 부가세 자동 계산',
+  sections: [
+    { t: '기본 정보', f: [f('no', '견적 번호', 'text', { h: 1 }), f('date', '견적일', 'date', { h: 1 }), f('valid', '유효 기간', 'text', { h: 1, ph: '견적일로부터 30일' }), f('due', '납기', 'text', { h: 1, ph: '계약 후 2주' }), f('pay', '결제 조건', 'text', { ph: '계약금 50%, 잔금 50%' })] },
+    TO_PARTY('받는 곳 (수신)'),
+    PARTY('sp_', '공급자 (우리 회사)', { auto: 'mine' }),
+    { t: '품목', sum: true, f: [f('vat', '부가세', 'select', { o: VAT_OPTS }), f('items', '', 'table', { add: '품목 추가', cols: ITEM_COLS, amt: true })] },
+    { t: '특기사항', f: [f('memo', '', 'textarea', { rows: 3, ph: '예: 디자인 시안 2회 수정 포함\n현장 설치비 별도' })] },
+  ],
+  defaults: () => ({ date: today(), no: 'Q-' + today().replace(/-/g, '') + '-01', vat: 'ex', valid: '견적일로부터 30일', items: [{ qty: '1' }] }),
+  title: d => `견적서${has(d.to_name) ? '_' + d.to_name : ''}`,
+  sum: d => tradeSum(calcItems(d.items, d.vat), d.vat),
+  render(d, S) {
+    const c = calcItems(d.items, d.vat);
+    return `<h1 class="dt">견 적 서</h1>
+<div class="cols"><div>
+<div class="to-line"><span>${E(d.to_name) || '&emsp;&emsp;&emsp;&emsp;'}</span><small>귀하</small></div>
+<table class="t kv">${kvRows([['견적 번호', d.no], ['견 적 일', D(d.date), 1], ['담 당 자', [d.to_mgr, d.to_tel].filter(has).join(' · ')], ['유효 기간', d.valid], ['납&emsp;&emsp;기', d.due], ['결제 조건', d.pay]])}</table>
+<p class="lead">아래와 같이 견적합니다.</p></div>
+<div class="w">${partyTable(d, 'sp_', '공급자')}</div></div>
+${totalLine(c.tot, d.vat)}
+${itemsTable(c, S, { tax: d.vat !== 'none' })}
+${has(d.memo) ? `<h2 class="st">특기사항</h2><div class="box">${E(d.memo)}</div>` : ''}`;
+  }
+});
+
+tpl({
+  id: 'statement', name: '거래명세서', cat: 'trade', icon: 'list', desc: '공급자·공급받는자, 전잔금·입금·잔액, 보관용 2부 출력',
+  sections: [
+    { t: '기본 정보', f: [f('date', '거래일', 'date', { h: 1 }), f('no', '거래 번호', 'text', { h: 1 }), f('copies', '출력', 'select', { o: [['1', '1부'], ['2', '2부 (공급자용 + 공급받는자용)']] })] },
+    PARTY('sp_', '공급자 (우리 회사)', { auto: 'mine' }),
+    PARTY('rc_', '공급받는자 (거래처)', { stamp: false, email: false }),
+    { t: '품목', sum: true, f: [f('vat', '부가세', 'select', { o: VAT_OPTS }), f('items', '', 'table', { add: '품목 추가', amt: true, cols: [{ k: 'date', l: '일자', t: 'date', h: 1 }, ...ITEM_COLS] })] },
+    { t: '잔액', f: [f('prev', '전잔금', 'money', { h: 1 }), f('paid', '입금액', 'money', { h: 1 }), f('memo', '비고', 'textarea', { rows: 2 })] },
+  ],
+  defaults: () => ({ date: today(), vat: 'ex', copies: '1', items: [{ date: today() }] }),
+  title: d => `거래명세서${has(d.rc_name) ? '_' + d.rc_name : ''}`,
+  sum: d => { const c = calcItems(d.items, d.vat); const bal = num(d.prev) + c.tot - num(d.paid); return tradeSum(c, d.vat).replace('</dl>', `<dt>잔액</dt><dd>₩${W(bal)}</dd></dl>`); },
+  render(d, S) {
+    const c = calcItems(d.items, d.vat);
+    const bal = num(d.prev) + c.tot - num(d.paid);
+    const one = sub => `<h1 class="dt">거 래 명 세 서${sub ? `<small>(${sub} 보관용)</small>` : ''}</h1>
+<table class="t kv" style="margin-bottom:3mm"><tr><th>거 래 일</th><td>${D(d.date)}</td><th>거래 번호</th><td>${E(d.no)}</td></tr></table>
+<div class="cols">${partyTable(d, 'sp_', '공급자', 1)}${partyTable(d, 'rc_', '공급받는자', 1)}</div>
+${totalLine(c.tot, d.vat)}
+${itemsTable(c, S, { date: 1, tax: d.vat !== 'none', min: 10 })}
+<table class="t sm"><tr><th>공급가액</th><th>세 액</th><th>합 계</th><th>전 잔 금</th><th>입 금 액</th><th>잔 액</th></tr>
+<tr><td class="r">${W(c.sup)}</td><td class="r">${W(c.tax)}</td><td class="r b">${W(c.tot)}</td><td class="r">${has(d.prev) ? W(num(d.prev)) : ''}</td><td class="r">${has(d.paid) ? W(num(d.paid)) : ''}</td><td class="r b">${has(d.prev) || has(d.paid) ? W(bal) : W(c.tot)}</td></tr></table>
+${has(d.memo) ? `<div class="box" style="min-height:0">${E(d.memo)}</div>` : ''}
+<div class="who keep"><span class="lb">인수자</span><span class="nm">&emsp;&emsp;&emsp;&emsp;</span>${seal('')}</div>`;
+    return d.copies === '2' ? one('공급받는자') + '<div class="pbreak"></div>' + one('공급자') : one('');
+  }
+});
+
+tpl({
+  id: 'invoice', name: '청구서', cat: 'trade', icon: 'money', desc: '인보이스 스타일 청구서, 입금 계좌와 결제 기한 표시',
+  sections: [
+    { t: '기본 정보', f: [f('no', '청구 번호', 'text', { h: 1 }), f('date', '청구일', 'date', { h: 1 }), f('due', '결제 기한', 'date', { h: 1 }), f('subject', '건명', 'text', { h: 1, ph: '11월 유지보수 비용' })] },
+    TO_PARTY('청구 대상 (받는 곳)', { addr: 1 }),
+    PARTY('sp_', '청구인 (우리 회사)', { auto: 'mine' }),
+    { t: '품목', sum: true, f: [f('vat', '부가세', 'select', { o: VAT_OPTS }), f('items', '', 'table', { add: '품목 추가', cols: ITEM_COLS, amt: true })] },
+    { t: '입금 계좌', profile: 'co', auto: 'mine', f: [f('bank', '은행', 'text', { p: 'bank', h: 1 }), f('account', '계좌번호', 'text', { p: 'account', h: 1 }), f('holder', '예금주', 'text', { p: 'holder', h: 1 })] },
+    { t: '메모', f: [f('memo', '', 'textarea', { rows: 3, ph: '입금 시 회사명으로 입금해 주세요.' })] },
+  ],
+  defaults: () => ({ date: today(), due: addDays(today(), 14), no: 'INV-' + today().replace(/-/g, '') + '-01', vat: 'ex', items: [{ qty: '1' }] }),
+  title: d => `청구서${has(d.to_name) ? '_' + d.to_name : ''}`,
+  sum: d => tradeSum(calcItems(d.items, d.vat), d.vat),
+  render(d, S) {
+    const c = calcItems(d.items, d.vat);
+    const rows = fillRows(c.rows.filter(r => has(r.name) || r._amt != null), S, 5);
+    const sp = k => d['sp_' + k];
+    return `<div class="inv-top"><h1>청 구 서<small>INVOICE</small></h1>
+<div class="inv-meta"><div><span>청구 번호</span><b>${E(d.no)}</b></div><div><span>청 구 일</span><b>${has(d.date) ? D(d.date, 'dot') : ''}</b></div><div><span>결제 기한</span><b>${has(d.due) ? D(d.due, 'dot') : ''}</b></div></div></div>
+<div class="cols">
+<div class="pbox"><h3>청구 대상</h3><div class="nm">${E(d.to_name) || '&emsp;'} <span style="font-weight:400;font-size:.8em">귀하</span></div><div>${[d.to_mgr && '담당 ' + d.to_mgr, d.to_tel, d.to_email].filter(has).map(esc).join('<br>')}${has(d.to_addr) ? '<br>' + E(d.to_addr) : ''}</div></div>
+<div class="pbox"><h3>청구인</h3><div class="nm">${E(sp('name'))}</div><div>${[sp('ceo') && '대표 ' + sp('ceo'), sp('bizNo') && '사업자 ' + sp('bizNo'), sp('addr'), [sp('tel'), sp('email')].filter(has).join(' · ')].filter(has).map(esc).join('<br>')}</div></div></div>
+${has(d.subject) ? `<p style="margin:0 0 3mm"><b>건명</b>&ensp;${E(d.subject)}</p>` : ''}
+<table class="t inv"><tr><th style="width:9mm">#</th><th>품목</th><th style="width:20mm" class="r">수량</th><th style="width:30mm" class="r">단가</th><th style="width:34mm" class="r">금액</th></tr>
+${rows.map((r, i) => `<tr><td>${has(r.name) || r._amt != null ? i + 1 : ''}</td><td>${E(r.name)}${has(r.spec) ? ` <span class="muted">(${E(r.spec)})</span>` : ''}${has(r.note) ? `<br><span class="muted">${E(r.note)}</span>` : ''}</td><td class="r">${E(numFmt(r.qty))}</td><td class="r">${has(r.price) ? W(num(r.price)) : ''}</td><td class="r">${r._amt != null ? W(r._amt) : ''}</td></tr>`).join('')}</table>
+<div class="inv-sum keep"><div><span>공급가액</span><span>₩${W(c.sup)}</span></div>${d.vat !== 'none' ? `<div><span>부가세 (10%)</span><span>₩${W(c.tax)}</span></div>` : ''}<div class="tot"><span>청구 금액</span><span>₩${W(c.tot)}</span></div><div style="justify-content:flex-end;color:#666;font-size:.9em">${c.tot ? wonKo(c.tot) : ''}</div></div>
+${[d.bank, d.account, d.holder].some(has) ? `<div class="inv-pay keep"><b>입금 계좌</b>&emsp;${E(d.bank)} ${E(d.account)}${has(d.holder) ? ` (예금주 ${E(d.holder)})` : ''}${has(d.due) ? `<br><b>결제 기한</b>&emsp;${D(d.due)}까지` : ''}</div>` : ''}
+${has(d.memo) ? `<div class="box" style="min-height:0">${E(d.memo)}</div>` : ''}
+<div class="keep"><p class="when" style="margin-top:8mm">위와 같이 청구합니다.&emsp;${D(d.date)}</p>${who('청구인', sp('name'), d, null, 'sp_stamp')}</div>`;
+  }
+});
+
+tpl({
+  id: 'receipt', name: '영수증', cat: 'trade', icon: 'receipt', desc: '간이 영수증, 금액 한글 표기와 결제 수단 표시',
+  sections: [
+    { t: '기본 정보', f: [f('no', '영수증 번호', 'text', { h: 1 }), f('date', '영수일', 'date', { h: 1 }), f('to_name', '받는 분 (귀하)', 'text', { h: 1 }), f('method', '결제 수단', 'select', { o: ['현금', '계좌이체', '카드', '수표', '기타'], h: 1 }), f('purpose', '내역 (○○ 대금으로)', 'text', { ph: '11월 교습비' })] },
+    { t: '금액', sum: true, hint: '품목을 넣으면 합계가 금액이 되고, 비워 두면 아래 금액을 씁니다.', f: [f('amount', '금액 (품목이 없을 때)', 'money'), f('items', '', 'table', { add: '품목 추가', amt: true, cols: [{ k: 'name', l: '품목' }, { k: 'qty', l: '수량', t: 'num', h: 1 }, { k: 'price', l: '단가', t: 'money', h: 1 }] })] },
+    PARTY('sp_', '영수인 (받은 사람)', { auto: 'mine', email: false }),
+  ],
+  defaults: () => ({ date: today(), method: '현금', items: [] }),
+  title: d => `영수증${has(d.to_name) ? '_' + d.to_name : ''}`,
+  total: d => { const c = calcItems(d.items, 'none'); return c.rows.some(r => r._amt != null) ? c.tot : Math.round(num(d.amount)); },
+  sum(d) { const t = this.total(d); return sumBox([['영수 금액', '₩' + W(t), 'big'], ['ko', t ? wonKo(t) : '금액을 넣어 주세요.']]); },
+  render(d, S) {
+    const tot = this.total(d);
+    const c = calcItems(d.items, 'none');
+    const rows = c.rows.filter(r => has(r.name) || r._amt != null);
+    return `<h1 class="dt">영 수 증</h1>
+<table class="t kv" style="margin-bottom:6mm"><tr><th>No.</th><td>${E(d.no)}</td><th>영 수 일</th><td>${D(d.date)}</td></tr></table>
+<div class="to-line" style="margin-bottom:6mm"><span>${E(d.to_name) || '&emsp;&emsp;&emsp;&emsp;'}</span><small>귀하</small></div>
+<div class="amount-box">${wonKo(tot)}<small>(₩${tot ? W(tot) : '&emsp;&emsp;&emsp;&emsp;'})</small></div>
+<table class="t"><colgroup><col style="width:28mm"><col></colgroup>
+<tr><th>내 역</th><td>${has(d.purpose) ? `단, ${E(d.purpose)} 대금으로` : ''}</td></tr>
+<tr><th>결제 수단</th><td>${marks(['현금', '계좌이체', '카드', '수표', '기타'], d.method)}</td></tr></table>
+${rows.length ? `<table class="t sm"><tr><th style="width:8mm">No</th><th>품 목</th><th style="width:18mm">수량</th><th style="width:30mm">단 가</th><th style="width:34mm">금 액</th></tr>${rows.map((r, i) => `<tr class="ir"><td class="c">${i + 1}</td><td>${E(r.name)}</td><td class="r">${E(numFmt(r.qty))}</td><td class="r">${has(r.price) ? W(num(r.price)) : ''}</td><td class="r">${r._amt != null ? W(r._amt) : ''}</td></tr>`).join('')}<tr class="sum"><th colspan="4">합&emsp;계</th><td class="r b">${W(tot)}</td></tr></table>` : ''}
+<div class="keep"><p class="stmt">위 금액을 정히 영수(領收)함.</p><p class="when">${D(d.date)}</p>
+<table class="t"><colgroup><col style="width:7mm"><col style="width:24mm"><col><col style="width:16mm"><col></colgroup>
+<tr><th rowspan="4" class="v">${vtext('영수인')}</th><th>상호·성명</th><td>${E(d.sp_name)}</td><th>대표자</th><td>${E(d.sp_ceo)}${seal(d.sp_stamp)}</td></tr>
+<tr><th>사업자번호</th><td colspan="3">${E(d.sp_bizNo)}</td></tr>
+<tr><th>주 소</th><td colspan="3">${E(d.sp_addr)}</td></tr>
+<tr><th>연 락 처</th><td colspan="3">${E(d.sp_tel)}</td></tr></table></div>`;
+  }
+});
+
+tpl({
+  id: 'po', name: '발주서', cat: 'trade', icon: 'cart', desc: '거래처에 보내는 주문서, 납기·납품 장소·결제 조건',
+  sections: [
+    { t: '기본 정보', f: [f('no', '발주 번호', 'text', { h: 1 }), f('date', '발주일', 'date', { h: 1 }), f('due', '납기일', 'date', { h: 1 }), f('place', '납품 장소', 'text', { h: 1 }), f('pay', '결제 조건', 'text', { ph: '납품 후 익월 말 현금 결제' })] },
+    TO_PARTY('수신 (거래처)', { nameL: '거래처 상호' }),
+    PARTY('sp_', '발주처 (우리 회사)', { auto: 'mine' }),
+    { t: '품목', sum: true, f: [f('vat', '부가세', 'select', { o: VAT_OPTS }), f('items', '', 'table', { add: '품목 추가', cols: ITEM_COLS, amt: true })] },
+    { t: '요청 사항', f: [f('memo', '', 'textarea', { rows: 3, ph: '거래명세서와 세금계산서를 함께 보내 주세요.' })] },
+  ],
+  defaults: () => ({ date: today(), no: 'PO-' + today().replace(/-/g, '') + '-01', vat: 'ex', items: [{ qty: '1' }] }),
+  title: d => `발주서${has(d.to_name) ? '_' + d.to_name : ''}`,
+  sum: d => tradeSum(calcItems(d.items, d.vat), d.vat),
+  render(d, S) {
+    const c = calcItems(d.items, d.vat);
+    return `<h1 class="dt">발 주 서</h1>
+<div class="cols"><div>
+<div class="to-line"><span>${E(d.to_name) || '&emsp;&emsp;&emsp;&emsp;'}</span><small>귀중</small></div>
+<table class="t kv">${kvRows([['발주 번호', d.no], ['발 주 일', D(d.date), 1], ['담 당 자', [d.to_mgr, d.to_tel].filter(has).join(' · ')], ['납 기 일', has(d.due) ? D(d.due) : '', 1], ['납품 장소', d.place], ['결제 조건', d.pay]])}</table>
+<p class="lead">아래와 같이 발주합니다.</p></div>
+<div class="w">${partyTable(d, 'sp_', '발주처')}</div></div>
+${totalLine(c.tot, d.vat, '발주금액')}
+${itemsTable(c, S, { tax: d.vat !== 'none' })}
+${has(d.memo) ? `<h2 class="st">요청 사항</h2><div class="box">${E(d.memo)}</div>` : ''}`;
+  }
+});
+
+tpl({
+  id: 'expense', name: '지출결의서', cat: 'hr', icon: 'coin', desc: '결재란, 지출 내역과 계정과목, 증빙 서류 체크',
+  sections: [
+    { t: '기본 정보', profile: 'me', auto: true, f: [f('date', '작성일', 'date', { h: 1 }), f('payDate', '지출일', 'date', { h: 1 }), f('dept', '부서', 'text', { p: 'org', h: 1 }), f('name', '작성자', 'text', { p: 'name', h: 1 }), f('appr', '결재란', 'text', { hint: '쉼표로 구분. 비우면 결재란이 빠집니다.' }), f('method', '지출 방법', 'checks', { o: ['현금', '법인카드', '계좌이체', '개인카드(정산)'] }), f('vendor', '거래처', 'text', { h: 1 }), f('title', '건명', 'text', { h: 1, ph: '11월 사무용품 구입' })] },
+    { t: '지출 내역', sum: true, f: [f('items', '', 'table', { add: '내역 추가', amt: true, title: 'desc', cols: [{ k: 'date', l: '일자', t: 'date', h: 1 }, { k: 'acct', l: '계정과목', h: 1, ph: '소모품비' }, { k: 'desc', l: '적요' }, { k: 'amount', l: '금액', t: 'money', h: 1 }, { k: 'note', l: '비고', h: 1 }] })] },
+    { t: '증빙·서명', profile: 'me', f: [f('proof', '증빙 서류', 'checks', { o: ['세금계산서', '카드 영수증', '현금영수증', '간이영수증', '거래명세서', '기타'] }), f('sign', '서명', 'img', { p: 'sign', kind: 'sign', h: 1 }), f('stamp', '도장', 'img', { p: 'stamp', kind: 'stamp', h: 1 })] },
+  ],
+  defaults: () => ({ date: today(), payDate: today(), appr: '담당, 팀장, 대표', method: ['법인카드'], proof: ['카드 영수증'], items: [{ date: today() }] }),
+  title: d => `지출결의서${has(d.title) ? '_' + d.title : ''}`,
+  sum: d => { const c = calcItems(d.items, 'none'); return sumBox([['지출 합계', '₩' + W(c.tot), 'big'], ['ko', c.tot ? wonKo(c.tot) : '금액을 넣어 주세요.']]); },
+  render(d, S) {
+    const c = calcItems(d.items, 'none');
+    const rows = fillRows(c.rows.filter(r => has(r.desc) || r._amt != null), S, 8);
+    let n = 0;
+    return `<div class="ahead"><h1 class="dt">지 출 결 의 서</h1>${approval(d.appr)}</div>
+<table class="t"><colgroup><col style="width:22mm"><col><col style="width:22mm"><col></colgroup>
+<tr><th>작 성 일</th><td>${D(d.date)}</td><th>지 출 일</th><td>${D(d.payDate)}</td></tr>
+<tr><th>부 서</th><td>${E(d.dept)}</td><th>작 성 자</th><td>${E(d.name)}</td></tr>
+<tr><th>건 명</th><td>${E(d.title)}</td><th>거 래 처</th><td>${E(d.vendor)}</td></tr>
+<tr><th>지출 방법</th><td colspan="3">${marks(['현금', '법인카드', '계좌이체', '개인카드(정산)'], d.method || [])}</td></tr></table>
+${totalLine(c.tot, null, '지출 금액')}
+<table class="t sm"><tr><th style="width:8mm">No</th><th style="width:16mm">일 자</th><th style="width:26mm">계정과목</th><th>적 요</th><th style="width:30mm">금 액</th><th style="width:24mm">비 고</th></tr>
+${rows.map(r => { const u = has(r.desc) || r._amt != null; return `<tr class="ir"><td class="c">${u ? ++n : ''}</td><td class="c">${has(r.date) ? D(r.date, 'md') : ''}</td><td class="c">${E(r.acct)}</td><td>${E(r.desc)}</td><td class="r">${r._amt != null ? W(r._amt) : ''}</td><td class="c">${E(r.note)}</td></tr>`; }).join('')}
+<tr class="sum"><th colspan="4">합&emsp;계</th><td class="r b">${W(c.tot)}</td><td></td></tr></table>
+<table class="t"><colgroup><col style="width:22mm"><col></colgroup><tr><th>증빙 서류</th><td>${marks(['세금계산서', '카드 영수증', '현금영수증', '간이영수증', '거래명세서', '기타'], d.proof || [])}</td></tr></table>
+<div class="keep"><p class="stmt">위 금액을 지출하고자 하오니 결재하여 주시기 바랍니다.</p><p class="when">${D(d.date)}</p>
+${who('작성자', d.name, d, 'sign', 'stamp')}</div>`;
+  }
+});
+
+/* ================= 인사·총무 ================= */
+const LEAVE_TYPES = ['연차', '반차(오전)', '반차(오후)', '병가', '경조사', '공가', '대체휴가', '기타'];
+tpl({
+  id: 'leave', name: '휴가신청서', cat: 'hr', icon: 'cal', desc: '휴가 종류 체크, 기간 입력 시 일수 자동 계산 (주말 제외)',
+  sections: [
+    { t: '신청인', profile: 'me', auto: true, f: [f('dept', '소속', 'text', { p: 'org', h: 1 }), f('pos', '직위', 'text', { p: 'pos', h: 1 }), f('name', '성명', 'text', { p: 'name', h: 1 }), f('phone', '연락처', 'tel', { p: 'phone', h: 1 })] },
+    { t: '휴가 내용', sum: true, f: [f('type', '휴가 종류', 'select', { o: LEAVE_TYPES, h: 1 }), f('days', '일수 (비우면 자동)', 'num', { h: 1 }), f('from', '시작일', 'date', { h: 1 }), f('to', '종료일', 'date', { h: 1 }), f('reason', '사유', 'textarea', { rows: 3, ph: '개인 사유' }), f('emerg', '비상 연락처', 'tel', { h: 1 }), f('sub', '업무 대행자', 'text', { h: 1 })] },
+    { t: '결재·제출', profile: 'me', f: [f('appr', '결재란', 'text', { hint: '쉼표로 구분. 비우면 결재란이 빠집니다.' }), f('date', '신청일', 'date', { h: 1 }), f('dest', '받는 사람', 'text', { h: 1, ph: '대표이사' }), f('sign', '서명', 'img', { p: 'sign', kind: 'sign', h: 1 }), f('stamp', '도장', 'img', { p: 'stamp', kind: 'stamp', h: 1 })] },
+  ],
+  defaults: () => ({ date: today(), from: today(), to: today(), type: '연차', appr: '담당, 팀장, 대표', dest: '대표이사' }),
+  title: d => `휴가신청서${has(d.name) ? '_' + d.name : ''}`,
+  days: d => has(d.days) ? num(d.days) : leaveDays(d.from, d.to, d.type),
+  sum(d) { const n = this.days(d); return sumBox([['휴가 일수', n == null ? '날짜를 확인해 주세요' : `${n}일`, 'big'], ['ko', '주말은 빼고 셉니다. 공휴일이 끼어 있으면 일수를 직접 넣어 주세요.']]); },
+  render(d, S) {
+    const n = this.days(d);
+    const p = parseISO(d.from), q = parseISO(d.to);
+    const wd = x => x ? `(${WD[new Date(x.y, x.m - 1, x.d).getDay()]})` : '';
+    return `<div class="ahead"><h1 class="dt">휴 가 신 청 서</h1>${approval(d.appr)}</div>
+<table class="t tall"><colgroup><col style="width:26mm"><col><col style="width:26mm"><col></colgroup>
+<tr><th>소 속</th><td>${E(d.dept)}</td><th>직 위</th><td>${E(d.pos)}</td></tr>
+<tr><th>성 명</th><td>${E(d.name)}</td><th>연 락 처</th><td>${E(d.phone)}</td></tr>
+<tr><th>휴가 종류</th><td colspan="3">${marks(LEAVE_TYPES, d.type)}</td></tr>
+<tr><th>기 간</th><td colspan="3">${D(d.from)} ${wd(p)} ~ ${D(d.to)} ${wd(q)}&emsp;( 총 <b>${n ?? '&emsp;'}</b> 일 )</td></tr>
+<tr><th>사 유</th><td colspan="3" class="box">${E(d.reason)}</td></tr>
+<tr><th>비상 연락처</th><td>${E(d.emerg)}</td><th>업무 대행자</th><td>${E(d.sub)}</td></tr></table>
+<div class="keep"><p class="stmt">위와 같이 휴가를 신청하오니 허가하여 주시기 바랍니다.</p><p class="when">${D(d.date)}</p>
+${who('신청인', d.name, d, 'sign', 'stamp')}
+<p class="dest">${E(d.dest) || '&emsp;&emsp;&emsp;'} 귀하</p></div>`;
+  }
+});
+
+tpl({
+  id: 'resign', name: '사직서', cat: 'hr', icon: 'door', desc: '소속·입사일·퇴사 예정일과 사유, 표준 문구',
+  sections: [
+    { t: '인적 사항', profile: 'me', auto: true, f: [f('dept', '소속', 'text', { p: 'org', h: 1 }), f('pos', '직위', 'text', { p: 'pos', h: 1 }), f('name', '성명', 'text', { p: 'name', h: 1 }), f('birth', '생년월일', 'date', { p: 'birth', h: 1 }), f('addr', '주소', 'text', { p: 'addr' })] },
+    { t: '사직 내용', f: [f('join', '입사일', 'date', { h: 1 }), f('leave', '퇴사 예정일', 'date', { h: 1 }), f('reason', '사직 사유', 'textarea', { rows: 3 })] },
+    { t: '제출', profile: 'me', f: [f('date', '작성일', 'date', { h: 1 }), f('dest', '받는 사람', 'text', { h: 1, ph: '(주)○○ 대표이사' }), f('sign', '서명', 'img', { p: 'sign', kind: 'sign', h: 1 }), f('stamp', '도장', 'img', { p: 'stamp', kind: 'stamp', h: 1 })] },
+  ],
+  defaults: () => ({ date: today(), reason: '일신상의 사유', dest: '대표이사' }),
+  title: d => `사직서${has(d.name) ? '_' + d.name : ''}`,
+  render(d, S) {
+    return `<h1 class="dt" style="margin:8mm 0 12mm">사 직 서</h1>
+<table class="t tall"><colgroup><col style="width:28mm"><col><col style="width:28mm"><col></colgroup>
+<tr><th>소 속</th><td>${E(d.dept)}</td><th>직 위</th><td>${E(d.pos)}</td></tr>
+<tr><th>성 명</th><td>${E(d.name)}</td><th>생년월일</th><td>${has(d.birth) ? D(d.birth) : ''}</td></tr>
+<tr><th>주 소</th><td colspan="3">${E(d.addr)}</td></tr>
+<tr><th>입 사 일</th><td>${has(d.join) ? D(d.join) : ''}</td><th>퇴사 예정일</th><td>${has(d.leave) ? D(d.leave) : ''}</td></tr>
+<tr><th>사직 사유</th><td colspan="3" class="box">${E(d.reason)}</td></tr></table>
+<div class="keep"><p class="stmt">본인은 위와 같은 사유로 ${D(d.leave)}부로 사직하고자<br>이에 사직서를 제출하오니 허락하여 주시기 바랍니다.</p>
+<p class="when">${D(d.date)}</p>
+${who('위 본인', d.name, d, 'sign', 'stamp')}
+<p class="dest">${E(d.dest) || '&emsp;&emsp;&emsp;'} 귀하</p></div>`;
+  }
+});
+
+tpl({
+  id: 'employ', name: '재직·경력증명서', cat: 'hr', icon: 'badge', desc: '회사가 발급하는 재직증명서 또는 경력증명서, 직인 포함',
+  sections: [
+    { t: '증명서 종류', f: [f('kind', '종류', 'select', { o: [['재직', '재직증명서'], ['경력', '경력증명서']], h: 1 }), f('no', '발급 번호', 'text', { h: 1, ph: '제 2026-001 호' }), f('use', '용도', 'text', { h: 1, ph: '금융기관 제출용' }), f('submit', '제출처', 'text', { h: 1 })] },
+    { t: '대상자', profile: 'me', f: [f('name', '성명', 'text', { p: 'name', h: 1 }), f('birth', '생년월일', 'date', { p: 'birth', h: 1 }), f('addr', '주소', 'text', { p: 'addr' })] },
+    { t: '재직 사항', f: [f('dept', '부서', 'text', { h: 1 }), f('pos', '직위', 'text', { h: 1 }), f('from', '입사일', 'date', { h: 1 }), f('to', '퇴사일 (재직 중이면 비움)', 'date', { h: 1 }), f('duty', '담당 업무', 'text')] },
+    { t: '발급 회사', profile: 'co', auto: 'mine', f: [f('co_name', '회사명', 'text', { p: 'name', h: 1 }), f('co_ceo', '대표이사', 'text', { p: 'ceo', h: 1 }), f('co_bizNo', '사업자등록번호', 'biz', { p: 'bizNo', h: 1 }), f('co_tel', '전화', 'tel', { p: 'tel', h: 1 }), f('co_addr', '주소', 'text', { p: 'addr' }), f('co_stamp', '직인', 'img', { p: 'stamp', kind: 'stamp' }), f('date', '발급일', 'date', { h: 1 })] },
+  ],
+  defaults: () => ({ kind: '재직', date: today() }),
+  title: d => `${d.kind === '경력' ? '경력' : '재직'}증명서${has(d.name) ? '_' + d.name : ''}`,
+  render(d, S) {
+    const k = d.kind === '경력' ? '경력' : '재직';
+    const period = `${has(d.from) ? D(d.from) : D('')} ~ ${has(d.to) ? D(d.to) : k === '재직' ? '현재' : D('')}`;
+    return `${has(d.no) ? `<p class="muted" style="margin:0">${E(d.no)}</p>` : ''}
+<h1 class="dt" style="margin:8mm 0 12mm">${k === '재직' ? '재 직 증 명 서' : '경 력 증 명 서'}</h1>
+<h2 class="st">인적 사항</h2>
+<table class="t tall"><colgroup><col style="width:28mm"><col><col style="width:28mm"><col></colgroup>
+<tr><th>성 명</th><td>${E(d.name)}</td><th>생년월일</th><td>${has(d.birth) ? D(d.birth) : ''}</td></tr>
+<tr><th>주 소</th><td colspan="3">${E(d.addr)}</td></tr></table>
+<h2 class="st">${k} 사항</h2>
+<table class="t tall"><colgroup><col style="width:28mm"><col><col style="width:28mm"><col></colgroup>
+<tr><th>회 사 명</th><td>${E(d.co_name)}</td><th>사업자번호</th><td>${E(d.co_bizNo)}</td></tr>
+<tr><th>부 서</th><td>${E(d.dept)}</td><th>직 위</th><td>${E(d.pos)}</td></tr>
+<tr><th>${k} 기간</th><td colspan="3">${period}</td></tr>
+<tr><th>담당 업무</th><td colspan="3">${E(d.duty)}</td></tr>
+<tr><th>용 도</th><td>${E(d.use)}</td><th>제 출 처</th><td>${E(d.submit)}</td></tr></table>
+<div class="keep"><p class="stmt" style="margin-top:14mm">위 사람은 당사에 ${k === '재직' ? '재직하고 있음' : '위와 같이 재직하였음'}을 증명합니다.</p>
+<p class="when">${D(d.date)}</p>
+<div style="text-align:center;font-size:1.15em;line-height:2;margin-top:10mm">
+<div>${E(d.co_addr)}</div><div class="b" style="font-size:1.25em">${E(d.co_name) || '&emsp;'}</div>
+<div>대표이사&ensp;<span class="b" style="letter-spacing:.2em">${E(d.co_ceo) || '&emsp;&emsp;&emsp;'}</span>&ensp;${seal(d.co_stamp, '(직인)')}</div></div></div>`;
+  }
+});
+
+/* ================= 계약·위임 ================= */
+const PERSON = (pre, t, o = {}) => ({
+  t, profile: o.profile, auto: o.auto, f: [
+    f(pre + 'name', '성명', 'text', { p: 'name', h: 1 }), f(pre + 'birth', '생년월일', 'date', { p: 'birth', h: 1 }),
+    f(pre + 'phone', '연락처', 'tel', { p: 'phone', h: 1 }), ...(o.rel ? [f(pre + 'rel', '관계', 'text', { h: 1, ph: '배우자, 직원 등' })] : []),
+    f(pre + 'addr', '주소', 'text', { p: 'addr' }),
+    ...(o.seal ? [f(pre + 'sign', '서명', 'img', { p: 'sign', kind: 'sign', h: 1 }), f(pre + 'stamp', '도장', 'img', { p: 'stamp', kind: 'stamp', h: 1 })] : []),
+  ]
+});
+function personTable(d, pre, label, rel) {
+  const g = k => d[pre + k];
+  return `<table class="t tall"><colgroup><col style="width:9mm"><col style="width:22mm"><col><col style="width:22mm"><col></colgroup>
+<tr><th rowspan="3" class="v">${vtext(label)}</th><th>성 명</th><td class="b">${E(g('name'))}${pre === 'db_' || pre === 'cr_' || pre === 'gu_' ? sealFor(d, pre + 'sign', pre + 'stamp') : ''}</td><th>생년월일</th><td>${has(g('birth')) ? D(g('birth')) : ''}</td></tr>
+<tr><th>주 소</th><td colspan="3">${E(g('addr'))}</td></tr>
+<tr><th>연 락 처</th><td${rel ? '' : ' colspan="3"'}>${E(g('phone'))}</td>${rel ? `<th>관 계</th><td>${E(g('rel'))}</td>` : ''}</tr></table>`;
+}
+
+tpl({
+  id: 'proxy', name: '위임장', cat: 'legal', icon: 'hand', desc: '위임인·수임인과 위임 사항, 관공서·은행 제출용',
+  sections: [
+    PERSON('b_', '수임인 (대리인)', { rel: 1 }),
+    { t: '위임 내용', f: [f('what', '위임 사항', 'textarea', { rows: 4, ph: '예: 주민등록등본 발급 신청 및 수령에 관한 일체의 권한' }), f('submit', '제출처', 'text', { h: 1, ph: '○○구청' }), f('period', '위임 기간 (선택)', 'text', { h: 1 })] },
+    PERSON('a_', '위임인 (본인)', { profile: 'me', auto: true, seal: 1 }),
+    { t: '작성일', f: [f('date', '작성일', 'date', { h: 1 })] },
+  ],
+  defaults: () => ({ date: today() }),
+  title: d => `위임장${has(d.submit) ? '_' + d.submit : ''}`,
+  render(d, S) {
+    return `<h1 class="dt" style="margin:6mm 0 10mm">위 임 장</h1>
+${personTable(d, 'b_', '수임인', 1)}
+<p class="stmt" style="margin:6mm 0">위 사람을 대리인으로 정하고 아래 사항에 관한 일체의 권한을 위임합니다.</p>
+<table class="t"><colgroup><col style="width:31mm"><col></colgroup>
+<tr><th>위임 사항</th><td class="box">${E(d.what)}</td></tr>
+${has(d.period) ? `<tr><th>위임 기간</th><td>${E(d.period)}</td></tr>` : ''}</table>
+${personTable(d, 'a_', '위임인')}
+<div class="keep"><p class="when">${D(d.date)}</p>
+${who('위임인', d.a_name, d, 'a_sign', 'a_stamp')}
+<p class="dest">${E(d.submit) || '&emsp;&emsp;&emsp;'} 귀중</p></div>`;
+  }
+});
+
+tpl({
+  id: 'loan', name: '차용증', cat: 'legal', icon: 'money', desc: '금액 한글 표기, 이자·변제일·지연손해금 조항, 보증인',
+  note: '일반적으로 쓰이는 형식의 서식입니다. 금액이 크거나 다툼이 예상되면 공증이나 전문가 검토를 권합니다.',
+  sections: [
+    { t: '차용 금액', sum: true, f: [f('amount', '금액', 'money'), f('lendDate', '빌린 날', 'date', { h: 1 }), f('dueDate', '갚을 날', 'date', { h: 1 }), f('rate', '이자율 (연 %)', 'num', { h: 1, ph: '0이면 무이자' }), f('payDay', '이자 지급일 (매월)', 'num', { h: 1, ph: '25' }), f('late', '지연손해금 (연 %)', 'num', { h: 1, ph: '12' })] },
+    { t: '갚을 계좌 (채권자)', f: [f('bank', '은행', 'text', { h: 1 }), f('account', '계좌번호', 'text', { h: 1 }), f('holder', '예금주', 'text', { h: 1 })] },
+    PERSON('cr_', '채권자 (빌려준 사람)', { seal: 1 }),
+    PERSON('db_', '채무자 (빌린 사람)', { profile: 'me', auto: true, seal: 1 }),
+    { t: '연대보증인', f: [f('useGu', '연대보증인', 'select', { o: [['n', '없음'], ['y', '있음']], h: 1, rerender: 1 })] },
+    { ...PERSON('gu_', '연대보증인 정보', { seal: 1 }), when: d => d.useGu === 'y' },
+    { t: '특약·작성일', f: [f('extra', '특약 사항', 'textarea', { rows: 3, ph: '예: 매월 말일 50만 원씩 분할 상환' }), f('date', '작성일', 'date', { h: 1 })] },
+  ],
+  defaults: () => ({ date: today(), lendDate: today(), useGu: 'n', late: '12' }),
+  title: d => `차용증${has(d.cr_name) ? '_' + d.cr_name : ''}`,
+  sum: d => { const a = num(d.amount); return sumBox([['차용 금액', '₩' + W(a), 'big'], ['ko', a ? wonKo(a) : '금액을 넣어 주세요.']]); },
+  render(d, S) {
+    const a = Math.round(num(d.amount));
+    const rate = num(d.rate);
+    let k = 0; const art = (t, b) => `<p class="art"><b>제${++k}조 (${t})</b>${b}</p>`;
+    return `<h1 class="dt" style="margin:4mm 0 8mm">차 용 증</h1>
+<div class="amount-box">${wonKo(a)}<small>(₩${a ? W(a) : '&emsp;&emsp;&emsp;&emsp;'})</small></div>
+${art('차용', `채무자는 채권자로부터 ${D(d.lendDate)} 위 금액을 틀림없이 빌렸음을 확인합니다.`)}
+${art('변제 기일', `채무자는 위 금액을 ${D(d.dueDate)}까지 채권자에게 갚습니다.`)}
+${art('이자', rate > 0 ? `이자는 연 ${esc(String(rate))}%로 하며, 매월 ${has(d.payDay) ? esc(d.payDay) : '&emsp;'}일에 지급합니다.` : '이자는 없는 것으로 합니다.')}
+${art('변제 방법', [d.bank, d.account].some(has) ? `원금과 이자는 채권자 명의의 계좌(${E(d.bank)} ${E(d.account)}${has(d.holder) ? `, 예금주 ${E(d.holder)}` : ''})로 송금하여 갚습니다.` : '원금과 이자는 채권자에게 직접 지급하거나 채권자가 지정하는 계좌로 송금하여 갚습니다.')}
+${art('지연손해금', `변제 기일까지 갚지 않으면 그 다음 날부터 다 갚는 날까지 연 ${has(d.late) ? esc(d.late) : '&emsp;'}%의 지연손해금을 더하여 지급합니다.`)}
+${art('기한 이익의 상실', '채무자가 이자를 2회 이상 연체하거나, 다른 채권자로부터 압류·가압류를 받거나, 파산·회생 절차가 개시된 경우에는 채권자의 청구가 있으면 기한의 이익을 잃고 남은 채무 전부를 즉시 갚습니다.')}
+${d.useGu === 'y' ? art('연대보증', '연대보증인은 이 차용증에 따른 채무자의 모든 채무에 대하여 채무자와 연대하여 책임을 집니다.') : ''}
+${has(d.extra) ? art('특약', '<br>' + E(d.extra)) : ''}
+<p class="stmt" style="margin:6mm 0">위 내용을 증명하기 위하여 이 증서를 작성하고 각자 서명 날인하여 1통씩 보관합니다.</p>
+<p class="when" style="margin:3mm 0 6mm">${D(d.date)}</p>
+${personTable(d, 'cr_', '채권자')}
+${personTable(d, 'db_', '채무자')}
+${d.useGu === 'y' ? personTable(d, 'gu_', '연대보증인') : ''}`;
+  }
+});
+
+const TPL_IDS = ['resume', 'cover', 'career', 'quote', 'statement', 'invoice', 'receipt', 'po', 'expense', 'leave', 'resign', 'employ', 'proxy', 'loan'];
+
+/* ================================================================
+   Storage (IndexedDB, memory fallback)
+   ================================================================ */
+const DB = (() => {
+  let db = null;
+  const mem = { docs: new Map(), kv: new Map() };
+  async function open() {
+    if (!('indexedDB' in window)) return;
+    try {
+      db = await new Promise((res, rej) => {
+        const r = indexedDB.open('former', 1);
+        r.onupgradeneeded = () => { const d = r.result; if (!d.objectStoreNames.contains('docs')) d.createObjectStore('docs', { keyPath: 'id' }); if (!d.objectStoreNames.contains('kv')) d.createObjectStore('kv'); };
+        r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); r.onblocked = () => rej(new Error('blocked'));
+      });
+    } catch (e) { db = null; }
+  }
+  function tx(store, mode, fn) {
+    return new Promise((res, rej) => {
+      const t = db.transaction(store, mode); const req = fn(t.objectStore(store));
+      t.oncomplete = () => res(req && req.result); t.onerror = () => rej(t.error); t.onabort = () => rej(t.error);
+    });
+  }
+  return {
+    open, get ok() { return !!db; },
+    all: async () => db ? tx('docs', 'readonly', s => s.getAll()) : [...mem.docs.values()],
+    put: async doc => db ? tx('docs', 'readwrite', s => s.put(doc)) : void mem.docs.set(doc.id, doc),
+    del: async id => db ? tx('docs', 'readwrite', s => s.delete(id)) : void mem.docs.delete(id),
+    getKV: async k => db ? tx('kv', 'readonly', s => s.get(k)) : mem.kv.get(k),
+    setKV: async (k, v) => db ? tx('kv', 'readwrite', s => s.put(v, k)) : void mem.kv.set(k, v),
+  };
+})();
+
+/* ================================================================
+   State
+   ================================================================ */
+let docs = [];
+let cur = null;
+let PF = { me: {}, cos: [] };
+let editCoId = null;
+let zoomMode = 'fit';
+let lastPag = null;
+const styleOf = d => ({ ...STYLE_DEF, ...(d.style || {}) });
+const ACCENTS = [['#1C2824', '먹색'], ['#244D3A', '숲'], ['#1F3A5F', '남색'], ['#8A5A3B', '흙'], ['#7A2E2E', '적갈']];
+
+const ME_SECS = [
+  { t: '기본', f: [f('name', '성명', 'text', { h: 1 }), f('nameEn', '영문 이름', 'text', { h: 1 }), f('birth', '생년월일', 'date', { h: 1 }), f('phone', '휴대전화', 'tel', { h: 1 }), f('email', '이메일', 'email'), f('addr', '주소', 'text')] },
+  { t: '소속', f: [f('org', '소속·부서', 'text', { h: 1 }), f('pos', '직위', 'text', { h: 1 })] },
+  { t: '사진·서명·도장', f: [f('photo', '증명사진 (3×4로 잘라 저장)', 'img', { kind: 'photo' }), f('sign', '서명', 'img', { kind: 'sign' }), f('stamp', '도장', 'img', { kind: 'stamp' })] },
+];
+const CO_SECS = [
+  { t: '구분', f: [f('kind', '구분', 'select', { o: [['mine', '우리 회사 (공급자)'], ['client', '거래처']], h: 1 }), f('mgr', '담당자', 'text', { h: 1 })] },
+  { t: '사업자 정보', f: [f('name', '상호', 'text', { h: 1 }), f('ceo', '대표자', 'text', { h: 1 }), f('bizNo', '사업자등록번호', 'biz', { h: 1, ph: '000-00-00000' }), f('tel', '전화', 'tel', { h: 1 }), f('email', '이메일', 'email', { h: 1 }), f('fax', '팩스', 'tel', { h: 1 }), f('addr', '주소', 'text'), f('type', '업태', 'text', { h: 1 }), f('item', '종목', 'text', { h: 1 })] },
+  { t: '입금 계좌', f: [f('bank', '은행', 'text', { h: 1 }), f('account', '계좌번호', 'text', { h: 1 }), f('holder', '예금주', 'text', { h: 1 })] },
+  { t: '직인', f: [f('stamp', '직인·도장', 'img', { kind: 'stamp' })] },
+];
+
+/* ================================================================
+   UI helpers
+   ================================================================ */
+let toastT;
+function toast(msg, kind = '', actLabel, act) {
+  const t = $('#toast'); $('#toastMsg').textContent = msg; t.className = 'show ' + kind;
+  const b = $('#toastAct');
+  if (actLabel) { b.hidden = false; b.textContent = actLabel; b.onclick = () => { t.className = ''; act(); }; } else b.hidden = true;
+  clearTimeout(toastT); toastT = setTimeout(() => { t.className = ''; }, actLabel ? 6500 : 2800);
+}
+function busy(t, s = '') { const b = $('#busy'); if (t === false) { b.classList.remove('show'); return; } $('#busyT').textContent = t; $('#busyS').textContent = s; b.classList.add('show'); }
+let menuEl = null;
+function closeMenu() { if (menuEl) { menuEl.remove(); menuEl = null; document.removeEventListener('pointerdown', menuOutside, true); } }
+function menuOutside(e) { if (menuEl && !menuEl.contains(e.target)) closeMenu(); }
+function openMenu(anchor, items) {
+  closeMenu();
+  const m = document.createElement('div'); m.className = 'menu';
+  m.innerHTML = items.map((it, i) => it === '-' ? '<hr>' : it.head ? `<div class="mh">${esc(it.head)}</div>` : `<button data-i="${i}" class="${it.danger ? 'danger' : ''}">${it.icon ? icon(it.icon, 'sm') : ''}<span>${esc(it.label)}</span>${it.small ? `<small>${esc(it.small)}</small>` : ''}</button>`).join('');
+  document.body.appendChild(m);
+  const r = anchor.getBoundingClientRect();
+  const left = clamp(r.right - m.offsetWidth, 8, innerWidth - m.offsetWidth - 8);
+  let top = r.bottom + 6; if (top + m.offsetHeight > innerHeight - 8) top = Math.max(8, r.top - m.offsetHeight - 6);
+  m.style.left = left + 'px'; m.style.top = top + 'px';
+  m.addEventListener('click', e => { const b = e.target.closest('button[data-i]'); if (!b) return; closeMenu(); items[+b.dataset.i].run(); });
+  menuEl = m; setTimeout(() => document.addEventListener('pointerdown', menuOutside, true), 0);
+}
+function ask({ title = '확인', text = '', input = null, ok = '확인', danger = false }) {
+  return new Promise(res => {
+    const dlg = $('#askDlg'); $('#askTitle').textContent = title; $('#askText').textContent = text; $('#askText').hidden = !text;
+    const inp = $('#askInput'); inp.hidden = input == null; if (input != null) inp.value = input;
+    const okb = $('#askOk'); okb.textContent = ok; okb.className = 'btn ' + (danger ? 'clay' : 'primary');
+    let done = false;
+    const finish = v => { if (done) return; done = true; okb.onclick = null; inp.onkeydown = null; dlg.close(); res(v); };
+    okb.onclick = () => finish(input != null ? inp.value : true);
+    inp.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); finish(inp.value); } };
+    dlg.onclose = () => finish(input != null ? null : false);
+    dlg.showModal(); if (input != null) setTimeout(() => { inp.focus(); inp.select(); }, 30);
+  });
+}
+function download(blob, name) { const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 5000); }
+const safeName = s => (String(s || '문서').replace(/[\\/:*?"<>|\n\r]+/g, '_').trim() || '문서').slice(0, 80);
+function fmtWhen(ts) {
+  const s = (Date.now() - ts) / 1000;
+  if (s < 60) return '방금'; if (s < 3600) return `${Math.floor(s / 60)}분 전`; if (s < 86400) return `${Math.floor(s / 3600)}시간 전`;
+  const d = new Date(ts); return `${d.getFullYear() !== new Date().getFullYear() ? d.getFullYear() + '. ' : ''}${d.getMonth() + 1}월 ${d.getDate()}일`;
+}
+function hhmm(ts) { const d = new Date(ts); const h = d.getHours(); return `${h < 12 ? '오전' : '오후'} ${h % 12 || 12}:${pad2(d.getMinutes())}`; }
+
+/* ================================================================
+   Form rendering
+   ================================================================ */
+function storeOf(ns) { return ns === 'doc' ? cur && cur.data : ns === 'me' ? PF.me : ns === 'co' ? PF.cos.find(c => c.id === editCoId) : null; }
+function countText(v, limit) {
+  const s = String(v || ''); const a = [...s].length, b = [...s.replace(/\s/g, '')].length;
+  const over = limit && a > num(limit);
+  return `<span style="${over ? 'color:var(--danger);font-weight:700' : ''}">공백 포함 ${a.toLocaleString()}자${has(limit) ? ` / ${num(limit).toLocaleString()}자` : ''}</span> · 공백 제외 ${b.toLocaleString()}자`;
+}
+function inputHTML(t, id, da, v, ph) {
+  const typ = { date: 'date', email: 'email', tel: 'tel' }[t] || 'text';
+  const im = { money: 'numeric', num: 'decimal', biz: 'numeric', tel: 'tel' }[t];
+  const val = t === 'money' && has(v) ? fmtMoneyInput(String(v)) : (v ?? '');
+  return `<input class="inp${t === 'money' || t === 'num' ? ' num' : ''}" id="${id}" type="${typ}"${im ? ` inputmode="${im}"` : ''} ${da} value="${esc(val)}" placeholder="${esc(ph || '')}" autocomplete="off" />`;
+}
+function imgFieldHTML(fd, v, da) {
+  const kind = fd.kind || 'photo';
+  const empty = kind === 'photo' ? '사진<br>3×4' : kind === 'sign' ? '서명<br>없음' : '도장<br>없음';
+  return `<div class="imgf"><div class="imgbox ${kind}">${v ? `<img src="${v}" alt="">` : empty}</div><div class="imgacts">
+<button type="button" class="btn xs line" data-act="img-up" ${da} data-kind="${kind}">${icon('upload', 'sm')}올리기</button>
+${kind === 'sign' ? `<button type="button" class="btn xs line" data-act="img-sign" ${da}>${icon('sign', 'sm')}그리기</button>` : ''}
+${kind === 'stamp' ? `<button type="button" class="btn xs line" data-act="img-stamp" ${da}>${icon('stamp', 'sm')}만들기</button>` : ''}
+${v ? `<button type="button" class="btn xs ghost danger" data-act="img-clear" ${da}>${icon('x', 'sm')}지우기</button>` : ''}</div></div>`;
+}
+function fieldHTML(fd, store, ns) {
+  const v = store[fd.k];
+  const id = `f_${ns}_${fd.k}`;
+  const da = `data-ns="${ns}" data-k="${fd.k}" data-t="${fd.t}"`;
+  const lab = fd.l ? `<label for="${id}">${esc(fd.l)}</label>` : '';
+  let inner;
+  switch (fd.t) {
+    case 'textarea': inner = `<textarea class="inp" id="${id}" ${da} rows="${fd.rows || 4}" placeholder="${esc(fd.ph || '')}">${esc(v ?? '')}</textarea>`; break;
+    case 'select': inner = `<select class="inp" id="${id}" ${da}${fd.rerender ? ' data-rr="1"' : ''}>${fd.o.map(o => { const [val, l] = Array.isArray(o) ? o : [o, o || '선택']; return `<option value="${esc(val)}"${String(v ?? '') === String(val) ? ' selected' : ''}>${esc(l)}</option>`; }).join('')}</select>`; break;
+    case 'checks': { const set = Array.isArray(v) ? v : []; inner = `<div class="cbs">${fd.o.map(o => `<button type="button" class="chip" data-act="chk" ${da} data-v="${esc(o)}" aria-pressed="${set.includes(o)}">${esc(o)}</button>`).join('')}</div>`; break; }
+    case 'img': inner = imgFieldHTML(fd, v, da); break;
+    case 'table': return `<div class="field">${lab}${tableHTML(fd, store, ns)}</div>`;
+    default: inner = inputHTML(fd.t, id, da, v, fd.ph);
+  }
+  return `<div class="field${fd.h ? ' half' : ''}">${lab}${inner}${fd.hint ? `<div class="fh">${esc(fd.hint)}</div>` : ''}</div>`;
+}
+function cellHTML(fd, c, r, i) {
+  const t = c.t || 'text', v = r[c.k];
+  const id = `c_${fd.k}_${i}_${c.k}`;
+  const da = `data-ck="${c.k}" data-t="${t}"`;
+  const inner = t === 'textarea'
+    ? `<textarea class="inp" id="${id}" ${da} rows="${c.rows || 3}" placeholder="${esc(c.ph || '')}">${esc(v ?? '')}</textarea>${c.count ? `<div class="cnt" data-cnt>${countText(v, r.limit)}</div>` : ''}`
+    : inputHTML(t, id, da, v, c.ph);
+  return `<div class="field${c.h ? ' half' : ''}"><label for="${id}">${esc(c.l)}</label>${inner}</div>`;
+}
+function rowTitle(fd, r) { return r[fd.title || fd.cols[0].k] ?? ''; }
+function tableHTML(fd, store, ns) {
+  if (!Array.isArray(store[fd.k])) store[fd.k] = [];
+  const rows = store[fd.k];
+  const calc = fd.amt ? calcItems(rows, store.vat || 'none') : null;
+  const items = rows.map((r, i) => `<div class="trow" data-ri="${i}"><div class="trh"><b>${i + 1}</b><span class="tt">${esc(rowTitle(fd, r)) || '<span class="muted">새 항목</span>'}</span>${fd.amt ? `<span class="amt" data-amt="${i}">${calc.rows[i]._amt != null ? '₩' + W(calc.rows[i]._amt) : ''}</span>` : ''}
+<button type="button" data-act="row-up" title="위로"${i === 0 ? ' disabled' : ''}>${icon('up')}</button><button type="button" data-act="row-down" title="아래로"${i === rows.length - 1 ? ' disabled' : ''}>${icon('down')}</button><button type="button" data-act="row-dup" title="복제">${icon('copy')}</button><button type="button" class="danger" data-act="row-del" title="삭제">${icon('trash')}</button></div>
+<div class="fgrid">${fd.cols.map(c => cellHTML(fd, c, r, i)).join('')}</div></div>`).join('');
+  return `<div class="tbl" data-ns="${ns}" data-tk="${fd.k}"${fd.amt ? ' data-amt="1"' : ''}>${items || '<div class="tbl-empty">아직 항목이 없어요.</div>'}<button type="button" class="btn sm line block" data-act="row-add">${icon('plus', 'sm')}${esc(fd.add || '추가')}</button></div>`;
+}
+function sectionHTML(s, si, store, ns) {
+  let acts = '';
+  if (s.profile === 'me') acts = `<span class="acts"><button type="button" class="btn xs ghost" data-act="pf-load" data-si="${si}" title="내 정보 탭에 저장한 내용 넣기">${icon('user', 'sm')}불러오기</button><button type="button" class="btn xs ghost" data-act="pf-save" data-si="${si}" title="이 칸의 내용을 내 정보에 저장">${icon('save', 'sm')}저장</button></span>`;
+  if (s.profile === 'co') acts = `<span class="acts"><button type="button" class="btn xs ghost" data-act="co-menu" data-si="${si}">${icon('building', 'sm')}업체 불러오기${icon('chevron', 'sm')}</button></span>`;
+  return `<section class="sec" data-si="${si}"><h3><span>${esc(s.t)}</span>${acts}</h3>${s.hint ? `<p class="hint">${esc(s.hint)}</p>` : ''}<div class="fgrid">${s.f.map(fd => fieldHTML(fd, store, ns)).join('')}</div>${s.sum ? '<div data-sum></div>' : ''}</section>`;
+}
+function styleSectionHTML() {
+  const S = styleOf(cur);
+  const seg = (key, opts) => `<div class="seg">${opts.map(([v, l]) => `<button type="button" data-act="st" data-key="${key}" data-v="${v}" aria-pressed="${String(S[key]) === String(v)}">${l}</button>`).join('')}</div>`;
+  return `<section class="sec"><h3><span>문서 모양</span></h3><div class="fgrid">
+<div class="field"><span class="lbl">강조색</span><div class="color-row">${ACCENTS.map(([c, l]) => `<button type="button" class="sw" data-act="st" data-key="color" data-v="${c}" title="${l}" aria-pressed="${S.color === c}"><span style="--c:${c}"></span></button>`).join('')}</div></div>
+<div class="field half"><span class="lbl">글꼴</span>${seg('font', [['serif', '명조'], ['sans', '고딕']])}</div>
+<div class="field half"><span class="lbl">글자 크기</span>${seg('size', [[9, '작게'], [10, '보통'], [11, '크게']])}</div>
+<div class="field"><label class="switch">빈 줄 채우기 (손으로 써 넣을 칸 남기기)<input type="checkbox" data-st="fill"${S.fill ? ' checked' : ''} /></label>
+<label class="switch">쪽 번호 넣기 (2쪽 이상일 때)<input type="checkbox" data-st="pageNo"${S.pageNo ? ' checked' : ''} /></label></div></div></section>`;
+}
+function renderForm() {
+  if (!cur) return;
+  const t = T[cur.tpl];
+  const form = $('#form'); const sc = form.scrollTop;
+  $('#tplName').textContent = t.name; $('#tplDesc').textContent = t.desc; $('#tplIcon').innerHTML = icon(t.icon);
+  let h = `<section class="sec mtitle"><div class="field"><label for="mTitle">문서 이름</label><input class="inp" id="mTitle" data-title value="${esc(cur.title)}" autocomplete="off" /></div></section>`;
+  if (t.note) h += `<section class="sec"><div class="note warn">${esc(t.note)}</div></section>`;
+  t.sections.forEach((s, si) => { if (s.when && !s.when(cur.data)) return; h += sectionHTML(s, si, cur.data, 'doc'); });
+  h += styleSectionHTML();
+  form.innerHTML = h; form.scrollTop = sc;
+  updateSums();
+}
+function updateSums() {
+  if (!cur) return;
+  const t = T[cur.tpl];
+  if (t.sum) { const html = t.sum.call(t, cur.data); $$('#form [data-sum]').forEach(el => { el.innerHTML = html; }); }
+  $$('#form .tbl[data-amt]').forEach(tb => {
+    const c = calcItems(cur.data[tb.dataset.tk], cur.data.vat || 'none');
+    $$('.amt', tb).forEach(a => { const r = c.rows[+a.dataset.amt]; a.textContent = r && r._amt != null ? '₩' + W(r._amt) : ''; });
+  });
+}
+function rerender(ns) {
+  if (ns === 'doc') renderForm(); else if (ns === 'me') renderMe(); else if (ns === 'co') { renderCoEdit(); renderCoList(); }
+}
+
+/* ================================================================
+   Documents
+   ================================================================ */
+function autoFill(t, data) {
+  const mine = PF.cos.find(c => c.kind === 'mine');
+  for (const s of t.sections) {
+    const src = s.profile === 'me' ? PF.me : s.profile === 'co' && s.auto === 'mine' ? mine : null;
+    if (!src) continue;
+    for (const fd of s.f) if (fd.p && has(src[fd.p]) && !has(data[fd.k])) data[fd.k] = src[fd.p];
+  }
+  return data;
+}
+function newDoc(id) {
+  const t = T[id];
+  const data = autoFill(t, t.defaults ? t.defaults() : {});
+  const doc = { id: uid(), tpl: id, title: t.title(data), autoTitle: true, data, style: { ...STYLE_DEF }, created: Date.now(), updated: Date.now() };
+  docs.push(doc); DB.put(doc).catch(saveErr);
+  openDoc(doc.id);
+  setMobile('form');
+  updateDocCount();
+}
+function openDoc(id) {
+  const d = docs.find(x => x.id === id); if (!d) return;
+  if (!T[d.tpl]) { toast('알 수 없는 양식입니다.', 'err'); return; }
+  cur = d;
+  document.body.classList.remove('nodoc');
+  $('#docTitle').value = cur.title;
+  ['printBtn', 'pdfBtn', 'moreBtn'].forEach(b => { $('#' + b).disabled = false; });
+  renderForm(); $('#form').scrollTop = 0;
+  resetHist(); renderPreview(); zoomMode = 'fit';
+  DB.setKV('lastDoc', id).catch(() => { });
+  switchView('compose');
+  updateApplied();
+}
+function closeDoc() {
+  cur = null; document.body.classList.add('nodoc');
+  ['printBtn', 'pdfBtn', 'moreBtn', 'undoBtn', 'redoBtn'].forEach(b => { $('#' + b).disabled = true; });
+  $('#docTitle').value = ''; renderRecent(); updateApplied();
+}
+let saveT, pvT;
+function saveErr(e) { console.error(e); toast('저장하지 못했어요. 저장 공간이 부족할 수 있어요.', 'err'); }
+function scheduleSave() { clearTimeout(saveT); saveT = setTimeout(flushSave, 450); }
+function flushSave() { clearTimeout(saveT); saveT = null; if (!cur) return; DB.put(cur).then(updateApplied).catch(saveErr); }
+function changed() {
+  if (!cur) return;
+  cur.updated = Date.now();
+  if (cur.autoTitle) { const nt = T[cur.tpl].title(cur.data); if (nt !== cur.title) { cur.title = nt; $('#docTitle').value = nt; const m = $('#mTitle'); if (m && document.activeElement !== m) m.value = nt; } }
+  updateSums(); schedulePreview(); scheduleSave(); scheduleHist();
+}
+function updateApplied() {
+  const a = $('#applied');
+  if (!cur) { a.innerHTML = ''; return; }
+  a.innerHTML = `<span class="achip">${icon(T[cur.tpl].icon)}${esc(T[cur.tpl].name)}</span><span class="achip plain">${DB.ok ? `${icon('check')}자동 저장됨 · ${hhmm(cur.updated)}` : '이 브라우저에서는 저장되지 않아요'}</span>`;
+}
+function updateDocCount() { $('#docCount').textContent = docs.length; }
+
+/* history */
+let H = { stack: [], i: -1 }, histT = null;
+const snap = () => JSON.stringify({ data: cur.data, style: cur.style });
+function resetHist() { clearTimeout(histT); histT = null; H = { stack: [snap()], i: 0 }; updUndo(); }
+function pushHist() { clearTimeout(histT); histT = null; if (!cur) return; const s = snap(); if (H.stack[H.i] === s) return; H.stack = H.stack.slice(0, H.i + 1); H.stack.push(s); if (H.stack.length > 60) H.stack.shift(); H.i = H.stack.length - 1; updUndo(); }
+function scheduleHist() { clearTimeout(histT); histT = setTimeout(pushHist, 500); }
+function updUndo() { $('#undoBtn').disabled = !cur || H.i <= 0; $('#redoBtn').disabled = !cur || H.i >= H.stack.length - 1; }
+function undoRedo(dir) {
+  if (!cur) return; if (histT) pushHist();
+  const ni = H.i + dir; if (ni < 0 || ni >= H.stack.length) return;
+  H.i = ni; const o = JSON.parse(H.stack[ni]); cur.data = o.data; cur.style = o.style; cur.updated = Date.now();
+  renderForm(); renderPreview(); scheduleSave(); updUndo();
+}
+
+/* ================================================================
+   Preview: render → measure → paginate into A4 pages
+   ================================================================ */
+const MM = 96 / 25.4;
+const CONTENT_H = 265; // 297 - 16 top - 16 bottom
+function docHTML(d) { const t = T[d.tpl]; return t.render.call(t, d.data, styleOf(d)); }
+function flowAttr(S, extra = '') { return `class="dflow ${S.font === 'sans' ? 'sans' : 'serif'}" style="--acc:${S.color};--accbg:${tint(S.color, .07)};--dfs:${S.size}pt;${extra}"`; }
+function paginate(html, S) {
+  const M = $('#measure');
+  M.innerHTML = `<div ${flowAttr(S)}>${html}</div>`;
+  const fl = M.firstElementChild;
+  const box = fl.getBoundingClientRect();
+  const k = box.width / 180 || MM;
+  const H = CONTENT_H * k, total = box.height, top0 = box.top;
+  const forced = $$('.pbreak', fl).map(e => e.getBoundingClientRect().top - top0);
+  const blocks = [];
+  $$('tr, p, h1, h2, h3, .keep, .box, .cv-entry, .cv-row, .qa, .art, .cols, .ahead, table, .inv-top, .inv-sum, .inv-pay, .amount-box, .to-line, .who', fl).forEach(e => {
+    if (e.parentElement && e.parentElement.closest('.keep')) return;
+    const r = e.getBoundingClientRect(); blocks.push(r.top - top0, r.bottom - top0);
+  });
+  let lines = null;
+  const getLines = () => {
+    if (lines) return lines; lines = [];
+    const w = document.createTreeWalker(fl, NodeFilter.SHOW_TEXT), rg = document.createRange(); let n;
+    while ((n = w.nextNode())) {
+      if (!n.textContent.trim() || n.parentElement.closest('.keep')) continue;
+      rg.selectNodeContents(n); for (const r of rg.getClientRects()) lines.push(r.top - top0 - 1);
+    }
+    return lines;
+  };
+  const pick = (arr, s, minFrac) => { let best = -1; for (const y of arr) if (y > s + H * minFrac && y <= s + H && y > best) best = y; return best; };
+  const segs = []; let s = 0;
+  for (let guard = 0; guard < 300; guard++) {
+    const fb = forced.find(y => y > s + 1 && y <= s + H + .5);
+    if (fb != null) { segs.push([s, fb]); s = fb; continue; }
+    if (total - s <= H + .5) { segs.push([s, total]); break; }
+    let b = pick(blocks, s, .5); if (b < 0) b = pick(getLines(), s, .25); if (b < 0) b = pick(blocks, s, .05); if (b < 0) b = s + H;
+    segs.push([s, b]); s = b;
+  }
+  M.innerHTML = '';
+  return segs;
+}
+function pagesHTML(html, S, segs) {
+  const n = segs.length;
+  return segs.map(([a, b], i) => `<div class="page"><div class="clip" style="height:${Math.max(1, Math.round(b - a))}px"><div ${flowAttr(S, `top:${-a}px`)}>${html}</div></div>${S.pageNo && n > 1 ? `<div class="pno">- ${i + 1} / ${n} -</div>` : ''}</div>`).join('');
+}
+function schedulePreview() { clearTimeout(pvT); pvT = setTimeout(renderPreview, 80); }
+function renderPreview() {
+  clearTimeout(pvT);
+  if (!cur) return;
+  const S = styleOf(cur);
+  let html;
+  try { html = docHTML(cur); } catch (e) { console.error(e); html = `<p style="color:#963F3B">미리보기를 만들지 못했어요: ${esc(e.message)}</p>`; }
+  const segs = paginate(html, S);
+  lastPag = { html, S, segs };
+  $('#pages').innerHTML = pagesHTML(html, S, segs);
+  $('#pageCount').innerHTML = `<b>${segs.length}</b>쪽 · A4`;
+  applyZoom();
+}
+function applyZoom() {
+  const st = $('#stage'), pg = $('#pages');
+  const pw = 210 * MM;
+  let z = zoomMode === 'fit' ? clamp((st.clientWidth - 40) / pw, .25, 1) : zoomMode;
+  if (!isFinite(z) || z <= 0) z = 1;
+  pg.style.zoom = z; pg.dataset.z = z;
+  $('#zoomLbl').textContent = Math.round(z * 100) + '%';
+}
+function zoomBy(f) { const z = parseFloat($('#pages').dataset.z || 1); zoomMode = clamp(Math.round(z * f * 20) / 20, .25, 3); applyZoom(); }
+
+/* ================================================================
+   Export: print, PDF, PNG
+   ================================================================ */
+async function waitImages(root) { await Promise.all($$('img', root).map(i => i.decode ? i.decode().catch(() => { }) : null)); }
+function fillPrintRoot() { if (!cur) return; renderPreview(); $('#printRoot').innerHTML = pagesHTML(lastPag.html, lastPag.S, lastPag.segs); }
+let oldTitle = document.title;
+async function doPrint() {
+  if (!cur) return;
+  flushSave(); fillPrintRoot();
+  await waitImages($('#printRoot'));
+  oldTitle = document.title; document.title = safeName(cur.title);
+  setTimeout(() => window.print(), 50);
+}
+window.addEventListener('beforeprint', () => { if (cur && !$('#printRoot').children.length) fillPrintRoot(); if (cur) document.title = safeName(cur.title); });
+window.addEventListener('afterprint', () => { $('#printRoot').innerHTML = ''; document.title = 'Former · 아웃그리드 문서 양식 작성기'; });
+
+const LIBS = { h2c: 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js', jspdf: 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js' };
+function loadScript(src) { return new Promise((res, rej) => { const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = () => { s.remove(); rej(new Error('스크립트를 불러오지 못했어요')); }; document.head.appendChild(s); }); }
+async function ensureLibs(pdf) { if (!window.html2canvas) await loadScript(LIBS.h2c); if (pdf && !window.jspdf) await loadScript(LIBS.jspdf); }
+async function pageCanvases() {
+  renderPreview();
+  const root = $('#exportRoot');
+  root.innerHTML = pagesHTML(lastPag.html, lastPag.S, lastPag.segs);
+  if (document.fonts && document.fonts.ready) await document.fonts.ready;
+  await waitImages(root);
+  const pages = $$('.page', root), out = [];
+  try {
+    for (let i = 0; i < pages.length; i++) {
+      $('#busyS').textContent = `${i + 1} / ${pages.length}쪽`;
+      out.push(await window.html2canvas(pages[i], { scale: 2, backgroundColor: '#ffffff', logging: false, useCORS: true }));
+    }
+  } finally { root.innerHTML = ''; }
+  return out;
+}
+async function savePDF() {
+  if (!cur) return;
+  flushSave(); busy('PDF 만드는 중', '도구 준비 중');
+  try {
+    await ensureLibs(true);
+    const cs = await pageCanvases();
+    const pdf = new window.jspdf.jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait', compress: true });
+    cs.forEach((c, i) => { if (i) pdf.addPage(); pdf.addImage(c.toDataURL('image/jpeg', .92), 'JPEG', 0, 0, 210, 297, undefined, 'FAST'); });
+    pdf.setProperties({ title: cur.title, creator: 'Former · outgrid' });
+    download(pdf.output('blob'), safeName(cur.title) + '.pdf');
+    toast('PDF로 저장했어요. 글자를 선택할 수 있는 PDF가 필요하면 인쇄 → PDF로 저장을 쓰세요.');
+  } catch (e) {
+    console.error(e);
+    toast('PDF 도구를 불러오지 못했어요. 인쇄 창에서 ‘PDF로 저장’을 골라 주세요.', 'err', '인쇄 열기', doPrint);
+  } finally { busy(false); }
+}
+async function savePNG() {
+  if (!cur) return;
+  busy('이미지 만드는 중');
+  try {
+    await ensureLibs(false);
+    const cs = await pageCanvases();
+    for (let i = 0; i < cs.length; i++) {
+      const blob = await new Promise(r => cs[i].toBlob(r, 'image/png'));
+      download(blob, safeName(cur.title) + (cs.length > 1 ? `_${i + 1}` : '') + '.png');
+    }
+    toast(cs.length > 1 ? `${cs.length}장의 이미지로 저장했어요.` : '이미지로 저장했어요.');
+  } catch (e) { console.error(e); toast('이미지 도구를 불러오지 못했어요. 인터넷 연결을 확인해 주세요.', 'err'); }
+  finally { busy(false); }
+}
+
+/* ================================================================
+   Images: upload, signature pad, stamp maker
+   ================================================================ */
+let imgTarget = null;
+function fileToImg(file) { return new Promise((res, rej) => { const u = URL.createObjectURL(file); const im = new Image(); im.onload = () => { URL.revokeObjectURL(u); res(im); }; im.onerror = () => { URL.revokeObjectURL(u); rej(new Error('이미지를 읽을 수 없어요')); }; im.src = u; }); }
+function knockWhite(x, w, h) {
+  const id = x.getImageData(0, 0, w, h), p = id.data;
+  for (let i = 0; i < p.length; i += 4) { const L = .299 * p[i] + .587 * p[i + 1] + .114 * p[i + 2]; if (L > 232) p[i + 3] = 0; else if (L > 185) p[i + 3] = Math.round(p[i + 3] * (232 - L) / 47); }
+  x.putImageData(id, 0, 0);
+}
+function trimCanvas(c, padPx = 6) {
+  const x = c.getContext('2d'); const { width: w, height: h } = c; const p = x.getImageData(0, 0, w, h).data;
+  let x0 = w, y0 = h, x1 = -1, y1 = -1;
+  for (let y = 0; y < h; y++) for (let xx = 0; xx < w; xx++) if (p[(y * w + xx) * 4 + 3] > 12) { if (xx < x0) x0 = xx; if (xx > x1) x1 = xx; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+  if (x1 < 0) return null;
+  x0 = Math.max(0, x0 - padPx); y0 = Math.max(0, y0 - padPx); x1 = Math.min(w - 1, x1 + padPx); y1 = Math.min(h - 1, y1 + padPx);
+  const o = document.createElement('canvas'); o.width = x1 - x0 + 1; o.height = y1 - y0 + 1; o.getContext('2d').drawImage(c, x0, y0, o.width, o.height, 0, 0, o.width, o.height);
+  return o;
+}
+async function processImage(file, kind) {
+  const img = await fileToImg(file);
+  const w = img.naturalWidth, h = img.naturalHeight, cv = document.createElement('canvas');
+  if (kind === 'photo') {
+    const tr = 3 / 4; let sx = 0, sy = 0, sw = w, sh = h;
+    if (w / h > tr) { sw = h * tr; sx = (w - sw) / 2; } else { sh = w / tr; sy = (h - sh) * .3; }
+    const ow = Math.round(Math.min(600, sw)), oh = Math.round(ow / tr);
+    cv.width = ow; cv.height = oh; const x = cv.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, ow, oh); x.drawImage(img, sx, sy, sw, sh, 0, 0, ow, oh);
+    return cv.toDataURL('image/jpeg', .9);
+  }
+  const s = Math.min(1, 640 / Math.max(w, h));
+  cv.width = Math.max(1, Math.round(w * s)); cv.height = Math.max(1, Math.round(h * s));
+  const x = cv.getContext('2d', { willReadFrequently: true }); x.drawImage(img, 0, 0, cv.width, cv.height);
+  knockWhite(x, cv.width, cv.height);
+  const t = trimCanvas(cv) || cv;
+  return t.toDataURL('image/png');
+}
+function setImg(tg, val) {
+  const store = storeOf(tg.ns); if (!store) return;
+  store[tg.k] = val;
+  rerender(tg.ns);
+  afterEdit(tg.ns);
+}
+function nameFor(tg) {
+  const st = storeOf(tg.ns) || {}; const pre = (tg.k.match(/^(.*_)?(sign|stamp)$/) || [])[1] || '';
+  return st[pre + 'name'] || st[pre + 'ceo'] || st.name || PF.me.name || '';
+}
+
+/* signature pad */
+const sig = { mode: 'draw', color: '#111111', font: 'Nanum Pen Script', dirty: false, ctx: null, last: null, cb: null };
+function openSign(cb, name) {
+  sig.cb = cb; $('#sigText').value = name || '';
+  setSigMode('draw'); $('#sigDlg').showModal(); requestAnimationFrame(sizeSig); updSigFonts();
+}
+function sizeSig() {
+  const c = $('#sigCanvas'), r = c.getBoundingClientRect(), dpr = window.devicePixelRatio || 1;
+  c.width = Math.max(1, r.width * dpr); c.height = Math.max(1, r.height * dpr);
+  const x = c.getContext('2d'); x.setTransform(dpr, 0, 0, dpr, 0, 0); x.lineCap = 'round'; x.lineJoin = 'round';
+  sig.ctx = x; sig.dirty = false;
+}
+function setSigMode(m) { sig.mode = m; $$('#sigMode button').forEach(b => b.setAttribute('aria-pressed', b.dataset.m === m)); $('#sigDraw').hidden = m !== 'draw'; $('#sigType').hidden = m !== 'type'; if (m === 'draw') requestAnimationFrame(sizeSig); }
+function updSigFonts() { const t = $('#sigText').value || '이름'; $$('#sigFonts button').forEach(b => { b.textContent = t; b.setAttribute('aria-pressed', b.dataset.f === sig.font); }); }
+function sigPt(e) { const r = $('#sigCanvas').getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top, t: performance.now() }; }
+function bindSig() {
+  const c = $('#sigCanvas');
+  c.addEventListener('pointerdown', e => { e.preventDefault(); c.setPointerCapture(e.pointerId); sig.last = sigPt(e); sig.mid = sig.last; sig.w = 2.8; });
+  c.addEventListener('pointermove', e => {
+    if (!sig.last) return; const p = sigPt(e), x = sig.ctx, l = sig.last;
+    const dist = Math.hypot(p.x - l.x, p.y - l.y), v = dist / Math.max(1, p.t - l.t);
+    const w = clamp(3.4 - v * 1.1, 1.3, 3.6); sig.w = sig.w * .6 + w * .4;
+    const mid = { x: (l.x + p.x) / 2, y: (l.y + p.y) / 2 };
+    x.strokeStyle = sig.color; x.lineWidth = sig.w; x.beginPath(); x.moveTo(sig.mid.x, sig.mid.y); x.quadraticCurveTo(l.x, l.y, mid.x, mid.y); x.stroke();
+    sig.mid = mid; sig.last = p; sig.dirty = true;
+  });
+  const end = () => { if (sig.last && !sig.dirty) { const x = sig.ctx; x.fillStyle = sig.color; x.beginPath(); x.arc(sig.last.x, sig.last.y, 1.6, 0, Math.PI * 2); x.fill(); sig.dirty = true; } sig.last = null; };
+  c.addEventListener('pointerup', end); c.addEventListener('pointercancel', end);
+  $('#sigClear').onclick = sizeSig;
+  $('#sigMode').onclick = e => { const b = e.target.closest('button'); if (b) setSigMode(b.dataset.m); };
+  $('#sigColors').onclick = e => { const b = e.target.closest('.sw'); if (!b) return; sig.color = b.dataset.c; $$('#sigColors .sw').forEach(x => x.setAttribute('aria-pressed', x === b)); };
+  $('#sigFonts').onclick = e => { const b = e.target.closest('button'); if (b) { sig.font = b.dataset.f; updSigFonts(); } };
+  $('#sigText').oninput = updSigFonts;
+  $('#sigOk').onclick = async () => {
+    let out;
+    if (sig.mode === 'draw') {
+      if (!sig.dirty) { toast('서명을 그려 주세요.'); return; }
+      out = trimCanvas($('#sigCanvas'), 8);
+    } else {
+      const t = $('#sigText').value.trim(); if (!t) { toast('이름을 넣어 주세요.'); return; }
+      try { await document.fonts.load(`80px "${sig.font}"`, t); } catch { }
+      const c = document.createElement('canvas'); c.width = 900; c.height = 260; const x = c.getContext('2d');
+      x.font = `150px "${sig.font}", cursive`; x.fillStyle = sig.color; x.textBaseline = 'middle'; x.fillText(t, 20, 135, 860);
+      out = trimCanvas(c, 8);
+    }
+    if (!out) { toast('서명을 그려 주세요.'); return; }
+    $('#sigDlg').close(); sig.cb && sig.cb(out.toDataURL('image/png'));
+  };
+}
+
+/* stamp maker */
+const stamp = { shape: 'circle', cb: null };
+function mulberry(a) { return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+function drawStamp() {
+  const c = $('#stCanvas'), x = c.getContext('2d'); x.clearRect(0, 0, 300, 300);
+  let t = $('#stText').value.replace(/\s+/g, '');
+  if (!t) return false;
+  if ($('#stIn').checked && !/인$/.test(t)) t += '인';
+  const ch = [...t].slice(0, 16), n = ch.length, red = '#C62A2F';
+  x.save(); x.strokeStyle = red; x.fillStyle = red;
+  let bx, by, bw, bh;
+  if (stamp.shape === 'circle') { x.lineWidth = 12; x.beginPath(); x.arc(150, 150, 136, 0, Math.PI * 2); x.stroke(); const s = 182; bx = 150 - s / 2; by = 150 - s / 2; bw = bh = s; }
+  else { x.lineWidth = 13; const r = 10, a = 16, b = 284; x.beginPath(); x.moveTo(a + r, a); x.arcTo(b, a, b, b, r); x.arcTo(b, b, a, b, r); x.arcTo(a, b, a, a, r); x.arcTo(a, a, b, a, r); x.closePath(); x.stroke(); bx = by = 34; bw = bh = 232; }
+  let cols, rows;
+  if (n === 1) { cols = 1; rows = 1; } else if (n <= 3) { cols = 1; rows = n; } else if (n === 4) { cols = 2; rows = 2; } else if (n <= 6) { cols = 2; rows = 3; } else if (n <= 9) { cols = 3; rows = 3; } else if (n <= 12) { cols = 3; rows = 4; } else { cols = 4; rows = 4; }
+  const cw = bw / cols, chh = bh / rows;
+  x.font = '700 100px maruBuri, "MaruBuri", "Batang", serif'; x.textAlign = 'left'; x.textBaseline = 'alphabetic';
+  ch.forEach((c1, i) => {
+    const col = Math.floor(i / rows), row = i % rows;
+    const inCol = Math.min(rows, n - col * rows); const cx = bx + bw - (col + .5) * cw, cy = by + (row + .5 + (rows - inCol) / 2) * chh;
+    const m = x.measureText(c1);
+    const w = (m.actualBoundingBoxLeft + m.actualBoundingBoxRight) || 80, h = (m.actualBoundingBoxAscent + m.actualBoundingBoxDescent) || 80;
+    let sx = cw * .86 / w, sy = chh * .86 / h; sx = Math.min(sx, sy * 1.9); sy = Math.min(sy, sx * 1.9);
+    x.save(); x.translate(cx, cy); x.scale(sx, sy); x.fillText(c1, -w / 2 + (m.actualBoundingBoxLeft || 0), -h / 2 + (m.actualBoundingBoxAscent || 0)); x.restore();
+  });
+  x.restore();
+  if ($('#stTex').checked) {
+    let seed = 0; for (const c1 of t) seed = (seed * 31 + c1.charCodeAt(0)) | 0;
+    const rnd = mulberry(seed); x.save(); x.globalCompositeOperation = 'destination-out';
+    for (let i = 0; i < 1400; i++) { x.globalAlpha = .35 + rnd() * .65; x.beginPath(); x.arc(rnd() * 300, rnd() * 300, .4 + rnd() * 1.5, 0, Math.PI * 2); x.fill(); }
+    x.globalAlpha = .18; for (let i = 0; i < 8; i++) { x.beginPath(); x.arc(rnd() * 300, rnd() * 300, 10 + rnd() * 26, 0, Math.PI * 2); x.fill(); }
+    x.restore();
+  }
+  return true;
+}
+function openStamp(cb, name, square) {
+  stamp.cb = cb; stamp.shape = square ? 'square' : 'circle';
+  $('#stText').value = name || ''; $('#stIn').checked = !square || !/인$/.test(name || '');
+  $$('#stShape button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === stamp.shape));
+  $('#stampDlg').showModal();
+  const go = () => drawStamp();
+  if (document.fonts) document.fonts.load('700 100px maruBuri').then(go, go); go();
+}
+function bindStamp() {
+  $('#stText').oninput = drawStamp; $('#stIn').onchange = drawStamp; $('#stTex').onchange = drawStamp;
+  $('#stShape').onclick = e => { const b = e.target.closest('button'); if (!b) return; stamp.shape = b.dataset.v; $$('#stShape button').forEach(x => x.setAttribute('aria-pressed', x === b)); drawStamp(); };
+  $('#stOk').onclick = () => { if (!drawStamp()) { toast('새길 글자를 넣어 주세요.'); return; } const o = trimCanvas($('#stCanvas'), 2); $('#stampDlg').close(); stamp.cb && stamp.cb(o.toDataURL('image/png')); };
+}
+
+/* ================================================================
+   Profiles
+   ================================================================ */
+let pfT;
+function saveProfiles() { clearTimeout(pfT); pfT = setTimeout(() => DB.setKV('profiles', PF).catch(saveErr), 350); }
+function renderMe() { const sc = $('#meForm').scrollTop; $('#meForm').innerHTML = ME_SECS.map((s, i) => sectionHTML(s, i, PF.me, 'me')).join(''); $('#meForm').scrollTop = sc; }
+function renderCoList() {
+  const l = $('#coList');
+  if (!PF.cos.length) { l.innerHTML = '<div class="note">아직 등록한 업체가 없어요. <b>추가</b>를 눌러 우리 회사(공급자)와 자주 거래하는 곳을 저장해 두세요.</div>'; return; }
+  l.innerHTML = PF.cos.map(c => `<div class="co${c.id === editCoId ? ' on' : ''}" data-act="co-pick" data-id="${c.id}"><span class="ic">${c.stamp ? `<img src="${c.stamp}" alt="">` : icon('building')}</span><span class="nm"><b>${esc(c.name) || '(이름 없음)'}</b><small>${esc([c.ceo, c.bizNo].filter(has).join(' · ') || '정보를 입력해 주세요')}</small></span><span class="kind${c.kind === 'mine' ? '' : ' c'}">${c.kind === 'mine' ? '우리 회사' : '거래처'}</span></div>`).join('');
+}
+function renderCoEdit() {
+  const c = PF.cos.find(x => x.id === editCoId), el = $('#coEdit');
+  if (!c) { el.innerHTML = ''; return; }
+  el.innerHTML = `<div class="co-edit">${CO_SECS.map((s, i) => sectionHTML(s, i, c, 'co')).join('')}<div class="btn-row" style="justify-content:space-between;padding-top:6px"><button class="btn sm ghost danger" data-act="co-del">${icon('trash', 'sm')}이 업체 삭제</button><button class="btn sm line" data-act="co-done">${icon('check', 'sm')}완료</button></div></div>`;
+}
+function renderProfile() { renderMe(); renderCoList(); renderCoEdit(); }
+function loadSection(s, src, label) {
+  let n = 0;
+  for (const fd of s.f) if (fd.p && has(src[fd.p])) { cur.data[fd.k] = src[fd.p]; n++; }
+  if (!n) { toast(`${label}에 저장된 내용이 없어요.`, '', '입력하러 가기', () => switchView('profile')); return; }
+  renderForm(); changed(); toast(`${label}를 불러왔어요.`);
+}
+function saveSectionToMe(s) {
+  let n = 0; for (const fd of s.f) if (fd.p && has(cur.data[fd.k])) { PF.me[fd.p] = cur.data[fd.k]; n++; }
+  if (!n) { toast('저장할 내용이 없어요.'); return; }
+  saveProfiles(); renderMe(); toast('내 정보에 저장했어요. 다음 문서부터 자동으로 채워집니다.');
+}
+function saveSectionAsCo(s) {
+  const o = {}; for (const fd of s.f) if (fd.p && has(cur.data[fd.k])) o[fd.p] = cur.data[fd.k];
+  if (!has(o.name)) { toast('상호(이름)를 먼저 넣어 주세요.'); return; }
+  const ex = PF.cos.find(c => c.name === o.name);
+  if (ex) Object.assign(ex, o); else PF.cos.push({ id: uid(), kind: s.auto === 'mine' ? 'mine' : 'client', ...o });
+  saveProfiles(); renderCoList(); toast(ex ? `‘${o.name}’ 정보를 업데이트했어요.` : `‘${o.name}’을 업체 목록에 저장했어요.`);
+}
+function coMenu(btn, si) {
+  const s = T[cur.tpl].sections[si];
+  const list = PF.cos.slice().sort((a, b) => s.auto === 'mine' ? (a.kind === 'mine' ? 0 : 1) - (b.kind === 'mine' ? 0 : 1) : (a.kind === 'client' ? 0 : 1) - (b.kind === 'client' ? 0 : 1));
+  const items = [];
+  if (list.length) { items.push({ head: '불러올 업체' }); list.forEach(c => items.push({ label: c.name || '(이름 없음)', small: c.kind === 'mine' ? '우리 회사' : '거래처', icon: 'building', run: () => loadSection(s, c, `‘${c.name}’ 정보`) })); items.push('-'); }
+  items.push({ label: '이 칸의 내용을 업체로 저장', icon: 'save', run: () => saveSectionAsCo(s) });
+  items.push({ label: '업체 관리', icon: 'building', run: () => switchView('profile') });
+  openMenu(btn, items);
+}
+
+/* ================================================================
+   Docs list, gallery
+   ================================================================ */
+function galleryHTML() {
+  return CATS.map(([id, name, cc]) => `<div class="gal-cat"><h3>${name}</h3><div class="gal">${TPL_IDS.filter(t => T[t].cat === id).map(t => `<button class="gcard" data-act="tpl" data-id="${t}"><span class="gi ${cc}">${icon(T[t].icon)}</span><span><b>${T[t].name}</b><small>${T[t].desc}</small></span></button>`).join('')}</div></div>`).join('');
+}
+function renderRecent() {
+  const r = docs.slice().sort((a, b) => b.updated - a.updated).slice(0, 4);
+  $('#recent').innerHTML = r.length ? r.map(d => `<button class="btn sm line" data-act="open" data-id="${d.id}">${icon(T[d.tpl] ? T[d.tpl].icon : 'file', 'sm')}${esc(d.title)}<span class="muted" style="font-weight:500">${fmtWhen(d.updated)}</span></button>`).join('') : '';
+}
+function docText(d) {
+  const out = [d.title, T[d.tpl] ? T[d.tpl].name : ''];
+  const walk = v => { if (typeof v === 'string') { if (!v.startsWith('data:')) out.push(v); } else if (Array.isArray(v)) v.forEach(walk); else if (v && typeof v === 'object') Object.values(v).forEach(walk); };
+  walk(d.data); return out.join(' ').toLowerCase();
+}
+function thumbHTML(d) {
+  try { const S = styleOf(d); return `<div class="page"><div class="clip" style="height:${Math.round(CONTENT_H * MM)}px"><div ${flowAttr(S)}>${docHTML(d)}</div></div></div>`; }
+  catch { return ''; }
+}
+function renderDocs() {
+  const q = $('#docSearch').value.trim().toLowerCase(), flt = $('#docFilter').value, sort = $('#docSort').value;
+  let list = docs.filter(d => T[d.tpl] && (!flt || d.tpl === flt) && (!q || docText(d).includes(q)));
+  list.sort(sort === 'name' ? (a, b) => a.title.localeCompare(b.title, 'ko') : sort === 'new' ? (a, b) => b.created - a.created : (a, b) => b.updated - a.updated);
+  $('#docsEmpty').hidden = docs.length > 0;
+  $('#dgrid').innerHTML = list.map(d => `<div class="dcard${cur && cur.id === d.id ? ' on' : ''}" data-act="open" data-id="${d.id}" tabindex="0" role="button"><div class="dthumb">${thumbHTML(d)}</div><div class="dt-t">${esc(d.title)}</div><div class="dt-m"><span class="tag">${T[d.tpl].name}</span>${fmtWhen(d.updated)}</div><button class="more" data-act="dmenu" data-id="${d.id}" title="더 보기">${icon('more')}</button></div>`).join('') || (docs.length ? '<div class="docs-empty" style="grid-column:1/-1">찾는 문서가 없어요.</div>' : '');
+  requestAnimationFrame(scaleThumbs);
+}
+function scaleThumbs() { $$('.dthumb').forEach(t => { const p = t.firstElementChild; if (p) p.style.transform = `scale(${t.clientWidth / (210 * MM)})`; }); }
+async function dupDoc(id) {
+  const d = docs.find(x => x.id === id); if (!d) return;
+  const c = JSON.parse(JSON.stringify(d)); c.id = uid(); c.title = d.title + ' (사본)'; c.autoTitle = false; c.created = c.updated = Date.now();
+  docs.push(c); await DB.put(c).catch(saveErr); updateDocCount(); toast('문서를 복제했어요.'); return c;
+}
+async function renameDoc(id) {
+  const d = docs.find(x => x.id === id); if (!d) return;
+  const v = await ask({ title: '이름 바꾸기', input: d.title, ok: '바꾸기' });
+  if (v == null || !v.trim()) return;
+  d.title = v.trim(); d.autoTitle = false; d.updated = Date.now(); await DB.put(d).catch(saveErr);
+  if (cur && cur.id === id) { $('#docTitle').value = d.title; renderForm(); }
+  renderDocs();
+}
+async function delDoc(id) {
+  const d = docs.find(x => x.id === id); if (!d) return;
+  if (!await ask({ title: '문서 삭제', text: `‘${d.title}’을 삭제할까요? 되돌릴 수 없어요.`, ok: '삭제', danger: true })) return;
+  docs = docs.filter(x => x !== d); await DB.del(id).catch(saveErr);
+  if (cur && cur.id === id) closeDoc();
+  updateDocCount(); renderDocs(); renderRecent(); toast('삭제했어요.');
+}
+function docMenu(btn, id) {
+  openMenu(btn, [
+    { label: '열기', icon: 'pen', run: () => openDoc(id) },
+    { label: '복제', icon: 'copy', run: async () => { await dupDoc(id); renderDocs(); } },
+    { label: '이름 바꾸기', icon: 'textfile', run: () => renameDoc(id) },
+    { label: '이 문서만 JSON으로 저장', icon: 'download', run: () => exportJSON([docs.find(x => x.id === id)], false) },
+    '-',
+    { label: '삭제', icon: 'trash', danger: true, run: () => delDoc(id) },
+  ]);
+}
+function exportJSON(list, withProfiles = true) {
+  const o = { app: 'former', version: 1, exportedAt: new Date().toISOString(), docs: list };
+  if (withProfiles) o.profiles = PF;
+  const name = list.length === 1 && !withProfiles ? safeName(list[0].title) + '.json' : `Former_백업_${today().replace(/-/g, '')}.json`;
+  download(new Blob([JSON.stringify(o)], { type: 'application/json' }), name);
+  toast(withProfiles ? `문서 ${list.length}개와 내 정보를 백업했어요.` : 'JSON으로 저장했어요.');
+}
+async function importJSON(file) {
+  try {
+    const o = JSON.parse(await file.text());
+    if (!o || o.app !== 'former' || !Array.isArray(o.docs)) throw new Error('Former 백업 파일이 아니에요.');
+    let n = 0;
+    for (const d of o.docs) {
+      if (!d || !d.id || !T[d.tpl]) continue;
+      const ex = docs.find(x => x.id === d.id);
+      if (ex && ex.updated >= d.updated) continue;
+      if (ex) Object.assign(ex, d); else docs.push(d);
+      await DB.put(ex || d); n++;
+    }
+    let p = 0;
+    if (o.profiles) {
+      const me = o.profiles.me || {};
+      for (const k in me) if (!has(PF.me[k]) && has(me[k])) { PF.me[k] = me[k]; p++; }
+      for (const c of o.profiles.cos || []) if (c && c.id && !PF.cos.some(x => x.id === c.id)) { PF.cos.push(c); p++; }
+      if (p) { await DB.setKV('profiles', PF); renderProfile(); }
+    }
+    updateDocCount(); renderDocs(); renderRecent();
+    toast(`문서 ${n}개${p ? '와 내 정보' : ''}를 불러왔어요.`);
+  } catch (e) { toast(e.message || '파일을 읽지 못했어요.', 'err'); }
+}
+
+/* ================================================================
+   Views
+   ================================================================ */
+function switchView(v) {
+  document.body.dataset.view = v;
+  $$('#tabs .tab').forEach(t => t.setAttribute('aria-selected', t.dataset.view === v));
+  if (v === 'docs') renderDocs();
+  if (v === 'profile') renderProfile();
+  if (v === 'compose') { if (!cur) renderRecent(); else requestAnimationFrame(applyZoom); }
+}
+function setMobile(m) {
+  document.body.classList.toggle('mprev', m === 'prev');
+  $$('#mswitch button').forEach(b => b.setAttribute('aria-pressed', b.dataset.m === m));
+  if (m === 'prev') requestAnimationFrame(() => { zoomMode = 'fit'; applyZoom(); });
+}
+function openGallery() { $('#galDlg').showModal(); }
+
+/* ================================================================
+   Events
+   ================================================================ */
+function afterEdit(ns) {
+  if (ns === 'doc') changed();
+  else if (ns === 'me') saveProfiles();
+  else if (ns === 'co') { saveProfiles(); renderCoList(); }
+}
+function onFieldInput(el) {
+  const tb = el.closest('.tbl');
+  const ns = tb ? tb.dataset.ns : el.dataset.ns;
+  const store = storeOf(ns); if (!store) return;
+  let v = el.value;
+  switch (el.dataset.t) {
+    case 'money': reformat(el, fmtMoneyInput); v = el.value.replace(/[^\d-]/g, ''); break;
+    case 'tel': reformat(el, fmtTel); v = el.value; break;
+    case 'biz': reformat(el, fmtBiz); v = el.value; break;
+  }
+  if (tb && el.dataset.ck) {
+    const row = el.closest('.trow'), ri = +row.dataset.ri, rows = store[tb.dataset.tk]; if (!rows || !rows[ri]) return;
+    rows[ri][el.dataset.ck] = v;
+    const fd = findField(ns, tb.dataset.tk);
+    if (fd && (fd.title || fd.cols[0].k) === el.dataset.ck) $('.tt', row).innerHTML = esc(v) || '<span class="muted">새 항목</span>';
+    const cnt = $('[data-cnt]', row); if (cnt) cnt.innerHTML = countText(rows[ri].a, rows[ri].limit);
+  } else if (el.dataset.k) {
+    store[el.dataset.k] = v;
+    if (el.dataset.rr) rerender(ns);
+  } else return;
+  afterEdit(ns);
+}
+function findField(ns, k) {
+  const secs = ns === 'doc' ? T[cur.tpl].sections : ns === 'me' ? ME_SECS : CO_SECS;
+  for (const s of secs) for (const fd of s.f) if (fd.k === k) return fd;
+  return null;
+}
+function rowAction(btn, act) {
+  const tb = btn.closest('.tbl'), ns = tb.dataset.ns, store = storeOf(ns), k = tb.dataset.tk;
+  const fd = findField(ns, k); const rows = store[k] || (store[k] = []);
+  const ri = btn.closest('.trow') ? +btn.closest('.trow').dataset.ri : -1;
+  if (act === 'row-add') {
+    const r = {}; for (const c of fd.cols) { if (c.t === 'date') r[c.k] = today(); if (c.k === 'qty') r[c.k] = '1'; }
+    rows.push(r);
+  } else if (act === 'row-del') rows.splice(ri, 1);
+  else if (act === 'row-dup') rows.splice(ri + 1, 0, JSON.parse(JSON.stringify(rows[ri])));
+  else if (act === 'row-up' && ri > 0) [rows[ri - 1], rows[ri]] = [rows[ri], rows[ri - 1]];
+  else if (act === 'row-down' && ri < rows.length - 1) [rows[ri + 1], rows[ri]] = [rows[ri], rows[ri + 1]];
+  rerender(ns); afterEdit(ns);
+  if (act === 'row-add') { const nt = $$(`.tbl[data-tk="${k}"] .trow`).pop(); if (nt) { const i = $('.inp', nt); if (i) i.focus({ preventScroll: true }); nt.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); } }
+}
+function bindEvents() {
+  document.addEventListener('input', e => {
+    const el = e.target;
+    if (el.matches('[data-title]') || el.id === 'docTitle') { if (!cur) return; cur.title = el.value; cur.autoTitle = false; if (el.id === 'docTitle') { const m = $('#mTitle'); if (m) m.value = el.value; } else $('#docTitle').value = el.value; cur.updated = Date.now(); scheduleSave(); return; }
+    if (el.matches('select')) return;
+    if (el.matches('.inp') && (el.dataset.k || el.dataset.ck)) onFieldInput(el);
+  });
+  document.addEventListener('change', e => {
+    const el = e.target;
+    if (el.matches('select.inp') && (el.dataset.k || el.dataset.ck)) onFieldInput(el);
+    if (el.matches('[data-st]') && cur) { cur.style = { ...styleOf(cur), [el.dataset.st]: el.checked }; changed(); }
+  });
+  document.addEventListener('click', async e => {
+    const b = e.target.closest('[data-act]'); if (!b) return;
+    const act = b.dataset.act;
+    switch (act) {
+      case 'tpl': $('#galDlg').open && $('#galDlg').close(); newDoc(b.dataset.id); break;
+      case 'new': openGallery(); break;
+      case 'open': if (e.target.closest('.more')) return; openDoc(b.dataset.id); break;
+      case 'dmenu': e.stopPropagation(); docMenu(b, b.dataset.id); break;
+      case 'row-add': case 'row-del': case 'row-dup': case 'row-up': case 'row-down': rowAction(b, act); break;
+      case 'chk': {
+        const store = storeOf(b.dataset.ns); const set = Array.isArray(store[b.dataset.k]) ? store[b.dataset.k] : [];
+        const v = b.dataset.v; store[b.dataset.k] = set.includes(v) ? set.filter(x => x !== v) : [...set, v];
+        b.setAttribute('aria-pressed', store[b.dataset.k].includes(v)); afterEdit(b.dataset.ns); break;
+      }
+      case 'img-up': imgTarget = { ns: b.dataset.ns, k: b.dataset.k, kind: b.dataset.kind }; $('#imgInput').value = ''; $('#imgInput').click(); break;
+      case 'img-clear': setImg({ ns: b.dataset.ns, k: b.dataset.k }, ''); break;
+      case 'img-sign': { const tg = { ns: b.dataset.ns, k: b.dataset.k }; openSign(v => setImg(tg, v), nameFor(tg)); break; }
+      case 'img-stamp': { const tg = { ns: b.dataset.ns, k: b.dataset.k }; const sq = tg.ns === 'co' || /^(sp_|co_)/.test(tg.k); const st = storeOf(tg.ns) || {}; const nm = sq ? (st.name || st.sp_name || st.co_name || '') : nameFor(tg); openStamp(v => setImg(tg, v), nm, sq); break; }
+      case 'pf-load': { const s = T[cur.tpl].sections[+b.dataset.si]; loadSection(s, PF.me, '내 정보'); break; }
+      case 'pf-save': saveSectionToMe(T[cur.tpl].sections[+b.dataset.si]); break;
+      case 'co-menu': coMenu(b, +b.dataset.si); break;
+      case 'co-pick': editCoId = editCoId === b.dataset.id ? null : b.dataset.id; renderCoList(); renderCoEdit(); break;
+      case 'co-done': editCoId = null; renderCoList(); renderCoEdit(); break;
+      case 'co-del': {
+        const c = PF.cos.find(x => x.id === editCoId); if (!c) break;
+        if (!await ask({ title: '업체 삭제', text: `‘${c.name || '이름 없음'}’을 목록에서 지울까요? 이미 만든 문서에는 영향이 없어요.`, ok: '삭제', danger: true })) break;
+        PF.cos = PF.cos.filter(x => x !== c); editCoId = null; saveProfiles(); renderCoList(); renderCoEdit(); break;
+      }
+      case 'st': {
+        if (!cur) break; let v = b.dataset.v; if (b.dataset.key === 'size') v = +v;
+        cur.style = { ...styleOf(cur), [b.dataset.key]: v };
+        $$(`[data-act="st"][data-key="${b.dataset.key}"]`).forEach(x => x.setAttribute('aria-pressed', x === b));
+        changed(); break;
+      }
+    }
+  });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && e.target.matches('.dcard')) { openDoc(e.target.dataset.id); return; }
+    const mod = e.ctrlKey || e.metaKey; if (!mod) return;
+    const k = e.key.toLowerCase(), inField = e.target.matches('input, textarea, select');
+    if (k === 'p') { if (cur) { e.preventDefault(); doPrint(); } }
+    else if (k === 's') { e.preventDefault(); if (cur) { flushSave(); toast('저장했어요.'); } }
+    else if (k === 'z' && !inField) { e.preventDefault(); undoRedo(e.shiftKey ? 1 : -1); }
+    else if (k === 'y' && !inField) { e.preventDefault(); undoRedo(1); }
+  });
+
+  $('#imgInput').addEventListener('change', async e => {
+    const file = e.target.files[0]; if (!file || !imgTarget) return;
+    const tg = imgTarget; imgTarget = null;
+    try { busy('이미지 정리 중'); setImg(tg, await processImage(file, tg.kind)); if (tg.kind !== 'photo') toast('흰 배경을 지우고 투명하게 정리했어요.'); }
+    catch (err) { toast(err.message || '이미지를 읽지 못했어요.', 'err'); }
+    finally { busy(false); }
+  });
+  $('#jsonInput').addEventListener('change', e => { const f1 = e.target.files[0]; e.target.value = ''; if (f1) importJSON(f1); });
+
+  $('#tabs').addEventListener('click', e => { const t = e.target.closest('.tab'); if (t) switchView(t.dataset.view); });
+  $('#mswitch').addEventListener('click', e => { const b = e.target.closest('button'); if (b) setMobile(b.dataset.m); });
+  $('#newBtn').onclick = openGallery;
+  $('#printBtn').onclick = doPrint;
+  $('#pdfBtn').onclick = savePDF;
+  $('#undoBtn').onclick = () => undoRedo(-1);
+  $('#redoBtn').onclick = () => undoRedo(1);
+  $('#moreBtn').onclick = e => openMenu(e.currentTarget, [
+    { label: 'PNG 이미지로 저장', icon: 'image', run: savePNG },
+    { label: '인쇄 · 글자 선택되는 PDF', icon: 'printer', small: 'Ctrl+P', run: doPrint },
+    '-',
+    { label: '문서 복제', icon: 'copy', run: async () => { const c = await dupDoc(cur.id); if (c) openDoc(c.id); } },
+    { label: '이름 바꾸기', icon: 'textfile', run: () => renameDoc(cur.id) },
+    { label: '이 문서만 JSON으로 저장', icon: 'download', run: () => exportJSON([cur], false) },
+    '-',
+    { label: '문서 삭제', icon: 'trash', danger: true, run: () => delDoc(cur.id) },
+  ]);
+  $('#clearBtn').onclick = async () => {
+    if (!cur) return;
+    if (!await ask({ title: '내용 비우기', text: '입력한 내용을 모두 지우고 처음 상태로 돌릴까요? 내 정보와 우리 회사 정보는 다시 채워집니다. (되돌리기로 복구할 수 있어요)', ok: '비우기', danger: true })) return;
+    const t = T[cur.tpl]; cur.data = autoFill(t, t.defaults ? t.defaults() : {}); cur.autoTitle = true;
+    renderForm(); changed(); pushHist();
+  };
+  $('#zoomIn').onclick = () => zoomBy(1.15);
+  $('#zoomOut').onclick = () => zoomBy(1 / 1.15);
+  $('#zoomFit').onclick = () => { zoomMode = 'fit'; applyZoom(); };
+  $('#docSearch').addEventListener('input', renderDocs);
+  $('#docFilter').addEventListener('change', renderDocs);
+  $('#docSort').addEventListener('change', renderDocs);
+  $('#exportBtn').onclick = () => { if (!docs.length && !has(PF.me.name) && !PF.cos.length) { toast('백업할 내용이 아직 없어요.'); return; } exportJSON(docs); };
+  $('#importBtn').onclick = () => $('#jsonInput').click();
+  $('#addCoBtn').onclick = () => { const c = { id: uid(), kind: PF.cos.some(x => x.kind === 'mine') ? 'client' : 'mine' }; PF.cos.push(c); editCoId = c.id; saveProfiles(); renderCoList(); renderCoEdit(); setTimeout(() => { const i = $('#coEdit .inp[data-k="name"]'); if (i) { i.focus(); i.scrollIntoView({ block: 'center', behavior: 'smooth' }); } }, 30); };
+  $$('dialog').forEach(d => d.addEventListener('click', e => { if (e.target.closest('[data-close]')) d.close(); else if (e.target === d) d.close(); }));
+  window.addEventListener('resize', () => { if (zoomMode === 'fit') applyZoom(); if (document.body.dataset.view === 'docs') scaleThumbs(); });
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') { if (saveT) flushSave(); if (pfT) { clearTimeout(pfT); DB.setKV('profiles', PF).catch(() => { }); } } });
+  window.addEventListener('pagehide', () => { if (saveT) flushSave(); });
+  bindSig(); bindStamp();
+}
+
+/* ================================================================
+   Boot
+   ================================================================ */
+async function boot() {
+  hydrateIcons();
+  $('#galStart').innerHTML = galleryHTML();
+  $('#galDlgBody').innerHTML = galleryHTML();
+  $('#docFilter').innerHTML = '<option value="">모든 양식</option>' + TPL_IDS.map(t => `<option value="${t}">${T[t].name}</option>`).join('');
+  bindEvents();
+  await DB.open();
+  try { docs = (await DB.all()) || []; } catch { docs = []; }
+  try { const p = await DB.getKV('profiles'); if (p && typeof p === 'object') PF = { me: p.me || {}, cos: Array.isArray(p.cos) ? p.cos : [] }; } catch { }
+  updateDocCount(); renderRecent();
+  let last = null; try { last = await DB.getKV('lastDoc'); } catch { }
+  if (last && docs.some(d => d.id === last)) openDoc(last); else closeDoc();
+  if (!DB.ok) toast('이 브라우저에서는 저장 공간을 쓸 수 없어 새로고침하면 내용이 사라져요. 백업 저장을 이용해 주세요.', 'err');
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if (cur) renderPreview(); });
+}
+boot();
+</script>
+</body>
+</html>
