@@ -1,0 +1,2656 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<script>
+  /* Opened as /notebook (no trailing slash)? Add it, so sw.js, the manifest and the icons resolve inside /notebook/. */
+  if (!/\/$|\.html$/.test(location.pathname)) location.replace(location.pathname + '/' + location.search + location.hash);
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#F5F1E8" />
+<!-- Fonts: outgrid's own files first (copy them to public/notebook/fonts/), public CDN as a fallback.
+     Once fonts/ is in place, the two CDN <link> lines below can be removed. -->
+<style>
+  @font-face { font-family: "wantedSans"; src: url("fonts/WantedSansVariable.woff2") format("woff2"); font-weight: 100 800; font-style: normal; font-display: swap; }
+  @font-face { font-family: "maruBuri"; src: url("fonts/MaruBuri-Regular.woff2") format("woff2"); font-weight: 400; font-style: normal; font-display: swap; }
+  @font-face { font-family: "maruBuri"; src: url("fonts/MaruBuri-SemiBold.woff2") format("woff2"); font-weight: 600; font-style: normal; font-display: swap; }
+</style>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/wanteddev/wanted-sans@v1.0.3/packages/wanted-sans/fonts/webfonts/variable/split/WantedSansVariable.min.css" />
+<link rel="stylesheet" href="https://hangeul.pstatic.net/hangeul_static/css/maru-buri.css" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-title" content="cronota" />
+<link rel="manifest" href="manifest.webmanifest" />
+<link rel="apple-touch-icon" href="apple-touch-icon.png" />
+<link rel="icon" type="image/png" href="data:image/png;base64,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" />
+<title>cronota · 아웃그리드 손글씨 노트</title>
+<meta name="description" content="펜으로 쓰는 손글씨 노트. 노트는 내 기기에 저장되고, 원하면 내 구글 드라이브와 동기화됩니다." />
+<style>
+  :root {
+    /* outgrid palette: paper + deep green */
+    --bg: #F5F1E8;          /* paper-100 */
+    --surface: #FCFAF5;     /* paper-050 */
+    --paper: #FFFDF8;       /* writing sheet */
+    --line: #E8E0CF;
+    --margin-line: rgba(186, 70, 58, 0.40);
+    --ink: #1C2824;         /* ink-900 */
+    --ink-2: #33403A;
+    --muted: #5E665F;
+    --faint: #9A9F95;
+    --hair: #E3DCCB;
+    --hover: #F0EADD;
+    --press: #E7DFCD;
+    --dark: #244D3A;        /* forest-700 */
+    --dark-2: #1B3B2C;
+    --river: #3E6F73;
+    --clay: #8A5A3B;
+    --sand: #D9C8A9;
+    --focus: #8A5A3B;
+    --danger: #963F3B;
+    --shadow: 0 1px 0 rgba(28,40,36,.03), 0 18px 40px -30px rgba(28,40,36,.30);
+    --sans: "wantedSans", "Wanted Sans Variable", "Wanted Sans", -apple-system, BlinkMacSystemFont, "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", "Hiragino Sans", "Yu Gothic", "PingFang SC", "Microsoft YaHei", "Noto Sans KR", "Noto Sans JP", "Noto Sans SC", "Segoe UI", sans-serif;
+    --serif: "maruBuri", "MaruBuri", "Batang", "Noto Serif KR", serif;
+    --gap: 32px;
+    --margin-x: 60px;
+    --r-sm: 10px;
+    --r-md: 13px;
+    --r-lg: 20px;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    font-family: var(--sans);
+    word-break: keep-all;
+    background: var(--bg);
+    color: var(--ink);
+    font-size: 14px;
+    letter-spacing: -0.005em;
+    -webkit-font-smoothing: antialiased;
+    overscroll-behavior: none;
+    display: flex;
+    flex-direction: column;
+    height: 100dvh;
+  }
+  [hidden] { display: none !important; }
+  button { font: inherit; color: inherit; cursor: pointer; border: 0; background: none; padding: 0; -webkit-tap-highlight-color: transparent; }
+  button:disabled { cursor: default; opacity: .3; }
+  input, select { font: inherit; color: inherit; }
+  :focus-visible { outline: 2.5px solid var(--focus); outline-offset: 3px; }
+  ::selection { background: rgba(36,77,58,.16); }
+  svg.i { width: 19px; height: 19px; stroke: currentColor; fill: none; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+  svg.i.sm { width: 16px; height: 16px; }
+  .muted { color: var(--faint); }
+
+  /* ---------- Header ---------- */
+  .top { position: sticky; top: 0; z-index: 30; background: var(--bg); }
+  .top-inner { max-width: 1360px; margin: 0 auto; padding: 14px 24px 6px; display: flex; align-items: center; gap: 20px; }
+  .logo { display: block; height: 34px; width: auto; flex: none; }
+  .search { position: relative; flex: 1; max-width: 520px; margin: 0 auto; }
+  .search input { width: 100%; height: 40px; border-radius: 999px; border: 1px solid transparent; background: var(--surface); padding: 0 80px 0 42px; font-size: 14px; outline: none; transition: box-shadow .15s, background .15s; box-shadow: inset 0 0 0 1px var(--hair); }
+  .search input::placeholder { color: var(--faint); }
+  .search input:focus { background: #fff; box-shadow: inset 0 0 0 1.5px var(--dark), 0 0 0 4px rgba(36,77,58,.08); }
+  .search input::-webkit-search-cancel-button { display: none; }
+  .search .s-icon { position: absolute; left: 15px; top: 11px; color: var(--faint); pointer-events: none; width: 18px; height: 18px; }
+  .search .s-actions { position: absolute; right: 4px; top: 4px; display: flex; }
+  .search .s-actions .icon-btn { width: 32px; height: 32px; border-radius: 999px; }
+  .head-actions { display: flex; align-items: center; gap: 4px; flex: none; }
+  .icon-btn { width: 36px; height: 36px; border-radius: var(--r-sm); display: grid; place-items: center; color: var(--ink-2); transition: background .15s, color .15s; flex: none; }
+  .icon-btn:hover { background: var(--hover); color: var(--ink); }
+  .icon-btn.danger:hover { color: var(--danger); }
+  .icon-btn[aria-pressed="true"] { background: var(--dark); color: var(--surface); }
+  .settings-btn { position: relative; }
+  .settings-btn .dot { position: absolute; top: 7px; right: 7px; width: 7px; height: 7px; border-radius: 999px; background: #3F8A5E; box-shadow: 0 0 0 2px var(--bg); display: none; }
+  .settings-btn.ai-on .dot { display: block; }
+  .lang-pick { position: relative; height: 36px; padding: 0 10px; border-radius: var(--r-sm); display: inline-flex; align-items: center; gap: 6px; color: var(--ink-2); font-size: 12px; font-weight: 600; letter-spacing: .02em; }
+  .lang-pick:hover { background: var(--hover); }
+  .lang-pick select { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; }
+
+  /* handwriting search popover */
+  .pad-pop { position: absolute; top: 48px; left: 0; right: 0; min-width: 300px; background: var(--surface); border: 1px solid var(--hair); border-radius: 18px; box-shadow: 0 20px 48px -24px rgba(28,40,36,.35); padding: 14px; z-index: 40; display: none; }
+  .pad-pop.open { display: block; }
+  .pad-pop .pad-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-bottom: 10px; font-size: 13px; font-weight: 600; }
+  .pad-pop .pad-head span.muted { font-weight: 400; font-size: 12px; text-align: right; }
+  .pad-wrap { height: 96px; border-radius: var(--r-md); overflow: hidden; box-shadow: inset 0 0 0 1px var(--hair); }
+  #padCanvas { display: block; width: 100%; height: 100%; touch-action: none; cursor: crosshair; background-color: var(--paper); background-image: linear-gradient(to bottom, transparent 63px, var(--line) 63px); background-size: 100% 64px; }
+  .pad-actions { display: flex; gap: 6px; justify-content: flex-end; margin-top: 10px; }
+  .kw-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--hair); font-size: 12px; align-items: center; }
+  .kw-chip { height: 26px; padding: 0 10px; border-radius: 999px; box-shadow: inset 0 0 0 1px var(--hair); color: var(--muted); font-size: 12px; }
+  .kw-chip:hover { color: var(--dark); box-shadow: inset 0 0 0 1px var(--dark); }
+
+  /* mobile tabs */
+  .mtabs { display: none; max-width: 1360px; margin: 6px 12px 10px; padding: 4px; background: var(--press); border-radius: 999px; }
+  .mtab { flex: 1; height: 34px; border-radius: 999px; font-weight: 600; font-size: 13px; color: var(--muted); transition: background .15s, color .15s; }
+  .mtab[aria-selected="true"] { background: var(--dark); color: var(--surface); box-shadow: 0 6px 14px -8px rgba(36,77,58,.6); }
+  /* One panel at a time (phones, and tablets unless side-by-side is turned on) */
+  body.tabs .mtabs { display: flex; }
+  body.tabs main { grid-template-columns: minmax(0, 1fr) !important; }
+  body.tabs[data-tab="write"] #notesPanel, body.tabs[data-tab="notes"] #writePanel { display: none; }
+  @media (min-width: 900px) { body.tabs .mtabs { margin: 6px 24px 10px; } body.tabs main { padding-top: 0; } }
+
+  /* ---------- Buttons ---------- */
+  .btn { height: 36px; padding: 0 14px; border-radius: var(--r-sm); display: inline-flex; align-items: center; justify-content: center; gap: 6px; font-weight: 600; font-size: 13px; background: var(--hover); color: var(--ink); white-space: nowrap; transition: background .15s; }
+  .btn:hover:not(:disabled) { background: var(--press); }
+  .btn.primary { background: var(--dark); color: var(--surface); }
+  .btn.primary:hover:not(:disabled) { background: var(--dark-2); }
+  .btn.ghost { background: none; color: var(--muted); }
+  .btn.ghost:hover:not(:disabled) { background: var(--hover); color: var(--ink); }
+
+  /* ---------- Layout ---------- */
+  main { flex: 1; min-height: 0; width: 100%; max-width: 1360px; margin: 0 auto; padding: 10px 24px 24px; display: grid; grid-template-columns: minmax(0, 1.22fr) minmax(0, .78fr); gap: 16px; }
+  .panel { background: var(--surface); border-radius: var(--r-lg); display: flex; flex-direction: column; min-height: 0; overflow: hidden; box-shadow: 0 0 0 1px var(--hair), var(--shadow); }
+
+  /* ---------- Write panel ---------- */
+  .toolbar { display: flex; align-items: center; gap: 0; padding: 10px 12px; border-bottom: 1px solid var(--hair); background: var(--surface); flex-wrap: wrap; row-gap: 8px; }
+  .tgroup { display: flex; align-items: center; gap: 2px; }
+  .sep { width: 1px; height: 18px; background: var(--hair); margin: 0 7px; flex: none; }
+  .swatch { width: 26px; height: 32px; border-radius: 999px; display: grid; place-items: center; }
+  .swatch span { width: 14px; height: 14px; border-radius: 999px; background: var(--c); transition: box-shadow .15s, transform .15s; }
+  .swatch:hover span { transform: scale(1.12); }
+  .swatch[aria-pressed="true"] span { box-shadow: 0 0 0 2.5px var(--surface), 0 0 0 4px var(--dark); }
+  .swatch.hl span { width: 16px; height: 9px; border-radius: 2px; opacity: .6; transform: rotate(-14deg); }
+  .swatch.hl:hover span { transform: rotate(-14deg) scale(1.12); }
+  .swatch.hl[aria-pressed="true"] span { opacity: .85; }
+  .wbtn { width: 26px; height: 32px; border-radius: var(--r-sm); display: grid; place-items: center; }
+  .wbtn span { border-radius: 999px; background: var(--ink-2); }
+  .wbtn:hover { background: var(--hover); }
+  .wbtn[aria-pressed="true"] { background: var(--press); }
+  .wbtn[aria-pressed="true"] span { background: var(--dark); }
+  .tool { height: 32px; width: 32px; border-radius: var(--r-sm); display: inline-grid; place-items: center; color: var(--ink-2); transition: background .15s, color .15s; }
+  .tool:hover:not(:disabled) { background: var(--hover); color: var(--ink); }
+  .tool[aria-pressed="true"] { background: var(--dark); color: var(--surface); }
+  #pageHBtn[aria-pressed="true"], #pageVBtn[aria-pressed="true"] { background: var(--press); color: var(--ink); }
+  .pen-mode { height: 32px; width: 32px; border-radius: var(--r-sm); display: grid; place-items: center; transition: background .15s, color .15s, opacity .15s; }
+  .pen-mode.on { background: var(--dark); color: var(--surface); }
+  .pen-mode.off { color: var(--ink-2); opacity: .32; }
+  .pen-mode.off:hover { opacity: .6; background: var(--hover); }
+  #saveBtn { height: 34px; padding: 0 16px 0 13px; margin-left: auto; gap: 6px; border-radius: 999px; box-shadow: 0 8px 18px -10px rgba(36,77,58,.7); }
+  #saveBtn:disabled { box-shadow: none; }
+  #cancelEditBtn { margin-left: auto; }
+  #cancelEditBtn:not([hidden]) + #saveBtn { margin-left: 4px; }
+  .pnote.editing canvas { opacity: .3; }
+
+  .canvas-wrap { position: relative; flex: 1; min-height: 300px; }
+  .canvas-scroll { position: absolute; inset: 0; overflow-y: auto; overflow-x: hidden; background: var(--paper); scroll-snap-type: y mandatory; scrollbar-width: none; overscroll-behavior: contain; }
+  .canvas-scroll::-webkit-scrollbar { display: none; }
+  .canvas-scroll.h { overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; }
+  #pageSnaps { position: absolute; left: 0; top: 0; pointer-events: none; }
+  #pageSnaps i { position: absolute; display: block; scroll-snap-align: start; }
+  .pnav { display: flex; align-items: center; flex: none; font-size: 12px; color: var(--muted); }
+  .pnav span { min-width: 38px; text-align: center; font-variant-numeric: tabular-nums; font-weight: 600; white-space: nowrap; color: var(--ink-2); }
+  .pnav .tool { width: 26px; }
+  .pnav .tool:disabled { opacity: .3; }
+  #writePanel { container-type: inline-size; }
+  /* Narrow writing panel (e.g. side by side on a laptop): keep the toolbar on one row */
+  @container (max-width: 800px) {
+    .toolbar .sep { margin: 0 4px; }
+    #saveBtn { width: 36px; padding: 0; justify-content: center; }
+    #saveBtn #saveLabel { display: none; }
+  }
+  .paper {
+    background-color: var(--paper);
+    background-image:
+      linear-gradient(to right, transparent calc(var(--margin-x) - 1px), var(--margin-line) calc(var(--margin-x) - 1px), var(--margin-line) var(--margin-x), transparent var(--margin-x)),
+      linear-gradient(to bottom, transparent calc(var(--gap) - 1px), var(--line) calc(var(--gap) - 1px));
+    background-size: 100% 100%, 100% var(--gap);
+    background-repeat: no-repeat, repeat;
+  }
+  #ink { display: block; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; cursor: crosshair; }
+  #ink.erasing { cursor: cell; }
+  #ink.paper { background-size: var(--page-w, 100%) 100%, 100% var(--gap); background-repeat: repeat-x, repeat; }
+
+  /* ---------- Notes panel ---------- */
+  .filters { padding: 10px 12px; border-bottom: 1px solid var(--hair); display: flex; align-items: center; gap: 8px; min-height: 53px; }
+  .chips { display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; align-items: center; flex: 1; min-width: 0; }
+  .chips::-webkit-scrollbar { display: none; }
+  .chip { height: 32px; padding: 0 12px; border-radius: 999px; white-space: nowrap; font-size: 13px; font-weight: 500; display: inline-flex; align-items: center; gap: 6px; color: var(--ink-2); flex: none; transition: background .15s; }
+  .chip:hover { background: var(--hover); }
+  .chip b { color: var(--c); font-weight: 600; }
+  .chip .n { color: var(--faint); font-size: 11px; font-variant-numeric: tabular-nums; }
+  .chip[aria-pressed="true"] { background: var(--dark); color: var(--surface); }
+  .chip[aria-pressed="true"] b, .chip[aria-pressed="true"] .n { color: inherit; opacity: .8; }
+  #sortBtn { height: 32px; padding: 0 10px; font-weight: 500; }
+
+  .banner { display: none; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 16px; background: #EAF0EA; color: var(--ink-2); font-size: 13px; border-bottom: 1px solid var(--hair); }
+  .banner.show { display: flex; }
+  .banner button { font-weight: 600; color: var(--dark); white-space: nowrap; text-decoration: underline; text-underline-offset: 3px; }
+
+  .list { flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; touch-action: pan-y; padding: 14px; background: var(--bg); scroll-snap-type: y mandatory; scroll-padding: 14px; scrollbar-width: none; }
+  .list::-webkit-scrollbar { display: none; }
+  .list.h { display: flex; gap: 14px; overflow-x: auto; overflow-y: hidden; touch-action: pan-x; scroll-snap-type: x mandatory; }
+  .npage { display: flex; flex-direction: column; flex: none; scroll-snap-align: start; scroll-snap-stop: always; }
+  .list:not(.h) .npage + .npage { margin-top: 14px; }
+  .npage .fill { flex: 1; min-height: 0; }
+  .page { border-radius: 14px; overflow: hidden; background: var(--paper); box-shadow: 0 0 0 1px var(--hair), 0 10px 24px -22px rgba(28,40,36,.35); }
+  .page-scroll { overflow: hidden; width: 100%; }
+  .pnote canvas { max-width: 100%; }
+  .pnote { position: relative; cursor: pointer; }
+  .pnote canvas { display: block; }
+  .pnote.done canvas { opacity: .35; }
+  .pnote.selected::after { content: ''; position: absolute; inset: 3px; border-radius: 10px; box-shadow: inset 0 0 0 1.5px var(--dark); pointer-events: none; }
+  .note-actions { position: absolute; top: 5px; right: 10px; z-index: 2; display: flex; align-items: center; gap: 2px; flex-wrap: wrap; justify-content: flex-end; background: var(--surface); border-radius: var(--r-md); padding: 3px; box-shadow: 0 0 0 1px var(--hair); cursor: default; }
+  .note-actions .icon-btn { width: 30px; height: 30px; }
+  .note-time { position: absolute; top: 9px; right: 14px; font-size: 11px; color: var(--faint); pointer-events: none; font-variant-numeric: tabular-nums; }
+  .day-head { position: sticky; top: 0; z-index: 3; padding: 10px 14px; font-family: var(--serif); font-size: 13px; font-weight: 600; color: var(--dark); background: var(--bg); border-bottom: 1px solid var(--hair); letter-spacing: .01em; }
+  .day-head:not(:first-child) { border-top: 1px solid var(--hair); }
+  .page-end { height: calc(var(--gap) * 3); }
+  .list.paged .page-end { display: none; }
+  .tag-pick { position: relative; display: inline-flex; align-items: center; gap: 4px; height: 28px; padding: 0 8px 0 10px; border-radius: var(--r-sm); color: var(--c); font-weight: 600; font-size: 12px; white-space: nowrap; }
+  .tag-pick:hover { background: var(--hover); }
+  .tag-pick select { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; }
+  .tag-pick svg.i { width: 13px; height: 13px; }
+  .done-btn { height: 28px; padding: 0 10px; border-radius: var(--r-sm); font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; gap: 5px; color: var(--ink-2); white-space: nowrap; }
+  .done-btn:hover { background: var(--hover); }
+  .done-btn[aria-pressed="true"] { background: var(--dark); color: var(--surface); }
+  .edit-row { padding: 10px 14px 12px; display: flex; gap: 6px; background: var(--surface); border-bottom: 1px solid var(--hair); cursor: default; }
+  .edit-row input { flex: 1; min-width: 0; height: 36px; border: 0; background: #fff; box-shadow: inset 0 0 0 1.5px var(--dark); border-radius: var(--r-sm); padding: 0 12px; font-size: 14px; outline: none; }
+  .empty { text-align: center; color: var(--faint); padding: 64px 16px; line-height: 1.8; font-size: 13px; }
+  .empty b { color: var(--dark); display: block; font-family: var(--serif); font-size: 17px; font-weight: 600; margin-bottom: 4px; }
+
+  /* ---------- Toast ---------- */
+  #toast { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom)); transform: translateX(-50%); background: var(--dark); color: var(--surface); padding: 11px 18px; border-radius: 999px; box-shadow: 0 14px 30px -14px rgba(28,40,36,.55); font-size: 13px; display: none; align-items: center; gap: 16px; z-index: 70; max-width: calc(100vw - 32px); }
+  #toast.show { display: flex; }
+  #toast button { color: var(--sand); font-weight: 600; white-space: nowrap; text-decoration: underline; text-underline-offset: 3px; }
+
+  /* ---------- Dialogs ---------- */
+  dialog { border: 0; border-radius: 22px; padding: 0; width: min(460px, calc(100vw - 32px)); background: var(--surface); box-shadow: 0 0 0 1px var(--hair), 0 30px 70px -30px rgba(28,40,36,.45); color: var(--ink); }
+  dialog::backdrop { background: rgba(28,40,36,.32); backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px); }
+  .dlg-head { display: flex; align-items: center; justify-content: space-between; padding: 20px 22px 8px; }
+  .dlg-head h2 { margin: 0; font-family: var(--serif); font-size: 20px; font-weight: 600; letter-spacing: -.02em; color: var(--dark); }
+  .dlg-body { padding: 6px 22px 22px; display: flex; flex-direction: column; gap: 20px; max-height: 75vh; overflow-y: auto; }
+  .sec h3 { margin: 0 0 8px; font-size: 12px; font-weight: 700; color: var(--clay); text-transform: uppercase; letter-spacing: .06em; }
+  .sec p { margin: 0 0 12px; font-size: 13px; color: var(--muted); line-height: 1.65; }
+  .sec p b { color: var(--ink-2); font-weight: 600; }
+  .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+  .field label { font-size: 12px; font-weight: 600; color: var(--ink-2); }
+  .field input[type=password], .field input[type=text] { height: 40px; border: 0; background: #fff; box-shadow: inset 0 0 0 1px var(--hair); border-radius: var(--r-sm); padding: 0 12px; font-size: 14px; outline: none; }
+  .field input:focus { box-shadow: inset 0 0 0 1.5px var(--dark), 0 0 0 4px rgba(36,77,58,.08); }
+  .btn-row { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+  .result { font-size: 12px; padding: 9px 12px; border-radius: var(--r-sm); margin-bottom: 12px; display: none; }
+  .result.show { display: block; }
+  .gd-uri { font-size: 12px !important; word-break: break-all; }
+  .dlg-foot { margin: 0; font-size: 12px; color: var(--faint); }
+  .dlg-foot a { color: var(--muted); text-underline-offset: 3px; }
+  .dlg-foot a:hover { color: var(--dark); }
+  .gd-uri code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11.5px; background: var(--hover); padding: 2px 6px; border-radius: 6px; color: var(--ink-2); user-select: all; -webkit-user-select: all; }
+  #syncBtn { position: relative; }
+  #syncBtn .dot { position: absolute; top: 7px; right: 7px; width: 7px; height: 7px; border-radius: 999px; background: #B7793F; box-shadow: 0 0 0 2px var(--bg); display: none; }
+  #syncBtn.warn .dot { display: block; }
+  #syncBtn.busy svg { animation: syncPulse 1s ease-in-out infinite; }
+  @keyframes syncPulse { 50% { opacity: .3; } }
+  .result.ok { background: #E8F0E9; color: var(--dark); }
+  .result.err { background: #F6E9E6; color: var(--danger); }
+  .result.info { background: var(--hover); color: var(--muted); }
+  .range-row { display: flex; align-items: center; gap: 12px; font-size: 13px; }
+  .range-row input { flex: 1; accent-color: var(--dark); }
+  .range-row > span:first-child { min-width: 72px; }
+  .range-row + .range-row { margin-top: 8px; }
+  .switch-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 13px; padding: 10px 0 0; }
+  .switch-row input { width: 18px; height: 18px; accent-color: var(--dark); }
+  hr.div { border: 0; border-top: 1px solid var(--hair); margin: 0; }
+
+  .sym-list { display: flex; flex-direction: column; }
+  .sym-row { display: flex; align-items: center; gap: 14px; padding: 10px 2px; border-bottom: 1px solid var(--hair); }
+  .sym-row:last-child { border-bottom: 0; }
+  .sym-row .glyph { width: 32px; height: 32px; border-radius: var(--r-sm); background: var(--paper); box-shadow: inset 0 0 0 1px var(--hair); display: grid; place-items: center; font-size: 16px; font-weight: 600; color: var(--c); flex: none; }
+  .sym-row .name { font-weight: 600; font-size: 13px; color: var(--ink); min-width: 64px; }
+  .sym-row .desc { font-size: 13px; color: var(--muted); flex: 1; }
+  .tips { margin: 0; padding-left: 18px; font-size: 13px; color: var(--muted); line-height: 1.75; }
+  .tips li + li { margin-top: 4px; }
+
+  /* ---------- Responsive ---------- */
+  @media (max-width: 1100px) {
+    main { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+    .sep { margin: 0 6px; }
+  }
+  @media (max-width: 899px) {
+    main { padding: 0 12px 12px; }
+    .top-inner { padding: 12px 12px 4px; gap: 8px; }
+    .logo { height: 27px; }
+    .toolbar { padding: 8px; }
+    .sep { margin: 0 4px; }
+    .swatch, .wbtn { width: 26px; }
+    .tool, .pen-mode { width: 30px; }
+  }
+  @media (max-width: 480px) {
+    .lang-pick .code { display: none; }
+    .lang-pick { padding: 0 8px; }
+    .icon-btn { width: 32px; }
+    .search { min-width: 0; }
+    .search input { padding: 0 38px 0 12px; }
+    .search .s-icon { display: none; }
+    .search:has(#clearSearchBtn:not([hidden])) input { padding-right: 70px; }
+    .head-actions { gap: 0; }
+    .head-actions .icon-btn { width: 30px; }
+    .top-inner { gap: 6px; }
+  }
+</style>
+</head>
+<body data-tab="write">
+
+<header class="top">
+  <div class="top-inner">
+    <img class="logo" alt="OUTGRID" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAeEAAABsCAYAAABdEwq8AAABe2lDQ1BJQ0MgUHJvZmlsZQAAeJx1kb9LQlEUxz9aoVlhUENDg4Q1WZhB1NKg9AuqQQ2yWvT5K1B7vGdEtAatQkHU0q+h/oJag+YgKIogmqOxqKXkdZ4KSuS5nHs+93vvOdx7LljDGSWrN3ohm8trwUm/ayGy6LK90YwDJ3bsUUVXZ0MTYera1wMWM971m7Xqn/vXWuIJXQGLXXhMUbW88JTwzHpeNXlXuFNJR+PC58IeTS4ofG/qsTK/mpwq84/JWjgYAGu7sCtVw7EaVtJaVlhejjubWVMq9zFf0prIzYck9oh3oxNkEj8uphknwDCDjMo8TD8+BmRFnXxvKX+OVclVZFbZQGOFFGnyeERdk+oJiUnREzIybJj9/9tXPTnkK1dv9UPTi2F89IJtB4oFw/g+NoziCTQ8w1Wumr96BCOfoheqmvsQnFtwcV3VYntwuQ1dT2pUi5akBnFrMgnvZ9AWgY5bcCyVe1bZ5/QRwpvyVTewfwB9ct65/AsLKWe8wiDFZwAARnJJREFUeNrtnXecXFXZx7/nnHtndja72d1UOhiKEEgIIBhiyKSQBAQUxH1RUbFg5VXkRWyIy6qAvvaCBVBEXrAsKiJISSCZFBJDSSUJPdSQhCTbsmXuPee8f9w7s7MpJDszuzu7ub+PI5uZW0/7Pc9zniLU1JnrkXI01hhAYLEAICwCS+afYLHCZv8ODun+7+D3XX+z4fUIrydy7mFzzic8R2DD43PO7/rNdjvX5twz9xybc92dfrfhOaLb+3Rdr/t1uv7udrztag8R/jv7tLt839UGXW3avT27tdcu7biHNhQ224JYu1O7dt0ntz3tLu1lsabr2tk2ynknkfM8u/1ehNfYqY1M13N2fzazaxuFo8/s3EZCBL91tVHYEpnn3al/DIDJeY5MW+S20U7vKHLawwgLOuyrnOc2O7WbEBZjdm0fYYJriJ361uS2eXiP3OMEFsLrZb4XwXEic30NSBm0BqZRabvRCqGQMjtJI0SIMHAghGcdhKhBiGqQ4be7HLbbP3f7hdiX82T3c2QeD967zVIKD9H/79fjU1UPLrTTsbbrq90Oh56MEWl7+Cy7u5fct2eQcvfvJvflHeRuHlPtpnlk9z9t2A++3aElEoEilFIiRIgwwGBVpwPWxxgTakgiapX8mzNqgsEprJbc0wQztRPEsGjKRogwkFnDCgdLGY6SWPsWdDIA+MX267P2tgBj9/ln2xvXL5Q4RE+v7+zTM1tr8rj2wBeuBIA1WKsR+diSIkSIUCJzWTsgXkXrzmCxsV02aZsllS5yEVZ0Xwq6HQfk/C4y3wuRs5ztemzXcd3vlT02e1zO7znH2p2fKXvLXZ/f7vx8YmdNR+yBRIqgLYlCdCvRo59FcUZH7+mF4q05z/f3hdgFSimkDPrHlqiw2FuP5KUrw4aMVOEIEQayJqxbYqczrFOQTndNZq8q+NtPC4YBvh/82/PCY6pBh9+Vh99pHZ4Tfm8ru45J6O7H6LLgv0Z33TMe/m1M+N9Y938ncv7Wbs75out7gJjJOS/e9Zs1gljXi8eI5dzLdh0DEMucH8NaG7jmZK9jc45xRPYcY4O/XbfrGGuFzZ7nCJzM89vu13KU6HoGK7rOVwInfK7wO2tV8LdDt/tgVfC3Cp83ex3VdZza6dq55zs7Xcdagcp9TtX92RQCVNg+OccpwEqRFZ4souv78DrknoNAii4yMQwTkhsQwtnDFokFscVa86jVZpXw5CtI2wY4WJsA4sE+6U4aeNCPXYKhRSBzniHYcBWBcNatfwRSdv0dyIXZv621AomQO30fCqw5gqoV4Z5ueH3Z9ffOAmvm+6BtAqkl015CyNBpbARCXBRtI0WIMNCV4QgRSgmT3lOpYu1bkDL+lgQj6MCy0QpWYcViKVnku+JJHnigc39oJid51mTrioX4vkYIFQ2cCBEGpCbcWUrmrCI9R11eP/Uq1q4dPMLO5s298y5btkhGjjSY2KFKsW6vJAyBd3LmYwz4/g4Lq4S1i5Es0MSe5JH7Xut2zimnuFRUKBIJy5YthoqKgeVQl0go2tu1kolZKHFfRMIRIgx8Eo4QoRQgAcMZsw5Vyj67TySc65xlrURK2Y2UtW60gpXWikVSsVALs5w5czbvIvwlk4pRoywNDYZS90KsrVU0NGg1dfZsHPlARMIRIgxsEnaiVogwgCGyBCREkIjE93NJuVpImRRSJjEG5dvtdvqsVcKyGGEXae0uJ/XvN0il/AFLyhEiRBjQiEg4wv5EyjVCyiQZUrZ+k502a7XALsbKhdqqJyJSjhAhQkTCESL0DSlXCSknI+RkrPmq8v0mO23WKmFZhLQLNfpJHnlkU0TKESJEiEg4QoS+IeUzEPIMrPm60iI0X4tFWBZqN9xTjkg5QoQIEQlHiNDrpNzdfO3bRjt99iqLXSytXKSNfDIyX++lgYUIPjn/hq5qIEEJDRuGtkfyS4SIhCNEiEh5z6RcLaScIqScgjEovGY7bdYqIewirFr4lqScSunBTsgZwpVCYK1FG4Pv+0EGNG3AGrrS44YJ66QEpUAqlKNQSiIQGGuxxvR6gykps4JBf8BaG7xrHwkgUsowN07PYazFGFPS7Zwr0A0UoW4gkrCktlbsEq86alTQ4rv7vqHBEpWaGVSLfR9NsL2R8lAh5WSknIwxX1P4TXb6rJXBnjILtbRP7sZ8PeiQWdjTvo/t7ATPA6UQiQQjqqs4aPhwRlRVURaLMSSRIO46dKTTdHoezW1tbNq2nW3NLWxpakI3twThZbEYKh7HUQpjTFhJsvjjKN3aClr310AOBBDXRTlO8K4FEN2+vK/X0QGdeeazicdx4vEezz0hBOm2tmBc9PJ0RUmQClwHx3FQUmIJqo6WKikPBBIW1NZKNm8W4WJmaGjI70rJpFNCZsJAmGhosD3LIlJPcN5YC/XFn621tQHp9Oi56qGuLkhK0tDQqyuatRatNa7rZjWuPtQk9mVPeQpCTsEalK+322mzVgqpFmvf3ELqwQ101UEa4CYDkCFBeuECW15Tw7hjjmHSuOOZPP4Ejjn0UA4cNoxhQ4e+Zfp1bQzNO3bw8uYtrN3wEsvWrWf+8hWsefFFOhsbIR4nVlYWZo8t3pD3PY+zppzBUQcfBDkm817X1rC0dXSyo72dV7e8yUtvbOLVLVvQLS3gujiJBFIIdBHfVQiBn05zwtFHMXncCbhOz5Z+z/dZtGoNa55/HicW2+f5lrnv6SdNYMJRR+Ko3glp7/Q82js7ebOpmY1bt/Lqli28ub0Rv70DpIB4GbGYG2j0fWBh6elcKk10kUH3Rf3Mcw9z0t7hRtmjhGAMlmFYW2ERFWHS3VaEaAGx1VrzgoTnfKteIvXAq/t0/f1cyexHgthrsg5rLTHXZUhZnK1b3gzMnK6LiMVwHQch+s6Muef1dafkIUJAPI5ta/uYmT/nNpJJpyDNuASSdSil8LWPaW2DRBmnjz2O/5o+lXMnnR4Q2m7QTVDK6VUZmrB3J2ytfuFF7pq/gLvmpVj33HMgJbHy8qxmU8jzp5tb+MT7zud3X72y3yddS1sb619+hfnLV/CPBYtYsnoN+D7ukCEgRMGChwyJ8IiDDmTF729m6JDyvK7TvKONEz/xKV56fSNOLLZX64SSEq+tjYkTTmTxjT/rU7P/lqYmXnh9I/9Zu44FK1exeNUa3njjDbAgyxO4joPOVvDtR5Rkso5wkcmS44wZw5V1p2HNNAuThE6/3boyIaTKqZ4DAttdrhAgwgVZGbPDTpu1Xlj7KFLN0zo+j4aGxm6adl+RcV2dpL7exGacfYyPuQ5jR4SrktiXHgNpkXKr8tLXewseXk4dkvqimNolYFRy9pnWkV/AmEowYh+ey4Yibxpj/mnmz/lVb5C5FALP8zhg9CgW/uKnrH7hBeY9uYKFq1az+sUN7NjeCEZDLIaMxXAcBxFKvabvJtqumrIxaTxPIRnwOa2llFhrSTc1Ea+ooPY953DZBecz8fjjug0GrXVQ3ilDsOE+8Z6Gkg2HdsaqAeAoxfgjxzD+yDFc/dGL+XtqIT9v+BtLV64CxyGeSOAXYka2hnMnTcRYS9rzek1D25uWKIWgsrycU499O6ce+3au+uBFzFu+gp/89S7+lVoYCB6JBLqAdxVCYNNpxh11JEOHlJP2PKTsWQVMYwxDh5Qz/qgj2bDhJUQ8DnuZV8F9PSYePxYhBB3pdK+3sxQCKSUjq6oYWVXFO487li9eeAFvNjUx78kV3DFnLg8ue5yOxiYYUk7cddFa96tmXDokvBP5qmkzp4P4IJZzUfIAUAhrgv0iY8w+iYfWCoSQCDFESHkKQp4C9gvKdrzGtFn/Ejh/8uf9e0F4zz4lY9/on4uystmkvX3j31wejsXQxneB81lbK6Ch4PUAsEw+ayRS/10otzKQZfZ1wtjgHRx3lkrOfkanHpyb7c/i6pkIITh4xHAOGTmCs995GgAvbdrEsnXrWbBiFYtXr2HtSy/T2dQcnBCLoWIxHKWwWKyx/UHKzk4lNweWeUSAlIr0jh2gFB+/4L1ccVEt48a8rRvxZvaGe7rQivAmQnQVR7aADQWouOvywTOn84Ezp3PHQ3P59u9v49nnn8cJzdw91optMF6ttdnn7Q8SztX6MwKIoxTTTprAtJMmcN+SpVz1y1+z7plniVVVFbztkvGlUEqhekjCOjw3X23WhoJVX7Vz7jaVEIIRVVXUTktSOy3Jupde5qZ//ovbHniI7VveRFVWoKQsqvl/oJFwLvkJNW32BVZwBVJORojAacLzdNbEF4wCGX72vnpkesT3LUIYrBVIdTDK+aw1+rNy+qz5woqf6HkP3kNDgw7Jo7f2jAX1wT6usPZwOtMao80+vUvOfCBtFZZhQLh3W7B2LqivN670DjHCqSTdmQ95+riua5U9AZjbO4UegkXTDxf8zKJ1+OjRHD56NLVTkwA888orPLpmLfOWr2Tp2rU8++prdLa0BntDsRhOLBY4bPSxZ+pA1X6NMaSbmph48gSu/8ynmHbShGAgGhM6OMuiL64CEFKG1R8DuVsKwYdnncl7Jk/iO7f+kR/+6a8gBE7MHdB9KHYSQDLtes7pE5k8fjxfvvHX3HLX33ErK7PCQyH3Is/zCzEni35oU5Vbyj6c6wI47vDD+MkXL+Py/7qQH/zpL9x8z32kd+wgVlER7Bf38VjqXxLO0X7VjNlnWst3kGqiCAq7B0QYaLKqG6nmp5EE5C0EWGPxjQaUUGoqMFVOn71IaK7RDQ3zuz1b7yGzlxdo6z2T4ntHnBTShm2ez/UtQVndXvUEliLYalXhAi2g2z6woxTHHHooxxx6KB87ezZpz+OpDS+xePUaFqxYxWPrn2bDxo34HR2BZ2o83l9OXiUPpRTp9naUlFz3hcv42oc/GDgMaRMscj3UpgpZwDP30loztLycH1z2WWa/8zQu+e4NbNq2DeG6g6bfsu9qDFVDyrn5K1dy7OGH8eWf/RKnrKwvowMGDXJJObNeHHHAAdx4xeVcctZsrrrxNyz4z2Ooyoqs4Dn4STiZdGho8Jl05kEq4XwX+LiQAnxP95iY8pvXwbv7vgaEcJzJCDtPTT/rZk36GhoaNhXsRFNawmHfPJft3feSu4k3lJlQjxCZMA8hBDHX5aSjj+Kko4/iv993Pm0dHax6/gUWrFzF/BWreOKZZ9m8eQt4aXCcgJQdB5lx8tpPSdlxFJ3NLRx52GHc8o2vMHXCidnYX6Vkvz2XUiowbGnNme84md9946ucfcWXcV130AVhZ6w12hiuvKiWoUMq+PT138NNJArWiPdr6064XmTWidOOO5b5v/wpN9x+B9feciue5xErKytoH75Hz9Mvi3xdnSSV8lVy1rkqoZah1McxxoThHqqXCXhnESm4n+9rjLE46lOK2DI1dfZsUimfujpJKXuR7zeibKBrK7n3UJLMPl/W5GwMvtZoYygvK2Pi8WP5yoc+wL//93rW/vF3PPTzH3H1Zz5F8tR3UDNkCF7rDjobG/Ha2gLSCc2tUor9YiA4StG5vZHJp5zM4t/eyNQJJ+Jr3afa7960Ghl6DQ8tTxRiIRsQGpyjFJ7v86lzz+bHV1yO19JSEv0wGMg4E4dureUbH7mYOT//MYeOHEG6pQXH6RsdtY814ToJ9Zb6eiOmzf4uUl4NFjzPB5x+nUwZE6zn+Uh5GEo84Eydda1fX18fUkAQQhOhX1k4VxMW+9StOzn85JicpZAMHzqUme84hZnvOAWAN7Zu47H1T5NasYKFq9aw5sUNtDU1BdsAbgwZj2X3P23fel73HQE3NvHemWdyZ93VlMfjaK371XFpV2MLgSYIfPW3t0AoIDCINUPXcfC15ora97F2wwZu+evfiFVX9Zm2NqjJOBRofK1JnjieRb+5kdpv1rFsxUri1dVB1rdBQcJhaA6nnOKqoSP+iOt+gHSnCVfKUgqVcsJNL2wsdq2aPnuMfmToJ6BBh0JERMQlMGEK0Sx257BhrUVJyQHDh3Heu07nvHedDsALr29kyVNrmb9iJUueWsszL79CuqkpODkeR7lur2c66rOB7yg6tzVy4dmz+Ou367LapiohAgayQsF3br+DRUuWEqup2S/ISIV7lT/7wudZuHIVz2x4CaesbMCPu1ISQH2tOWzUSOb89IdceHUdcxc/SryqqrBwuJIg4QwBT5pUKeOVf8N1ZuJ1eiH5lp4tKTCHW7y0h+t+VE5rGm7aa2tZWt8RacT9qwIV2wz3VqTsKMWYgw5kzEEHcvHMGWhjePrlV1j61FrmLV/B0rXreO6117OZjlQiMWC1MaUUnU3NTJ88iTu+dXU2xlqWmNlTG4OjFP9Zt55v3/x73KFD9xsSyiSjKS8r41dXfokZ//2lQa399xcRa2MYWl7OPd+/jvO+ejUPL15CvGporxFxX8wwQX295ayz4jJe+U/hOjPx0h4Il9LeaxWAi+d5wnXPkYnmv5FMKurqINoj7jcWzmhnvbX0ZPY9M+ZXE6bJ1DrYGx57xOF84pyzuf2bX2f1H25h2W9v5MdfuZIp7zgF6/n9Wgwg70VASdI72jj+mGP4+3X1xEMnp1Ij4IwjUltHB5+44QfBPnW4799fyKQs2NunWM+YiWedftIELpg+Da+1taS2CgaTxSERi3H39d/htJNOpLOlpdcsQr09y4IYYEB2mDuF60zLIeCBAhcv7QnXPVvJ+K3U1xuSSRURcb+swsRcN9gXDrUiX+te3ZeVQgTJDZTMxqtmnLzKYjFOPfbtXFF7Id/86Icx6c68K9T0p3ZlPZ9Eoow7679J1ZAh6DAmt9SQcZL7yk2/Y+3adcTLy/stwUJ2fEi5T59MWFGxsjNZ4JqPXoyKx/u9DQYjZCjsVCTK+Mf13+bwQw7Ga2/vFcG0d83RyaSiocFXyZk/JR57H+nOgUbAmaXKDUzTsQ+L5MyXbGrON3s5fCnCbghYOA7bm5tZ88KLHHv4YbtoAL7WCETgxdwLJJKbQCKjmfm+j5CS5h07Buxik25t5Td1VzN+zBj8Ijth7S72WiCwOVSUSTW4NwJ2lOLfS5dx45/+Qqy6d/fp9gWdnsdzr71Ot2TYuxm3SkmGVQ5lVE11VpsyYbauQjS1k44+iumnncqcRYuJVVQMajJ+K+tXbsa1Ys56JSVaaw4aPpw/f7uO5Oe+gA1DH4tpfek9Eg6SXfgqObOWmHs56bTfywS8U/LoXhBYvLQvXedqpsxcrFNz7u+DhB4RMpPQWmQsxvqXX2XCJz/DMYcewsTjxzJ1womcfvxYjj7k4G7kkYmv7M2wGiEEIjdb1ADbngsKGTRzzvRpfPLdZxeVgDOEoKTstuf+lueEmdB2FqBMmHrwzaYmPv2/P0I6Tr82dWav/IXXN3LypZ/NWg7sW1hTyuNxTjj8MD5y1kwuPe/ccFvFImX+tX0F8LGzZjFnwaJBHaaVERb3ddxlnCyLIYir0Flr4tjj+P4XLuOK7/+AWHV1UR0Be4uEJQ0NhjNmvg0lb0JrA1YWkR+7V6sJHKlyvWsyaS7FLr8VoghZK8Me/gNnzJ5Aw9hNRI5afaoNO06QrGHdCy+ybv3T3Pq3uymrGsrxRxzO5HEnMPWkEznt2GM5aOSIPt0rM7YUqmP2TIDQvk/F0KH85LLPZvMoF4OgcgWfbS0trHruedZueInnX9/I9tZWPN+nprKCEUOrOOLA0bzj7ccw9ogjslpixuyce01HKS776S947dVXg9AcvzRkX5NTdMK+RZs07tjBohUrWbTsMW5/cC531F3NYaNG5a0Rq3BLZuY7TmHY6FFsb25GOc6gTeCx4rnnaW1r60bGmQx5Q+JxaoZWcsCwYd3GzZ6EunyJ+Evvv4B7lyzh4cVLiFVWFo2Ie4eEgzq5Rjr8AuVU46WLU27NhiudlArHUSDAmkxRbj/7To6jCB2c0RqMKU4WLiEkxvi47ihl0z/S1H8o1IYjguwzHg40ADceRyYSWCydvs8TT63jiRUr+dmdf6aqpoZxR47hXSccz9kT38mUCeN71UQSEId9S6tkyWnBUtLZ3MyVl32Oow85uChacC55Pvz4k/zh/geY+8Ry3tjyJqQ7c+dRl1evELgVFZxyzNF88tx384EZ06hIJAJiC60ZruNw24Nz+Ot99xOrKh0CJpTAbc5/97BuBHvD5eXIigoWPfY4M774Pyy48WccMGxYXhqxCB0UR1ZXcdpxx/LAgoVI10UPUhK++Ls3sPapdVCeCIr45I4lKRlaXs5Bw4dx8tFHMfu0Uzl74mmMrK4OybiwLG8itGYA/OpLX+SklatJh9tQxRB6ik/CmXqnU2ZegOOeg+/5RYgDDjRfpRRSgu9vsdpfiLWLhLVrpRWbPEQr1giEGKKMPsAKfTxCTBbYM3Dd4RgT1lgrWDN2SKc1jvNBNfXM3+mGhocjs3QfE3FIxiaURJUQiPIEUpRjraWpvZ1Fy1ewaP5C/rH4UZ6+/dYekXwgr/VcAwxydpY+Cwsh8Do7GXXwQVx+4fmY0HxXiGBkQ2Jftm4937zpd8xZ9hh4HiQSuGVxZHlij33pa83SVatZ+uQKvnf7nVzz8Y9yyVmzsuT14sY3uPwnP8cpLy+5cCS70+etrDg6FCrKamp47rkX+MT//oj7v399t/3xnmrhAph0wlgemDd/QHrm7yvimbrhsdguY8BaS3NbG83Nzax/+hnuvPd+Rh8wmo/Mnsnl//V+Dhk5IttW+baRlBJfa4459BAuv6iWG266pWhm6WKTsKChwTKxNoFs/CHGZMzFhWm/UkocR6H1Guv7vzCOvZs5czZnJfCdJfLgPw8APyL57gOkZ94npP0CbuxYtJ+xmRVho1D8mGTylLDqUtFr6EbowUJoTHZPwFEKJxbDl4qKRFmPCYqQGDKTb1/MhcaYAdP7Skr89nY+d/4l1FRWFqQFZzQBKQTf/eP/Uf+7W/E707gVFYiQNE2OwLQnbVKVlyOE4PnXX+djdd/mrnkpvvXxj1IWi/GJ7/2ApuZmYiXgDV0MeJ5HrKaaB+Yv4N9L/8O7J74TrXWPQ2BEKPKNHzMGpBrUuaRtTh733b2noxRCKUQiEPY2NTXxw1v/yB/uf4BvffwSvnDhBVnBpRCHOGstV33wv/j9v+9ny9ZtyCIUDikuCSeTilTKl+XNF+PExpAu0AxtrcZxFMY0W9+71oyovpGGhnRW4968WTBqlGXsWEt9eE4dsHatyP7W0PCGgV8xceKtMlF9uRBcg+OU4/v5P5sQCt/XuO54pblAQ0PkLV1aEzYbvtTDWrObtm9n+NChu/e8DnMW706aDsyApb8ICiHwPI+a0aP53HvPy2qw+WvAFmMsH7v++9xx9z04VVXEKuM90hAyQhSAG4tBPM69qQXc959lQahIOo0zSAi4i0CDz633P8i7J74zL8eqzCmHjR6FTJTt16FKGWtMuDWJ4ziommrebGnlizf8gAUrVvH7r3+FyvJE3kQshEBrTU1FBZddcD7f+vmNuDXxgr30naKOq1RKc9ZZcdGhrwpXP1FAq2pcV1mtVxptPkxqzpqQ6B1SKb1H82/9bp4rEA7aDXzPnT77IWPsHTjusfheoUKCxfA1ksl/kEpF5ugBjMx+5pd+8WuWr17NjEmnc8b4cZw29ljGHHjgHj2vM1LwQMnapKTEb27hnJkzGF1Ts4sTVE9gTBB+c/F11/Pnu/9J2YgRQQx1AYtSZi84N+TGHYSpGY0x2FiMJ595jk7PCxKkhF7gPWXh4UOHEo/H6Uins9paJIgHlbYcx8EZVsNd9z/Aq1u2cO//3sDwoZX5E3HYvp8+7938+C8NNO3Yka3slS+KF7sRJLCwstO+F9c9JqyIlK+IrXFcZX29yOiOqaTmrCGZdEKi93uoctjwHEEy6XiPPPikTrdOscZ/DMdVWJvfihFowxbHOVmJshmApbY2Sl0zwOFrzdPPPMuv/nIXH/zGNZzwsUs59TOX8T83/pp7Fi9h49at2co2Skpcx8EYg+cPDCOIsRYchw/PnBEsHHkuHpmSht+69Tb+fPc9lI0Ygef7RSOADAGLASTg9GiJA5CSprYdNO9oy1ubBiiLxYg7TtaaEKE7GXu+T9mwYSx9/EkuuPoa2jvTeZcozZQ4HV1Tw/uSZ2Db2goOgSweCU+dasK3/lhBdjlrDY6jrNarzQ5xDqlUY46p1xY07lMpn2TSYdGiLUboszH+06EYk9/oFcIgpAX7sWi4Dw4IIZCJBEOqq4hVVtKR9nh89Rp+8ofbee+Xv8rxH/0k0y+/kmtvvY1HnlzOlsYmpJQMKSsr+Ty+Ugi8jg7e9rbDmTrhxOBdZc/lxoz2vHj1Gq675Q/Eaqp7LXHGoNbprCXuuJTFCkufoG1YzUtESfz2BM/3KRtew8JHl3L5L38VJDyxhdCU5SMzZ4DjFpyxr1jm6KBAQ3L2EULYafh+vuFABinBmGaj9YUsm9ucSfpRtN5Ipfzwmlv19OnvU9Z9DCEzK2hPR7FC+wI4m9NnjqKhYTORg9aAR25qSiUlorw8SMZgLdt37GDesseY9+gSiMUYNWI4k8aNw9M+osTNplJK6Ewz+YTjicdieZuiM3tj//Or3wbRf1Jio5J6PRaIhOdzxIEHUFle3nNTdMDhCAHNO3bQlk4H5tXIFL1nIvZ84sOGcfNf7+K80ydy3qSJec2BTNrc048fy1FvO4LnXnoZNx7Lm4yLowknk0F+aKHfi+OWEcTs9lwss0GON2vtVSyY+yzJpNMroT8NDZpTTnF55JG11piv4zgyT21YYIzGdatknLPDtohM0oPMnJVLyo5SxIYMIV5djZsoY3NjE3fPmct9qYXIeLz06wsLSJ44PvtuPYWvNVII7l36H5Y9uTzYu40IuOfdICXWS/OeSROz1oWeWwmC/tva3ILf2YmUMpL+9yZgW4twXL7ym5vpDAUX2/MphK818ViMGSdPgM6OgnJKF4eEM6ZoIaeBDTJV9Xy10ziOsr73mJn30M3U1qpe9TZ+4gmf2lplRlbfiJdeGRJxz1cTISzBC08HYNSoaB4MclLO9bx2HIdYZSVueXnJayG+1jgVFUw8fmyXZpyPNg38+u5/Deq41N6EkhKvo4ORBx/MJ885O28P9YxH8MrnnoeOzl5LzzqoSNgY3PIE69ev5y/zUlmrTr6YdvKEwBLUz45ZIqwsVCHgVIwpIDOVQAi+A1g2b+7tGR7co6FBWyGvz39FsRJjhBXidE45xQ0192h12s9IudSdhzJpKkfV1HD46FFZib6nWoQUgpc2bWLhylWIRCJMRhdhXzUoRym01pjOTn775S8xoqoqm+oznz4VwNKn1kaN27NJi1CKm+69r2Bh9OSjjyYWxtrnu+gXTsJhqUJHxI5HyIPyCk0Ks2FZ33ta6/T9ZMKdehvBPYQxHffgexvCaPkerqZCYgwCjqSm5igA6uoiEo5QciSM73PwyBFUJBJBhs0eLvwZQSO1YhVtjY24jrNfb0FmSHVfPhlHoM7mZpSx/O7aa7jgjMl578tnihTs6OggtWo1lMUHpRd5b0Abg0gkWPbUOta//Eq2RnlP+x7g0FEjOXjkCIyffy3xwkk41FiN5WiUJK+9VSEMSiEQDaEHs6JvnJtsGEPcAdxNEAuax+aM1SglleZoIEgWEiFCCUEKAb5mzIEHdiPUfPCftesi10PAN4b2xkbSjY10NDbSuadPUxPp1lbijsO5ySk8evOv+MTZswuK0c5UC5r7xJO89OJLuAPBH6GE4CqF19LKgpWrslaengq11lrKYjGOOOAA8PIn4aIl67BSHi2ECPdIe0yFCq0RUjwE9O2+anAvgRQPYsyX8kqzKYQNPETFkbmCSYQIJQVjGFVTndWkekzkIWE8/coroNR+mxQis9gePGI4N37jq1nPZrsbbclai+s4jK6u5oQxb+PIgw/Kkmghe7iZzG2/+/eD3TSzCD3DE08/A+edk+d0siglOHD4MDC6H0k4JExp7dF52qaCjSatt/kd4imAMBdz3yC4l9XWXa10ug0py7NZ/Hv2FgjLMdGwjlDKKC8rI79JStZs98a2RlAy78IDg4WEayor+fz57+nZwh0mSCmEgDMEvvSpdfx7wUKciiH7dcrKvMaztaCC4iC5AmbP5kQw/kfX1BTklFk8TRiGi+DtelaCJghLEtbal1n60LacOd+30K2bkPHXEOJorMkj8t0CYnifa/IRIuwze8DQPVQz2od5CkLQ6fm0dXaAlPu9Sdpa0PvomCYQCBnkHi84qUa44H/r1j+gPY9YPD5oSxj2Wt8FzMv2ltasZSFvwTYeL+hZCt8TzmitwibynJQ2HJQbAairk33fH3WSVMq3sBkh6bGIH4ZkWWHLo+EdoZThOoXJ3caaSOvKasQ9cMxSsqCFPgM/rLZ024NzmLNwMbHKiqg/CujATs8r+DIx1y1IIC0G4dnw/yvCP3tanTo4yRKIJP3h1FSXfZMdeW+uBG9REQomkVgaoSSxo729YBKPu26vxETLnJzcPfk4ShWF4EodmWQxL23axJd++gtUWVlgtIuQt0UhXmDKUADP9wralC9mFSVZcIv0FzLEL2wBIqUFa2U3wSRChJJadKC1vSNPpUFgLcQch6ohQ8CYQBUs1rQVAq+zE9LpPHaCLMTjqFhs0KZtzBSlb0+n+eC136WxsTHKVlbIcAMwhprKimz75ivI7ejoLOhZnCK9jwV25EVAWVMu/WfKHTs21OZFed70KQSIsA3q6gT19RERRyi5laelAE3YWIMSksNHj+bxFSuL5pErhcDv7GTc0UfxhQsvYPjQoeGOkNgr+UopeHnzFn5x19958bXXi1JkvfQUtuB9pJRcct33WPLYE8SGVaP9iIDzl/kEaMPbckL2pFI9nE7B+Ny0fXtB+/yFk3BtraShQSNoz/tBAmfkkUDfekZn2rK+3lBXJ0Xq0eEEynBeJnUsbd006wgRSmkhV4qXN23KLuj5ksFJRx/F3+5/oOhpK2+66n+YOPa4vM49eMRwaq/6Bk48Pqi0w65QJssnv/cDGv79IPGaavyIgIsilJ769vwDWoQMxv/GrVsLCtkrohOUbMxbJLEWYe3hzJw5JNSk+57E5j8xDMQhoReoyKdHBTQBUZxwhNIkYcdhwxubskUYerpmZKbFGeNPgFisKB65Qgh8YygbMoQDhtXga43n+/ha79Mn7QXHHjR8OMRjgyprlAlDmdo707z/m9fy+7v+Try6qtfKRu5P8HyfWGUlU8JiJrKHmZZtaL7uTKfZ8MYmcJx+JOGQcIS1L5Bfsg6JMRYpR6P124G+TfuYSbtpveNQsirM+JVHIlewyOei4R2hJEkYwHHYuHUbW5ubc7/d94kakvBpxx3LmMMPQ3d2FtUhylgbehKrHnkdO2rwFS7LLPIrn3+BKZd9kb8/9DDxmpqIgIsAJSW2o4PTxx3PMYceEuwHS9Hz+QS8smULr7/5JtJx8o6bL5ombAXPFuCOpFGOkEZNDbTS+X0XppRJuynttALSVgbavDTPRkM8Qqku6q5SNDU2snbDS1nS67HWqjVlsRgfmD4V296OVMWbqpH5KFwMw4IOC1auZuKln+XxteuJVQ2NCLhoA01gteZz7zk3mAd5WE8y5zz5zHN0NrfgOCpvn8DCZ1CYmEIY8SzG5HoI95DEDEAtAKlU39mUwiIOYN+X9/MLIdEaacULQFdpxz0LUEG+7EJWHdELa5bShY8Ha6OgxRKFlBI606RWrsJSWOrKz5x3LhXDh+MXkDN3UFsdCumnsD3HHHQgVUOH4sZj2CgWuGhacHrHDk4cdwLvm3JGYPIvwJKSWrGSoIBP/nOgaMk6NB1rMLoxnKU9FbEVWhuh1GnO9FmnAZba2t63MYX3cKbNPEModSLaN3mUYTRIKTD2dc+x6wH24hkdJhaz6YIUBktl9v6FInQkMzhVoXOdyXv5EaI9muqlqw3jKBauXI0gzxJuQqC14bDRo/hi7fvQzS2D0hxcqEafr5CTsThorTlk5AiuvuTDeK2tiKhWcPEsLdbyo89/NqwCZntMn5YgSUva95n75AqIF1bBqkjJOuokqdSb1trlSJWvNmSQUhpjv07fxtlaY8XXwjR8eRSfsEHxBmGXMWfOjpDY90rCOWTVU4ElqIeJGMpZZ8V3Hl95IetIZquDdrD5tENwDWPboulemjDWIsvKeGzd07yyeUuQCzovbTjIIf31iz/IsWOPo6O1tSBtYrAu+IVYCGRY+vDSc87m6Lcfg9fenpfQFKELjuOQ3raNKz5yMTNOOSnvIhrGGCzw+NPP8OyLL+IUWMGqOL2aDPZwJSKFzLOSEjj4vhHKOV9NPXMGDQ26V7XhZNKhoUGraWe+WzjqbDzfIETP7ydEkHbTiFR3QtsD6rLpudrz5M7ArVXYGtrbK4u5blhjD4O8+y9sDhkIF1H+7JLUhF3XpeXNN/nbgoXZBSUfTc0CFYkE/3fN1ykvK8NPp/cbksi02QsbN3LKpz7HSZ/8LCdf+llOuvSznPypz3HiJz5N8ov/w/aWFqy1ecm0QgisMSTicb51yUewaS8y+xcA13Xp2LqVs2fO4AefuRRtTP7j1QYr9x1zHsZ2dhZUjKN4JJzZF7b2n/i+AVSeqwRhBP5vmTSpkoYG0yu5pOvqJKmUJpmsRshfBbMkzwpQ4OB5ncaa+4C972eHpl9h5eY8vcmDQpZSVTu27GhAZDy8C+w/KxCTwsxfeXiHC4kxCKu3RlO+tImYmMudD88DyHsBUVKijeGUY47mjm/XIYzB97z9SiNu70zz5Lr1rFi3juXr1rNi3XqWr13HqmefZ8H8FD//292IPK0NAEopjDF8YPpUTj5pPOkdOwpe8Pc3SBmkQu14801mTZ3CX6+9BimDPN4iz/kjpaSxtZW/pRYgEomCc3cXp0cbGjQgvNScFdbax1AqKHSfz0KutUE5R8pYxW2ADUiriETcRepWivgdKOdwtM5nLzgwuzuOtdYuYMHcZ8Nrv3WPZDRlYTYUYETWKAWOnQXYAuOSBQ0Nhsnn1CDEdLQmj7YIYruN8XwjXgvHRKQJlyC0MTiJBE+sXsOi1WuC/cc8FxElJb7WnD95En/73nVUxmKkW1txHGe/0NqkEMQTCZxEglgigRt+YmUxnOHD+Pldf2fTtu15m/2zUr5SfOfjHwNjo3y4Pegbx1F4nWk6m5q49KJa7vn+9VQkgjpD+Y7PwHMd/vjgHDa9+hqxeLzgDG3FI7dkUoVL+v8hpcjbpCmEwvd94boXqGmzfhsQfL0pimk6mXSorzfU1xs1ffZtwnXfjefpvMzQuXYjYW8HehRaZREb8p9RVqI11vBxZs4cQmpqfrHNXf1mpeN9GtcdgbV+XtcKqk9toybxZs76EaFEtQPjedxw558LvpajFL7WvPddp7PgN7/ktHEn0LltO77nZYsx7G3BE0IMWA3PGLPLJ9AjXLa9sYkf/rUha1rOV9AxxvDuiacx/V0T8aL9990vwUIgw2IeSkq8dJrObds5YvRo/u+6em7+ypXEQ0esfGPbM1pwe2dnYOUo0CGr+CQchPpghP4TXnpLSGz5LsQOvufjuJ9W02b/mWSygoYGTTLp5GWerquT1NYqUimfyZNr5PRZd6Ocj4bxFfmazg1KSTzvZWO8fwAi0wZvidB0L7FPY3R+IVEIidaamHu49OylUG845dNOXu2SSmlmzBguhLgC37d5jQlrDVJgsS9zzz2tdDmIRihFbVgbnIoKHlj0KMvWrc+algshYm0MJx45hkW//gU/uuoKDhk5gs6mJtKtrfi+nyXabJIN2VXaz3gera2tgyrbldYaVVnBb/9xDy9v2hw6WuX3fpmJ9N1PfAzpOIOqnQqFDbVT3/Pw2trobGwk3bqDMQcdxHVf/G+euPUmLp55ZuBMZW1BFhptDFIIfnvPfTz/zLO4iURBDlnFJ2GwJJMODz+81VpxI44jCowZDYlYXSRV2RKmzZxOKuVTXx9ofcmkE2rHYref2lpFMumQyQ3d0KDVjFlnSXfIUqGc9+KlNYXkzhbCIJWwgp+QSrVmNMq9nheGdPlebDVab8srpCu4v8T3jZDOt5g27UieuMnjlFP2vS5Xba2ivj5Qq426DUeNDmd3PnHSlkDjWRaOg0hUHwDmOuN5XH3LrUW5XkZjc5Xify6qZdUfbuGma77OrHdNYkTVUHzPI93SQmdjE52NATl7HR1Yazlw1EjOT06huqKin3LW9g45OI5Dy7Zt3HDnn0NtOP+21cZw+vFjueDM6fgt+19YWOC2Y7OObtbabGWpRCzGQSNG8M5xJ/CFiz/IPT/+Pqtuu4VvfPRihlVWZp2wCiFgE2rBm7Zv54bb70ANKS9a7LZT1JYKE18YX/5KCe9LSDk0JGKZ9/N5nhZKnaCEepjps+8UUv7En3v/46RS/l7ILquVOlPf/U4rzZVArZBQsAk6CKdS+OmNpjPxu33Wgrvmp2DRfdvt1FlrhJRT8PPyzBYYY3GcYUrH/qWnTTuPefOehzpJcr5k6lQTxivb7PEB+Uo2bxY0NPiAUNNm/RbHOaegNgkzhlljl0b0NkA0NWOIVVYyd+Ei7pj7MBefOQNf64IWdyklFjBaU1NZyafOO5dPnXcuWxobeXHjG7y8eTPNO9oQQlBdUcHQIeWMrqnh8NGjqCwvzxXqBo027FRUcNu9/+aK97+Pow85OKjWk4fpXRD4rX77Yx/l3tQitNb7lbnpb9+po6MzHRRNsDmCjlLEXZdhlRUMHTJkl/aXYc3pQmHCWs5f+c0tbN74RlFzeDtFbqsgyUZDwxabnFUv4s5P8Dy/II07TOSBEALH+ZDV+kNy+uwFWO6V2MW+6XwBaCSVCoo6JpNxTFmNI/WRRsrJwLlW6HehFPi+DW0ShYmRgXeytMZczaP3tITvvO89kkwGpnFh5yDllAL2zyW+b1DOccrGHiU58zKdqr+LFIZUim7kmxm64XO6Z545Thv1QxxnFul0IUKJDQQSv8MgFwFBxrCu+0coVe3CGGRZGV/91U2c/c7TqKmoKKiuamawqbCiTEYDGVldzcjqak477ti3XOQGW4hTRhtub2riO7ffwe3f+Gre5ksZasNjjzicS849m5v+/Ffi1dX7TSrLIw86aJ/aW2sd7A8LUbS984xw+o+Fi/njPf8qegpRp+it1dBgqK1VZvPmX0qPS4RSE/D9Qp2fgtkZamtCqSlIOcVqjSLWAmy1U2fuCBeBChw73EqnQigVFB/Xukv7LdRt01qN4yrrpReZ+XNu7TEBA4EjVQqD36B88S0KM4tLtG+QchSu0yCnz1qMNn9wlPNouq3xRZYuzSQFkZw+c4SKy1OBC422FwulYgUScLg37kjr+wtIPbiBujoZbhlEKHEYa3HicV579VU+86Of0nDtNYH2UITFSwiR1aozpsNcL1IRaryZpBaDNcbYD7Xhvzw0ly//1/sZf9SReSeJEGFbXv2RD/HnOQ+zo6MDUUAJvYE2VnefnFlk/tdtzBXtvqEG/PLmzXzm+z9EurGit3dvjPzgCVMpX0rxeYw1oXmpGHXPgn1X39d4no8xFiErkeoIoZzjhXKOR6nDEaICYyye52cLbxaq/WbeTQgwOq2E+G8Axo7N473qDdRJ5s172hqWoJz8QrpyidhaG+wRq3eJWPxmbfRqlRi6Vk6b9aScNmuJmjZrjSpjPY68F1d9HIjhF2yWD0eREAjuAPq2+EaEgqG1JlZVxV333s9P7/oHjlJ4Ra5Vu7NTVqZSkpKy4L26gQCpFF5bO/V//L+C9rszWbQOGzWKyy68AL0fxQ3LUFDb9RNovb0xhkxQ1pa053FR3XfYsnUrTjxWFGes3iZhMtmu/IcfXGK1/iauqwC/WHM6JI7A6cpaG8QF+MEn4wYXCEdOkcg3K9jiuMpqfaU376GVoXNTflpfbSZpBz8pUjEGEZqndej1LZHyCKHUSUKpiUh5HELW4PsGz9OhQFFo24Qe4ulXTGfrvnuIRygtLcMY3KGVXPXzX/LQE0/iOiqq2FNkQceprOCf8+az9Kl1BXmjB3WgLVde9H5GHXwQXjodZdLqDU0ytNxIIfjYDf/L0sefIF5Zie6FedF7YlQYUmRSc26wXvpeXNctIhHvbKWRCCFDs7WkdxwsPdyYi5/+i0nN/WUm7WVB7VNXJ3XqoXus5y0Pa2EV3sNdAkognPi+wfc1Wmd89GV4jCjKSFVKWCF+zKOPtuyzh3iEkltwkBIjBLVfv4bHn34mG/8boUgLrZQYz6fuD3/MLlr5WhWMMQwfOpSvfOgDmLa2KItWL2jAxlqUlFz2k5/zp3vuDfbffb93xkavvk2gFUlj0h+xvr8C5Ti9RMS9DR/Hca3nLdUmfWk2vrZQBCksjVDiG+EMKyaB5QonKhRQiiecZOOk0xuM7rylaG0Sod+0Ycd1aW5r47yrvs7qFzdERFxkbditqOChxY/yyJPLA0crnac2HJqlP/eecxlz1FF4HR0FOdNF6D4PZLh98vkf/4xf3fln4jU1vToPeluEstTVQSrVaPDOxegXByAR+ziOg9brjSfeQyrVmn23YlgLamuVfvihB/D9O3HdgdM2QgQlHK39b1Kp1lCgiLTggUwUxhBLlPHGtm3M+MKXWLR6TUDEvo46tkhSMcZS94fbQ6NU/tqwNYbysjKuueTDmI7OqNRhMRb6MKSpI53mQ9++jl/f+Zc+8UDv/Z6rD1NOPvLIazrtn4XVz+MMFCK2Po7jWG3Wa83ZLHpgS0H7wLsnYktdndRl6kt43mtI6RSY5KQPmsX6uK6D592q58+9Ly8P8QglqrEZYokEW5qamX3FVfx9wUIcR0HoelGaw3FgiAjaGNyKISxa9hj3LlmaDTvKa+EOizt8+MwZnHjiOLyouEP+2m8YTucoxQuvb2TG5Vfyp3/dR7ymb0LA+qbXMmUJFz38jPY7plrffzJH6yvFGWQBHzfmWK2XGt0+jdSDG3qJbAxr1woeeGCL0LoW8EINs1SJ2Md1HZv2l+mOlsvCNolCkgYVEWvceJwO3+fCr13DN357C4bADOprXVKk54dxoc1tbZBOl7xZVgBISf1tt2djWvO9jrXgOIpvf+ISbFjjNkLPhDdf66z5+S+PzGfipz/Po8tX9hkB9x0J5xJxKvWqMZ0zrO/9MyRiiuKQVLye0YDAdR2r/btMR8ssUqk3elXby3iTL3h4ifX1RxGCkIhLTbvMmOafN7bjQpYubQ9DtKL5P9i0A2OQSuEmyrjh5t8z8/IreWrDSzgqCLXvbzLWxmCsJe66tHV0cOPf70YMgFSO2hhiQ4bwxPJVNMxfgAzbMh8oFaQKfc+k05ky8TS81kgb7gn5ZuKKX960mYu/fR0fuPpbbGlpIVZZkY1sHVwknCEb6iSpVKN55KHzre99DSFsYO/qd63YhiSjkNK3af9K8/CDtTz6aAsge93c2uVN/md8fRFC+GHKl1Iw29usBqzNGt2pp5NKvRol5hj8i5WxlnhNNfMee5x3fupzXPv729jR0dkvZGzCxRPIFoD4W2ohp37qc9y7YBGqCLVd+6pdhevwndvvIO152XSf+U5MCIo7CCX3i8Qd+ba5NiYsRRiQ7/aWVq774/9x8ic+zZ333o87ZEioY/St7tMPYlNYgKGuTppHHvq+wJtqtXkMx80UIe1rMg4IRgiB4zpW2yXC86aY+Q/+OKzYJNhbjeBiIZXySSYdnZrTgO/NAjbgug7W6n4zT1urEaFlwNf3GN0+jcVzXy763niEkoWvNbGKIbT7PvW//i2nXvpZbrn3Pto6u8g4s8AVkwQyKQB8rbNeq5mMSPc+uoSZV1zF+792NWtfeBG3vLzH97ZFeL58rQxueTlrn1rLHx+aixQi74U/E3N8xvhxvGfaVLyWlrdM11hI//TXufks6BnS9bXOEq8K80i/snkL1//xDiZ8/FK++Ytfs7W1lVjV0JwUE30Lp5/mtaW+3pJMOv4jjywkmZwkddllAvENXGcUvh84/1gr8ygwv+/kAiClwnEcfP8Nq/3vmnkP/tqACWsP970WmiXih+eTTJ6ubOKnOM5FwWqYzf7VW7HQXf1jbVBUwnUVRrdYL/0dM2/ODwBCDThyxNqPoHWQ29mtrmbdhg186tvX8+M/38Xn3/deLpxyBgeOGN5NYzXGIBAIkSmg3pVecBciDBe+IEECWGx20RRCZDWFl97YxN0LF3Pn3IdZtmoNWItbMSRLbPuMcENVSdllmuwBKRtjcAhyE5s8y+Nl8nZff/sdXHzmDMpiLp7W5FNSLUMedZd8mAcefXSP75MpZq+1DioS9aC5jLUox8GYPEgqHAN+LxadEDkpUEUw6FA5/dK0Ywep5Sv567wU9y1ZQuOWNyGRIFZdFdaA7r/lzOnXmZ1K+eFeq2/gZyTf/Rdh/c9KYT+N6x6YzfsMPtaKAsknQywWcHAchZCg/Vetr39j2s3NLJmzOYdk/BJolzc0fEBNP+sOBNfiuCcHK6JfrDbJmZ/WgjBYKwLBxFVoX6P9vypp6tLz5j4btouNNOD916Tna41bFkckEqzbsIEvfO8HXPv72zj7nadx0YypTDx+LCOqqvaYf9qGi7/IWTgzsTo7k1na83j6lVeZt3wlDy17jEWrV9O05U1wXdwh5QjI0/wcLNIPPfY450+eRFks1kP1M3i3uY8/gW5rJ1YxpMfPYazFKSvjxRc2cPXNv+PH//053Hz3tMPzRlRXEYvFSXd0BNpwKNwYaxHxOCuefobN2xsZVVPd81sAm7c3suKZZ4Ni9vugMQb3jbFo5Wo60umet3MBAuPmxu08/9rrPPnscyxYuYr/rF3Hq6+9DtpAeYJ4dXVgvSmBOPhScSUU1NZ27btOPmukjNkPAR8QMBHHCQoxBB+DECac0WIP72HDWZ0RsTOJRkFK8HysYDHwJ9Nm/8TSh7YBlGCojaCuLqiHnEw6SsXOt8jPCewZKNcFGwgpgQ1Fd2sTkdU7uldRCiaPzWmbIA1opm0soP0tCPEP6fu/8RY8vLyP2kYChjNmHaqUfRYp4znpR3t+MSnx2tqZMPZYlt/ym71P3DCp/n9d+10a/n0/8aqilSoLwtz89IfMvLl/Ipl09lqG860Q9oOaOns2jnyg4OIohXSYEAgpSafT0N4OymHkqBGceNSRnDF+HOPHjGHMQQdy8MgRDC0vx3Wc3ZJye2cnjTt28GZjE8+++hrPvPIqy597jhXPPs8LGzeiW1qDsZkoI+66WU27UBitmTLhRA4dNTJbm3ZfTJ1SSN5sauKRJ5cHi3ghVaeEwE+nedeJ43nbgQfs83N0tyQEs+SJp5/lmZdeQrnuLmbVzH2OOPggTjvuWFzlBBaHfbi+QOBpn2Xr1rPhtddxYvtexEAIgd+Z5oSjj2TcmLdlBa1iEo8FPN+nI+2xvaWZzdub2Ny4ncbGJuhMgxQQj+PGYtmMYyWzd25tp0OJPEq4wGfIeIuBnwE/c2acdar29XkCkxTGTsBxhnZFpudU1sj8NzMhQpNEsEFgQOvtVpsV0tiU0P49WXIBwoVRl2Csa2C2D60FGu4C7oolZx3rC//dWDtLGCag5GikdIL3tV2f3FmaVTPCdhFhG1kbmLmteQ5fP26R9xgTe4TUvW/qLqsAURxwhN1pOmiN4zjIqiqstWxpbGLu4iXMXbAIlEKUlTG8qoqaigrKy+IMKSsjHnPxfE3a92nv7GR7Swstbe0079iB7egIBEspwXVRsRjx6qqsk1gxw0akUqSWPQa+psfMpyQykShCUTaLE4ux+InlLPb9wtgpFkPF47slmMx9Nrz2OhteeDG/68fjPSLg7H3jMdY8+xxrnlrbu/qkIBg3SoHj4MTjqEQCi8WY0o1zd0rsebrIOKy56z/8wGPAYxbgjNkHKuGPs0IcIyxHW8tRCIYCCaytQGBB7ADbBjQJIZ+1xjwnrHxGx+wq5jy02eT2WnAPXZBm0hfoLqCYdOqh9cB64Mckk9UOZccZrY8X2OOstUdiGYkQIwU2EfaxwggP8K2gCdgsrN1ksU8LKdYqodamdfsz3dqhtlYxdmxkeo6wTwttxqznOA7SdYOsTqFzzJuNjby5dWsg8JnMzkeOoCwVqMBpRlVUBOdisab4xLsLbw0Zkt+ebqiN2yK1X2xIecGEbsKwrbe6jxuLIcvKeuX6b3nfsjgykehF4qC7bwFd2yelDqdU53WWEOrqJPPnB3mJFz64UcNG4KFdzshobG/tySxJJiVTpxrq603Jk+/uBZSuNgneo9GHJQSf7mbLlhaH9nYX11Vsj3u0J3zWNqR3McXmnhOQvok03wh5E/JOC7XjOAjHydYP7rZw0uU5myHtvkSphDT11XMYazH9QEzGWAzRkjKQSLgLgSZmstprba1k8+ZgLo8aZcNsTTtrbHs6zpBKGVKpgd1rmTYJ3mP37xqQqAY6dyuwrF0r2LxZMGqUDTVeGxFvhN4i5lxNJUKECAOJhPekDe6KXAek/YlQ9vSuYo/HRybmCBEiRIhIuOhkFCFqj900QiZFnczEEEaIECFCRMIRIvTBAJcym2UJuvYdI1KOECFCKSDK9h1hcGrA1iJjLi+8vpGrb/499/9nGW9s25bNG5vJxpTxoNSlFDsYIUKE/U4TLkQdiFauCCVJwkJKtre2cv1Nt4DrUjN8GOPHjGHyCcczefw4TjrmKEbX1HTTlCNEiBChP0g4ItIIe4Low/sIjBGo4t3SkRJVXY2xlu3NLaSWPUbq0SXgugwfPpzxY97G5HEnMOmE4zl17LH0onU6eL/WVlFQmwZe8CInW1yECBEGAQlHiLBHpbKP7hMW1FBeMYtWZRyzoHsiCWMtW5ubmbfsMeY9ugQch1GjRwdFvsvLix7kL4TwAMsTT3gFXSgT2y5VOhqaESIMAi1HTps5DyFGYjF5SugF1LfKPdf23X0zeZP7gpS67zP21zMXi1T33l+2gPsG7xgXMJ4+8FfIdc4y1uJ5HiBQjiym6GHDGzxjBZuxVu21Ld6qr60VCLSwDEPK4wvJrx0hQoT+VnFspyMsJ6GcqqIE0kdLQYSi6MS6j8Z/9+xOTlhgoMgOWgJrQcljhBDHFPHhg4Im0ayLEGFAwwFa0X5FoJdG+0wRSgD7XkO6qOO1V72jtQ6qf+1pjnWvarUXTVjYnDKWESJEGLhrnXUQxJFSBUnVIw6OMIBgbZC+s3h1lXtXsBBC7rayfffjct7vLX4Xuzk+QoQIA20NcxxgG8a6YPelvOTOVyjeCiCKeFRxHqLvVjfbl+RRQJ+JPujhfTrcgkWiVBylJHanusqlScoe1gbPZgtuP4tAYpFY24lAR2wcIcJAJGE6He2K0+l0A7OW9os3kRO6ONfSxbpOWf7XMUV6hniRrmNM/tfRMVHAgCnOM+zpXRJ7utlOaAfKrONoe6gxdhKYKcKKk4K6ysqBEiJlazWOq6zvfdkI/58YFSMu/IL71lcyBk4a2YqVftHGaIQIEfoOUkV7wBEGCZLJake4JxrkZISdLISYgJAHoFTgxKQNWNMfpOzjOA7aq9WPzLkr6qgIESLkwiHyriw1RP2xr6itDcoxdtVVThF84Mwzqxwjxhvfm4TlDAEnI+WBKOX0h/naWhsDJGPHOqxdW4Q61nVQB2EN7SjZToQI0YIfIUI/j+VMXeWAlLtn/DjrrKGOz3hjzLswTBGCk5G5mnKvkbKP4zjWT3/IzJv7J5JJJ5twI0KECJEmHDVBhEGCrrrKqdTuSLnZh0UEn++TTFY7xMaj/clGqDME9mSkHNVfmnKECBEiEo4QYX8i5UYfFhB8YPI5NY7TOd5o+65gT5mTQk05IuUIESJEJBwhQi+T8vZd9pSR44zvT8LaKdk95VLzvo4QIUJEwhEiDEJSbsoxX/9vdk/Z9yYjOEPY7J5ypClHiBAhIuEIEXqZlHP3lL9HMlntWPdErJlsDFOEsCchnZEo6WTzOhtDmKAjSi8ZIUKEiIQjRCgiKeeGRF0XxCnLccbXk7DiXQJ7EkIcglRxlAPai7TiCBEiRCQcIUIvkvJCgk+wp+w7E4wwU9D+OQI6oiaMECHCzvh//+V9rnx8y+IAAAAASUVORK5CYII=" />
+
+    <div class="search" id="searchBox">
+      <i data-icon="search" class="s-icon"></i>
+      <input id="searchInput" type="search" autocomplete="off" enterkeyhint="search" data-i18n-ph="searchPh" data-i18n-aria="searchPh" />
+      <div class="s-actions">
+        <button id="clearSearchBtn" class="icon-btn" data-i18n-title="clearSearch" hidden><i data-icon="x"></i></button>
+        <button id="padToggleBtn" class="icon-btn" data-i18n-title="handSearch" aria-expanded="false"><i data-icon="pen"></i></button>
+      </div>
+      <div class="pad-pop" id="padPop" role="dialog">
+        <div class="pad-head"><span data-i18n="handSearch"></span> <span class="muted" id="padNote"></span></div>
+        <div class="pad-wrap"><canvas id="padCanvas"></canvas></div>
+        <div class="pad-actions">
+          <button class="btn ghost" id="padClearBtn" data-i18n="clear"></button>
+          <button class="btn primary" id="padRunBtn"><i data-icon="search" class="sm"></i><span data-i18n="search"></span></button>
+        </div>
+        <div class="kw-row" id="kwRow"></div>
+      </div>
+    </div>
+
+    <div class="head-actions">
+      <label class="lang-pick" data-i18n-title="language"><i data-icon="globe" class="sm"></i><span class="code" id="langCode"></span>
+        <select id="langSelect" data-i18n-aria="language">
+          <option value="ko">한국어</option>
+          <option value="en">English</option>
+          <option value="ja">日本語</option>
+          <option value="zh">中文</option>
+        </select>
+      </label>
+      <button id="syncBtn" class="icon-btn" hidden data-i18n-title="gdSyncNow"><i data-icon="cloud"></i><span class="dot"></span></button>
+      <button id="layoutBtn" class="icon-btn" data-i18n-title="splitView" data-i18n-aria="splitView"><i data-icon="columns"></i></button>
+      <button id="helpBtn" class="icon-btn" data-i18n-title="help"><i data-icon="help"></i></button>
+      <button id="settingsBtn" class="icon-btn settings-btn" data-i18n-title="settings"><i data-icon="sliders"></i><span class="dot"></span></button>
+    </div>
+  </div>
+  <div class="mtabs" role="tablist">
+    <button class="mtab" role="tab" data-tab="write" aria-selected="true" data-i18n="tabWrite"></button>
+    <button class="mtab" role="tab" data-tab="notes" aria-selected="false"><span data-i18n="tabNotes"></span> <span id="mtabCount"></span></button>
+  </div>
+</header>
+
+<main>
+  <!-- ========== Write ========== -->
+  <section class="panel" id="writePanel">
+    <div class="toolbar">
+      <div class="tgroup" id="penBtns"></div>
+      <div class="sep"></div>
+      <div class="tgroup" id="widthBtns"></div>
+      <div class="sep"></div>
+      <div class="tgroup" id="hlBtns"></div>
+      <div class="sep"></div>
+      <div class="tgroup">
+        <button class="tool" id="eraserBtn" aria-pressed="false" data-i18n-title="eraser"><i data-icon="eraser"></i></button>
+        <button class="tool" id="undoBtn" data-i18n-title="undo" disabled><i data-icon="undo"></i></button>
+        <button class="tool" id="redoBtn" data-i18n-title="redo" disabled><i data-icon="redo"></i></button>
+        <button class="tool" id="clearBtn" data-i18n-title="clearCanvas" disabled><i data-icon="trash"></i></button>
+      </div>
+      <div class="sep"></div>
+      <div class="tgroup">
+        <button class="tool" id="pageHBtn" data-i18n-title="pageModeH"><i data-icon="pagesH"></i></button>
+        <button class="tool" id="pageVBtn" data-i18n-title="pageModeV"><i data-icon="pagesV"></i></button>
+        <button class="pen-mode" id="penModeBtn"><i data-icon="penTip"></i></button>
+      </div>
+      <div class="sep"></div>
+      <div class="pnav">
+        <button class="tool" id="prevPageBtn" data-i18n-title="prevPage"></button>
+        <span id="pageLabel">1 / 1</span>
+        <button class="tool" id="nextPageBtn" data-i18n-title="nextPage"></button>
+      </div>
+      <button class="tool" id="cancelEditBtn" hidden data-i18n-title="cancelEdit" data-i18n-aria="cancelEdit"><i data-icon="x"></i></button>
+      <button class="btn primary" id="saveBtn" disabled><i data-icon="check" class="sm"></i><span id="saveLabel"></span></button>
+    </div>
+
+    <div class="canvas-wrap">
+      <div class="canvas-scroll" id="canvasScroll">
+        <canvas id="ink" class="paper"></canvas>
+        <div id="pageSnaps"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== Notes ========== -->
+  <section class="panel" id="notesPanel">
+    <div class="filters">
+      <div class="chips" id="tagChips"></div>
+      <button class="btn ghost" id="sortBtn"><i data-icon="sort" class="sm"></i><span id="sortLabel"></span></button>
+      <div class="pnav" id="notesNav" hidden>
+        <button class="tool" id="nPrevBtn" data-i18n-title="prevPage"></button>
+        <span id="nPageLabel">1 / 1</span>
+        <button class="tool" id="nNextBtn" data-i18n-title="nextPage"></button>
+      </div>
+    </div>
+    <div class="banner" id="banner"><span id="bannerText"></span><button id="bannerClear" data-i18n="clearSearch"></button></div>
+    <div class="list" id="list"></div>
+  </section>
+</main>
+
+<div id="toast" role="status" aria-live="polite"></div>
+
+<!-- ========== Help ========== -->
+<dialog id="help">
+  <div class="dlg-head">
+    <h2 data-i18n="help"></h2>
+    <button class="icon-btn" data-close data-i18n-title="close"><i data-icon="x"></i></button>
+  </div>
+  <div class="dlg-body">
+    <div class="sec">
+      <h3 data-i18n="helpSymbols"></h3>
+      <p data-i18n="helpSymbolsIntro"></p>
+      <div class="sym-list" id="symList"></div>
+    </div>
+    <hr class="div" />
+    <div class="sec">
+      <h3 data-i18n="helpTips"></h3>
+      <ul class="tips" id="tipList"></ul>
+    </div>
+  </div>
+</dialog>
+
+<!-- ========== Settings ========== -->
+<dialog id="settings">
+  <div class="dlg-head">
+    <h2 data-i18n="settings"></h2>
+    <button class="icon-btn" data-close data-i18n-title="close"><i data-icon="x"></i></button>
+  </div>
+  <div class="dlg-body">
+    <div class="sec">
+      <h3 data-i18n="aiTitle"></h3>
+      <p data-i18n-html="aiDesc"></p>
+      <div class="field">
+        <label for="keyInput" data-i18n="apiKey"></label>
+        <input id="keyInput" type="password" placeholder="AIza..." autocomplete="off" spellcheck="false" />
+      </div>
+      <div class="field">
+        <label for="modelInput" data-i18n="model"></label>
+        <input id="modelInput" type="text" list="modelList" autocomplete="off" spellcheck="false" />
+        <datalist id="modelList">
+          <option value="gemini-3.5-flash-lite"></option>
+          <option value="gemini-3.6-flash"></option>
+          <option value="gemini-3.8-flash"></option>
+        </datalist>
+      </div>
+      <div class="result" id="aiResult"></div>
+      <div class="btn-row">
+        <button class="btn ghost" id="keyClearBtn" data-i18n="keyClear"></button>
+        <button class="btn" id="keyTestBtn" data-i18n="keyTest"></button>
+        <button class="btn primary" id="keySaveBtn" data-i18n="save"></button>
+      </div>
+    </div>
+    <hr class="div" />
+    <div class="sec">
+      <h3 data-i18n="writing"></h3>
+      <div class="range-row">
+        <span data-i18n="lineGap"></span>
+        <input id="gapRange" type="range" min="24" max="56" step="2" />
+        <span id="gapLabel" style="width:36px;text-align:right"></span>
+      </div>
+      <div class="range-row">
+        <span data-i18n="pressureSetting"></span>
+        <input id="pressureRange" type="range" min="0" max="100" step="10" />
+        <span id="pressureLabel" style="width:36px;text-align:right"></span>
+      </div>
+      <label class="switch-row"><span data-i18n="fingerSetting"></span>
+        <input type="checkbox" id="fingerCheck" />
+      </label>
+    </div>
+    <hr class="div" />
+    <div class="sec" id="gdSec">
+      <h3 data-i18n="gdTitle"></h3>
+      <p data-i18n="gdDesc"></p>
+      <div class="field" id="gdClientField">
+        <label for="gdClientInput" data-i18n="gdClient"></label>
+        <input id="gdClientInput" type="text" placeholder="1234567890-xxxx.apps.googleusercontent.com" autocomplete="off" spellcheck="false" />
+      </div>
+      <p class="gd-uri" id="gdUriRow"><span data-i18n="gdRedirect"></span> <code id="gdUri"></code></p>
+      <div class="result" id="gdResult"></div>
+      <div class="btn-row">
+        <button class="btn ghost" id="gdDisconnectBtn" data-i18n="gdDisconnect"></button>
+        <button class="btn" id="gdSyncBtn" data-i18n="gdSyncNow"></button>
+        <button class="btn primary" id="gdConnectBtn" data-i18n="gdConnect"></button>
+      </div>
+    </div>
+    <hr class="div" />
+    <div class="sec">
+      <h3 data-i18n="data"></h3>
+      <p data-i18n="dataDesc"></p>
+      <div class="btn-row" style="justify-content:flex-start">
+        <button class="btn" id="exportBtn" data-i18n="export"></button>
+        <button class="btn" id="importBtn" data-i18n="import"></button>
+        <input type="file" id="importFile" accept="application/json,.json" hidden />
+      </div>
+    </div>
+    <hr class="div" />
+    <p class="dlg-foot"><a id="privacyLink" href="/privacy" target="_blank" rel="noopener" data-i18n="privacy"></a></p>
+  </div>
+</dialog>
+
+<script>
+'use strict';
+/* =========================================================
+   Service settings for outgrid.net/notebook/
+   ========================================================= */
+// Google OAuth "Web application" client ID made for outgrid.net. When set, people just press
+// "구글로 연결"; when empty, the settings show a field where each person enters their own client ID.
+const GD_CLIENT_ID = '';
+// Privacy policy page, opened from the bottom of Settings.
+const PRIVACY_URL = '/privacy';
+
+/* =========================================================
+   Language strings (Korean / English / Japanese / Chinese)
+   ========================================================= */
+const I18N = {
+  ko: {
+    locale: 'ko-KR', code: '한',
+    searchPh: '노트 검색', clearSearch: '검색 지우기', handSearch: '손글씨로 검색',
+    padNote: '검색어를 펜으로 쓰세요', padNoteNoAi: 'AI 연결 후 쓸 수 있어요 · 아래 키워드는 바로 검색돼요',
+    clear: '지우기', search: '검색', kwTop: '자주 쓴 키워드', kwNone: '키워드가 생기면 여기에 표시돼요',
+    language: '언어', help: '도움말', settings: '설정', close: '닫기',
+    pageModeH: '가로 페이지 이동', pageModeV: '세로 페이지 이동', prevPage: '이전 페이지', nextPage: '다음 페이지', saveTitleN: '노트 {n}개로 나눠 저장 (Ctrl+Enter)',
+    tabWrite: '쓰기', tabNotes: '노트',
+    pens: ['검정', '빨강 (중요 표시)', '파랑', '초록'],
+    hls: ['형광펜 노랑', '형광펜 주황', '형광펜 하늘', '형광펜 회색'],
+    widths: ['가는 펜', '보통 펜', '굵은 펜'],
+    eraser: '지우개 (E)', undo: '되돌리기 (Ctrl+Z)', redo: '다시 실행 (Ctrl+Shift+Z)', clearCanvas: '캔버스 비우기',
+    penOnlyOn: '펜 전용 (손바닥 터치 무시) · 누르면 손가락으로도 쓰기', penOnlyOff: '손가락으로도 쓰는 중 · 누르면 펜 전용',
+    save: '저장', splitView: '나란히 보기', reedit: '다시 쓰기', saveEdit: '수정', cancelEdit: '취소', saveFirst: '쓰기 화면의 글을 먼저 저장하거나 비워 주세요.', updated: '노트를 수정했습니다.', saving: '저장 중…', saveN: '노트 {n}개 저장', saveTitle: '저장 (Ctrl+Enter)',
+    sortNew: '최신순', sortOld: '오래된순', all: '전체',
+    results: '"{q}" 검색 결과 {n}건',
+    emptyNone: '아직 노트가 없어요', emptyNoneSub: '왼쪽 캔버스에 써 보세요.',
+    emptySearch: '검색 결과가 없어요', emptySearchSub: '다른 단어로 찾아보거나 "전체"를 눌러 보세요.',
+    emptyFilter: '이 분류에는 노트가 없어요',
+    today: '오늘', yesterday: '어제',
+    changeTag: '종류 바꾸기', doneLabel: ['완료하기', '완료됨'], editKw: '검색어 편집', editPh: '이 노트를 찾을 때 쓸 검색어', del: '삭제',
+    deleted: '노트를 삭제했습니다.', undoBtn: '되돌리기', cleared: '캔버스를 비웠습니다.',
+    saved: '노트 {n}개 저장: {list}', writeFirst: '먼저 캔버스에 써 주세요.',
+    palm: '지금은 펜 전용입니다. 손가락으로 쓰려면 도구막대의 펜 버튼을 누르세요.',
+    penOnlyToast: '펜 전용: 손바닥 터치는 무시하고, 손가락으로는 스크롤합니다.', fingerToast: '손가락으로도 쓸 수 있어요.',
+    aiFail: 'AI 인식 실패: {msg} (노트는 저장됨)', storageFull: '저장 공간이 부족해 노트를 저장하지 못했습니다. 설정에서 백업을 내보낸 뒤 오래된 노트를 정리해 주세요.',
+    padWriteFirst: '먼저 검색어를 써 주세요.', padNeedAi: '손글씨 검색은 설정에서 AI를 연결하면 쓸 수 있어요.',
+    padSearched: '"{q}"(으)로 검색했어요.', padUnreadable: '글씨를 읽지 못했어요. 조금 더 크게 써 보세요.', padFail: '손글씨 검색 실패: {msg}',
+    errKey: 'API 키를 확인해 주세요', errModel: '모델 이름을 확인해 주세요', errQuota: '요청 한도를 넘었어요. 잠시 후 다시 시도하세요',
+    errServer: 'Gemini 서버 오류', errParse: 'AI 응답을 읽지 못했어요', errNet: '네트워크 연결을 확인해 주세요',
+    aiTitle: 'AI 손글씨 인식 (선택)',
+    aiDesc: 'Gemini API 키를 넣으면 저장할 때 손글씨를 글자로 읽어 숨은 검색어를 붙입니다. 이때 <b>손글씨 이미지가 Google로 전송</b>됩니다. 키는 각자 발급받아 넣으며, 이 브라우저에만 저장되고 Google에만 직접 전송돼요. 아웃그리드 서버로는 보내지지 않아요. 공용 PC나 다른 사람과 함께 쓰는 기기에서는 넣지 마세요.',
+    privacy: '개인정보 처리방침', gdConflict: '다른 기기에서 같은 노트를 함께 고쳐서, 노트 {n}개를 사본으로 남겼어요.',
+    apiKey: 'API 키', model: '모델 이름', keyClear: '키 삭제', keyTest: '연결 테스트',
+    testing: '{m} 연결 확인 중…', testOk: '연결 성공 ({m}). 저장을 누르면 적용돼요.', testFail: '연결 실패: {msg}',
+    needKey: 'API 키를 먼저 넣어 주세요.', keyDeleted: '키를 삭제했어요.', aiOn: 'AI 손글씨 인식을 켰어요.', aiOff: 'AI 손글씨 인식을 껐어요.',
+    writing: '필기', lineGap: '줄 간격', pressureSetting: '필압 감도', pressureOff: '끔', fingerSetting: '손가락으로도 쓰기 (끄면 손바닥 터치 무시)',
+    gdTitle: '구글 드라이브 동기화', gdDesc: '구글 드라이브의 앱 전용 폴더에 노트를 저장해 다른 기기와 맞춥니다. 이 폴더는 cronota만 읽고 쓸 수 있고, 노트는 이 기기에도 그대로 남아 있어요.', gdClient: 'OAuth 클라이언트 ID', gdRedirect: '승인된 리디렉션 URI:', gdConnect: '구글로 연결', gdSyncNow: '지금 동기화', gdDisconnect: '연결 해제', gdNeedHttps: 'https 주소에 올린 페이지에서만 연결할 수 있어요. 지금은 파일로 열려 있어요.', gdNeedClient: 'OAuth 클라이언트 ID를 먼저 넣어 주세요.', gdOff: '연결되어 있지 않아요.', gdOn: '연결됨 · 마지막 동기화 {time}', gdOnNever: '연결됨 · 아직 동기화 전', gdExpired: '로그인이 만료됐어요. 지금 동기화를 누르면 다시 로그인해요.', gdSyncing: '동기화 중…', gdDone: '드라이브와 동기화했어요.', gdFail: '동기화 실패: {msg}', gdDenied: '구글 로그인이 취소됐어요.', gdConnected: '구글 드라이브에 연결했어요.', gdDisconnected: '구글 드라이브 연결을 해제했어요. 노트는 이 기기에 그대로 있어요.',
+    data: '데이터', dataDesc: '노트는 이 브라우저에 저장됩니다. 브라우저 데이터를 지우면 함께 사라지니 가끔 백업해 두세요.',
+    export: '백업 내보내기', import: '백업 가져오기',
+    imported: '노트 {n}개를 가져왔어요.', importFail: '백업 파일을 읽지 못했어요.',
+    helpSymbols: '기호', helpSymbolsIntro: '빨간 선 왼쪽에 기호를 그리고 오른쪽에 내용을 쓰면 기호별로 자동 분류됩니다.',
+    insert: '넣기',
+    symDesc: { todo: '해야 할 일 · 완료 표시 가능', fact: '사실, 알게 된 정보', ref: '참고 자료, 출처, 링크', idea: '떠오른 생각, 짧은 메모', decision: '정한 것, 결론', none: '기호 없이 쓰면 일반 노트' },
+    helpTips: '쓰는 법',
+    tips: [
+      '바로 아랫줄에 이어 쓰면 같은 노트입니다. 빈 줄을 하나 띄우면 새 노트가 시작되고, 기호가 없으면 "노트"로 저장됩니다.',
+      '빨간 펜으로 쓴 노트는 "중요"로 표시됩니다.',
+      '형광펜은 글씨 아래에 칠해지고 분류에는 영향을 주지 않습니다.',
+      '펜 버튼이 진하면 펜 전용(손바닥 무시, 손가락은 스크롤), 흐리면 손가락으로도 쓸 수 있어요.',
+      '캔버스는 화면 크기 페이지로 나뉩니다. 도구막대의 가로/세로 페이지 버튼으로 넘기는 방향을 고르고, 펜 전용일 때는 손가락으로 밀어서, 아니면 오른쪽 아래 화살표로 넘기세요.',
+      '노트를 누르면 종류 바꾸기, 완료, 검색어 편집, 삭제를 할 수 있어요.',
+      '단축키: Ctrl+Z 되돌리기 · Ctrl+Shift+Z 다시 실행 · Ctrl+Enter 저장 · E 지우개'
+    ],
+    tags: { todo: '할일', fact: '정보', ref: '참고', idea: '메모', decision: '결정', none: '노트' }
+  },
+  en: {
+    locale: 'en-US', code: 'EN',
+    searchPh: 'Search notes', clearSearch: 'Clear search', handSearch: 'Search by handwriting',
+    padNote: 'Write your search with the pen', padNoteNoAi: 'Needs AI in Settings · keywords below work now',
+    clear: 'Clear', search: 'Search', kwTop: 'Frequent keywords', kwNone: 'Keywords will appear here',
+    language: 'Language', help: 'Help', settings: 'Settings', close: 'Close',
+    pageModeH: 'Turn pages sideways', pageModeV: 'Turn pages up and down', prevPage: 'Previous page', nextPage: 'Next page', saveTitleN: 'Save as {n} notes (Ctrl+Enter)',
+    tabWrite: 'Write', tabNotes: 'Notes',
+    pens: ['Black', 'Red (important)', 'Blue', 'Green'],
+    hls: ['Highlighter yellow', 'Highlighter orange', 'Highlighter sky blue', 'Highlighter gray'],
+    widths: ['Fine pen', 'Medium pen', 'Bold pen'],
+    eraser: 'Eraser (E)', undo: 'Undo (Ctrl+Z)', redo: 'Redo (Ctrl+Shift+Z)', clearCanvas: 'Clear canvas',
+    penOnlyOn: 'Pen only (palm ignored) · tap to allow finger', penOnlyOff: 'Finger writing on · tap for pen only',
+    save: 'Save', splitView: 'Side by side', reedit: 'Open in writing', saveEdit: 'Update', cancelEdit: 'Cancel', saveFirst: 'Save or clear the writing page first.', updated: 'Note updated.', saving: 'Saving…', saveN: 'Save {n} notes', saveTitle: 'Save (Ctrl+Enter)',
+    sortNew: 'Newest', sortOld: 'Oldest', all: 'All',
+    results: '{n} results for "{q}"',
+    emptyNone: 'No notes yet', emptyNoneSub: 'Write something on the canvas.',
+    emptySearch: 'No results', emptySearchSub: 'Try another word, or tap "All".',
+    emptyFilter: 'No notes in this category',
+    today: 'Today', yesterday: 'Yesterday',
+    changeTag: 'Change type', doneLabel: ['Mark done', 'Done'], editKw: 'Edit search words', editPh: 'Words to find this note by', del: 'Delete',
+    deleted: 'Note deleted.', undoBtn: 'Undo', cleared: 'Canvas cleared.',
+    saved: 'Saved: {list}', writeFirst: 'Write something on the canvas first.',
+    palm: 'Pen only is on. Tap the pen button in the toolbar to write with your finger.',
+    penOnlyToast: 'Pen only: palm touches are ignored and a finger scrolls.', fingerToast: 'You can now write with your finger.',
+    aiFail: 'AI recognition failed: {msg} (note saved)', storageFull: 'Storage is full, so the note could not be saved. Export a backup in Settings and remove old notes.',
+    padWriteFirst: 'Write a search word first.', padNeedAi: 'Handwriting search needs AI. Set it up in Settings.',
+    padSearched: 'Searched for "{q}".', padUnreadable: 'Could not read that. Try writing larger.', padFail: 'Handwriting search failed: {msg}',
+    errKey: 'check your API key', errModel: 'check the model name', errQuota: 'rate limit reached, try again shortly',
+    errServer: 'Gemini server error', errParse: 'could not read the AI response', errNet: 'check your network connection',
+    aiTitle: 'AI handwriting recognition (optional)',
+    aiDesc: 'With a Gemini API key, your handwriting is read into hidden search words when you save. <b>Handwriting images are sent to Google.</b> Use your own key: it is stored only in this browser and sent only to Google, never to the outgrid server. Do not enter it on a shared or public computer.',
+    privacy: 'Privacy policy', gdConflict: 'The same note was changed on another device, so {n} note(s) were kept as copies.',
+    apiKey: 'API key', model: 'Model name', keyClear: 'Delete key', keyTest: 'Test connection',
+    testing: 'Checking {m}…', testOk: 'Connected ({m}). Press Save to use it.', testFail: 'Connection failed: {msg}',
+    needKey: 'Enter an API key first.', keyDeleted: 'Key deleted.', aiOn: 'AI handwriting recognition is on.', aiOff: 'AI handwriting recognition is off.',
+    writing: 'Writing', lineGap: 'Line spacing', pressureSetting: 'Pen pressure', pressureOff: 'Off', fingerSetting: 'Allow finger writing (off ignores palm touches)',
+    gdTitle: 'Google Drive sync', gdDesc: 'Saves your notes to a private app folder in your Google Drive so your devices stay in step. Only cronota can read that folder, and your notes also stay on this device.', gdClient: 'OAuth client ID', gdRedirect: 'Authorized redirect URI:', gdConnect: 'Connect Google', gdSyncNow: 'Sync now', gdDisconnect: 'Disconnect', gdNeedHttps: 'Connecting only works when the page is served from an https address. It is open as a local file now.', gdNeedClient: 'Enter the OAuth client ID first.', gdOff: 'Not connected.', gdOn: 'Connected · last synced {time}', gdOnNever: 'Connected · not synced yet', gdExpired: 'Sign-in expired. Tap Sync now to sign in again.', gdSyncing: 'Syncing…', gdDone: 'Synced with Drive.', gdFail: 'Sync failed: {msg}', gdDenied: 'Google sign-in was cancelled.', gdConnected: 'Connected to Google Drive.', gdDisconnected: 'Disconnected from Google Drive. Your notes stay on this device.',
+    data: 'Data', dataDesc: 'Notes are stored in this browser. Clearing browser data deletes them, so back up now and then.',
+    export: 'Export backup', import: 'Import backup',
+    imported: 'Imported {n} notes.', importFail: 'Could not read the backup file.',
+    helpSymbols: 'Symbols', helpSymbolsIntro: 'Draw a symbol left of the red line and write to the right; notes are sorted by symbol.',
+    insert: 'Insert',
+    symDesc: { todo: 'Something to do · can be marked done', fact: 'Facts and information', ref: 'References, sources, links', idea: 'Ideas and quick memos', decision: 'Decisions and conclusions', none: 'Write without a symbol for a plain note' },
+    helpTips: 'How to write',
+    tips: [
+      'Writing on the very next line continues the same note. Leave one blank line to start a new note; without a symbol it is saved as a plain "Note".',
+      'Notes written in red ink are marked important.',
+      'Highlighter goes under your ink and does not affect sorting.',
+      'Pen button dark = pen only (palm ignored, finger scrolls). Faded = finger can write.',
+      'The canvas is split into screen-sized pages. Pick sideways or up-and-down paging in the toolbar; swipe with a finger in pen-only mode, or use the arrows at the bottom right.',
+      'Tap a note to change its type, mark it done, edit search words or delete it.',
+      'Shortcuts: Ctrl+Z undo · Ctrl+Shift+Z redo · Ctrl+Enter save · E eraser'
+    ],
+    tags: { todo: 'To-do', fact: 'Info', ref: 'Reference', idea: 'Memo', decision: 'Decision', none: 'Note' }
+  },
+  ja: {
+    locale: 'ja-JP', code: '日',
+    searchPh: 'ノートを検索', clearSearch: '検索をクリア', handSearch: '手書きで検索',
+    padNote: 'ペンで検索語を書いてください', padNoteNoAi: '設定でAI接続が必要 · 下のキーワードはすぐ検索できます',
+    clear: '消去', search: '検索', kwTop: 'よく使うキーワード', kwNone: 'キーワードがここに表示されます',
+    language: '言語', help: 'ヘルプ', settings: '設定', close: '閉じる',
+    pageModeH: '横にページ移動', pageModeV: '縦にページ移動', prevPage: '前のページ', nextPage: '次のページ', saveTitleN: 'ノート{n}件に分けて保存 (Ctrl+Enter)',
+    tabWrite: '書く', tabNotes: 'ノート',
+    pens: ['黒', '赤(重要)', '青', '緑'],
+    hls: ['蛍光ペン 黄', '蛍光ペン オレンジ', '蛍光ペン 水色', '蛍光ペン グレー'],
+    widths: ['細いペン', '普通のペン', '太いペン'],
+    eraser: '消しゴム (E)', undo: '元に戻す (Ctrl+Z)', redo: 'やり直す (Ctrl+Shift+Z)', clearCanvas: 'キャンバスを消去',
+    penOnlyOn: 'ペン専用(手のひらを無視)· 押すと指でも書けます', penOnlyOff: '指でも書けます · 押すとペン専用',
+    save: '保存', splitView: '左右に並べて表示', reedit: '書き直す', saveEdit: '更新', cancelEdit: 'キャンセル', saveFirst: '先に書く画面を保存するか消去してください。', updated: 'ノートを更新しました。', saving: '保存中…', saveN: 'ノート{n}件を保存', saveTitle: '保存 (Ctrl+Enter)',
+    sortNew: '新しい順', sortOld: '古い順', all: 'すべて',
+    results: '「{q}」の検索結果 {n}件',
+    emptyNone: 'まだノートがありません', emptyNoneSub: 'キャンバスに書いてみましょう。',
+    emptySearch: '検索結果がありません', emptySearchSub: '別の言葉で探すか「すべて」を押してください。',
+    emptyFilter: 'この分類のノートはありません',
+    today: '今日', yesterday: '昨日',
+    changeTag: '種類を変更', doneLabel: ['完了にする', '完了'], editKw: '検索語を編集', editPh: 'このノートを探すための言葉', del: '削除',
+    deleted: 'ノートを削除しました。', undoBtn: '元に戻す', cleared: 'キャンバスを消去しました。',
+    saved: 'ノート{n}件を保存: {list}', writeFirst: 'まずキャンバスに書いてください。',
+    palm: 'ペン専用モードです。指で書くにはツールバーのペンボタンを押してください。',
+    penOnlyToast: 'ペン専用: 手のひらは無視し、指ではスクロールします。', fingerToast: '指でも書けるようになりました。',
+    aiFail: 'AI認識に失敗: {msg}(ノートは保存済み)', storageFull: '保存容量が足りず保存できませんでした。設定でバックアップを書き出し、古いノートを整理してください。',
+    padWriteFirst: 'まず検索語を書いてください。', padNeedAi: '手書き検索は設定でAIを接続すると使えます。',
+    padSearched: '「{q}」で検索しました。', padUnreadable: '読み取れませんでした。もう少し大きく書いてください。', padFail: '手書き検索に失敗: {msg}',
+    errKey: 'APIキーを確認してください', errModel: 'モデル名を確認してください', errQuota: 'リクエスト上限です。少し待って再試行してください',
+    errServer: 'Geminiサーバーエラー', errParse: 'AIの応答を読めませんでした', errNet: 'ネットワーク接続を確認してください',
+    aiTitle: 'AI手書き認識(任意)',
+    aiDesc: 'Gemini APIキーを入れると、保存時に手書きを文字に変換して隠れた検索語を付けます。<b>手書き画像はGoogleに送信されます。</b>キーは各自で発行して入力します。このブラウザにのみ保存され、Googleにだけ直接送信されます(outgridのサーバーには送られません)。共用PCや他の人と使う端末では入力しないでください。',
+    privacy: 'プライバシーポリシー', gdConflict: '同じノートが別の端末でも変更されたため、{n}件をコピーとして残しました。',
+    apiKey: 'APIキー', model: 'モデル名', keyClear: 'キーを削除', keyTest: '接続テスト',
+    testing: '{m} に接続中…', testOk: '接続成功({m})。保存を押すと適用されます。', testFail: '接続失敗: {msg}',
+    needKey: '先にAPIキーを入力してください。', keyDeleted: 'キーを削除しました。', aiOn: 'AI手書き認識をオンにしました。', aiOff: 'AI手書き認識をオフにしました。',
+    writing: '手書き', lineGap: '行間', pressureSetting: '筆圧感度', pressureOff: 'オフ', fingerSetting: '指でも書く(オフで手のひらを無視)',
+    gdTitle: 'Googleドライブ同期', gdDesc: 'Googleドライブのアプリ専用フォルダにノートを保存し、他の端末と同期します。このフォルダはcronotaだけが読み書きでき、ノートはこの端末にも残ります。', gdClient: 'OAuthクライアントID', gdRedirect: '承認済みのリダイレクトURI:', gdConnect: 'Googleに接続', gdSyncNow: '今すぐ同期', gdDisconnect: '接続を解除', gdNeedHttps: 'https のアドレスで公開したページでのみ接続できます。今はファイルとして開かれています。', gdNeedClient: '先にOAuthクライアントIDを入力してください。', gdOff: '接続されていません。', gdOn: '接続済み · 最終同期 {time}', gdOnNever: '接続済み · まだ同期していません', gdExpired: 'ログインの期限が切れました。「今すぐ同期」で再ログインします。', gdSyncing: '同期中…', gdDone: 'ドライブと同期しました。', gdFail: '同期に失敗しました: {msg}', gdDenied: 'Googleログインがキャンセルされました。', gdConnected: 'Googleドライブに接続しました。', gdDisconnected: 'Googleドライブとの接続を解除しました。ノートはこの端末に残っています。',
+    data: 'データ', dataDesc: 'ノートはこのブラウザに保存されます。ブラウザのデータを消すと一緒に消えるので、時々バックアップしてください。',
+    export: 'バックアップを書き出す', import: 'バックアップを読み込む',
+    imported: 'ノート{n}件を読み込みました。', importFail: 'バックアップファイルを読めませんでした。',
+    helpSymbols: '記号', helpSymbolsIntro: '赤い線の左に記号を書き、右に内容を書くと記号ごとに自動で分類されます。',
+    insert: '入れる',
+    symDesc: { todo: 'やること · 完了にできます', fact: '事実、わかった情報', ref: '参考資料、出典、リンク', idea: '思いつき、短いメモ', decision: '決めたこと、結論', none: '記号なしで書くと普通のノート' },
+    helpTips: '書き方',
+    tips: [
+      'すぐ下の行に続けて書くと同じノートです。1行空けると新しいノートになり、記号がなければ「ノート」として保存されます。',
+      '赤ペンで書いたノートは「重要」になります。',
+      '蛍光ペンは文字の下に塗られ、分類には影響しません。',
+      'ペンボタンが濃いとペン専用(手のひら無視、指でスクロール)、薄いと指でも書けます。',
+      'キャンバスは画面サイズのページに分かれます。ツールバーの横/縦ページボタンでめくる方向を選び、ペン専用のときは指でスワイプ、それ以外は右下の矢印でめくります。',
+      'ノートを押すと種類の変更、完了、検索語の編集、削除ができます。',
+      'ショートカット: Ctrl+Z 元に戻す · Ctrl+Shift+Z やり直す · Ctrl+Enter 保存 · E 消しゴム'
+    ],
+    tags: { todo: 'やること', fact: '情報', ref: '参考', idea: 'メモ', decision: '決定', none: 'ノート' }
+  },
+  zh: {
+    locale: 'zh-CN', code: '中',
+    searchPh: '搜索笔记', clearSearch: '清除搜索', handSearch: '手写搜索',
+    padNote: '用笔写下搜索词', padNoteNoAi: '需在设置中连接 AI · 下方关键词可直接搜索',
+    clear: '清除', search: '搜索', kwTop: '常用关键词', kwNone: '关键词会显示在这里',
+    language: '语言', help: '帮助', settings: '设置', close: '关闭',
+    pageModeH: '横向翻页', pageModeV: '纵向翻页', prevPage: '上一页', nextPage: '下一页', saveTitleN: '分成 {n} 条笔记保存 (Ctrl+Enter)',
+    tabWrite: '书写', tabNotes: '笔记',
+    pens: ['黑色', '红色(重要)', '蓝色', '绿色'],
+    hls: ['荧光笔 黄色', '荧光笔 橙色', '荧光笔 天蓝', '荧光笔 灰色'],
+    widths: ['细笔', '中笔', '粗笔'],
+    eraser: '橡皮擦 (E)', undo: '撤销 (Ctrl+Z)', redo: '重做 (Ctrl+Shift+Z)', clearCanvas: '清空画布',
+    penOnlyOn: '仅限笔(忽略手掌)· 点击后手指也能写', penOnlyOff: '手指也能书写 · 点击切换为仅限笔',
+    save: '保存', splitView: '并排显示', reedit: '重新编辑', saveEdit: '更新', cancelEdit: '取消', saveFirst: '请先保存或清空书写页。', updated: '已更新笔记。', saving: '保存中…', saveN: '保存 {n} 条笔记', saveTitle: '保存 (Ctrl+Enter)',
+    sortNew: '最新', sortOld: '最早', all: '全部',
+    results: '“{q}”的搜索结果 {n} 条',
+    emptyNone: '还没有笔记', emptyNoneSub: '在画布上写点什么吧。',
+    emptySearch: '没有搜索结果', emptySearchSub: '换个词试试,或点击“全部”。',
+    emptyFilter: '此分类下没有笔记',
+    today: '今天', yesterday: '昨天',
+    changeTag: '更改类型', doneLabel: ['标记完成', '已完成'], editKw: '编辑搜索词', editPh: '用于查找此笔记的词', del: '删除',
+    deleted: '已删除笔记。', undoBtn: '撤销', cleared: '已清空画布。',
+    saved: '已保存 {n} 条笔记:{list}', writeFirst: '请先在画布上书写。',
+    palm: '当前为仅限笔模式。要用手指书写,请点击工具栏中的笔按钮。',
+    penOnlyToast: '仅限笔:忽略手掌触碰,手指用于滚动。', fingerToast: '现在可以用手指书写了。',
+    aiFail: 'AI 识别失败:{msg}(笔记已保存)', storageFull: '存储空间不足,未能保存笔记。请在设置中导出备份并清理旧笔记。',
+    padWriteFirst: '请先写下搜索词。', padNeedAi: '手写搜索需要在设置中连接 AI。',
+    padSearched: '已搜索“{q}”。', padUnreadable: '无法识别,请写大一点。', padFail: '手写搜索失败:{msg}',
+    errKey: '请检查 API 密钥', errModel: '请检查模型名称', errQuota: '已达请求上限,请稍后再试',
+    errServer: 'Gemini 服务器错误', errParse: '无法读取 AI 响应', errNet: '请检查网络连接',
+    aiTitle: 'AI 手写识别(可选)',
+    aiDesc: '填入 Gemini API 密钥后,保存时会把手写内容识别为隐藏的搜索词。<b>手写图片会发送给 Google。</b>请使用自己的密钥:它只保存在此浏览器中,只直接发送给 Google,不会发送到 outgrid 的服务器。请勿在公用电脑或与他人共用的设备上填写。',
+    privacy: '隐私政策', gdConflict: '同一笔记也在其他设备上被修改,已将 {n} 条保留为副本。',
+    apiKey: 'API 密钥', model: '模型名称', keyClear: '删除密钥', keyTest: '测试连接',
+    testing: '正在检查 {m}…', testOk: '连接成功({m})。点击保存后生效。', testFail: '连接失败:{msg}',
+    needKey: '请先填入 API 密钥。', keyDeleted: '已删除密钥。', aiOn: '已开启 AI 手写识别。', aiOff: '已关闭 AI 手写识别。',
+    writing: '书写', lineGap: '行距', pressureSetting: '压感灵敏度', pressureOff: '关', fingerSetting: '允许手指书写(关闭时忽略手掌)',
+    gdTitle: 'Google 云端硬盘同步', gdDesc: '把笔记保存到 Google 云端硬盘的应用专用文件夹,让各设备保持一致。只有 cronota 能读写该文件夹,笔记也会保留在本设备上。', gdClient: 'OAuth 客户端 ID', gdRedirect: '已获授权的重定向 URI:', gdConnect: '连接 Google', gdSyncNow: '立即同步', gdDisconnect: '断开连接', gdNeedHttps: '只有通过 https 地址打开页面时才能连接。现在是以本地文件打开的。', gdNeedClient: '请先填写 OAuth 客户端 ID。', gdOff: '未连接。', gdOn: '已连接 · 上次同步 {time}', gdOnNever: '已连接 · 尚未同步', gdExpired: '登录已过期。点“立即同步”重新登录。', gdSyncing: '同步中…', gdDone: '已与云端硬盘同步。', gdFail: '同步失败:{msg}', gdDenied: '已取消 Google 登录。', gdConnected: '已连接 Google 云端硬盘。', gdDisconnected: '已断开 Google 云端硬盘。笔记仍保留在本设备上。',
+    data: '数据', dataDesc: '笔记保存在此浏览器中。清除浏览器数据会一并删除,请不时备份。',
+    export: '导出备份', import: '导入备份',
+    imported: '已导入 {n} 条笔记。', importFail: '无法读取备份文件。',
+    helpSymbols: '符号', helpSymbolsIntro: '在红线左侧画符号,右侧书写内容,笔记会按符号自动分类。',
+    insert: '插入',
+    symDesc: { todo: '待办事项 · 可标记完成', fact: '事实、获得的信息', ref: '参考资料、出处、链接', idea: '想法、简短备忘', decision: '决定、结论', none: '不画符号即为普通笔记' },
+    helpTips: '书写方法',
+    tips: [
+      '紧接着在下一行书写会接在同一条笔记中;空一行即开始新笔记,没有符号时保存为“笔记”。',
+      '用红笔写的笔记会标记为“重要”。',
+      '荧光笔涂在文字下方,不影响分类。',
+      '笔按钮深色 = 仅限笔(忽略手掌,手指滚动);浅色 = 手指也能写。',
+      '画布按屏幕大小分页。在工具栏选择横向或纵向翻页;仅限笔模式下用手指滑动,否则用右下角的箭头翻页。',
+      '点击笔记可更改类型、标记完成、编辑搜索词或删除。',
+      '快捷键:Ctrl+Z 撤销 · Ctrl+Shift+Z 重做 · Ctrl+Enter 保存 · E 橡皮擦'
+    ],
+    tags: { todo: '待办', fact: '信息', ref: '参考', idea: '备忘', decision: '决定', none: '笔记' }
+  }
+};
+let lang = (() => {
+  try { const s = localStorage.getItem('cronota_lang'); if (I18N[s]) return s; } catch {}
+  const n = (navigator.language || 'ko').slice(0, 2).toLowerCase();
+  return I18N[n] ? n : 'ko';
+})();
+function t(key, params) {
+  let v = I18N[lang][key] ?? I18N.ko[key] ?? key;
+  if (params && typeof v === 'string') v = v.replace(/\{(\w+)\}/g, (_, k) => (params[k] ?? ''));
+  return v;
+}
+
+/* =========================================================
+   Constants
+   ========================================================= */
+const MARGIN_X = 60;
+const HIGH_COLOR = '#DC2626';
+const TAGS = {
+  todo:     { symbol: '□', color: '#2F6A8C', canDone: true },
+  fact:     { symbol: '○', color: '#2E6B4A' },
+  ref:      { symbol: '△', color: '#6E5390' },
+  idea:     { symbol: '+', color: '#9A6232' },
+  decision: { symbol: '◇', color: '#B0413E' },
+  none:     { symbol: '',  color: '#5E665F' }
+};
+const TAG_KEYS = Object.keys(TAGS);
+const SYMBOL_KEYS = TAG_KEYS.filter((k) => TAGS[k].symbol);
+const tagLabel = (k) => t('tags')[k];
+const tagName = (k) => (TAGS[k].symbol ? TAGS[k].symbol + ' ' : '') + tagLabel(k);
+
+const PEN_COLORS = ['#1E293B', HIGH_COLOR, '#2563EB', '#16A34A'];
+const HL_COLORS = ['#FACC15', '#FB923C', '#38BDF8', '#9CA3AF'];
+const HL_ALPHA = 0.38;
+const PEN_WIDTHS = [{ w: 1.6 }, { w: 2.8 }, { w: 5.0 }];
+const DEFAULT_MODEL = 'gemini-3.5-flash-lite';
+
+const ICONS = {
+  search: '<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>',
+  pen: '<path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/>',
+  penTip: '<path d="m12 19 7-7 3 3-7 7-3-3Z"/><path d="m18 13-1.5-7.5L2 2l3.5 14.5L13 18l5-5Z"/><path d="m2 2 7.586 7.586"/><circle cx="11" cy="11" r="2"/>',
+  x: '<path d="M18 6 6 18M6 6l12 12"/>',
+  cloud: '<path d="M7 18.5h10.5a4 4 0 0 0 .6-7.95A6 6 0 0 0 6.6 9.2 4.65 4.65 0 0 0 7 18.5Z"/>',
+  columns: '<rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><path d="M12 4.5v15"/>',
+  sliders: '<path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/>',
+  help: '<circle cx="12" cy="12" r="9"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><path d="M12 17h.01"/>',
+  globe: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a14 14 0 0 1 0 18a14 14 0 0 1 0-18"/>',
+  eraser: '<path d="m7 21-4.3-4.3a1 1 0 0 1 0-1.4l10-10a1 1 0 0 1 1.4 0l5.6 5.6a1 1 0 0 1 0 1.4L13 19"/><path d="M22 21H7"/><path d="m5 11 9 9"/>',
+  undo: '<path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/>',
+  redo: '<path d="m15 14 5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/>',
+  trash: '<path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>',
+  check: '<path d="M20 6 9 17l-5-5"/>',
+  circle: '<circle cx="12" cy="12" r="8"/>',
+  sort: '<path d="m3 16 4 4 4-4"/><path d="M7 20V4"/><path d="m21 8-4-4-4 4"/><path d="M17 4v16"/>',
+  type: '<path d="M4 7V4h16v3"/><path d="M9 20h6"/><path d="M12 4v16"/>',
+  chevron: '<path d="m6 9 6 6 6-6"/>',
+  chevUp: '<path d="m18 15-6-6-6 6"/>',
+  chevLeft: '<path d="m15 18-6-6 6-6"/>',
+  chevRight: '<path d="m9 18 6-6-6-6"/>',
+  pagesH: '<rect x="2.5" y="5" width="8.5" height="14" rx="1.5"/><rect x="13" y="5" width="8.5" height="14" rx="1.5"/>',
+  pagesV: '<rect x="5" y="2.5" width="14" height="8.5" rx="1.5"/><rect x="5" y="13" width="14" height="8.5" rx="1.5"/>'
+};
+function icon(name, cls = '') {
+  return `<svg class="i ${cls}" viewBox="0 0 24 24" aria-hidden="true">${ICONS[name] || ''}</svg>`;
+}
+
+/* =========================================================
+   Small helpers
+   ========================================================= */
+const $ = (s) => document.querySelector(s);
+function lsGet(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : v; } catch { return d; } }
+function lsSet(k, v) { try { localStorage.setItem(k, v); return true; } catch { return false; } }
+function lsDel(k) { try { localStorage.removeItem(k); } catch {} }
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, (m) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
+}
+function uid() { return 'n_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 7); }
+function toStr(v) { if (v == null) return ''; return (typeof v === 'string' ? v : String(v)).slice(0, 1000); }
+function toKeywords(v) {
+  if (!Array.isArray(v)) return [];
+  const out = v.filter((k) => typeof k === 'string' || typeof k === 'number')
+    .map((k) => String(k).trim().replace(/^#/, '').slice(0, 40)).filter(Boolean);
+  return [...new Set(out)].slice(0, 12);
+}
+function getBox(pts) {
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  for (const p of pts) {
+    if (p.x < minX) minX = p.x; if (p.y < minY) minY = p.y;
+    if (p.x > maxX) maxX = p.x; if (p.y > maxY) maxY = p.y;
+  }
+  return { minX, minY, maxX, maxY, w: maxX - minX, h: maxY - minY };
+}
+function strokesBox(list) { return getBox(list.flatMap((s) => s.points)); }
+
+/* =========================================================
+   Toast (with optional action, e.g. undo)
+   ========================================================= */
+let toastTimer = null;
+function toast(msg, action) {
+  const el = $('#toast');
+  el.replaceChildren();
+  const span = document.createElement('span');
+  span.textContent = msg;
+  el.append(span);
+  if (action) {
+    const b = document.createElement('button');
+    b.textContent = action.label;
+    b.addEventListener('click', () => { hideToast(); action.run(); });
+    el.append(b);
+  }
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(hideToast, action ? 6000 : 3000);
+}
+function hideToast() { $('#toast').classList.remove('show'); }
+
+/* =========================================================
+   Preferences
+   ========================================================= */
+const prefs = {
+  gap: Math.min(56, Math.max(24, parseInt(lsGet('cronota_line_gap', '32'), 10) || 32)),
+  penOnly: lsGet('cronota_pen_only', '1') === '1',
+  sortDesc: lsGet('cronota_sort', 'desc') !== 'asc',
+  pageMode: lsGet('cronota_page_mode', 'v') === 'h' ? 'h' : 'v',
+  pressure: (() => { const v = parseInt(lsGet('cronota_pressure', '100'), 10); return Number.isFinite(v) ? Math.min(100, Math.max(0, v)) : 100; })(),
+  key: lsGet('cronota_gemini_key', ''),
+  model: lsGet('cronota_gemini_model', DEFAULT_MODEL) || DEFAULT_MODEL
+};
+
+/* =========================================================
+   Storage: IndexedDB, with localStorage as a fallback
+   ========================================================= */
+const idb = (() => {
+  let dbp = null;
+  function open() {
+    if (!dbp) {
+      dbp = new Promise((resolve, reject) => {
+        if (!('indexedDB' in window)) { reject(new Error('no IndexedDB')); return; }
+        const req = indexedDB.open('cronota', 1);
+        req.onupgradeneeded = () => req.result.createObjectStore('kv');
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+      });
+    }
+    return dbp;
+  }
+  async function get(key) {
+    const db = await open();
+    return new Promise((resolve, reject) => {
+      const r = db.transaction('kv', 'readonly').objectStore('kv').get(key);
+      r.onsuccess = () => resolve(r.result);
+      r.onerror = () => reject(r.error);
+    });
+  }
+  async function set(key, value) {
+    const db = await open();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction('kv', 'readwrite');
+      tx.objectStore('kv').put(value, key);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+      tx.onabort = () => reject(tx.error || new Error('aborted'));
+    });
+  }
+  return { get, set };
+})();
+
+function sanitizeStroke(s) {
+  if (!s || !Array.isArray(s.points)) return null;
+  const points = s.points
+    .filter((p) => p && Number.isFinite(+p.x) && Number.isFinite(+p.y))
+    .map((p) => ({ x: Math.round(+p.x * 10) / 10, y: Math.round(+p.y * 10) / 10, p: Number.isFinite(+p.p) ? Math.round(+p.p * 100) / 100 : 0.5 }));
+  if (!points.length) return null;
+  const out = {
+    color: /^#[0-9a-fA-F]{3,8}$/.test(s.color) ? s.color : '#1E293B',
+    width: Math.min(40, Math.max(0.5, +s.width || 2.8)),
+    points
+  };
+  if (s.hl) out.hl = true;
+  return out;
+}
+function migrateTag(b) {
+  if (b.tagType === 'question') return 'ref';                         // △ now means 참고
+  if (b.tagSource === 'auto' && b.tagType === 'idea') return 'none';  // saved without a symbol
+  return TAGS[b.tagType] ? b.tagType : 'none';
+}
+function sanitizeBlock(b) {
+  if (!b || typeof b !== 'object') return null;
+  const strokes = Array.isArray(b.strokes) ? b.strokes.map(sanitizeStroke).filter(Boolean) : [];
+  if (!strokes.length) return null;
+  return {
+    id: typeof b.id === 'string' && b.id ? b.id.slice(0, 80) : uid(),
+    tagType: migrateTag(b),
+    tagSource: ['symbol', 'auto', 'ai', 'user'].includes(b.tagSource) ? b.tagSource : 'symbol',
+    status: b.status === 'done' ? 'done' : 'open',
+    priority: b.priority === 'high' ? 'high' : 'normal',
+    createdAt: Number.isFinite(Date.parse(b.createdAt)) ? new Date(b.createdAt).toISOString() : new Date().toISOString(),
+    updatedAt: Number.isFinite(Date.parse(b.updatedAt)) ? new Date(b.updatedAt).toISOString()
+      : Number.isFinite(Date.parse(b.createdAt)) ? new Date(b.createdAt).toISOString() : new Date().toISOString(),
+    text: toStr(b.text ?? b.ocrText).trim(),
+    keywords: toKeywords(b.keywords),
+    gap: Math.min(56, Math.max(20, +b.gap || 32)),
+    ...(Number.isInteger(b.pos) && b.pos >= 0 ? { pos: Math.min(b.pos, 999) } : {}),
+    strokes
+  };
+}
+
+let blocks = [];
+let storageWarned = false;
+
+async function loadBlocks() {
+  let fromIdb = null, fromLs = null;
+  try { fromIdb = await idb.get('notes'); } catch {}
+  try {
+    const raw = localStorage.getItem('cronota_notes');
+    if (raw) fromLs = JSON.parse(raw);
+  } catch {}
+  let chosen = null;
+  if (fromIdb && fromLs) chosen = (fromLs.savedAt || 0) > (fromIdb.savedAt || 0) ? fromLs : fromIdb;
+  else chosen = fromIdb || fromLs;
+  let list = chosen && Array.isArray(chosen.blocks) ? chosen.blocks : null;
+  if (!list) {
+    try {
+      const old = localStorage.getItem('shadowink_blocks_v1'); // first prototype
+      if (old) list = JSON.parse(old);
+    } catch {}
+  }
+  if (!Array.isArray(list)) list = [];
+  blocks = list.map(sanitizeBlock).filter(Boolean);
+  tombs = sanitizeTombs(chosen && chosen.deleted);
+  sigs = new Map(blocks.map((b) => [b.id, blockSig(b)]));
+  if (!chosen) persist();
+}
+
+/* Change tracking for sync: every note carries updatedAt, deleted notes leave a
+   tombstone (id -> time) so a deletion on one device also reaches the others. */
+let tombs = {};
+let sigs = new Map();
+function blockSig(b) {
+  const pts = b.strokes.reduce((n, s) => n + s.points.length, 0);
+  const last = b.strokes.length ? b.strokes[b.strokes.length - 1].points.slice(-1)[0] : null;
+  return JSON.stringify([b.tagType, b.tagSource, b.status, b.priority, b.text, b.keywords, b.gap, b.createdAt, b.strokes.length, pts, last && last.x, last && last.y]);
+}
+function sanitizeTombs(o) {
+  const out = {};
+  const cutoff = Date.now() - 180 * 864e5;
+  if (o && typeof o === 'object') for (const [id, ts] of Object.entries(o)) if (typeof id === 'string' && +ts > cutoff) out[id.slice(0, 80)] = +ts;
+  return out;
+}
+function trackChanges() {
+  const now = Date.now();
+  const seen = new Set();
+  for (const b of blocks) {
+    seen.add(b.id);
+    const sig = blockSig(b);
+    if (sigs.get(b.id) === sig) continue;
+    if (sigs.has(b.id) || tombs[b.id] || !b.updatedAt) b.updatedAt = new Date(now).toISOString();
+    delete tombs[b.id];
+    sigs.set(b.id, sig);
+  }
+  for (const id of [...sigs.keys()]) if (!seen.has(id)) { sigs.delete(id); tombs[id] = now; }
+}
+
+let saveChain = Promise.resolve();
+function persist(fromSync = false) {
+  trackChanges();
+  if (!fromSync) gdSchedule();
+  const payload = { savedAt: Date.now(), blocks: blocks.map((b) => ({ ...b })), deleted: { ...tombs } };
+  saveChain = saveChain.then(async () => {
+    try {
+      await idb.set('notes', payload);
+      lsDel('cronota_notes');
+    } catch (e) {
+      if (!lsSet('cronota_notes', JSON.stringify(payload))) {
+        if (!storageWarned) { storageWarned = true; toast(t('storageFull')); }
+        return;
+      }
+    }
+    storageWarned = false;
+  });
+  return saveChain;
+}
+
+/* =========================================================
+   Stroke rendering (highlighter strokes go under the ink)
+   ========================================================= */
+/* Pressure → width. Pressure 0.5 draws the nominal width; the sensitivity setting
+   (0–100) sets how far light/heavy pressure moves away from it (up to ~×0.25 … ×4). */
+function pressureFactor(p) {
+  const sens = prefs.pressure / 100;
+  if (sens <= 0) return 1;
+  const q = Math.min(1, Math.max(0, ((p ?? 0.5) - 0.1) / 0.8));
+  const R = 1 + sens * 3;
+  return Math.pow(R, 2 * q - 1);
+}
+function lineWidthFor(base, p) { return Math.max(0.6, base * pressureFactor(p)); }
+function drawSegment(ctx, s, p0, p1, dx = 0, dy = 0) {
+  ctx.strokeStyle = s.color;
+  ctx.lineWidth = lineWidthFor(s.width, ((p0.p ?? 0.5) + (p1.p ?? 0.5)) / 2);
+  ctx.beginPath();
+  ctx.moveTo(p0.x + dx, p0.y + dy);
+  ctx.lineTo(p1.x + dx, p1.y + dy);
+  ctx.stroke();
+}
+function drawDot(ctx, s, p, dx = 0, dy = 0) {
+  ctx.fillStyle = s.color;
+  ctx.beginPath();
+  ctx.arc(p.x + dx, p.y + dy, lineWidthFor(s.width, p.p) / 2, 0, Math.PI * 2);
+  ctx.fill();
+}
+function drawHighlight(ctx, s, dx = 0, dy = 0) {
+  ctx.save();
+  ctx.globalAlpha = HL_ALPHA;
+  ctx.strokeStyle = s.color;
+  ctx.fillStyle = s.color;
+  ctx.lineWidth = s.width;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.beginPath();
+  if (s.points.length === 1) {
+    ctx.arc(s.points[0].x + dx, s.points[0].y + dy, s.width / 2, 0, Math.PI * 2);
+    ctx.fill();
+  } else {
+    ctx.moveTo(s.points[0].x + dx, s.points[0].y + dy);
+    for (let i = 1; i < s.points.length; i++) ctx.lineTo(s.points[i].x + dx, s.points[i].y + dy);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+function drawStrokes(ctx, list, dx = 0, dy = 0) {
+  for (const s of list) if (s.hl && s.points.length) drawHighlight(ctx, s, dx, dy);
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  for (const s of list) {
+    if (s.hl || !s.points.length) continue;
+    if (s.points.length === 1) { drawDot(ctx, s, s.points[0], dx, dy); continue; }
+    for (let i = 1; i < s.points.length; i++) drawSegment(ctx, s, s.points[i - 1], s.points[i], dx, dy);
+  }
+}
+function dprOf() { return Math.min(window.devicePixelRatio || 1, 2); }
+
+/** Render strokes tightly cropped on white, as base64 PNG (for AI). */
+function renderPng(list) {
+  const b = strokesBox(list);
+  const pad = 16;
+  const w = b.w + pad * 2, h = b.h + pad * 2;
+  const scale = Math.min(2, 1600 / w, 900 / h);
+  const c = document.createElement('canvas');
+  c.width = Math.max(64, Math.ceil(w * scale));
+  c.height = Math.max(64, Math.ceil(h * scale));
+  const x = c.getContext('2d');
+  x.fillStyle = '#FFFFFF';
+  x.fillRect(0, 0, c.width, c.height);
+  x.scale(scale, scale);
+  drawStrokes(x, list, pad - b.minX, pad - b.minY);
+  return c.toDataURL('image/png').split(',')[1];
+}
+
+/* =========================================================
+   Symbol classification & block splitting
+   Rule: symbols live in the left margin (left of the red line).
+   Each margin symbol starts a new note; text lines without a
+   symbol continue the note above. Highlights are ignored for
+   classification and attached to the note they cover.
+   ========================================================= */
+function classifySymbol(list) {
+  if (!list.length) return null;
+  const all = list.flatMap((s) => s.points);
+  const b = getBox(all);
+  const w = Math.max(1, b.w), h = Math.max(1, b.h);
+  if (w / h < 0.38 || h / w < 0.38) return null; // a line, not a symbol
+
+  const inCenter = all.filter((p) =>
+    p.x > b.minX + w * 0.28 && p.x < b.maxX - w * 0.28 &&
+    p.y > b.minY + h * 0.28 && p.y < b.maxY - h * 0.28).length;
+  const centerRatio = inCenter / all.length;
+  if (centerRatio > 0.12) return list.length === 2 ? 'idea' : null; // + (two crossing strokes)
+
+  // △: bottom much wider than top
+  const top = all.filter((p) => p.y < b.minY + h * 0.35);
+  const bot = all.filter((p) => p.y > b.minY + h * 0.65);
+  const span = (pts) => pts.length ? Math.max(...pts.map((p) => p.x)) - Math.min(...pts.map((p) => p.x)) : w;
+  if (span(bot) > 1.7 * Math.max(4, span(top))) return 'ref';
+
+  // □ / ○ / ◇: which outline fits best (square = L∞, circle = L2, diamond = L1)
+  const cx = (b.minX + b.maxX) / 2, cy = (b.minY + b.maxY) / 2;
+  let eSq = 0, eCi = 0, eDi = 0;
+  for (const p of all) {
+    const u = Math.abs((p.x - cx) / (w / 2)), v = Math.abs((p.y - cy) / (h / 2));
+    eSq += Math.abs(Math.max(u, v) - 1);
+    eCi += Math.abs(Math.hypot(u, v) - 1);
+    eDi += Math.abs(u + v - 1);
+  }
+  if (eSq <= eCi && eSq <= eDi) return 'todo';
+  return eDi < eCi ? 'decision' : 'fact';
+}
+
+function splitIntoBlocks(list, gap) {
+  const highlights = [];
+  const items = [];
+  for (const s of list) {
+    if (!s.points.length) continue;
+    if (s.hl) { highlights.push(s); continue; }
+    const b = getBox(s.points);
+    items.push({ s, b, cx: (b.minX + b.maxX) / 2, cy: (b.minY + b.maxY) / 2 });
+  }
+  const marginItems = items.filter((i) => i.cx < MARGIN_X).sort((a, b) => a.b.minY - b.b.minY);
+  const textItems = items.filter((i) => i.cx >= MARGIN_X);
+
+  const clusters = [];
+  for (const it of marginItems) {
+    const c = clusters[clusters.length - 1];
+    if (c && it.b.minY <= c.maxY + gap * 0.3) {
+      c.items.push(it);
+      c.minY = Math.min(c.minY, it.b.minY);
+      c.maxY = Math.max(c.maxY, it.b.maxY);
+    } else {
+      clusters.push({ items: [it], minY: it.b.minY, maxY: it.b.maxY });
+    }
+  }
+
+  const lines = new Map();
+  const lineOf = (i) => { if (!lines.has(i)) lines.set(i, { sym: [], text: [] }); return lines.get(i); };
+  for (const c of clusters) lineOf(Math.floor((c.minY + c.maxY) / 2 / gap)).sym.push(...c.items.map((i) => i.s));
+  for (const tItem of textItems) lineOf(Math.floor(tItem.cy / gap)).text.push(tItem.s);
+
+  const out = [];
+  let lastLine = -99;
+  for (const idx of [...lines.keys()].sort((a, b) => a - b)) {
+    const ln = lines.get(idx);
+    const tag = ln.sym.length ? classifySymbol(ln.sym) : null;
+    const lineStrokes = [...ln.sym, ...ln.text];
+    if (tag) {
+      out.push({ tagType: tag, strokes: lineStrokes, first: idx, last: idx });
+    } else if (out.length && idx - lastLine === 1) {
+      const prev = out[out.length - 1];
+      prev.strokes.push(...lineStrokes); // continuation line
+      prev.last = idx;
+    } else {
+      out.push({ tagType: null, strokes: lineStrokes, first: idx, last: idx }); // after a blank line, no symbol -> new plain note
+    }
+    lastLine = idx;
+  }
+
+  // Attach each highlight to the note whose lines it covers (or the nearest one)
+  for (const h of highlights) {
+    const b = getBox(h.points);
+    const line = Math.floor((b.minY + b.maxY) / 2 / gap);
+    if (!out.length) { out.push({ tagType: null, strokes: [h], first: line, last: line }); continue; }
+    let best = out[0], bestD = Infinity;
+    for (const o of out) {
+      const d = line < o.first ? o.first - line : line > o.last ? line - o.last : 0;
+      if (d < bestD) { bestD = d; best = o; }
+    }
+    best.strokes.unshift(h);
+  }
+  return out;
+}
+
+/* =========================================================
+   Writing canvas, divided into screen-sized pages.
+   Strokes keep logical coordinates with pages stacked top to
+   bottom (page k covers y = k*pageH ... (k+1)*pageH). In sideways
+   mode the same pages are only laid out next to each other.
+   ========================================================= */
+const ink = $('#ink');
+const ictx = ink.getContext('2d');
+const scroller = $('#canvasScroll');
+let strokes = [];          // never mutated in place except the stroke being drawn
+let undoStack = [], redoStack = [];
+const tool = { mode: 'pen', penColor: PEN_COLORS[0], hlColor: HL_COLORS[0], width: PEN_WIDTHS[1].w };
+let active = null;         // { id, erase, stroke, before, page }
+let touchNav = null;
+let palmNoticeShown = false;
+let pageW = 0, pageH = 0, pageCount = 1, curPage = 0;
+let redrawQueued = false;
+const horizontal = () => prefs.pageMode === 'h';
+
+function pageOfY(y) { return pageH ? Math.max(0, Math.floor(y / pageH)) : 0; }
+function strokePage(s) { return pageOfY(s.points[0].y); }
+function lastContentPage() {
+  let m = -1;
+  for (const s of strokes) for (const p of s.points) { const k = pageOfY(p.y); if (k > m) m = k; }
+  return m;
+}
+function pageOffset(k) { return horizontal() ? { dx: k * pageW, dy: -k * pageH } : { dx: 0, dy: 0 }; }
+
+function layoutPages(force = false) {
+  const w = scroller.clientWidth, hRaw = scroller.clientHeight;
+  if (!w || !hRaw) return;
+  const g = prefs.gap;
+  const h = Math.max(g * 4, Math.floor(hRaw / g) * g);
+  const sizeChanged = w !== pageW || h !== pageH;
+  pageW = w; pageH = h;
+  const count = Math.max(1, lastContentPage() + 2); // always one blank page after the last written one
+  if (!force && !sizeChanged && count === pageCount) return;
+  pageCount = count;
+  const cw = horizontal() ? w * count : w;
+  const ch = horizontal() ? h : h * count;
+  const dpr = dprOf();
+  ink.width = Math.round(cw * dpr);
+  ink.height = Math.round(ch * dpr);
+  ink.style.width = cw + 'px';
+  ink.style.height = ch + 'px';
+  ink.style.setProperty('--page-w', w + 'px');
+  ictx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  $('#pageSnaps').innerHTML = Array.from({ length: count }, (_, k) => horizontal()
+    ? `<i style="left:${k * w}px;top:0;width:${w}px;height:${h}px"></i>`
+    : `<i style="left:0;top:${k * h}px;width:${w}px;height:${h}px"></i>`).join('');
+  redraw();
+  if (curPage > count - 1) curPage = count - 1;
+  if (sizeChanged || force) goToPage(curPage, false);
+  updatePageNav();
+}
+function sizeInk() { layoutPages(); }
+
+function redraw() {
+  const cw = horizontal() ? pageW * pageCount : pageW;
+  const ch = horizontal() ? pageH : pageH * pageCount;
+  ictx.clearRect(0, 0, cw, ch);
+  // page breaks
+  ictx.save();
+  ictx.strokeStyle = '#D6CBB4';
+  ictx.lineWidth = 1;
+  ictx.setLineDash([6, 5]);
+  for (let k = 1; k < pageCount; k++) {
+    ictx.beginPath();
+    if (horizontal()) { ictx.moveTo(k * pageW + 0.5, 0); ictx.lineTo(k * pageW + 0.5, ch); }
+    else { ictx.moveTo(0, k * pageH + 0.5); ictx.lineTo(cw, k * pageH + 0.5); }
+    ictx.stroke();
+  }
+  ictx.restore();
+  if (!horizontal()) { drawStrokes(ictx, strokes); return; }
+  const byPage = new Map();
+  for (const s of strokes) {
+    if (!s.points.length) continue;
+    const k = strokePage(s);
+    if (!byPage.has(k)) byPage.set(k, []);
+    byPage.get(k).push(s);
+  }
+  for (const [k, list] of byPage) { const o = pageOffset(k); drawStrokes(ictx, list, o.dx, o.dy); }
+}
+function queueRedraw() {
+  if (redrawQueued) return;
+  redrawQueued = true;
+  requestAnimationFrame(() => { redrawQueued = false; redraw(); });
+}
+function hlWidth() { return Math.round(prefs.gap * 0.55); }
+
+/** Page under the pointer, from screen position. */
+function pageAt(e) {
+  const r = ink.getBoundingClientRect();
+  const k = horizontal() ? Math.floor((e.clientX - r.left) / pageW) : Math.floor((e.clientY - r.top) / pageH);
+  return Math.min(pageCount - 1, Math.max(0, k));
+}
+/** Logical point for a pointer event on page k, kept inside that page. */
+function posOnPage(e, k) {
+  const r = ink.getBoundingClientRect();
+  let x = e.clientX - r.left, y = e.clientY - r.top;
+  if (horizontal()) { x -= k * pageW; y += k * pageH; }
+  return {
+    x: Math.min(pageW - 1, Math.max(0, x)),
+    y: Math.min((k + 1) * pageH - 1, Math.max(k * pageH, y)),
+    p: e.pointerType === 'pen' ? (e.pressure || 0.5) : 0.5
+  };
+}
+
+/* ----- page navigation ----- */
+function goToPage(k, smooth = true) {
+  curPage = Math.min(pageCount - 1, Math.max(0, k));
+  scroller.scrollTo({ left: horizontal() ? curPage * pageW : 0, top: horizontal() ? 0 : curPage * pageH, behavior: smooth ? 'smooth' : 'auto' });
+  updatePageNav();
+}
+function updatePageNav() {
+  $('#pageLabel').textContent = `${curPage + 1} / ${pageCount}`;
+  $('#prevPageBtn').disabled = curPage <= 0;
+  $('#nextPageBtn').disabled = curPage >= pageCount - 1;
+}
+scroller.addEventListener('scroll', () => {
+  if (touchNav || !pageW || !pageH) return;
+  const k = horizontal() ? Math.round(scroller.scrollLeft / pageW) : Math.round(scroller.scrollTop / pageH);
+  if (k !== curPage) { curPage = Math.min(pageCount - 1, Math.max(0, k)); updatePageNav(); }
+});
+let wheelLock = 0;
+scroller.addEventListener('wheel', (e) => {
+  if (!horizontal() || Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return;
+  e.preventDefault();
+  const now = Date.now();
+  if (now < wheelLock) return;
+  wheelLock = now + 450;
+  goToPage(curPage + (e.deltaY > 0 ? 1 : -1));
+}, { passive: false });
+$('#prevPageBtn').addEventListener('click', () => goToPage(curPage - 1));
+$('#nextPageBtn').addEventListener('click', () => goToPage(curPage + 1));
+
+function setPageMode(mode) {
+  prefs.pageMode = mode === 'h' ? 'h' : 'v';
+  lsSet('cronota_page_mode', prefs.pageMode);
+  scroller.classList.toggle('h', horizontal());
+  $('#pageHBtn').setAttribute('aria-pressed', String(horizontal()));
+  $('#pageVBtn').setAttribute('aria-pressed', String(!horizontal()));
+  $('#prevPageBtn').innerHTML = icon(horizontal() ? 'chevLeft' : 'chevUp', 'sm');
+  $('#nextPageBtn').innerHTML = icon(horizontal() ? 'chevRight' : 'chevron', 'sm');
+  $('#nPrevBtn').innerHTML = icon(horizontal() ? 'chevLeft' : 'chevUp', 'sm');
+  $('#nNextBtn').innerHTML = icon(horizontal() ? 'chevRight' : 'chevron', 'sm');
+  layoutPages(true);
+  nPage = 0;
+  renderNotes();
+}
+$('#pageHBtn').addEventListener('click', () => setPageMode('h'));
+$('#pageVBtn').addEventListener('click', () => setPageMode('v'));
+
+/* ----- history ----- */
+function pushHistory() {
+  undoStack.push(strokes);
+  if (undoStack.length > 200) undoStack.shift();
+  redoStack = [];
+}
+function afterCanvasChange() {
+  $('#undoBtn').disabled = !undoStack.length;
+  $('#redoBtn').disabled = !redoStack.length;
+  $('#clearBtn').disabled = !strokes.length;
+  updateStatus();
+}
+function undo() {
+  if (!undoStack.length || active) return;
+  redoStack.push(strokes);
+  strokes = undoStack.pop();
+  layoutPages(); redraw(); afterCanvasChange();
+}
+function redo() {
+  if (!redoStack.length || active) return;
+  undoStack.push(strokes);
+  strokes = redoStack.pop();
+  layoutPages(); redraw(); afterCanvasChange();
+}
+function clearCanvas() {
+  if (!strokes.length) return;
+  pushHistory();
+  strokes = [];
+  layoutPages(); redraw(); afterCanvasChange();
+  goToPage(0);
+  toast(t('cleared'), { label: t('undoBtn'), run: undo });
+}
+
+function eraseAt(pt, radius = 12) {
+  let changed = false;
+  const next = [];
+  for (const s of strokes) {
+    const r = s.hl ? radius + s.width / 2 : radius;
+    if (!s.points.some((p) => Math.hypot(p.x - pt.x, p.y - pt.y) <= r)) { next.push(s); continue; }
+    changed = true;
+    let seg = [];
+    for (const p of s.points) {
+      if (Math.hypot(p.x - pt.x, p.y - pt.y) <= r) {
+        if (seg.length >= 2) next.push({ ...s, points: seg });
+        seg = [];
+      } else seg.push(p);
+    }
+    if (seg.length >= 2) next.push({ ...s, points: seg });
+  }
+  if (changed) { strokes = next; redraw(); }
+}
+
+/* ----- pointer input ----- */
+ink.addEventListener('pointerdown', (e) => {
+  if (e.pointerType === 'touch' && prefs.penOnly) {
+    // pen-only: a finger turns pages instead of drawing
+    if (!touchNav) {
+      touchNav = { id: e.pointerId, x: e.clientX, y: e.clientY, left: scroller.scrollLeft, top: scroller.scrollTop, start: curPage };
+      scroller.style.scrollSnapType = 'none';
+    }
+    if (!palmNoticeShown) { palmNoticeShown = true; toast(t('palm')); }
+    return;
+  }
+  if (active || e.button > 0) return;
+  e.preventDefault();
+  try { ink.setPointerCapture(e.pointerId); } catch {}
+  const page = pageAt(e);
+  const pt = posOnPage(e, page);
+  const before = strokes;
+  pushHistory();
+  if (tool.mode === 'eraser') {
+    active = { id: e.pointerId, erase: true, before, page };
+    eraseAt(pt);
+    return;
+  }
+  const s = tool.mode === 'hl'
+    ? { color: tool.hlColor, width: hlWidth(), points: [pt], hl: true }
+    : { color: tool.penColor, width: tool.width, points: [pt] };
+  strokes = [...strokes, s];
+  active = { id: e.pointerId, stroke: s, before, page };
+  if (s.hl) queueRedraw();
+  else { const o = pageOffset(page); ictx.lineCap = 'round'; ictx.lineJoin = 'round'; drawDot(ictx, s, pt, o.dx, o.dy); }
+});
+
+ink.addEventListener('pointermove', (e) => {
+  if (touchNav && e.pointerId === touchNav.id) {
+    if (horizontal()) scroller.scrollLeft = touchNav.left - (e.clientX - touchNav.x);
+    else scroller.scrollTop = touchNav.top - (e.clientY - touchNav.y);
+    return;
+  }
+  if (!active || e.pointerId !== active.id) return;
+  let evs = e.getCoalescedEvents ? e.getCoalescedEvents() : null;
+  if (!evs || !evs.length) evs = [e];
+  const o = pageOffset(active.page);
+  for (const ce of evs) {
+    const pt = posOnPage(ce, active.page);
+    if (active.erase) { eraseAt(pt); continue; }
+    const s = active.stroke;
+    const prev = s.points[s.points.length - 1];
+    if (Math.hypot(pt.x - prev.x, pt.y - prev.y) >= 1.2) {
+      s.points.push(pt);
+      if (!s.hl) drawSegment(ictx, s, prev, pt, o.dx, o.dy);
+    }
+  }
+  if (!active.erase && active.stroke.hl) queueRedraw(); // keeps the highlight under the ink
+});
+
+function endPointer(e) {
+  if (touchNav && e.pointerId === touchNav.id) {
+    const d = horizontal() ? e.clientX - touchNav.x : e.clientY - touchNav.y;
+    const size = horizontal() ? pageW : pageH;
+    let k = touchNav.start;
+    if (Math.abs(d) > Math.min(60, size * 0.15)) k += d < 0 ? 1 : -1;
+    touchNav = null;
+    goToPage(k);
+    setTimeout(() => { scroller.style.scrollSnapType = ''; }, 450);
+    return;
+  }
+  if (!active || e.pointerId !== active.id) return;
+  const unchanged = strokes === active.before;
+  active = null;
+  if (unchanged) undoStack.pop();
+  layoutPages(); // adds a fresh blank page after the last written one
+  afterCanvasChange();
+}
+ink.addEventListener('pointerup', endPointer);
+ink.addEventListener('pointercancel', endPointer);
+ink.addEventListener('lostpointercapture', endPointer);
+
+/* ----- Save button label (number of notes the canvas will become) ----- */
+function updateStatus() {
+  const parts = splitIntoBlocks(strokes, prefs.gap);
+  $('#saveBtn').disabled = !parts.length || saving;
+  $('#cancelEditBtn').hidden = !editNoteId;
+  if (editNoteId) { $('#saveLabel').textContent = t('saveEdit'); $('#saveBtn').title = t('saveEdit') + ' (Ctrl+Enter)'; return; }
+  $('#saveLabel').textContent = saving ? t('saving') : (parts.length > 1 ? `${t('save')} (${parts.length})` : t('save'));
+  $('#saveBtn').title = parts.length > 1
+    ? t('saveTitleN', { n: parts.length }) + '\n' + parts.map((p) => tagName(p.tagType || 'none')).join(', ')
+    : t('saveTitle');
+}
+
+/* ----- Save ----- */
+let saving = false;
+
+/* ----- Re-open a saved note on the writing page (add highlights, underlines, more ink) ----- */
+let editNoteId = null;
+function openNoteForEditing(b) {
+  if (active || saving) return;
+  if (editNoteId === b.id) { setTab('write'); return; }
+  if (strokes.length) { toast(t('saveFirst')); return; }
+  const g = b.gap, k = prefs.gap / g;
+  const box = strokesBox(b.strokes);
+  const top = Math.floor(Math.max(0, box.minY) / g) * g;
+  strokes = b.strokes.map((s) => ({ ...s, points: s.points.map((p) => ({ x: Math.round(p.x * k * 10) / 10, y: Math.round(((p.y - top) * k + prefs.gap) * 10) / 10, p: p.p })) }));
+  undoStack = []; redoStack = [];
+  editNoteId = b.id;
+  selectedId = null; editingId = null;
+  setTab('write');
+  layoutPages(true); redraw(); afterCanvasChange();
+  goToPage(0, false);
+  renderNotes();
+}
+function endNoteEditing() {
+  editNoteId = null;
+  strokes = []; undoStack = []; redoStack = [];
+  layoutPages(true); redraw(); afterCanvasChange();
+  goToPage(0, false);
+  renderNotes();
+}
+$('#cancelEditBtn').addEventListener('click', () => { if (!active && !saving) endNoteEditing(); });
+function saveEditedNote() {
+  const parts = splitIntoBlocks(strokes, prefs.gap);
+  if (!parts.length) { toast(t('writeFirst')); return; }
+  const fresh = sanitizeBlock({ gap: prefs.gap, strokes });
+  let b = blocks.find((x) => x.id === editNoteId);
+  if (!b) { // deleted while editing: keep it as a new note
+    b = sanitizeBlock({ id: editNoteId, tagType: parts[0].tagType || 'none', tagSource: parts[0].tagType ? 'symbol' : 'auto', createdAt: new Date().toISOString(), gap: prefs.gap, strokes });
+    blocks.unshift(b);
+  }
+  b.strokes = fresh.strokes;
+  b.gap = prefs.gap;
+  b.priority = b.strokes.some((s) => !s.hl && s.color === HIGH_COLOR) ? 'high' : 'normal';
+  const sym = parts.find((p) => p.tagType);
+  if (b.tagSource === 'symbol' && sym) b.tagType = sym.tagType;
+  persist();
+  endNoteEditing();
+  renderKeywordChips();
+  toast(t('updated'));
+}
+
+async function saveCanvas() {
+  if (saving || active) return;
+  if (editNoteId) { saveEditedNote(); return; }
+  const parts = splitIntoBlocks(strokes, prefs.gap);
+  if (!parts.length) { toast(t('writeFirst')); return; }
+
+  // Take exactly these strokes off the canvas right away, so anything
+  // written while the AI is working stays on the canvas.
+  const taken = new Set(parts.flatMap((p) => p.strokes));
+  strokes = strokes.filter((s) => !taken.has(s));
+  undoStack = []; redoStack = [];
+  sizeInk(); redraw();
+
+  const base = Date.now();
+  const created = parts.map((p, i) => sanitizeBlock({
+    id: uid(),
+    tagType: p.tagType || 'none',
+    tagSource: p.tagType ? 'symbol' : 'auto',
+    status: 'open',
+    priority: p.strokes.some((s) => !s.hl && s.color === HIGH_COLOR) ? 'high' : 'normal',
+    createdAt: new Date(base).toISOString(), pos: i, // notes saved together share a time; pos keeps top-to-bottom order
+    text: '', keywords: [], gap: prefs.gap,
+    strokes: p.strokes
+  }));
+  blocks.unshift(...created);
+  persist();
+  renderNotes();
+  renderKeywordChips();
+  toast(t('saved', { n: created.length, list: created.map((b) => tagName(b.tagType)).join(', ') }));
+
+  if (!prefs.key) { afterCanvasChange(); return; }
+
+  saving = true;
+  afterCanvasChange();
+  let failed = null;
+  await Promise.all(created.map(async (b) => {
+    try {
+      const r = await analyzeInk(b.strokes.filter((s) => !s.hl));
+      const live = blocks.find((x) => x.id === b.id);
+      if (!live) return; // deleted meanwhile
+      if (!live.text && r.text) live.text = r.text;
+      if (!live.keywords.length) live.keywords = r.keywords;
+      if (live.tagSource === 'auto' && r.tagType) { live.tagType = r.tagType; live.tagSource = 'ai'; }
+    } catch (err) { failed = err; }
+  }));
+  saving = false;
+  persist();
+  renderNotes();
+  renderKeywordChips();
+  afterCanvasChange();
+  if (failed) toast(t('aiFail', { msg: aiErrorMessage(failed) }));
+}
+
+/* =========================================================
+   Gemini
+   ========================================================= */
+async function gemini(parts, { json = false, model = prefs.model, key = prefs.key } = {}) {
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
+  const body = { contents: [{ parts }] };
+  if (json) body.generationConfig = { responseMimeType: 'application/json' };
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
+    body: JSON.stringify(body)
+  });
+  if (!res.ok) {
+    const err = new Error('HTTP ' + res.status);
+    err.status = res.status;
+    throw err;
+  }
+  const data = await res.json();
+  const out = data?.candidates?.[0]?.content?.parts;
+  return Array.isArray(out) ? out.map((p) => (typeof p?.text === 'string' ? p.text : '')).join('') : '';
+}
+function aiErrorMessage(e) {
+  if (e.status === 400 || e.status === 401 || e.status === 403) return t('errKey');
+  if (e.status === 404) return t('errModel');
+  if (e.status === 429) return t('errQuota');
+  if (e.status >= 500) return t('errServer');
+  if (e instanceof SyntaxError) return t('errParse');
+  return t('errNet');
+}
+function parseJsonLoose(raw) {
+  const cleaned = String(raw).replace(/```json|```/gi, '').trim();
+  try { return JSON.parse(cleaned); } catch {}
+  const m = cleaned.match(/\{[\s\S]*\}/);
+  return m ? JSON.parse(m[0]) : {};
+}
+async function analyzeInk(list) {
+  const prompt = 'This is a handwritten note. Read the first symbol on the left (□=todo, ○=fact, △=ref, +=idea, ◇=decision, none if there is no symbol) and the handwriting. ' +
+    'Reply with JSON only: {"tagType":"todo|fact|ref|idea|decision|none","text":"all handwriting except the symbol, in the language it was written in","keywords":["3-6 search keywords in the same language"]}';
+  const raw = await gemini([{ text: prompt }, { inline_data: { mime_type: 'image/png', data: renderPng(list) } }], { json: true });
+  const obj = parseJsonLoose(raw) || {};
+  return {
+    tagType: TAGS[obj.tagType] && obj.tagType !== 'none' ? obj.tagType : null,
+    text: toStr(obj.text ?? obj.ocrText).trim(),
+    keywords: toKeywords(obj.keywords)
+  };
+}
+
+/* =========================================================
+   Notes: one continuous page
+   ========================================================= */
+let filter = 'all';      // 'all' | tag key
+let query = '';
+let editingId = null;
+let selectedId = null;
+
+function matchesQuery(b, q) {
+  return b.text.toLowerCase().includes(q) ||
+    b.keywords.some((k) => k.toLowerCase().includes(q)) ||
+    Object.values(I18N).some((L) => L.tags[b.tagType].toLowerCase().includes(q));
+}
+function sortKey(b) {
+  const t = Date.parse(b.createdAt) || 0;
+  if (Number.isInteger(b.pos)) return { t, pos: b.pos };
+  // older notes: one save used times base, base-1ms, base-2ms... from the top down
+  return { t: Math.floor(t / 1000) * 1000, pos: -(t % 1000) };
+}
+function visibleBlocks() {
+  let list = blocks;
+  if (filter !== 'all') list = list.filter((b) => b.tagType === filter);
+  const q = query.trim().toLowerCase();
+  if (q) list = list.filter((b) => matchesQuery(b, q));
+  return [...list].sort((a, b) => {
+    // Newest/oldest first by the time a note was first saved (re-editing never
+    // changes it). Notes saved together stay in reading order in both directions.
+    const ka = sortKey(a), kb = sortKey(b);
+    const d = prefs.sortDesc ? kb.t - ka.t : ka.t - kb.t;
+    return d || (ka.pos - kb.pos) || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
+  });
+}
+
+function renderFilters() {
+  const counts = Object.fromEntries(TAG_KEYS.map((k) => [k, 0]));
+  for (const b of blocks) counts[b.tagType]++;
+  $('#tagChips').innerHTML =
+    `<button class="chip" data-filter="all" aria-pressed="${filter === 'all'}">${t('all')} <span class="n">${blocks.length}</span></button>` +
+    TAG_KEYS.map((k) =>
+      `<button class="chip" data-filter="${k}" style="--c:${TAGS[k].color}" aria-pressed="${filter === k}">${TAGS[k].symbol ? `<b>${TAGS[k].symbol}</b>` : ''}${escapeHtml(tagLabel(k))}${counts[k] ? ` <span class="n">${counts[k]}</span>` : ''}</button>`).join('');
+  $('#mtabCount').textContent = blocks.length ? `(${blocks.length})` : '';
+  $('#sortLabel').textContent = prefs.sortDesc ? t('sortNew') : t('sortOld');
+}
+
+function dayLabel(iso) {
+  const d = new Date(iso), now = new Date();
+  const y = new Date(now); y.setDate(now.getDate() - 1);
+  const opts = { month: 'long', day: 'numeric', weekday: 'short' };
+  if (d.getFullYear() !== now.getFullYear()) opts.year = 'numeric';
+  const base = new Intl.DateTimeFormat(t('locale'), opts).format(d);
+  if (d.toDateString() === now.toDateString()) return t('today') + ' · ' + base;
+  if (d.toDateString() === y.toDateString()) return t('yesterday') + ' · ' + base;
+  return base;
+}
+function timeLabel(iso) {
+  const d = new Date(iso);
+  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+}
+
+function noteHtml(b, inSearch) {
+  const tg = TAGS[b.tagType];
+  const done = b.status === 'done';
+  const sel = selectedId === b.id;
+  const actions = sel ? `
+    <div class="note-actions">
+      <label class="tag-pick" style="--c:${tg.color}" title="${escapeHtml(t('changeTag'))}">${escapeHtml(tagName(b.tagType))}${icon('chevron')}
+        <select data-act="tag" aria-label="${escapeHtml(t('changeTag'))}">${TAG_KEYS.map((k) => `<option value="${k}"${k === b.tagType ? ' selected' : ''}>${escapeHtml(tagName(k))}</option>`).join('')}</select>
+      </label>
+      ${tg.canDone ? `<button class="done-btn" data-act="done" aria-pressed="${done}">${icon(done ? 'check' : 'circle', 'sm')}${escapeHtml(t('doneLabel')[done ? 1 : 0])}</button>` : ''}
+      <button class="icon-btn" data-act="reedit" title="${escapeHtml(t('reedit'))}" aria-label="${escapeHtml(t('reedit'))}">${icon('pen', 'sm')}</button>
+      <button class="icon-btn" data-act="edit" title="${escapeHtml(t('editKw'))}" aria-label="${escapeHtml(t('editKw'))}">${icon('type', 'sm')}</button>
+      <button class="icon-btn danger" data-act="delete" title="${escapeHtml(t('del'))}" aria-label="${escapeHtml(t('del'))}">${icon('trash', 'sm')}</button>
+    </div>` : '';
+  const edit = editingId === b.id
+    ? `<div class="edit-row"><input data-edit-input value="${escapeHtml(b.text)}" placeholder="${escapeHtml(t('editPh'))}" aria-label="${escapeHtml(t('editKw'))}" /><button class="btn primary" data-act="edit-save">${escapeHtml(t('save'))}</button></div>`
+    : '';
+  const time = inSearch && !sel ? `<span class="note-time">${timeLabel(b.createdAt)}</span>` : '';
+  return `<div class="pnote${done ? ' done' : ''}${sel ? ' selected' : ''}${editNoteId === b.id ? ' editing' : ''}" data-id="${escapeHtml(b.id)}">${time}${actions}<canvas class="paper" data-ink></canvas>${edit}</div>`;
+}
+
+/** Draw a note as a slice of lined paper: one blank line on top, then its ink rows. */
+function drawNoteInk(canvas, b, width) {
+  // Every note is drawn on the same ruling as the page: the current line gap and
+  // the red margin at MARGIN_X, so lines and the margin run straight down the page.
+  const G = prefs.gap, s0 = G / b.gap;
+  const box0 = strokesBox(b.strokes);
+  const top = Math.floor(Math.max(0, box0.minY) / b.gap) * b.gap;
+  const offY = G - top * s0;
+  const pts = (st, f) => ({ ...st, width: st.width * f.w, points: st.points.map(f.p) });
+  let list = b.strokes.map((st) => pts(st, { w: s0, p: (p) => ({ x: p.x * s0, y: p.y * s0 + offY, p: p.p }) }));
+  // Notes written on a wider screen: shrink only the writing right of the margin,
+  // each line around its own middle, so symbols, margin and lines stay put.
+  const textW = Math.max(...list.filter((st) => !isMarginStroke(st)).flatMap((st) => st.points.map((p) => p.x)), MARGIN_X) + 16;
+  const k = Math.min(1, (width - MARGIN_X) / Math.max(1, textW - MARGIN_X));
+  if (k < 1) {
+    list = list.map((st) => {
+      if (isMarginStroke(st)) return st;
+      const yb = getBox(st.points);
+      const mid = Math.floor((yb.minY + yb.maxY) / 2 / G) * G + G / 2;
+      return pts(st, { w: k, p: (p) => ({ x: MARGIN_X + (p.x - MARGIN_X) * k, y: mid + (p.y - mid) * k, p: p.p }) });
+    });
+  }
+  const box = strokesBox(list);
+  const h = Math.max(G, Math.ceil((box.maxY + 6) / G) * G);
+  const w = Math.max(1, Math.floor(width));
+  const dpr = dprOf();
+  canvas.width = Math.round(w * dpr);
+  canvas.height = Math.round(h * dpr);
+  canvas.style.width = w + 'px';
+  canvas.style.height = h + 'px';
+  canvas.style.removeProperty('--gap');
+  canvas.style.removeProperty('--margin-x');
+  const c = canvas.getContext('2d');
+  c.setTransform(dpr, 0, 0, dpr, 0, 0);
+  drawStrokes(c, list, 0, 0);
+}
+function isMarginStroke(st) {
+  if (st.hl) return false;
+  const bx = getBox(st.points);
+  return (bx.minX + bx.maxX) / 2 < MARGIN_X;
+}
+
+function renderNotes() {
+  renderFilters();
+  const listEl = $('#list');
+  const q = query.trim().toLowerCase();
+  const list = visibleBlocks();
+
+  $('#banner').classList.toggle('show', !!q);
+  $('#bannerText').textContent = q ? t('results', { q: query.trim(), n: list.length }) : '';
+
+  if (!list.length) {
+    listEl.classList.remove('paged', 'h');
+    nPageCount = 0; updateNotesNav();
+    listEl.innerHTML = blocks.length === 0
+      ? `<div class="empty"><b>${escapeHtml(t('emptyNone'))}</b>${escapeHtml(t('emptyNoneSub'))}</div>`
+      : q ? `<div class="empty"><b>${escapeHtml(t('emptySearch'))}</b>${escapeHtml(t('emptySearchSub'))}</div>`
+          : `<div class="empty"><b>${escapeHtml(t('emptyFilter'))}</b></div>`;
+    return;
+  }
+  listEl.classList.remove('paged', 'h'); // measure notes in the plain one-column layout first
+  let html = '<div class="page"><div class="page-scroll">';
+  let lastDay = '';
+  for (const b of list) {
+    if (q) {
+      const day = dayLabel(b.createdAt);
+      if (day !== lastDay) { html += `<div class="day-head">${escapeHtml(day)}</div>`; lastDay = day; }
+    }
+    html += noteHtml(b, !!q);
+  }
+  html += '<div class="paper page-end"></div></div></div>';
+  listEl.innerHTML = html;
+
+  const scrollEl = listEl.querySelector('.page-scroll');
+  const baseW = scrollEl.clientWidth;
+  const byId = new Map(list.map((b) => [b.id, b]));
+  scrollEl.querySelectorAll('.pnote').forEach((el) => {
+    const b = byId.get(el.dataset.id);
+    if (b) drawNoteInk(el.querySelector('canvas[data-ink]'), b, baseW);
+  });
+  if (listEl.clientWidth && listEl.clientHeight) paginateNotes(listEl);
+  else { listEl.classList.remove('paged', 'h'); nPageCount = 0; updateNotesNav(); }
+  const input = listEl.querySelector('[data-edit-input]');
+  if (input) { input.focus(); input.setSelectionRange(input.value.length, input.value.length); }
+}
+
+/* Notes are shown as screen-sized pages too, turned the same way as the writing
+   page (up/down or sideways). Notes are packed whole; a note taller than a page
+   gets a page of its own. */
+let nPage = 0, nPageCount = 0, nPageW = 0, nPageH = 0, nScrollLock = false;
+function paginateNotes(listEl) {
+  const cs = getComputedStyle(listEl);
+  const padX = parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight);
+  const padY = parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom);
+  const w = listEl.clientWidth - padX;
+  const h = Math.max(160, listEl.clientHeight - padY);
+  const src = listEl.querySelector('.page-scroll');
+  const items = [...src.children].filter((el) => !el.classList.contains('page-end'));
+  const pages = [];
+  let cur = null, used = 0;
+  for (const el of items) {
+    const eh = el.offsetHeight;
+    if (!cur || (used + eh > h && used > 0)) { cur = []; pages.push(cur); used = 0; }
+    cur.push(el); used += eh;
+  }
+  const frag = document.createDocumentFragment();
+  for (const group of pages) {
+    const pg = document.createElement('div');
+    pg.className = 'page npage';
+    pg.style.width = w + 'px';
+    pg.style.minHeight = h + 'px';
+    pg.append(...group);
+    const fill = document.createElement('div');
+    fill.className = 'paper fill';
+    pg.append(fill);
+    frag.append(pg);
+  }
+  listEl.classList.add('paged');
+  listEl.classList.toggle('h', horizontal());
+  listEl.replaceChildren(frag);
+  nPageW = w; nPageH = h; nPageCount = pages.length;
+  // stay on the page being looked at (or the one holding the selected note)
+  let k = Math.min(nPage, nPageCount - 1);
+  const want = selectedId || editingId;
+  if (want) {
+    const at = [...listEl.children].findIndex((pg) => pg.querySelector(`.pnote[data-id="${CSS.escape(want)}"]`));
+    if (at >= 0) k = at;
+  }
+  goToNotesPage(k, false);
+}
+function notesStep() { return (horizontal() ? nPageW : nPageH) + 14; }
+function goToNotesPage(k, smooth = true) {
+  const listEl = $('#list');
+  nPage = Math.min(Math.max(0, nPageCount - 1), Math.max(0, k));
+  const pg = listEl.children[nPage];
+  if (pg && pg.classList.contains('npage')) {
+    nScrollLock = true;
+    listEl.scrollTo({ left: horizontal() ? pg.offsetLeft - 14 : 0, top: horizontal() ? 0 : pg.offsetTop - 14, behavior: smooth ? 'smooth' : 'auto' });
+    setTimeout(() => { nScrollLock = false; }, smooth ? 500 : 50);
+  }
+  updateNotesNav();
+}
+function updateNotesNav() {
+  $('#notesNav').hidden = nPageCount < 1;
+  $('#nPageLabel').textContent = `${Math.min(nPage + 1, nPageCount)} / ${nPageCount}`;
+  $('#nPrevBtn').disabled = nPage <= 0;
+  $('#nNextBtn').disabled = nPage >= nPageCount - 1;
+}
+$('#list').addEventListener('scroll', (e) => {
+  if (nScrollLock || !nPageCount || e.target !== $('#list')) return;
+  const el = $('#list');
+  const k = Math.round((horizontal() ? el.scrollLeft : el.scrollTop) / notesStep());
+  if (k !== nPage) { nPage = Math.min(nPageCount - 1, Math.max(0, k)); updateNotesNav(); }
+});
+let nWheelLock = 0;
+$('#list').addEventListener('wheel', (e) => {
+  if (!horizontal() || !nPageCount || Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return;
+  e.preventDefault();
+  const now = Date.now();
+  if (now < nWheelLock) return;
+  nWheelLock = now + 450;
+  goToNotesPage(nPage + (e.deltaY > 0 ? 1 : -1));
+}, { passive: false });
+$('#nPrevBtn').addEventListener('click', () => goToNotesPage(nPage - 1));
+$('#nNextBtn').addEventListener('click', () => goToNotesPage(nPage + 1));
+
+function findBlock(el) {
+  const n = el.closest('.pnote');
+  return n ? blocks.find((b) => b.id === n.dataset.id) : null;
+}
+function saveEdit(input) {
+  const b = blocks.find((x) => x.id === editingId);
+  editingId = null;
+  if (b) { b.text = toStr(input.value).trim(); persist(); }
+  renderNotes();
+}
+
+$('#list').addEventListener('click', (e) => {
+  const btn = e.target.closest('[data-act]');
+  if (!btn) {
+    if (e.target.closest('.edit-row, .note-actions')) return;
+    const note = e.target.closest('.pnote');
+    const id = note ? note.dataset.id : null;
+    selectedId = selectedId === id ? null : id;
+    if (editingId && editingId !== selectedId) editingId = null;
+    renderNotes();
+    return;
+  }
+  if (btn.tagName === 'SELECT') return;
+  const b = findBlock(btn);
+  if (!b) return;
+  const act = btn.dataset.act;
+  if (act === 'done') {
+    b.status = b.status === 'done' ? 'open' : 'done';
+    persist(); renderNotes();
+  } else if (act === 'delete') {
+    const idx = blocks.indexOf(b);
+    blocks.splice(idx, 1);
+    selectedId = null; editingId = null;
+    persist(); renderNotes(); renderKeywordChips();
+    toast(t('deleted'), { label: t('undoBtn'), run: () => {
+      blocks.splice(Math.min(idx, blocks.length), 0, b);
+      persist(); renderNotes(); renderKeywordChips();
+    } });
+  } else if (act === 'reedit') {
+    openNoteForEditing(b);
+  } else if (act === 'edit') {
+    editingId = editingId === b.id ? null : b.id;
+    renderNotes();
+  } else if (act === 'edit-save') {
+    saveEdit(btn.parentElement.querySelector('[data-edit-input]'));
+  }
+});
+$('#list').addEventListener('change', (e) => {
+  if (e.target.dataset.act !== 'tag') return;
+  const b = findBlock(e.target);
+  if (!b || !TAGS[e.target.value]) return;
+  b.tagType = e.target.value;
+  b.tagSource = 'user';
+  if (!TAGS[b.tagType].canDone) b.status = 'open';
+  persist(); renderNotes();
+});
+$('#list').addEventListener('keydown', (e) => {
+  if (!e.target.matches('[data-edit-input]')) return;
+  if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); saveEdit(e.target); }
+  if (e.key === 'Escape') { editingId = null; renderNotes(); }
+});
+
+/* =========================================================
+   Search & handwriting search pad
+   ========================================================= */
+const searchInput = $('#searchInput');
+function setQuery(q) {
+  query = q;
+  searchInput.value = q;
+  $('#clearSearchBtn').hidden = !q;
+  selectedId = null; editingId = null; nPage = 0;
+  if (q.trim()) setTab('notes');
+  renderNotes();
+}
+searchInput.addEventListener('input', () => setQuery(searchInput.value));
+$('#clearSearchBtn').addEventListener('click', () => { setQuery(''); searchInput.focus(); });
+$('#bannerClear').addEventListener('click', () => setQuery(''));
+
+const pad = $('#padCanvas');
+const pctx = pad.getContext('2d');
+let padStrokes = [];
+let padActive = null;
+function sizePad() {
+  const r = pad.getBoundingClientRect();
+  if (!r.width) return;
+  const dpr = dprOf();
+  pad.width = Math.round(r.width * dpr);
+  pad.height = Math.round(r.height * dpr);
+  pctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  pctx.clearRect(0, 0, r.width, r.height);
+  drawStrokes(pctx, padStrokes);
+}
+function padIsOpen() { return $('#padPop').classList.contains('open'); }
+function openPad(open) {
+  $('#padPop').classList.toggle('open', open);
+  $('#padToggleBtn').setAttribute('aria-pressed', String(open));
+  $('#padToggleBtn').setAttribute('aria-expanded', String(open));
+  if (open) {
+    $('#padNote').textContent = prefs.key ? t('padNote') : t('padNoteNoAi');
+    renderKeywordChips();
+    requestAnimationFrame(sizePad);
+  }
+}
+function renderKeywordChips() {
+  const freq = new Map();
+  for (const b of blocks) for (const k of b.keywords) freq.set(k, (freq.get(k) || 0) + 1);
+  const top = [...freq.entries()].sort((a, b) => b[1] - a[1]).slice(0, 14).map(([k]) => k);
+  $('#kwRow').innerHTML = top.length
+    ? `<span class="muted">${escapeHtml(t('kwTop'))}</span>` + top.map((k) => `<button class="kw-chip" data-kw="${escapeHtml(k)}">#${escapeHtml(k)}</button>`).join('')
+    : `<span class="muted">${escapeHtml(t('kwNone'))}</span>`;
+}
+$('#padToggleBtn').addEventListener('click', () => openPad(!padIsOpen()));
+$('#kwRow').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-kw]');
+  if (!b) return;
+  setQuery(b.dataset.kw);
+  openPad(false);
+});
+$('#padClearBtn').addEventListener('click', () => { padStrokes = []; sizePad(); });
+document.addEventListener('pointerdown', (e) => {
+  if (padIsOpen() && !e.target.closest('#searchBox')) openPad(false);
+});
+
+pad.addEventListener('pointerdown', (e) => {
+  if ((e.pointerType === 'touch' && prefs.penOnly) || padActive) return;
+  e.preventDefault();
+  try { pad.setPointerCapture(e.pointerId); } catch {}
+  const r = pad.getBoundingClientRect();
+  const s = { color: '#1E293B', width: 2.6, points: [{ x: e.clientX - r.left, y: e.clientY - r.top, p: e.pointerType === 'pen' ? (e.pressure || 0.5) : 0.5 }] };
+  padStrokes.push(s);
+  padActive = { id: e.pointerId, s };
+  pctx.lineCap = 'round'; pctx.lineJoin = 'round';
+  drawDot(pctx, s, s.points[0]);
+});
+pad.addEventListener('pointermove', (e) => {
+  if (!padActive || e.pointerId !== padActive.id) return;
+  const r = pad.getBoundingClientRect();
+  let evs = e.getCoalescedEvents ? e.getCoalescedEvents() : null;
+  if (!evs || !evs.length) evs = [e];
+  for (const ce of evs) {
+    const pt = { x: ce.clientX - r.left, y: ce.clientY - r.top, p: ce.pointerType === 'pen' ? (ce.pressure || 0.5) : 0.5 };
+    const s = padActive.s, prev = s.points[s.points.length - 1];
+    if (Math.hypot(pt.x - prev.x, pt.y - prev.y) >= 1.2) { s.points.push(pt); drawSegment(pctx, s, prev, pt); }
+  }
+});
+const endPad = (e) => { if (padActive && e.pointerId === padActive.id) padActive = null; };
+pad.addEventListener('pointerup', endPad);
+pad.addEventListener('pointercancel', endPad);
+
+$('#padRunBtn').addEventListener('click', async () => {
+  if (!padStrokes.length) { toast(t('padWriteFirst')); return; }
+  if (!prefs.key) { toast(t('padNeedAi')); return; }
+  const btn = $('#padRunBtn');
+  btn.disabled = true;
+  try {
+    const raw = await gemini([
+      { text: 'Output only the search word written in this handwriting image, in its original language. No other text.' },
+      { inline_data: { mime_type: 'image/png', data: renderPng(padStrokes) } }
+    ]);
+    const text = raw.trim().split('\n')[0].replace(/^["'“”「」]+|["'“”「」]+$/g, '').slice(0, 60);
+    if (text) {
+      padStrokes = []; sizePad();
+      openPad(false);
+      setQuery(text);
+      toast(t('padSearched', { q: text }));
+    } else {
+      toast(t('padUnreadable'));
+    }
+  } catch (err) {
+    toast(t('padFail', { msg: aiErrorMessage(err) }));
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+/* =========================================================
+   Toolbar
+   ========================================================= */
+/** Diameter a pen actually draws at normal pressure, so the toolbar dot matches the ink. */
+function realDot(w) { return Math.max(2, Math.round(lineWidthFor(w, 0.5) * 10) / 10); }
+function buildToolbar() {
+  $('#penBtns').innerHTML = PEN_COLORS.map((c, i) =>
+    `<button class="swatch" data-pen="${c}" style="--c:${c}" title="${escapeHtml(t('pens')[i])}" aria-label="${escapeHtml(t('pens')[i])}"><span></span></button>`).join('');
+  $('#hlBtns').innerHTML = HL_COLORS.map((c, i) =>
+    `<button class="swatch hl" data-hl="${c}" style="--c:${c}" title="${escapeHtml(t('hls')[i])}" aria-label="${escapeHtml(t('hls')[i])}"><span></span></button>`).join('');
+  $('#widthBtns').innerHTML = PEN_WIDTHS.map((p, i) =>
+    `<button class="wbtn" data-width="${p.w}" title="${escapeHtml(t('widths')[i])}" aria-label="${escapeHtml(t('widths')[i])}"><span style="width:${realDot(p.w)}px;height:${realDot(p.w)}px"></span></button>`).join('');
+  syncToolbar();
+}
+function syncToolbar() {
+  document.querySelectorAll('[data-pen]').forEach((x) => x.setAttribute('aria-pressed', String(tool.mode === 'pen' && x.dataset.pen === tool.penColor)));
+  document.querySelectorAll('[data-hl]').forEach((x) => x.setAttribute('aria-pressed', String(tool.mode === 'hl' && x.dataset.hl === tool.hlColor)));
+  document.querySelectorAll('[data-width]').forEach((x) => x.setAttribute('aria-pressed', String(+x.dataset.width === tool.width)));
+  $('#eraserBtn').setAttribute('aria-pressed', String(tool.mode === 'eraser'));
+  ink.classList.toggle('erasing', tool.mode === 'eraser');
+}
+function setMode(mode) { tool.mode = mode; syncToolbar(); }
+function setPenOnly(on) {
+  prefs.penOnly = on;
+  lsSet('cronota_pen_only', on ? '1' : '0');
+  const b = $('#penModeBtn');
+  b.classList.toggle('on', on);
+  b.classList.toggle('off', !on);
+  b.title = on ? t('penOnlyOn') : t('penOnlyOff');
+  b.setAttribute('aria-label', b.title);
+  b.setAttribute('aria-pressed', String(on));
+  $('#fingerCheck').checked = !on;
+}
+
+$('#penBtns').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-pen]'); if (!b) return;
+  tool.penColor = b.dataset.pen; setMode('pen');
+});
+$('#hlBtns').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-hl]'); if (!b) return;
+  tool.hlColor = b.dataset.hl; setMode('hl');
+});
+$('#widthBtns').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-width]'); if (!b) return;
+  tool.width = parseFloat(b.dataset.width); setMode('pen');
+});
+$('#eraserBtn').addEventListener('click', () => setMode(tool.mode === 'eraser' ? 'pen' : 'eraser'));
+$('#undoBtn').addEventListener('click', undo);
+$('#redoBtn').addEventListener('click', redo);
+$('#clearBtn').addEventListener('click', clearCanvas);
+$('#penModeBtn').addEventListener('click', () => {
+  setPenOnly(!prefs.penOnly);
+  toast(prefs.penOnly ? t('penOnlyToast') : t('fingerToast'));
+});
+$('#saveBtn').addEventListener('click', saveCanvas);
+
+$('#tagChips').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-filter]'); if (!b) return;
+  filter = (filter === b.dataset.filter && filter !== 'all') ? 'all' : b.dataset.filter;
+  selectedId = null; editingId = null; nPage = 0;
+  renderNotes();
+});
+$('#sortBtn').addEventListener('click', () => {
+  prefs.sortDesc = !prefs.sortDesc;
+  lsSet('cronota_sort', prefs.sortDesc ? 'desc' : 'asc');
+  nPage = 0;
+  renderNotes();
+});
+
+/* mobile tabs */
+function setTab(tab) {
+  if (document.body.dataset.tab === tab) return;
+  document.body.dataset.tab = tab;
+  document.querySelectorAll('.mtab').forEach((x) => x.setAttribute('aria-selected', String(x.dataset.tab === tab)));
+  requestAnimationFrame(() => { sizeInk(); if (tab === 'notes') renderNotes(); });
+}
+document.querySelectorAll('.mtab').forEach((x) => x.addEventListener('click', () => setTab(x.dataset.tab)));
+
+/* Layout: writing and notes side by side, or one at a time with tabs.
+   Phones always use tabs. Touch/pen tablets default to tabs, desktops to side by
+   side; the header button switches it and the choice is remembered. */
+const WIDE_MIN = 900;
+function isTouchTablet() {
+  const fine = matchMedia('(hover: hover) and (pointer: fine)').matches;
+  return matchMedia('(pointer: coarse)').matches || (navigator.maxTouchPoints > 1 && !fine);
+}
+function wantSplit() {
+  const v = lsGet('cronota_layout', '');
+  if (v === 'split') return true;
+  if (v === 'tabs') return false;
+  return !isTouchTablet();
+}
+let lastTabsState = null;
+function applyLayout() {
+  const wide = window.innerWidth >= WIDE_MIN;
+  const tabs = !wide || !wantSplit();
+  $('#layoutBtn').hidden = !wide;
+  $('#layoutBtn').setAttribute('aria-pressed', String(!tabs));
+  if (tabs === lastTabsState) return;
+  lastTabsState = tabs;
+  document.body.classList.toggle('tabs', tabs);
+  requestAnimationFrame(() => { sizeInk(); renderNotes(); });
+}
+$('#layoutBtn').addEventListener('click', () => {
+  lsSet('cronota_layout', wantSplit() ? 'tabs' : 'split');
+  applyLayout();
+});
+window.addEventListener('resize', applyLayout);
+applyLayout();
+
+/* keyboard shortcuts */
+document.addEventListener('keydown', (e) => {
+  if (e.target.closest('input, textarea, select, dialog')) return;
+  const mod = e.ctrlKey || e.metaKey;
+  if (mod && e.key.toLowerCase() === 'z') { e.preventDefault(); e.shiftKey ? redo() : undo(); }
+  else if (mod && e.key.toLowerCase() === 'y') { e.preventDefault(); redo(); }
+  else if (mod && e.key === 'Enter') { e.preventDefault(); saveCanvas(); }
+  else if (!mod && e.key.toLowerCase() === 'e') setMode(tool.mode === 'eraser' ? 'pen' : 'eraser');
+});
+
+/* =========================================================
+   Help dialog
+   ========================================================= */
+const helpDlg = $('#help');
+function renderHelp() {
+  $('#symList').innerHTML = TAG_KEYS.map((k) =>
+    `<div class="sym-row" style="--c:${TAGS[k].color}"><span class="glyph">${TAGS[k].symbol}</span><span class="name">${escapeHtml(tagLabel(k))}</span><span class="desc">${escapeHtml(t('symDesc')[k])}</span></div>`).join('');
+  $('#tipList').innerHTML = t('tips').map((x) => `<li>${escapeHtml(x)}</li>`).join('');
+}
+$('#helpBtn').addEventListener('click', () => { renderHelp(); helpDlg.showModal(); });
+
+/* =========================================================
+   Settings dialog
+   ========================================================= */
+const dlg = $('#settings');
+document.querySelectorAll('dialog').forEach((d) => {
+  d.addEventListener('click', (e) => { if (e.target === d || e.target.closest('[data-close]')) d.close(); });
+});
+function showResult(text, kind) {
+  const r = $('#aiResult');
+  r.textContent = text;
+  r.className = 'result show ' + kind;
+}
+function updateAiBadge() { $('#settingsBtn').classList.toggle('ai-on', !!prefs.key); }
+$('#settingsBtn').addEventListener('click', () => {
+  $('#keyInput').value = prefs.key;
+  $('#modelInput').value = prefs.model;
+  $('#gapRange').value = prefs.gap;
+  $('#gapLabel').textContent = prefs.gap + 'px';
+  $('#fingerCheck').checked = !prefs.penOnly;
+  $('#pressureRange').value = prefs.pressure;
+  showPressure();
+  gdRenderSettings();
+  $('#aiResult').className = 'result';
+  dlg.showModal();
+});
+
+$('#keyTestBtn').addEventListener('click', async () => {
+  const key = $('#keyInput').value.trim();
+  const model = $('#modelInput').value.trim() || DEFAULT_MODEL;
+  if (!key) { showResult(t('needKey'), 'err'); return; }
+  showResult(t('testing', { m: model }), 'info');
+  try {
+    await gemini([{ text: 'Reply with OK only.' }], { key, model });
+    showResult(t('testOk', { m: model }), 'ok');
+  } catch (err) {
+    showResult(t('testFail', { msg: aiErrorMessage(err) }), 'err');
+  }
+});
+$('#keySaveBtn').addEventListener('click', () => {
+  prefs.key = $('#keyInput').value.trim();
+  prefs.model = $('#modelInput').value.trim() || DEFAULT_MODEL;
+  lsSet('cronota_gemini_key', prefs.key);
+  lsSet('cronota_gemini_model', prefs.model);
+  updateAiBadge();
+  dlg.close();
+  toast(prefs.key ? t('aiOn') : t('aiOff'));
+});
+$('#keyClearBtn').addEventListener('click', () => {
+  prefs.key = '';
+  $('#keyInput').value = '';
+  lsDel('cronota_gemini_key');
+  updateAiBadge();
+  showResult(t('keyDeleted'), 'info');
+});
+function applyGap(px) {
+  prefs.gap = px;
+  document.documentElement.style.setProperty('--gap', px + 'px');
+  $('#gapLabel').textContent = px + 'px';
+  layoutPages(true); updateStatus();
+}
+$('#gapRange').addEventListener('input', (e) => {
+  const v = parseInt(e.target.value, 10);
+  applyGap(v);
+  lsSet('cronota_line_gap', String(v));
+});
+$('#fingerCheck').addEventListener('change', (e) => setPenOnly(!e.target.checked));
+function showPressure() { $('#pressureLabel').textContent = prefs.pressure ? String(prefs.pressure) : t('pressureOff'); }
+$('#pressureRange').addEventListener('input', (e) => {
+  prefs.pressure = parseInt(e.target.value, 10) || 0;
+  lsSet('cronota_pressure', String(prefs.pressure));
+  showPressure();
+  redraw();
+});
+
+
+$('#exportBtn').addEventListener('click', () => {
+  const blob = new Blob([JSON.stringify({ app: 'cronota', version: 4, exportedAt: new Date().toISOString(), blocks })], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `cronota-backup-${new Date().toISOString().slice(0, 10)}.json`;
+  document.body.append(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+});
+$('#importBtn').addEventListener('click', () => $('#importFile').click());
+$('#importFile').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  e.target.value = '';
+  if (!file) return;
+  try {
+    const data = JSON.parse(await file.text());
+    const list = (Array.isArray(data) ? data : data.blocks || []).map(sanitizeBlock).filter(Boolean);
+    const have = new Set(blocks.map((b) => b.id));
+    const added = list.filter((b) => !have.has(b.id));
+    blocks.push(...added);
+    persist(); renderNotes(); renderKeywordChips();
+    toast(t('imported', { n: added.length }));
+  } catch {
+    toast(t('importFail'));
+  }
+});
+
+/* =========================================================
+   Google Drive sync (optional). OAuth implicit flow by page
+   redirect (no external script); notes live in one JSON file
+   in the Drive appDataFolder and are merged per note.
+   ========================================================= */
+const GD_SCOPE = 'https://www.googleapis.com/auth/drive.appdata';
+const GD_FILE = 'cronota-notes.json';
+const gd = {
+  client: GD_CLIENT_ID || lsGet('cronota_gd_client', ''),
+  on: lsGet('cronota_gd_on', '0') === '1',
+  token: '', exp: 0,
+  fileId: lsGet('cronota_gd_file', ''),
+  last: +lsGet('cronota_gd_last', '0') || 0,
+  busy: false, queued: false, timer: null, state: ''
+};
+try { const tk = JSON.parse(lsGet('cronota_gd_token', 'null')); if (tk && tk.exp > Date.now()) { gd.token = tk.token; gd.exp = tk.exp; } } catch {}
+function gdRedirectUri() { return location.origin + location.pathname.replace(/index\.html$/, ''); }
+function gdCanConnect() { return location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1'; }
+function gdTokenOk() { return !!gd.token && gd.exp - 60000 > Date.now(); }
+
+function gdConnect() {
+  if (!gdCanConnect()) { toast(t('gdNeedHttps')); return; }
+  if (!gd.client) { toast(t('gdNeedClient')); return; }
+  const state = uid();
+  try {
+    sessionStorage.setItem('cronota_gd_state', state);
+    if (strokes.length) sessionStorage.setItem('cronota_draft', JSON.stringify({ strokes, editNoteId }));
+  } catch {}
+  const q = new URLSearchParams({ client_id: gd.client, redirect_uri: gdRedirectUri(), response_type: 'token', scope: GD_SCOPE, include_granted_scopes: 'true', state });
+  location.assign('https://accounts.google.com/o/oauth2/v2/auth?' + q);
+}
+/** Called once at start: picks up the token Google returns in the URL fragment. */
+function gdTakeRedirect() {
+  if (!location.hash || !/(access_token|error)=/.test(location.hash)) return null;
+  const h = new URLSearchParams(location.hash.slice(1));
+  let expected = null;
+  try { expected = sessionStorage.getItem('cronota_gd_state'); sessionStorage.removeItem('cronota_gd_state'); } catch {}
+  history.replaceState(null, '', location.pathname + location.search);
+  if (!expected || h.get('state') !== expected) return null;
+  if (h.get('error')) return 'denied';
+  const token = h.get('access_token');
+  if (!token) return null;
+  gd.token = token;
+  gd.exp = Date.now() + (parseInt(h.get('expires_in'), 10) || 3600) * 1000;
+  lsSet('cronota_gd_token', JSON.stringify({ token: gd.token, exp: gd.exp }));
+  gd.on = true; lsSet('cronota_gd_on', '1');
+  return 'ok';
+}
+function gdRestoreDraft() {
+  let d = null;
+  try { d = JSON.parse(sessionStorage.getItem('cronota_draft') || 'null'); sessionStorage.removeItem('cronota_draft'); } catch {}
+  if (!d || !Array.isArray(d.strokes) || !d.strokes.length) return;
+  strokes = d.strokes.map(sanitizeStroke).filter(Boolean);
+  if (d.editNoteId && blocks.some((b) => b.id === d.editNoteId)) editNoteId = d.editNoteId;
+}
+
+async function gdApi(url, opts = {}) {
+  let r;
+  try {
+    r = await fetch(url, { ...opts, headers: { Authorization: 'Bearer ' + gd.token, ...(opts.headers || {}) } });
+  } catch { throw Object.assign(new Error(t('errNet')), { code: 'net' }); }
+  if (r.status === 401) { gd.token = ''; gd.exp = 0; lsDel('cronota_gd_token'); throw Object.assign(new Error('401'), { code: 'auth' }); }
+  if (!r.ok) {
+    let msg = 'HTTP ' + r.status;
+    try { const j = await r.json(); if (j.error && j.error.message) msg += ' ' + j.error.message; } catch {}
+    throw Object.assign(new Error(msg), { code: r.status === 404 ? 'gone' : 'http', status: r.status });
+  }
+  return r;
+}
+/** Every copy of the notes file, newest first (two devices connecting at once can each create one). */
+async function gdFindFiles() {
+  const q = new URLSearchParams({ spaces: 'appDataFolder', q: `name='${GD_FILE}' and trashed=false`, fields: 'files(id,modifiedTime)', orderBy: 'modifiedTime desc', pageSize: '10' });
+  const r = await gdApi('https://www.googleapis.com/drive/v3/files?' + q);
+  const j = await r.json();
+  return (j.files || []).map((f) => f.id);
+}
+/** Drive bumps a file's version on every write; comparing it tells us if another device wrote meanwhile. */
+async function gdVersion(id) {
+  const r = await gdApi(`https://www.googleapis.com/drive/v3/files/${encodeURIComponent(id)}?fields=version`);
+  return String((await r.json()).version || '');
+}
+async function gdDelete(id) {
+  try { await gdApi(`https://www.googleapis.com/drive/v3/files/${encodeURIComponent(id)}`, { method: 'DELETE' }); } catch {}
+}
+async function gdDownload(id) {
+  const r = await gdApi(`https://www.googleapis.com/drive/v3/files/${encodeURIComponent(id)}?alt=media`);
+  try { return JSON.parse(await r.text()); } catch { return null; }
+}
+async function gdUpload(id, data) {
+  const body = JSON.stringify(data);
+  if (id) {
+    await gdApi(`https://www.googleapis.com/upload/drive/v3/files/${encodeURIComponent(id)}?uploadType=media`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body });
+    return id;
+  }
+  const bd = 'cronota' + uid();
+  const meta = JSON.stringify({ name: GD_FILE, parents: ['appDataFolder'], mimeType: 'application/json' });
+  const multipart = `--${bd}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${meta}\r\n--${bd}\r\nContent-Type: application/json\r\n\r\n${body}\r\n--${bd}--`;
+  const r = await gdApi('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id', { method: 'POST', headers: { 'Content-Type': `multipart/related; boundary=${bd}` }, body: multipart });
+  return (await r.json()).id;
+}
+
+function inkSig(b) {
+  const pts = b.strokes.reduce((n, s) => n + s.points.length, 0);
+  const last = b.strokes.length ? b.strokes[b.strokes.length - 1].points.slice(-1)[0] : null;
+  return [b.strokes.length, pts, last && last.x, last && last.y].join();
+}
+/** Per-note merge: newer updatedAt wins; a deletion wins over edits made before it.
+    If both sides rewrote a note's ink since this device last synced (since), the losing
+    version is kept as a copy next to it instead of being dropped. */
+function mergeData(local, remote, since = 0) {
+  const byId = new Map();
+  const copies = [];
+  for (const b of local.blocks) byId.set(b.id, b);
+  for (const raw of remote.blocks) {
+    const b = sanitizeBlock(raw);
+    if (!b) continue;
+    const mine = byId.get(b.id);
+    if (!mine) { byId.set(b.id, b); continue; }
+    const tm = Date.parse(mine.updatedAt), tr = Date.parse(b.updatedAt);
+    if (tm === tr) continue;
+    const [win, lose] = tr > tm ? [b, mine] : [mine, b];
+    byId.set(b.id, win);
+    if (since && tm > since && tr > since && inkSig(mine) !== inkSig(b)) {
+      copies.push({ ...lose, id: (lose.id + '~' + uid()).slice(0, 80), updatedAt: new Date().toISOString() });
+    }
+  }
+  const del = { ...sanitizeTombs(remote.deleted) };
+  for (const [id, ts] of Object.entries(local.deleted)) del[id] = Math.max(del[id] || 0, ts);
+  const out = [];
+  for (const b of byId.values()) {
+    if (del[b.id] && del[b.id] >= Date.parse(b.updatedAt)) continue;
+    delete del[b.id];
+    out.push(b);
+  }
+  return { blocks: out.concat(copies), deleted: del, conflicts: copies.length };
+}
+function dataSig(d) {
+  return JSON.stringify([d.blocks.map((b) => b.id + '@' + b.updatedAt).sort(), Object.keys(d.deleted).sort()]);
+}
+
+function gdSetState(st) {
+  gd.state = st;
+  const btn = $('#syncBtn');
+  btn.hidden = !gd.on;
+  btn.classList.toggle('busy', st === 'busy');
+  btn.classList.toggle('warn', st === 'auth' || st === 'err' || (gd.on && !gdTokenOk() && st !== 'busy'));
+  if (dlg.open) gdRenderSettings();
+}
+function gdRenderSettings() {
+  $('#gdClientInput').value = gd.client;
+  $('#gdUri').textContent = gdRedirectUri();
+  $('#gdClientField').hidden = !!GD_CLIENT_ID;
+  $('#gdUriRow').hidden = !!GD_CLIENT_ID;
+  $('#gdSyncBtn').hidden = !gd.on;
+  $('#gdDisconnectBtn').hidden = !gd.on;
+  $('#gdConnectBtn').hidden = gd.on && gdTokenOk();
+  const r = $('#gdResult');
+  let text = '', kind = 'info';
+  if (!gdCanConnect()) { text = t('gdNeedHttps'); kind = 'err'; }
+  else if (gd.state === 'busy') text = t('gdSyncing');
+  else if (!gd.on) text = t('gdOff');
+  else if (!gdTokenOk()) { text = t('gdExpired'); kind = 'err'; }
+  else if (gd.last) { text = t('gdOn', { time: `${dayLabel(new Date(gd.last).toISOString())} ${timeLabel(new Date(gd.last).toISOString())}` }); kind = 'ok'; }
+  else text = t('gdOnNever');
+  r.textContent = text;
+  r.className = 'result show ' + kind;
+}
+
+function gdSchedule() {
+  if (!gd.on || !gdTokenOk()) return;
+  clearTimeout(gd.timer);
+  gd.timer = setTimeout(() => gdSync(), 2500);
+}
+const gdRemoteOf = (d) => ({ blocks: d && Array.isArray(d.blocks) ? d.blocks.map(sanitizeBlock).filter(Boolean) : [], deleted: sanitizeTombs(d && d.deleted) });
+/** Reads the notes file (and folds in any stray duplicate files). */
+async function gdPull(retry = true) {
+  const ids = gd.fileId ? [gd.fileId] : await gdFindFiles();
+  const id = ids[0] || '';
+  let ver = '', data = gdRemoteOf(null), raw = null;
+  if (id) {
+    try { ver = await gdVersion(id); raw = await gdDownload(id); }
+    catch (e) {
+      if (e.code !== 'gone' || !retry) throw e;
+      gd.fileId = ''; lsDel('cronota_gd_file');
+      return gdPull(false);
+    }
+    data = gdRemoteOf(raw);
+  }
+  const extras = ids.slice(1);
+  for (const x of extras) {
+    let d = null;
+    try { d = await gdDownload(x); } catch {}
+    if (d) { const m = mergeData(data, gdRemoteOf(d)); data = { blocks: m.blocks, deleted: m.deleted }; }
+  }
+  return { id, ver, data, extras, fresh: !raw };
+}
+async function gdSync(interactive = false) {
+  if (!gd.on) return;
+  if (!gdTokenOk()) { gdSetState('auth'); if (interactive) gdConnect(); return; }
+  if (gd.busy) { gd.queued = true; return; }
+  gd.busy = true; gdSetState('busy');
+  try {
+    await saveChain;
+    let conflicts = 0, id = '';
+    for (let attempt = 0; ; attempt++) {
+      const pull = await gdPull();
+      const local = { blocks, deleted: tombs };
+      const merged = mergeData(local, pull.data, gd.last);
+      conflicts += merged.conflicts;
+      const mSig = dataSig(merged);
+      if (mSig !== dataSig(local)) {
+        blocks = merged.blocks;
+        tombs = merged.deleted;
+        sigs = new Map(blocks.map((b) => [b.id, blockSig(b)]));
+        if (selectedId && !blocks.some((b) => b.id === selectedId)) selectedId = null;
+        persist(true);
+        renderNotes(); renderKeywordChips();
+      }
+      id = pull.id;
+      if (pull.fresh || pull.extras.length || mSig !== dataSig(pull.data)) {
+        // Another device wrote while we merged: merge again instead of overwriting its notes.
+        if (id && attempt < 3 && (await gdVersion(id)) !== pull.ver) continue;
+        id = await gdUpload(id, { app: 'cronota', version: 1, savedAt: Date.now(), blocks: blocks.map((b) => ({ ...b })), deleted: { ...tombs } });
+        for (const x of pull.extras) await gdDelete(x);
+      }
+      break;
+    }
+    gd.fileId = id; lsSet('cronota_gd_file', id);
+    gd.last = Date.now(); lsSet('cronota_gd_last', String(gd.last));
+    gd.busy = false; gdSetState('ok');
+    if (conflicts) toast(t('gdConflict', { n: conflicts }));
+    else if (interactive) toast(t('gdDone'));
+  } catch (e) {
+    gd.busy = false;
+    gdSetState(e.code === 'auth' ? 'auth' : 'err');
+    if (e.code === 'auth') { if (interactive) gdConnect(); }
+    else if (interactive) toast(t('gdFail', { msg: e.message }));
+  }
+  if (gd.queued) { gd.queued = false; gdSync(); }
+}
+function gdDisconnect() {
+  if (gd.token) fetch('https://oauth2.googleapis.com/revoke?token=' + encodeURIComponent(gd.token), { method: 'POST' }).catch(() => {});
+  gd.on = false; gd.token = ''; gd.exp = 0; gd.fileId = ''; gd.last = 0;
+  ['cronota_gd_on', 'cronota_gd_token', 'cronota_gd_file', 'cronota_gd_last'].forEach(lsDel);
+  gdSetState('');
+  toast(t('gdDisconnected'));
+}
+$('#gdClientInput').addEventListener('change', (e) => {
+  if (GD_CLIENT_ID) return;
+  gd.client = e.target.value.trim();
+  lsSet('cronota_gd_client', gd.client);
+});
+$('#gdConnectBtn').addEventListener('click', () => {
+  if (!GD_CLIENT_ID) {
+    gd.client = $('#gdClientInput').value.trim();
+    lsSet('cronota_gd_client', gd.client);
+  }
+  gdConnect();
+});
+$('#privacyLink').href = PRIVACY_URL;
+$('#gdSyncBtn').addEventListener('click', () => gdSync(true));
+$('#gdDisconnectBtn').addEventListener('click', gdDisconnect);
+$('#syncBtn').addEventListener('click', () => gdSync(true));
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && gd.on && gdTokenOk() && Date.now() - gd.last > 30000) gdSync();
+});
+
+/* =========================================================
+   Language
+   ========================================================= */
+function applyLanguage(next) {
+  lang = I18N[next] ? next : 'ko';
+  lsSet('cronota_lang', lang);
+  document.documentElement.lang = lang;
+  $('#langSelect').value = lang;
+  $('#langCode').textContent = t('code');
+  document.querySelectorAll('[data-i18n]').forEach((el) => { el.textContent = t(el.dataset.i18n); });
+  document.querySelectorAll('[data-i18n-html]').forEach((el) => { el.innerHTML = t(el.dataset.i18nHtml); });
+  document.querySelectorAll('[data-i18n-ph]').forEach((el) => { el.placeholder = t(el.dataset.i18nPh); });
+  document.querySelectorAll('[data-i18n-aria]').forEach((el) => { el.setAttribute('aria-label', t(el.dataset.i18nAria)); });
+  document.querySelectorAll('[data-i18n-title]').forEach((el) => { el.title = t(el.dataset.i18nTitle); el.setAttribute('aria-label', el.title); });
+  $('#saveBtn').title = t('saveTitle');
+  $('#sortBtn').title = t('sortNew') + ' / ' + t('sortOld');
+  buildToolbar();
+  setPenOnly(prefs.penOnly);
+  updateStatus();
+  renderNotes();
+  renderKeywordChips();
+  if (padIsOpen()) $('#padNote').textContent = prefs.key ? t('padNote') : t('padNoteNoAi');
+  if (helpDlg.open) renderHelp();
+}
+$('#langSelect').addEventListener('change', (e) => applyLanguage(e.target.value));
+
+/* =========================================================
+   Init
+   ========================================================= */
+document.querySelectorAll('i[data-icon]').forEach((el) => {
+  el.outerHTML = icon(el.dataset.icon, el.className);
+});
+document.documentElement.style.setProperty('--gap', prefs.gap + 'px');
+document.documentElement.style.setProperty('--margin-x', MARGIN_X + 'px');
+updateAiBadge();
+scroller.classList.toggle('h', horizontal());
+applyLanguage(lang);
+setPageMode(prefs.pageMode);
+
+let resizeTimer = null;
+new ResizeObserver(() => sizeInk()).observe(scroller);
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => { renderNotes(); if (padIsOpen()) sizePad(); }, 150);
+});
+
+const gdReturn = gdTakeRedirect();
+/* Installable app: the service worker only runs when served over http(s). */
+if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).catch(() => {});
+  });
+}
+(async () => {
+  await loadBlocks();
+  gdRestoreDraft();
+  layoutPages(true);
+  afterCanvasChange();
+  renderNotes();
+  renderKeywordChips();
+  gdSetState('');
+  if (gdReturn === 'denied') toast(t('gdDenied'));
+  if (gdReturn === 'ok') toast(t('gdConnected'));
+  if (gd.on && gdTokenOk()) gdSync();
+})();
+</script>
+</body>
+</html>
