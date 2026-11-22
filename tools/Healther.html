@@ -1,0 +1,1931 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#F5F1E8" />
+<title>Healther · 아웃그리드 건강 기록</title>
+<meta name="description" content="브라우저 안에서만 동작하는 건강 기록. 체중, 혈압, 혈당, 수면, 심박수, 체온 등을 기록하고 그래프와 통계로 보고, 병원에 가져갈 리포트를 PDF로 저장. 기록은 내 기기에만 저장됩니다." />
+<!-- Fonts: outgrid's own files first (fonts/ next to this page), public CDN as a fallback. -->
+<style>
+  @font-face { font-family: "wantedSans"; src: url("fonts/WantedSansVariable.woff2") format("woff2"); font-weight: 100 800; font-style: normal; font-display: swap; }
+  @font-face { font-family: "maruBuri"; src: url("fonts/MaruBuri-Regular.woff2") format("woff2"); font-weight: 400; font-style: normal; font-display: swap; }
+  @font-face { font-family: "maruBuri"; src: url("fonts/MaruBuri-SemiBold.woff2") format("woff2"); font-weight: 600; font-style: normal; font-display: swap; }
+</style>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/wanteddev/wanted-sans@v1.0.3/packages/wanted-sans/fonts/webfonts/variable/split/WantedSansVariable.min.css" />
+<link rel="stylesheet" href="https://hangeul.pstatic.net/hangeul_static/css/maru-buri.css" />
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23244D3A'/%3E%3Cpath d='M32 50s-17-10-17-23a9.5 9.5 0 0 1 17-5.8A9.5 9.5 0 0 1 49 27c0 13-17 23-17 23z' fill='none' stroke='%23F5F1E8' stroke-width='3.5' stroke-linejoin='round'/%3E%3Cpath d='M19 32h7l3-5 5 9 3-4h8' fill='none' stroke='%23D9C8A9' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
+<style>
+  :root {
+    --bg: #F5F1E8;
+    --surface: #FCFAF5;
+    --paper: #FFFDF8;
+    --ink: #1C2824;
+    --ink-2: #33403A;
+    --muted: #5E665F;
+    --faint: #9A9F95;
+    --hair: #E3DCCB;
+    --hover: #F0EADD;
+    --press: #E7DFCD;
+    --dark: #244D3A;
+    --dark-2: #1B3B2C;
+    --river: #3E6F73;
+    --clay: #8A5A3B;
+    --sand: #D9C8A9;
+    --focus: #8A5A3B;
+    --danger: #963F3B;
+    --rec: #B5443B;
+    --shadow: 0 1px 0 rgba(28,40,36,.03), 0 18px 40px -30px rgba(28,40,36,.30);
+    --sans: "wantedSans", "Wanted Sans Variable", "Wanted Sans", -apple-system, BlinkMacSystemFont, "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+    --serif: "maruBuri", "MaruBuri", "Batang", "Noto Serif KR", serif;
+    --r-sm: 10px;
+    --r-md: 13px;
+    --r-lg: 20px;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    font-family: var(--sans); word-break: keep-all; background: var(--bg); color: var(--ink);
+    font-size: 14px; letter-spacing: -0.005em; -webkit-font-smoothing: antialiased;
+    min-height: 100dvh; display: flex; flex-direction: column;
+  }
+  [hidden] { display: none !important; }
+  button { font: inherit; color: inherit; cursor: pointer; border: 0; background: none; padding: 0; -webkit-tap-highlight-color: transparent; }
+  button:disabled { cursor: default; opacity: .35; }
+  input, select, textarea { font: inherit; color: inherit; }
+  :focus-visible { outline: 2.5px solid var(--focus); outline-offset: 3px; }
+  ::selection { background: rgba(36,77,58,.16); }
+  svg.i { width: 19px; height: 19px; stroke: currentColor; fill: none; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+  svg.i.sm { width: 16px; height: 16px; }
+  .muted { color: var(--faint); }
+  .tnum { font-variant-numeric: tabular-nums; }
+
+  /* ---------- Header ---------- */
+  .top { position: sticky; top: 0; z-index: 40; background: var(--bg); }
+  .top-inner { max-width: 1440px; margin: 0 auto; padding: 14px 24px 8px; display: flex; align-items: center; gap: 14px; }
+  .brand { display: flex; align-items: center; gap: 12px; flex: none; text-decoration: none; color: inherit; }
+  .logo { display: block; height: 34px; width: auto; flex: none; }
+  .app-name { font-family: var(--serif); font-weight: 600; font-size: 23px; letter-spacing: -.02em; color: var(--dark); line-height: 1; padding-left: 12px; border-left: 1.5px solid var(--hair); }
+  .app-name small { display: block; font-family: var(--sans); font-size: 11px; font-weight: 500; color: var(--faint); letter-spacing: 0; margin-top: 4px; }
+  .head-actions { margin-left: auto; display: flex; align-items: center; gap: 6px; min-width: 0; }
+  .icon-btn { width: 38px; height: 38px; border-radius: 999px; display: grid; place-items: center; color: var(--ink-2); transition: background .15s, color .15s; flex: none; }
+  .icon-btn:hover:not(:disabled) { background: var(--hover); color: var(--ink); }
+  .icon-btn[aria-pressed="true"] { background: var(--dark); color: var(--surface); }
+  .icon-btn.off { color: var(--faint); }
+  .run-pill { height: 34px; padding: 0 14px 0 12px; border-radius: 999px; background: #E8EFE8; color: var(--dark); font-weight: 700; font-size: 13px; display: inline-flex; align-items: center; gap: 8px; font-variant-numeric: tabular-nums; max-width: 46vw; overflow: hidden; white-space: nowrap; cursor: pointer; }
+  .dot { width: 9px; height: 9px; border-radius: 999px; background: currentColor; flex: none; }
+  .run-pill .dot { animation: blink 1.6s ease-in-out infinite; }
+  @keyframes blink { 50% { opacity: .25; } }
+
+  /* ---------- Buttons ---------- */
+  .btn { height: 38px; padding: 0 16px; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; font-weight: 600; font-size: 13.5px; background: var(--hover); color: var(--ink-2); white-space: nowrap; transition: background .15s, box-shadow .15s; flex: none; }
+  .btn:hover:not(:disabled) { background: var(--press); }
+  .btn.primary { background: var(--dark); color: var(--surface); box-shadow: 0 8px 18px -10px rgba(36,77,58,.7); }
+  .btn.primary:hover:not(:disabled) { background: var(--dark-2); }
+  .btn.clay { background: var(--clay); color: var(--surface); }
+  .btn.clay:hover:not(:disabled) { background: #74492F; }
+  .btn.ghost { background: none; color: var(--muted); }
+  .btn.ghost:hover:not(:disabled) { background: var(--hover); color: var(--ink); }
+  .btn.line { background: var(--surface); box-shadow: inset 0 0 0 1px var(--hair); }
+  .btn.line:hover:not(:disabled) { background: var(--hover); }
+  .btn.sm { height: 32px; padding: 0 12px; font-size: 12.5px; gap: 5px; }
+  .btn.lg { height: 46px; padding: 0 22px; font-size: 14.5px; }
+  .btn.block { width: 100%; }
+  .btn.danger { color: var(--danger); }
+  .btn.rec { background: var(--rec); color: #fff; }
+
+  /* ---------- Tabs ---------- */
+  .tabs-wrap { max-width: 1440px; margin: 0 auto; padding: 4px 24px 10px; display: flex; align-items: center; gap: 12px; }
+  .tabs { display: flex; gap: 2px; padding: 4px; background: var(--press); border-radius: 999px; overflow-x: auto; scrollbar-width: none; flex: none; max-width: 100%; }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab { height: 34px; padding: 0 15px; border-radius: 999px; font-weight: 600; font-size: 13px; color: var(--muted); white-space: nowrap; display: inline-flex; align-items: center; gap: 6px; transition: background .15s, color .15s; flex: none; }
+  .tab svg.i { width: 16px; height: 16px; }
+  .tab:hover { color: var(--ink); }
+  .tab[aria-selected="true"] { background: var(--dark); color: var(--surface); box-shadow: 0 6px 14px -8px rgba(36,77,58,.6); }
+  .tab .n { font-size: 11px; font-weight: 700; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px; background: rgba(28,40,36,.08); display: inline-grid; place-items: center; font-variant-numeric: tabular-nums; }
+  .tab[aria-selected="true"] .n { background: rgba(255,255,255,.18); }
+  .tab .live { width: 7px; height: 7px; border-radius: 999px; background: #6FBF8B; }
+  .applied { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; min-width: 0; align-items: center; }
+  .applied::-webkit-scrollbar { display: none; }
+  .achip { height: 28px; padding: 0 11px; border-radius: 999px; font-size: 12px; font-weight: 600; background: #E8EFE8; color: var(--dark); white-space: nowrap; display: inline-flex; align-items: center; gap: 5px; flex: none; font-variant-numeric: tabular-nums; }
+  .achip.warn { background: #F3E7DC; color: var(--clay); }
+
+  /* ---------- Layout ---------- */
+  main { flex: 1; width: 100%; max-width: 1440px; margin: 0 auto; padding: 0 24px 24px; display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 16px; height: calc(100dvh - 122px); min-height: 520px; }
+  .panel { background: var(--surface); border-radius: var(--r-lg); display: flex; flex-direction: column; min-height: 0; overflow: hidden; box-shadow: 0 0 0 1px var(--hair), var(--shadow); }
+  .view { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+  .wbar { display: flex; align-items: center; gap: 6px; padding: 10px 12px; border-bottom: 1px solid var(--hair); flex-wrap: wrap; row-gap: 8px; min-height: 59px; }
+  .wbar .count { font-size: 13px; color: var(--muted); margin: 0 6px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .wbar .count b { color: var(--ink); font-weight: 600; }
+  .grow { flex: 1; }
+  .sep { width: 1px; height: 20px; background: var(--hair); margin: 0 4px; flex: none; }
+  .tool { height: 36px; min-width: 36px; padding: 0 9px; border-radius: var(--r-sm); display: inline-flex; align-items: center; justify-content: center; gap: 6px; color: var(--ink-2); font-size: 12.5px; font-weight: 600; transition: background .15s, color .15s; flex: none; white-space: nowrap; }
+  .tool:hover:not(:disabled) { background: var(--hover); color: var(--ink); }
+  .tool[aria-pressed="true"] { background: var(--dark); color: var(--surface); }
+  .tool.danger:hover:not(:disabled) { color: var(--danger); }
+  .scroll { flex: 1; min-height: 0; overflow: auto; overscroll-behavior: contain; position: relative; }
+  /* ---------- Stats ---------- */
+  .kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; padding: 18px 18px 6px; }
+  .kpi { border-radius: 16px; background: #fff; box-shadow: 0 0 0 1px var(--hair); padding: 14px 16px; min-width: 0; }
+  .kpi .k { font-size: 12px; font-weight: 600; color: var(--muted); }
+  .kpi .v { font-size: 26px; font-weight: 700; letter-spacing: -.03em; margin-top: 6px; font-variant-numeric: tabular-nums; color: var(--ink); white-space: nowrap; }
+  .kpi .v small { font-size: 13px; font-weight: 600; color: var(--muted); margin-left: 2px; letter-spacing: 0; }
+  .kpi .s { font-size: 11.5px; color: var(--faint); margin-top: 3px; font-variant-numeric: tabular-nums; }
+  .card { border-radius: 16px; background: #fff; box-shadow: 0 0 0 1px var(--hair); padding: 14px 16px 12px; margin: 12px 18px 0; position: relative; }
+  .card h3 { margin: 0; font-family: var(--serif); font-size: 16px; font-weight: 600; color: var(--dark); letter-spacing: -.02em; }
+  .card .ch { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+  .card .cs { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .chart { width: 100%; display: block; overflow: visible; }
+  .chart text { font-family: var(--sans); font-size: 11px; fill: var(--faint); font-variant-numeric: tabular-nums; }
+  .chart .grid { stroke: var(--hover); stroke-width: 1; }
+  .chart .base { stroke: var(--hair); stroke-width: 1; }
+  .chart .goal { stroke: var(--clay); stroke-width: 1.2; stroke-dasharray: 4 4; }
+  .chart .b { fill: var(--dark); }
+  .chart .b.today { fill: var(--clay); }
+  .chart .hit { fill: transparent; }
+  .chart .hit:hover + .b, .chart g:hover .b { fill: var(--dark-2); }
+  .chart g:hover .b.today { fill: #74492F; }
+  .tip { position: absolute; pointer-events: none; background: var(--ink); color: var(--surface); padding: 7px 10px; border-radius: 9px; font-size: 12px; line-height: 1.45; white-space: nowrap; z-index: 5; transform: translate(-50%, calc(-100% - 10px)); font-variant-numeric: tabular-nums; box-shadow: 0 10px 24px -12px rgba(0,0,0,.5); }
+  .tip b { font-weight: 700; }
+  .heat { display: grid; grid-auto-flow: column; grid-template-rows: repeat(7, 1fr); gap: 3px; overflow-x: auto; padding-bottom: 2px; }
+  .heat i { width: 13px; height: 13px; border-radius: 3px; background: var(--hover); display: block; }
+  .heat i.l1 { background: #CFDFD2; } .heat i.l2 { background: #9DBFA6; } .heat i.l3 { background: #5E8F6E; } .heat i.l4 { background: #244D3A; }
+  .heat i.fut { background: transparent; }
+  .legend { display: flex; gap: 4px; align-items: center; font-size: 11px; color: var(--faint); margin-top: 8px; }
+  .legend i { width: 11px; height: 11px; border-radius: 3px; display: inline-block; }
+  .empty { padding: 50px 24px; text-align: center; color: var(--faint); font-size: 13px; line-height: 1.7; }
+  .empty b { display: block; font-family: var(--serif); color: var(--dark); font-size: 18px; font-weight: 600; margin-bottom: 4px; }
+  .seg { display: flex; padding: 3px; gap: 2px; background: var(--press); border-radius: 999px; flex-wrap: wrap; }
+  .seg button { flex: 1; height: 30px; border-radius: 999px; font-size: 12.5px; font-weight: 600; color: var(--muted); padding: 0 10px; white-space: nowrap; }
+  .seg button[aria-pressed="true"] { background: var(--surface); color: var(--dark); box-shadow: 0 2px 6px -3px rgba(28,40,36,.3); }
+
+  /* ---------- Side panel ---------- */
+  #side .ph { padding: 16px 20px 12px; border-bottom: 1px solid var(--hair); display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  #side .ph h2 { margin: 0; font-family: var(--serif); font-size: 19px; font-weight: 600; color: var(--dark); letter-spacing: -.02em; }
+  #side .ph p { margin: 3px 0 0; font-size: 12px; color: var(--faint); }
+  #side .collapse { display: none; }
+  .pbody { flex: 1; min-height: 0; overflow-y: auto; padding: 6px 20px 20px; overscroll-behavior: contain; }
+  .sec { padding: 16px 0; border-bottom: 1px solid var(--hair); }
+  .sec:last-child { border-bottom: 0; }
+  .sec h3 { margin: 0 0 10px; font-size: 12px; font-weight: 700; color: var(--clay); letter-spacing: .04em; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .sec h3 .v { color: var(--faint); font-weight: 600; letter-spacing: 0; font-variant-numeric: tabular-nums; }
+  .sec p.hint { margin: 0 0 10px; font-size: 12.5px; color: var(--muted); line-height: 1.6; }
+  .btns { display: flex; flex-wrap: wrap; gap: 6px; }
+  .btns.g2 { display: grid; grid-template-columns: 1fr 1fr; }
+  .btns.g2 .btn { width: 100%; }
+  .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+  .field:last-child { margin-bottom: 0; }
+  .field > label, .field > .lbl { font-size: 12px; font-weight: 600; color: var(--ink-2); display: flex; justify-content: space-between; gap: 6px; }
+  .field > label .v, .field > .lbl .v { color: var(--faint); font-weight: 500; font-variant-numeric: tabular-nums; }
+  .inp, select.inp { width: 100%; height: 40px; border: 0; background: #fff; box-shadow: inset 0 0 0 1px var(--hair); border-radius: 999px; padding: 0 14px; font-size: 13.5px; outline: none; transition: box-shadow .15s; min-width: 0; }
+  select.inp { appearance: none; -webkit-appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235E665F' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; background-size: 16px; padding-right: 34px; }
+  .inp:focus { box-shadow: inset 0 0 0 1.5px var(--dark), 0 0 0 4px rgba(36,77,58,.08); }
+  .inp.tc { text-align: center; font-variant-numeric: tabular-nums; padding: 0 6px; }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+  .hms { display: grid; grid-template-columns: 1fr auto 1fr auto 1fr; gap: 6px; align-items: center; }
+  .hms span { font-size: 12px; color: var(--faint); font-weight: 600; }
+  .num { display: grid; grid-template-columns: 34px 1fr 34px; align-items: center; background: #fff; box-shadow: inset 0 0 0 1px var(--hair); border-radius: 999px; height: 40px; }
+  .num button { height: 34px; width: 34px; border-radius: 999px; display: grid; place-items: center; color: var(--muted); margin: 3px; }
+  .num button:hover { background: var(--hover); color: var(--ink); }
+  .num input { border: 0; background: none; text-align: center; width: 100%; height: 100%; outline: none; font-weight: 600; font-variant-numeric: tabular-nums; min-width: 0; -moz-appearance: textfield; }
+  .num input::-webkit-inner-spin-button { -webkit-appearance: none; }
+  .num svg.i { width: 15px; height: 15px; }
+  .range { width: 100%; accent-color: var(--dark); margin: 4px 0 0; }
+  .switch { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 13px; font-weight: 600; color: var(--ink-2); cursor: pointer; padding: 6px 0; }
+  .switch small { display: block; font-size: 11.5px; font-weight: 500; color: var(--faint); margin-top: 2px; line-height: 1.45; }
+  .switch input { appearance: none; -webkit-appearance: none; width: 40px; height: 24px; border-radius: 999px; background: var(--sand); position: relative; cursor: pointer; transition: background .15s; flex: none; margin: 0; }
+  .switch input::after { content: ''; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 999px; background: #fff; transition: transform .15s; box-shadow: 0 1px 3px rgba(0,0,0,.2); }
+  .switch input:checked { background: var(--dark); }
+  .switch input:checked::after { transform: translateX(16px); }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip { height: 32px; padding: 0 12px; border-radius: 999px; background: #fff; box-shadow: inset 0 0 0 1px var(--hair); font-size: 12.5px; font-weight: 600; color: var(--ink-2); display: inline-flex; align-items: center; gap: 6px; }
+  .chip:hover { background: var(--hover); }
+  .chip small { color: var(--faint); font-weight: 500; font-variant-numeric: tabular-nums; }
+  .chip .x { width: 18px; height: 18px; border-radius: 999px; display: grid; place-items: center; color: var(--faint); margin-right: -6px; }
+  .chip .x:hover { background: var(--press); color: var(--danger); }
+  .chip .x svg { width: 12px; height: 12px; }
+  .note { font-size: 12px; padding: 10px 12px; border-radius: var(--r-md); background: var(--hover); color: var(--muted); line-height: 1.6; margin-top: 10px; }
+  .note.ok { background: #E8F0E9; color: var(--dark); }
+  .note.warn { background: #F3E7DC; color: #6E4429; }
+  .goalbar { display: flex; align-items: center; gap: 10px; font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .goalbar .bar { flex: 1; height: 8px; }
+  .goalbar b { color: var(--ink); }
+  /* ---------- Dialogs ---------- */
+  dialog { border: 0; border-radius: 22px; padding: 0; width: min(520px, calc(100vw - 32px)); background: var(--surface); box-shadow: 0 0 0 1px var(--hair), 0 30px 70px -30px rgba(28,40,36,.45); color: var(--ink); }
+  dialog::backdrop { background: rgba(28,40,36,.32); backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px); }
+  .dlg-head { display: flex; align-items: center; justify-content: space-between; padding: 20px 22px 8px; }
+  .dlg-head h2 { margin: 0; font-family: var(--serif); font-size: 20px; font-weight: 600; letter-spacing: -.02em; color: var(--dark); }
+  .dlg-body { padding: 8px 22px 22px; display: flex; flex-direction: column; gap: 14px; max-height: 76vh; overflow-y: auto; }
+  .dlg-body p { margin: 0; font-size: 13px; color: var(--muted); line-height: 1.65; }
+  .dlg-body .sec { padding: 12px 0; }
+  .btn-row { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+  .help h4 { margin: 4px 0 6px; font-size: 12px; font-weight: 700; color: var(--clay); letter-spacing: .04em; }
+  .help ul { margin: 0; padding-left: 18px; font-size: 13px; color: var(--ink-2); line-height: 1.75; }
+  .keys { display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; font-size: 13px; align-items: center; }
+  kbd { font-family: var(--sans); font-size: 11.5px; font-weight: 700; padding: 3px 7px; border-radius: 6px; background: #fff; box-shadow: inset 0 0 0 1px var(--hair), 0 1px 0 var(--hair); color: var(--ink-2); white-space: nowrap; }
+
+  /* ---------- Toast ---------- */
+  #toast { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom)); transform: translateX(-50%); background: var(--dark); color: var(--surface); padding: 11px 18px; border-radius: 999px; box-shadow: 0 14px 30px -14px rgba(28,40,36,.55); font-size: 13px; font-weight: 600; z-index: 200; display: none; align-items: center; gap: 14px; max-width: calc(100vw - 32px); }
+  #toast.show { display: flex; }
+  #toast.err { background: var(--danger); }
+  #toast button { color: var(--sand); font-weight: 600; white-space: nowrap; text-decoration: underline; text-underline-offset: 3px; }
+
+  .foot { max-width: 1440px; margin: 0 auto; padding: 0 24px 16px; font-size: 11.5px; color: var(--faint); display: flex; gap: 6px; align-items: center; }
+  .foot svg { width: 13px; height: 13px; }
+  /* ---------- Healther ---------- */
+  :root {
+    --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --s4: #eda100; --s5: #e87ba4;
+    --st-ok: #2F7D4F; --st-ok-bg: #E4F0E6;
+    --st-warn: #8A5A1B; --st-warn-bg: #F6EBD6;
+    --st-high: #A63A33; --st-high-bg: #F7E3E0;
+    --st-low: #2F5F8A; --st-low-bg: #E2ECF5;
+    --st-none: #5E665F; --st-none-bg: #EEEAE0;
+  }
+  .scroll { padding-bottom: 18px; }
+  .badge { display: inline-flex; align-items: center; gap: 4px; height: 22px; padding: 0 9px; border-radius: 999px; font-size: 11.5px; font-weight: 700; white-space: nowrap; background: var(--st-none-bg); color: var(--st-none); flex: none; }
+  .badge::before { content: ''; width: 6px; height: 6px; border-radius: 999px; background: currentColor; }
+  .badge.ok { background: var(--st-ok-bg); color: var(--st-ok); }
+  .badge.warn { background: var(--st-warn-bg); color: var(--st-warn); }
+  .badge.high { background: var(--st-high-bg); color: var(--st-high); }
+  .badge.low { background: var(--st-low-bg); color: var(--st-low); }
+  .badge.plain::before { display: none; }
+
+  /* dashboard */
+  .hello { padding: 18px 18px 4px; display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .hello h2 { margin: 0; font-family: var(--serif); font-weight: 600; font-size: 22px; color: var(--dark); letter-spacing: -.02em; }
+  .hello p { margin: 4px 0 0; font-size: 12.5px; color: var(--muted); }
+  .mgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; padding: 14px 18px 4px; }
+  .mcard { border-radius: 16px; background: #fff; box-shadow: 0 0 0 1px var(--hair); padding: 13px 14px 10px; display: flex; flex-direction: column; gap: 6px; cursor: pointer; transition: box-shadow .15s; text-align: left; min-width: 0; }
+  .mcard:hover { box-shadow: 0 0 0 1.5px var(--dark), 0 14px 30px -24px rgba(28,40,36,.5); }
+  .mcard .hd { display: flex; align-items: center; gap: 7px; font-size: 12.5px; font-weight: 700; color: var(--ink-2); }
+  .mcard .hd .ic { width: 28px; height: 28px; border-radius: 9px; display: grid; place-items: center; background: #E8EFE8; color: var(--dark); flex: none; }
+  .mcard .hd .ic svg { width: 16px; height: 16px; }
+  .mcard .hd .add { margin-left: auto; width: 30px; height: 30px; border-radius: 999px; display: grid; place-items: center; color: var(--muted); }
+  .mcard .hd .add:hover { background: var(--hover); color: var(--dark); }
+  .mcard .val { font-size: 27px; font-weight: 700; letter-spacing: -.03em; font-variant-numeric: tabular-nums; color: var(--ink); line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .mcard .val small { font-size: 12.5px; font-weight: 600; color: var(--muted); margin-left: 3px; letter-spacing: 0; }
+  .mcard .val.none { color: var(--faint); font-size: 18px; font-weight: 600; }
+  .mcard .meta { display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--faint); font-variant-numeric: tabular-nums; min-height: 22px; flex-wrap: wrap; }
+  .mcard .spark { width: 100%; height: 36px; display: block; }
+  .delta { font-weight: 700; }
+  .delta.up { color: var(--st-high); } .delta.down { color: var(--st-low); }
+
+  /* calendar */
+  .cal-h { display: flex; align-items: center; gap: 6px; }
+  .cal-h b { font-size: 14px; font-weight: 700; min-width: 92px; text-align: center; font-variant-numeric: tabular-nums; }
+  .cal { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+  .cal .wd { font-size: 11px; font-weight: 700; color: var(--faint); text-align: center; padding: 2px 0 4px; }
+  .cal .wd.sun { color: #B5443B; } .cal .wd.sat { color: var(--river); }
+  .cal button { min-height: 52px; border-radius: 10px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 5px; padding: 6px 2px; font-size: 12.5px; font-weight: 600; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+  .cal button:hover { background: var(--hover); }
+  .cal button.out { color: var(--faint); opacity: .45; }
+  .cal button.today span.d { background: var(--dark); color: #fff; }
+  .cal button.sel { box-shadow: inset 0 0 0 1.6px var(--dark); background: #F2F6F1; }
+  .cal span.d { width: 24px; height: 24px; border-radius: 999px; display: grid; place-items: center; }
+  .cal .dots { display: flex; gap: 3px; flex-wrap: wrap; justify-content: center; max-width: 44px; }
+  .cal .dots i { width: 6px; height: 6px; border-radius: 999px; background: var(--c); }
+  .tdot { width: 8px; height: 8px; border-radius: 999px; background: var(--c); display: inline-block; flex: none; }
+  .legend-row { display: flex; flex-wrap: wrap; gap: 10px; font-size: 11.5px; color: var(--muted); margin-top: 10px; }
+  .legend-row span { display: inline-flex; align-items: center; gap: 5px; }
+  .legend-row .ln { width: 16px; height: 2px; border-radius: 2px; background: var(--c); display: inline-block; }
+  .legend-row .ln.dash { background: repeating-linear-gradient(90deg, var(--c) 0 4px, transparent 4px 7px); }
+  .legend-row .bx { width: 12px; height: 10px; border-radius: 3px; background: var(--c); display: inline-block; }
+
+  /* entry list */
+  .elist { display: flex; flex-direction: column; }
+  .eday { padding: 12px 0 4px; font-size: 12px; font-weight: 700; color: var(--clay); letter-spacing: .03em; display: flex; justify-content: space-between; gap: 8px; }
+  .eday span { color: var(--faint); font-weight: 600; letter-spacing: 0; }
+  .erow { display: flex; align-items: center; gap: 10px; padding: 9px 4px; border-bottom: 1px solid var(--hover); font-size: 13px; border-radius: 8px; cursor: pointer; }
+  .erow:hover { background: var(--paper); }
+  .erow.editing { background: #F2F6F1; box-shadow: inset 0 0 0 1.5px var(--dark); }
+  .erow .k { width: 30px; height: 30px; border-radius: 10px; display: grid; place-items: center; flex: none; background: #E8EFE8; color: var(--dark); }
+  .erow .k svg { width: 16px; height: 16px; }
+  .erow .tm { width: 44px; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; flex: none; }
+  .erow .tx { flex: 1; min-width: 0; }
+  .erow .v { font-weight: 700; font-variant-numeric: tabular-nums; }
+  .erow .v small { font-weight: 500; color: var(--faint); margin-left: 2px; }
+  .erow .sub { font-size: 11.5px; color: var(--faint); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .erow .tg { display: inline-block; font-size: 10.5px; font-weight: 700; padding: 1px 6px; border-radius: 999px; background: var(--hover); color: var(--muted); margin-right: 3px; }
+  .erow button { width: 30px; height: 30px; border-radius: 999px; display: grid; place-items: center; color: var(--faint); flex: none; }
+  .erow button:hover { background: var(--hover); color: var(--danger); }
+  .erow button svg { width: 15px; height: 15px; }
+  .more { margin: 10px auto 0; display: flex; }
+
+  /* stat table */
+  .stbl { width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
+  .stbl th { text-align: right; font-size: 11.5px; font-weight: 700; color: var(--faint); padding: 7px 8px; border-bottom: 1px solid var(--hair); white-space: nowrap; }
+  .stbl td { text-align: right; padding: 8px; border-bottom: 1px solid var(--hover); white-space: nowrap; }
+  .stbl th:first-child, .stbl td:first-child { text-align: left; }
+  .stbl tr:last-child td { border-bottom: 0; }
+  .stbl td.nm { font-weight: 600; color: var(--ink-2); display: flex; align-items: center; gap: 6px; }
+  .tblwrap { overflow-x: auto; }
+  .dist { display: flex; height: 14px; border-radius: 5px; overflow: hidden; gap: 2px; margin: 6px 0 8px; }
+  .dist i { display: block; height: 100%; min-width: 3px; }
+  .mini-kv { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
+  .mini-kv div { background: var(--paper); border-radius: 12px; padding: 10px 12px; box-shadow: inset 0 0 0 1px var(--hover); }
+  .mini-kv .k { font-size: 11.5px; color: var(--muted); font-weight: 600; }
+  .mini-kv .v { font-size: 18px; font-weight: 700; margin-top: 3px; font-variant-numeric: tabular-nums; letter-spacing: -.02em; }
+  .mini-kv .v small { font-size: 11.5px; color: var(--faint); font-weight: 600; margin-left: 2px; }
+  .chart-box { position: relative; }
+  .chart .dot { stroke: #fff; stroke-width: 2; }
+  .chart .ring { fill: none; stroke-width: 2; }
+  .chart .band { opacity: .12; }
+  .chart .ref { stroke-width: 1.2; stroke-dasharray: 4 4; }
+  .chart .lbl { font-size: 10.5px; font-weight: 700; }
+  .chart .bar { fill: var(--dark); }
+  .chart .bar.low { fill: #8FAE9A; }
+  .xcross { stroke: var(--faint); stroke-width: 1; stroke-dasharray: 2 3; }
+  .chart-empty { height: 160px; display: grid; place-items: center; color: var(--faint); font-size: 13px; }
+
+  /* side form */
+  .tsel { display: grid; grid-template-columns: repeat(auto-fill, minmax(74px, 1fr)); gap: 6px; }
+  .tsel button { height: 56px; border-radius: 12px; background: #fff; box-shadow: inset 0 0 0 1px var(--hair); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; font-size: 11.5px; font-weight: 700; color: var(--ink-2); }
+  .tsel button svg { width: 18px; height: 18px; color: var(--dark); }
+  .tsel button[aria-pressed="true"] { background: var(--dark); color: var(--surface); box-shadow: none; }
+  .tsel button[aria-pressed="true"] svg { color: var(--surface); }
+  .bigin { display: grid; grid-template-columns: 44px 1fr 44px; align-items: center; background: #fff; box-shadow: inset 0 0 0 1px var(--hair); border-radius: 16px; height: 60px; }
+  .bigin:focus-within { box-shadow: inset 0 0 0 1.5px var(--dark), 0 0 0 4px rgba(36,77,58,.08); }
+  .bigin button { width: 38px; height: 38px; border-radius: 999px; display: grid; place-items: center; color: var(--muted); margin: 0 3px; }
+  .bigin button:hover { background: var(--hover); color: var(--ink); }
+  .bigin .mid { display: flex; align-items: baseline; justify-content: center; gap: 4px; min-width: 0; }
+  .bigin input { border: 0; background: none; text-align: center; width: 100%; min-width: 0; outline: none; font-size: 26px; font-weight: 700; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+  .bigin .u { font-size: 12px; font-weight: 600; color: var(--faint); white-space: nowrap; padding-right: 6px; }
+  .bp3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
+  .bp3 .bx { background: #fff; box-shadow: inset 0 0 0 1px var(--hair); border-radius: 14px; padding: 6px 4px 4px; text-align: center; }
+  .bp3 .bx:focus-within { box-shadow: inset 0 0 0 1.5px var(--dark), 0 0 0 4px rgba(36,77,58,.08); }
+  .bp3 label { font-size: 11px; font-weight: 700; color: var(--muted); display: block; }
+  .bp3 input { border: 0; background: none; width: 100%; text-align: center; outline: none; font-size: 24px; font-weight: 700; font-variant-numeric: tabular-nums; height: 36px; min-width: 0; }
+  .bp3 .u { font-size: 10.5px; color: var(--faint); font-weight: 600; }
+  .preview { border-radius: 14px; background: var(--paper); box-shadow: inset 0 0 0 1px var(--hover); padding: 10px 12px; font-size: 12.5px; color: var(--muted); display: flex; align-items: center; gap: 8px; flex-wrap: wrap; min-height: 44px; line-height: 1.5; }
+  .preview b { color: var(--ink); font-variant-numeric: tabular-nums; }
+  .edit-flag { display: flex; align-items: center; gap: 8px; padding: 8px 10px 8px 12px; border-radius: 12px; background: #F3E7DC; color: #6E4429; font-size: 12.5px; font-weight: 600; margin-bottom: 12px; }
+  .edit-flag span { flex: 1; }
+  .chip[aria-pressed="true"] { background: var(--dark); color: var(--surface); box-shadow: none; }
+  .dtrow { display: grid; grid-template-columns: 1fr auto; gap: 6px; }
+  textarea.inp { height: auto; min-height: 64px; border-radius: 14px; padding: 10px 14px; resize: vertical; line-height: 1.5; }
+  .qrow { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 6px; }
+  .qrow .btn { height: 28px; padding: 0 10px; font-size: 12px; }
+  .stars { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; }
+  .stars button { height: 44px; border-radius: 12px; background: #fff; box-shadow: inset 0 0 0 1px var(--hair); font-size: 11px; font-weight: 700; color: var(--muted); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; }
+  .stars button b { font-size: 15px; color: var(--ink-2); }
+  .stars button[aria-pressed="true"] { background: var(--dark); color: var(--sand); box-shadow: none; }
+  .stars button[aria-pressed="true"] b { color: #fff; }
+  .fab { display: none; }
+
+  /* report */
+  .rep-wrap { padding: 18px; background: var(--bg); }
+  .paper { background: #fff; max-width: 820px; margin: 0 auto; border-radius: 6px; box-shadow: 0 0 0 1px var(--hair), 0 24px 50px -30px rgba(28,40,36,.35); padding: 34px 38px 30px; color: #1C2824; font-size: 12.5px; line-height: 1.55; }
+  .rp-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; border-bottom: 2px solid var(--dark); padding-bottom: 10px; }
+  .rp-head h1 { margin: 0; font-family: var(--serif); font-size: 24px; font-weight: 600; color: var(--dark); letter-spacing: -.02em; }
+  .rp-head .brandline { display: flex; align-items: center; gap: 10px; }
+  .rp-head img { height: 22px; }
+  .rp-head .per { text-align: right; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .rp-head .per b { display: block; font-size: 14px; color: var(--ink); }
+  .rp-prof { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; margin: 14px 0 4px; border: 1px solid var(--hair); border-radius: 8px; overflow: hidden; }
+  .rp-prof div { padding: 7px 10px; border-right: 1px solid var(--hair); border-bottom: 1px solid var(--hair); min-width: 0; }
+  .rp-prof div.w2 { grid-column: span 2; } .rp-prof div.w4 { grid-column: 1 / -1; }
+  .rp-prof .k { font-size: 10.5px; font-weight: 700; color: var(--faint); display: block; }
+  .rp-prof .v { font-weight: 600; white-space: pre-wrap; }
+  .rp-sec { margin-top: 18px; break-inside: avoid; page-break-inside: avoid; }
+  .rp-sec h2 { margin: 0 0 8px; font-family: var(--serif); font-size: 16px; font-weight: 600; color: var(--dark); display: flex; align-items: center; justify-content: space-between; gap: 10px; border-bottom: 1px solid var(--hair); padding-bottom: 5px; }
+  .rp-sec h2 small { font-family: var(--sans); font-size: 11px; color: var(--faint); font-weight: 600; }
+  .rp-tbl { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; font-size: 11.5px; }
+  .rp-tbl th { background: #F5F1E8; text-align: left; font-weight: 700; color: var(--ink-2); padding: 5px 7px; border: 1px solid var(--hair); white-space: nowrap; }
+  .rp-tbl td { padding: 4px 7px; border: 1px solid var(--hair); vertical-align: top; }
+  .rp-tbl td.r, .rp-tbl th.r { text-align: right; }
+  .rp-tbl tr { break-inside: avoid; page-break-inside: avoid; }
+  .rp-notes { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 6px 16px; margin-top: 6px; font-size: 11.5px; color: var(--ink-2); }
+  .rp-notes b { font-variant-numeric: tabular-nums; }
+  .rp-memo { border: 1px solid var(--hair); border-radius: 8px; padding: 10px 12px; white-space: pre-wrap; min-height: 60px; }
+  .rp-blank { border: 1px dashed var(--sand); border-radius: 8px; min-height: 90px; }
+  .rp-foot { margin-top: 20px; padding-top: 8px; border-top: 1px solid var(--hair); font-size: 10.5px; color: var(--faint); display: flex; justify-content: space-between; gap: 10px; }
+  .rp-chart svg { width: 100%; height: auto; display: block; }
+  .rp-chart .chart text { font-size: 10px; }
+  #printRoot { display: none; }
+  @media print {
+    @page { size: A4; margin: 12mm 11mm; }
+    html, body { background: #fff !important; height: auto !important; min-height: 0 !important; display: block !important; }
+    body > *:not(#printRoot) { display: none !important; }
+    #printRoot { display: block !important; }
+    #printRoot .paper { box-shadow: none; padding: 0; max-width: none; border-radius: 0; }
+    * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+  /* ---------- Responsive ---------- */
+  @media (min-width: 1000px) {
+    body { height: 100dvh; min-height: 560px; }
+    main { flex: 1; height: auto; min-height: 0; }
+  }
+  @media (max-width: 1100px) { main { grid-template-columns: minmax(0, 1fr) 330px; } }
+  @media (max-width: 999px) {
+    main { display: flex; flex-direction: column; height: auto; min-height: 0; padding: 0 12px 16px; }
+    #side .collapse { display: grid; }
+    #side.closed .pbody { display: none; }
+    #side.closed .ph { border-bottom: 0; }
+    .pbody { overflow: visible; }
+    #work { min-height: 50vh; }
+    .scroll { overflow: visible; }
+    .tabs-wrap { padding: 2px 12px 10px; }
+    .top-inner { padding: 12px 12px 6px; gap: 8px; }
+    .foot { padding: 0 12px 12px; }
+    .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .fab { display: inline-flex; position: fixed; right: 16px; bottom: calc(18px + env(safe-area-inset-bottom)); z-index: 60; height: 52px; padding: 0 20px; font-size: 14.5px; box-shadow: 0 16px 30px -12px rgba(36,77,58,.7); }
+  }
+  @media (max-width: 760px) {
+    .logo { height: 27px; }
+    .app-name { font-size: 19px; padding-left: 10px; }
+    .app-name small { display: none; }
+    .head-actions .btn .lbl { display: none; }
+    .head-actions .btn { width: 38px; padding: 0; }
+    .tool .t { display: none; }
+    .kpis { padding: 12px 12px 4px; gap: 8px; }
+    .card { margin: 10px 12px 0; }
+    .mgrid { padding: 12px; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
+    .hello { padding: 14px 12px 0; }
+    .rep-wrap { padding: 10px; }
+    .paper { padding: 20px 16px; }
+    .rp-prof { grid-template-columns: 1fr 1fr; }
+    .mcard .val { font-size: 22px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="top-inner">
+    <a class="brand" href="./" aria-label="Healther">
+      <img class="logo" alt="OUTGRID" src="data:image/png;base64,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" />
+      <span class="app-name">Healther<small>건강 기록</small></span>
+    </a>
+    <div class="head-actions">
+      <button class="icon-btn" id="helpBtn" title="도움말"><i data-icon="help"></i></button>
+      <button class="icon-btn" id="setBtn" title="내 정보·설정·백업"><i data-icon="gear"></i></button>
+      <button class="btn primary" id="repBtn" title="병원용 리포트"><i data-icon="file"></i><span class="lbl">병원용 리포트</span></button>
+    </div>
+  </div>
+  <div class="tabs-wrap">
+    <nav class="tabs" id="tabs" role="tablist">
+      <button class="tab" role="tab" data-tab="home" aria-selected="true"><i data-icon="home"></i>요약</button>
+      <button class="tab" role="tab" data-tab="weight"><i data-icon="scale"></i>체중</button>
+      <button class="tab" role="tab" data-tab="bp"><i data-icon="heart"></i>혈압</button>
+      <button class="tab" role="tab" data-tab="glucose"><i data-icon="drop"></i>혈당</button>
+      <button class="tab" role="tab" data-tab="sleep"><i data-icon="moon"></i>수면</button>
+      <button class="tab" role="tab" data-tab="other"><i data-icon="pulse"></i>기타</button>
+      <button class="tab" role="tab" data-tab="report"><i data-icon="file"></i>리포트</button>
+    </nav>
+    <div class="applied" id="applied"></div>
+  </div>
+</header>
+
+<main>
+  <section class="panel" id="work">
+
+    <!-- ===== Home ===== -->
+    <div class="view" data-view="home">
+      <div class="scroll" id="homeScroll"></div>
+    </div>
+
+    <!-- ===== Metric (weight/bp/glucose/sleep/other) ===== -->
+    <div class="view" data-view="metric" hidden>
+      <div class="wbar">
+        <div class="seg" id="rangeSeg"><button data-r="7">1주</button><button data-r="30">1달</button><button data-r="90">3달</button><button data-r="365">1년</button><button data-r="0">전체</button></div>
+        <span class="grow"></span>
+        <span class="count" id="mCount"></span>
+      </div>
+      <div class="wbar" id="otherBar" hidden></div>
+      <div class="scroll" id="mScroll"></div>
+    </div>
+
+    <!-- ===== Report ===== -->
+    <div class="view" data-view="report" hidden>
+      <div class="wbar">
+        <div class="seg" id="repSeg"><button data-d="7">1주</button><button data-d="14">2주</button><button data-d="30">1달</button><button data-d="90">3달</button><button data-d="-1">직접</button></div>
+        <span class="grow"></span>
+        <button class="tool" id="repPrint2"><i data-icon="printer"></i><span class="t">인쇄·PDF</span></button>
+      </div>
+      <div class="scroll"><div class="rep-wrap"><div class="paper" id="repPaper"></div></div></div>
+    </div>
+  </section>
+
+  <aside class="panel" id="side">
+    <div class="ph">
+      <div><h2 id="sideT">기록하기</h2><p id="sideS">값을 넣고 저장하면 바로 그래프에 반영돼요</p></div>
+      <button class="icon-btn collapse" id="sideToggle" title="접기·펼치기"><i data-icon="chevron"></i></button>
+    </div>
+    <div class="pbody">
+      <!-- entry form -->
+      <div data-side="form">
+        <div class="sec" id="tselSec" style="padding-bottom:12px"><div class="tsel" id="tsel"></div></div>
+        <div class="sec">
+          <div class="edit-flag" id="editFlag" hidden><i data-icon="pen"></i><span>기록을 고치는 중이에요</span><button class="btn sm ghost" id="editCancel">취소</button></div>
+          <div id="formBody"></div>
+          <div class="field"><label>날짜와 시간</label>
+            <div class="dtrow"><input class="inp" type="datetime-local" id="fT" /><button class="btn line" id="fNow">지금</button></div>
+          </div>
+          <div class="field"><label>상황 태그 <span class="v">여러 개 고를 수 있어요</span></label><div class="chips" id="fTags"></div></div>
+          <div class="field"><label>메모</label><textarea class="inp" id="fNote" maxlength="500" placeholder="예: 두통이 있었음, 약 먹고 1시간 뒤"></textarea></div>
+          <button class="btn primary lg block" id="fSave"><i data-icon="check"></i><span id="fSaveT">저장</span></button>
+        </div>
+        <div class="sec" id="goalSec"></div>
+      </div>
+      <!-- report options -->
+      <div data-side="report" hidden>
+        <div class="sec">
+          <h3>기간</h3>
+          <div class="row2">
+            <div class="field"><label>시작</label><input class="inp" type="date" id="repFrom" /></div>
+            <div class="field"><label>끝</label><input class="inp" type="date" id="repTo" /></div>
+          </div>
+        </div>
+        <div class="sec">
+          <h3>넣을 항목</h3>
+          <div class="chips" id="repTypes"></div>
+          <div style="margin-top:10px">
+            <label class="switch"><span>내 정보 표시<small>이름, 나이, 키, 복용 약, 질환</small></span><input type="checkbox" data-rep="profile" /></label>
+            <label class="switch"><span>그래프</span><input type="checkbox" data-rep="charts" /></label>
+            <label class="switch"><span>전체 기록표<small>측정값을 날짜순으로 모두</small></span><input type="checkbox" data-rep="table" /></label>
+            <label class="switch"><span>메모와 태그 포함</span><input type="checkbox" data-rep="notes" /></label>
+            <label class="switch"><span>의사 소견 빈칸</span><input type="checkbox" data-rep="blank" /></label>
+          </div>
+        </div>
+        <div class="sec">
+          <h3>진료 때 물어볼 것</h3>
+          <textarea class="inp" id="repAsk" rows="4" maxlength="1500" placeholder="예: 아침 혈압이 높은데 약 시간을 바꿔도 될까요?"></textarea>
+        </div>
+        <div class="sec">
+          <div class="btns g2">
+            <button class="btn primary" id="repPrint" style="grid-column:1/-1"><i data-icon="printer"></i>인쇄·PDF로 저장</button>
+            <button class="btn line" id="repCsv"><i data-icon="table"></i>표로 (CSV)</button>
+            <button class="btn line" id="repHtml"><i data-icon="download"></i>파일로 (HTML)</button>
+          </div>
+          <div class="note">인쇄 창에서 프린터를 <b>PDF로 저장</b>으로 바꾸면 PDF 파일이 돼요. 갤럭시 탭은 크롬 메뉴의 공유 › 인쇄에서도 할 수 있어요.</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+</main>
+
+<div class="foot"><i data-icon="shield"></i>Healther는 브라우저 안에서만 동작합니다. 건강 기록은 이 기기에만 저장되고 어디에도 전송되지 않아요. 결과는 참고용이며 진단을 대신하지 않아요.</div>
+
+<button class="btn primary fab" id="fab"><i data-icon="plus"></i>기록하기</button>
+
+<!-- Settings -->
+<dialog id="setDlg">
+  <div class="dlg-head"><h2>내 정보·설정</h2><button class="icon-btn" data-close><i data-icon="x"></i></button></div>
+  <div class="dlg-body">
+    <div class="sec" style="padding-top:0">
+      <h3>내 정보 <span class="v">리포트에 들어가요</span></h3>
+      <div class="row2">
+        <div class="field"><label>이름</label><input class="inp" data-p="name" maxlength="30" /></div>
+        <div class="field"><label>성별</label><select class="inp" data-p="sex"><option value="">선택 안 함</option><option value="M">남성</option><option value="F">여성</option></select></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label>생년월일</label><input class="inp" type="date" data-p="birth" /></div>
+        <div class="field"><label>키 <span class="v">cm</span></label><input class="inp" data-p="height" inputmode="decimal" maxlength="5" placeholder="170" /></div>
+      </div>
+      <div class="field"><label>복용 중인 약</label><textarea class="inp" data-p="meds" rows="2" maxlength="500" placeholder="예: 암로디핀 5mg 아침 1번"></textarea></div>
+      <div class="field"><label>질환·알레르기</label><textarea class="inp" data-p="cond" rows="2" maxlength="500" placeholder="예: 고혈압(2023년 진단), 페니실린 알레르기"></textarea></div>
+      <div class="field"><label>다니는 병원·담당의</label><input class="inp" data-p="hosp" maxlength="80" /></div>
+    </div>
+    <div class="sec">
+      <h3>보이는 항목</h3>
+      <div class="chips" id="showChips"></div>
+      <div class="field" style="margin-top:12px"><label>내 항목 추가 <span class="v">예: 허리둘레, 물 마신 양, 통증 점수</span></label>
+        <div style="display:grid;grid-template-columns:1fr 80px 70px auto;gap:6px">
+          <input class="inp" id="cName" maxlength="20" placeholder="이름" />
+          <input class="inp" id="cUnit" maxlength="8" placeholder="단위" />
+          <select class="inp" id="cDec"><option value="0">정수</option><option value="1">0.1</option><option value="2">0.01</option></select>
+          <button class="btn line" id="cAdd"><i data-icon="plus"></i></button>
+        </div>
+      </div>
+    </div>
+    <div class="sec">
+      <h3>단위</h3>
+      <div class="field"><label>혈당</label><div class="seg" id="gUnitSeg"><button data-u="mg">mg/dL</button><button data-u="mmol">mmol/L</button></div></div>
+    </div>
+    <div class="sec">
+      <h3>백업과 내보내기</h3>
+      <p class="hint">기록은 이 브라우저에만 저장돼요. 기기를 바꾸거나 브라우저 데이터를 지우기 전에 백업 파일을 받아 두세요.</p>
+      <div class="btns g2">
+        <button class="btn line" id="bkJson"><i data-icon="download"></i>백업 (JSON)</button>
+        <button class="btn line" id="bkCsv"><i data-icon="table"></i>표로 (CSV)</button>
+        <button class="btn line" id="bkImport" style="grid-column:1/-1"><i data-icon="upload"></i>백업 불러오기</button>
+      </div>
+      <dl id="dataInfo" style="display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:12.5px;margin:12px 0"></dl>
+      <div class="btns">
+        <button class="btn sm ghost" id="sampleBtn"><i data-icon="sparkle"></i>예시 데이터 넣어 보기</button>
+        <button class="btn sm ghost danger" id="wipeBtn"><i data-icon="trash"></i>기록 모두 지우기</button>
+      </div>
+    </div>
+  </div>
+</dialog>
+
+<!-- Help -->
+<dialog id="helpDlg">
+  <div class="dlg-head"><h2>Healther 도움말</h2><button class="icon-btn" data-close><i data-icon="x"></i></button></div>
+  <div class="dlg-body help">
+    <div><h4>무엇을 할 수 있나요</h4><ul>
+      <li><b>체중</b>: 체지방, 허리둘레, BMI, 7일 평균선, 목표 체중까지 남은 양.</li>
+      <li><b>혈압</b>: 수축기·이완기·맥박. 두 번 재면 평균을 저장하고, 아침·저녁 평균을 따로 보여줘요.</li>
+      <li><b>혈당</b>: 공복, 식전, 식후, 취침 전으로 나눠 평균과 목표 범위 안 비율, 추정 당화혈색소.</li>
+      <li><b>수면</b>: 잠든 시각과 깬 시각으로 수면 시간, 규칙성, 수면의 질.</li>
+      <li><b>기타</b>: 심박수, 체온, 산소포화도, 걸음 수, 당화혈색소와 직접 만든 항목.</li>
+      <li><b>병원용 리포트</b>: 기간을 골라 요약표, 그래프, 기록표를 A4로 인쇄하거나 PDF로 저장.</li>
+    </ul></div>
+    <div><h4>판정 기준 (참고용)</h4><ul>
+      <li>혈압: 대한고혈압학회 2022 기준. 정상 120/80 미만, 주의 120~129, 고혈압 전단계 130~139 또는 80~89, 고혈압 140/90 이상. 집에서 잰 혈압은 135/85 이상이면 고혈압으로 봐요.</li>
+      <li>혈당: 공복 100 미만 정상, 100~125 공복혈당장애, 126 이상 당뇨 범위. 식후 2시간 140 미만 정상, 200 이상 당뇨 범위. 70 미만은 저혈당.</li>
+      <li>BMI: 대한비만학회 기준. 18.5 미만 저체중, 23 이상 비만 전단계, 25 이상 비만.</li>
+      <li>목표 범위는 오른쪽 아래 <b>내 목표</b>에서 의사와 정한 값으로 바꿀 수 있어요.</li>
+    </ul></div>
+    <div><h4>단축키</h4><div class="keys">
+      <kbd>1</kbd><span>~ <kbd>7</kbd> 탭 이동</span>
+      <kbd>N</kbd><span>새 기록 입력</span>
+      <kbd>Ctrl</kbd><span>+ <kbd>Enter</kbd> 저장</span>
+      <kbd>P</kbd><span>리포트 인쇄</span>
+    </div></div>
+    <div><h4>알아 두면 좋아요</h4><ul>
+      <li>그래프의 점을 누르면 자세한 값이 보여요. 기록 목록에서 줄을 누르면 고칠 수 있어요.</li>
+      <li>여기 판정은 참고용이에요. 진단과 치료는 꼭 의료진과 상의하세요.</li>
+      <li>기록은 이 기기 브라우저에만 저장돼요. 설정에서 백업 파일을 받아 두세요.</li>
+    </ul></div>
+  </div>
+</dialog>
+
+<!-- Confirm -->
+<dialog id="cfDlg">
+  <div class="dlg-head"><h2 id="cfT"></h2></div>
+  <div class="dlg-body"><p id="cfM"></p><div class="btn-row"><button class="btn ghost" id="cfNo">취소</button><button class="btn primary" id="cfOk">확인</button></div></div>
+</dialog>
+
+<div id="toast" role="status" aria-live="polite"><span id="toastMsg"></span><button id="toastAct" hidden></button></div>
+<input type="file" id="fileIn" accept=".json,application/json" hidden />
+<div id="printRoot"></div>
+<script>
+'use strict';
+/* =========================================================================
+   Healther · outgrid — browser-only health log
+   Weight, blood pressure, glucose, sleep and more. Charts, stats and a
+   printable report for doctor visits. Everything stays in localStorage.
+   ========================================================================= */
+
+/* ---------- Icons ---------- */
+const ICONS = {
+  home: '<path d="M4 11 12 4.5l8 6.5"/><path d="M6 9.5V19.5h12V9.5"/><path d="M10 19.5v-5h4v5"/>',
+  scale: '<rect x="4" y="4" width="16" height="16" rx="4"/><path d="M8.5 9.5a5 5 0 0 1 7 0"/><path d="m12 11.5 1.5-2.5"/>',
+  heart: '<path d="M12 19.5s-7.5-4.4-7.5-10a4.2 4.2 0 0 1 7.5-2.6 4.2 4.2 0 0 1 7.5 2.6c0 5.6-7.5 10-7.5 10z"/><path d="M7 12h2.5l1.2-2 2 4 1.3-2H17"/>',
+  drop: '<path d="M12 3.5s-6 6.6-6 10.8a6 6 0 0 0 12 0C18 10.1 12 3.5 12 3.5z"/><path d="M9.5 15a2.6 2.6 0 0 0 2.5 2.5"/>',
+  moon: '<path d="M19.5 14.5A8 8 0 0 1 9.5 4.5a8 8 0 1 0 10 10z"/>',
+  pulse: '<path d="M3 12h4l2-5 4 10 2-5h6"/>',
+  file: '<path d="M6.5 3.5h7l4 4v13h-11z"/><path d="M13.5 3.5v4h4"/><path d="M9 12.5h6M9 16h6"/>',
+  thermo: '<path d="M10 14.5V5a2 2 0 0 1 4 0v9.5a3.5 3.5 0 1 1-4 0z"/><path d="M12 16.5V9"/>',
+  o2: '<circle cx="9" cy="12" r="4.5"/><path d="M15.5 14.5h3l-3 3.5h3"/>',
+  steps: '<path d="M8 3.5c1.7 0 2.5 1.8 2.5 4.2S9.6 12 8 12s-2.5-1.9-2.5-4.3S6.3 3.5 8 3.5z"/><path d="M6 14.5h4V17a2 2 0 0 1-4 0z"/><path d="M16 7.5c1.7 0 2.5 1.8 2.5 4.2S17.6 16 16 16s-2.5-1.9-2.5-4.3S14.3 7.5 16 7.5z"/><path d="M14 18.5h4"/>',
+  lab: '<path d="M9.5 3.5h5M10.5 3.5v6L5.5 18a1.6 1.6 0 0 0 1.4 2.5h10.2a1.6 1.6 0 0 0 1.4-2.5l-5-8.5v-6"/><path d="M8 14.5h8"/>',
+  star: '<path d="m12 4 2.4 5 5.4.6-4 3.7 1.1 5.4L12 16l-4.9 2.7 1.1-5.4-4-3.7 5.4-.6z"/>',
+  plus: '<path d="M12 5v14M5 12h14"/>',
+  minus: '<path d="M5 12h14"/>',
+  help: '<circle cx="12" cy="12" r="8.5"/><path d="M9.6 9.5a2.5 2.5 0 0 1 4.8.9c0 1.7-2.4 2-2.4 3.6M12 16.8v.1"/>',
+  gear: '<circle cx="12" cy="12" r="3"/><path d="M19.4 13.5a7.6 7.6 0 0 0 0-3l2-1.5-2-3.4-2.3.9a7.5 7.5 0 0 0-2.6-1.5L14 2.5h-4l-.5 2.5A7.5 7.5 0 0 0 6.9 6.5l-2.3-.9-2 3.4 2 1.5a7.6 7.6 0 0 0 0 3l-2 1.5 2 3.4 2.3-.9a7.5 7.5 0 0 0 2.6 1.5l.5 2.5h4l.5-2.5a7.5 7.5 0 0 0 2.6-1.5l2.3.9 2-3.4z"/>',
+  trash: '<path d="M4.5 7h15"/><path d="M9.5 7V5.2a1.2 1.2 0 0 1 1.2-1.2h2.6a1.2 1.2 0 0 1 1.2 1.2V7"/><path d="m6.5 7 .9 11.3a2 2 0 0 0 2 1.7h5.2a2 2 0 0 0 2-1.7L17.5 7"/>',
+  download: '<path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/>',
+  upload: '<path d="M12 16V5"/><path d="m7 9.5 5-5 5 5"/><path d="M5 20h14"/>',
+  table: '<rect x="3.5" y="5" width="17" height="14" rx="2"/><path d="M3.5 10h17M3.5 14.5h17M9.5 10v9"/>',
+  shield: '<path d="M12 3.5 5 6.2v5.3c0 4.3 3 7.6 7 9 4-1.4 7-4.7 7-9V6.2z"/><path d="m9.2 12 2 2 3.8-4"/>',
+  chevron: '<path d="m6 9 6 6 6-6"/>',
+  chevL: '<path d="m15 6-6 6 6 6"/>',
+  chevR: '<path d="m9 6 6 6-6 6"/>',
+  check: '<path d="m5 12.5 4.5 4.5L19 7.5"/>',
+  x: '<path d="M6 6l12 12M18 6 6 18"/>',
+  pen: '<path d="M14.5 5.5 18.5 9.5"/><path d="M4 20l1-4.5L15.8 4.7a2 2 0 0 1 2.8 0l.7.7a2 2 0 0 1 0 2.8L8.5 19 4 20z"/>',
+  printer: '<path d="M7 8.5V3.5h10v5"/><rect x="3.5" y="8.5" width="17" height="8" rx="2"/><path d="M7 14h10v6.5H7z"/>',
+  sparkle: '<path d="M12 3.5 13.8 10 20.5 12l-6.7 2L12 20.5 10.2 14 3.5 12l6.7-2z"/>',
+  target: '<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r=".8" fill="currentColor"/>',
+  calendar: '<rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/>',
+  clock: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
+};
+function icon(n, cls = '') { return `<svg class="i ${cls}" viewBox="0 0 24 24" aria-hidden="true">${ICONS[n] || ''}</svg>`; }
+function hydrateIcons(root = document) { root.querySelectorAll('i[data-icon]').forEach(el => { const t = document.createElement('template'); t.innerHTML = icon(el.dataset.icon, el.className); el.replaceWith(t.content.firstChild); }); }
+
+/* ---------- Helpers ---------- */
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const pad2 = n => String(n).padStart(2, '0');
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+const DAY = 86400000;
+const WD = ['일', '월', '화', '수', '목', '금', '토'];
+const store = {
+  get(k, d) { try { const v = localStorage.getItem('healther.' + k); return v == null ? d : JSON.parse(v); } catch { return d; } },
+  set(k, v) { try { localStorage.setItem('healther.' + k, JSON.stringify(v)); return true; } catch { toast('저장 공간이 부족해요. 백업 후 오래된 기록을 지워 주세요.', { err: true }); return false; } },
+};
+function merge(d, s) { const o = Array.isArray(d) ? [...d] : { ...d }; if (s && typeof s === 'object' && !Array.isArray(s)) for (const k in s) o[k] = (d[k] && typeof d[k] === 'object' && !Array.isArray(d[k])) ? merge(d[k], s[k]) : s[k]; return o; }
+function num(s) { if (s == null) return null; s = String(s).trim().replace(',', '.'); if (s === '') return null; const v = Number(s); return Number.isFinite(v) ? v : null; }
+function fmt(v, dec = 0) { if (v == null || !Number.isFinite(v)) return '–'; return v.toLocaleString('ko-KR', { minimumFractionDigits: dec, maximumFractionDigits: dec }); }
+function dayStart(t) { const d = new Date(t); d.setHours(0, 0, 0, 0); return d.getTime(); }
+function dayKey(t) { const d = new Date(t); return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`; }
+function fmtHM(t) { const d = new Date(t); return `${pad2(d.getHours())}:${pad2(d.getMinutes())}`; }
+function fmtMD(t) { const d = new Date(t); return `${d.getMonth() + 1}/${d.getDate()}`; }
+function fmtDate(t, wd = true) { const d = new Date(t); return `${d.getMonth() + 1}월 ${d.getDate()}일` + (wd ? ` (${WD[d.getDay()]})` : ''); }
+function fmtYMD(t) { const d = new Date(t); return `${d.getFullYear()}.${pad2(d.getMonth() + 1)}.${pad2(d.getDate())}`; }
+function toLocalInput(t) { const d = new Date(t); return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}T${pad2(d.getHours())}:${pad2(d.getMinutes())}`; }
+function fromLocalInput(s) { if (!s) return null; const t = new Date(s).getTime(); return Number.isFinite(t) ? t : null; }
+function dateInput(t) { return dayKey(t); }
+function fromDateInput(s) { if (!s) return null; const [y, m, d] = s.split('-').map(Number); if (!y) return null; return new Date(y, m - 1, d).getTime(); }
+function fmtAgo(t) {
+  const s = (Date.now() - t) / 1000;
+  if (s < 60) return '방금'; if (s < 3600) return Math.floor(s / 60) + '분 전'; if (s < 86400) return Math.floor(s / 3600) + '시간 전';
+  const d = Math.round((dayStart(Date.now()) - dayStart(t)) / DAY); if (d === 1) return '어제'; if (d < 31) return d + '일 전';
+  return fmtYMD(t);
+}
+function fmtDurH(h) { if (h == null) return '–'; const m = Math.round(h * 60); return `${Math.floor(m / 60)}시간 ${pad2(m % 60)}분`; }
+function fmtDurShort(h) { if (h == null) return '–'; const m = Math.round(h * 60); return `${Math.floor(m / 60)}:${pad2(m % 60)}`; }
+function minToClock(m) { m = ((Math.round(m) % 1440) + 1440) % 1440; return `${pad2(Math.floor(m / 60))}:${pad2(m % 60)}`; }
+const mean = a => a.length ? a.reduce((x, y) => x + y, 0) / a.length : null;
+const sd = a => { if (a.length < 2) return null; const m = mean(a); return Math.sqrt(a.reduce((s, x) => s + (x - m) ** 2, 0) / (a.length - 1)); };
+function download(name, data, type) {
+  const blob = data instanceof Blob ? data : new Blob([data], { type });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name;
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+}
+function setText(el, s) { if (el && el.textContent !== s) el.textContent = s; }
+
+let toastTimer;
+function toast(msg, { err = false, action, onAction, ms = 3200 } = {}) {
+  const t = $('#toast'); $('#toastMsg').textContent = msg; t.classList.toggle('err', err);
+  const b = $('#toastAct'); b.hidden = !action; b.textContent = action || ''; b.onclick = () => { t.classList.remove('show'); onAction && onAction(); };
+  t.classList.add('show'); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), action ? Math.max(ms, 6000) : ms);
+}
+function confirmDlg(title, msg, okLabel = '확인', danger = false) {
+  return new Promise(res => {
+    const d = $('#cfDlg'); $('#cfT').textContent = title; $('#cfM').textContent = msg;
+    const ok = $('#cfOk'); ok.textContent = okLabel; ok.className = 'btn ' + (danger ? 'rec' : 'primary');
+    const done = v => { d.close(); res(v); };
+    ok.onclick = () => done(true); $('#cfNo').onclick = () => done(false); d.oncancel = e => { e.preventDefault(); done(false); };
+    d.showModal();
+  });
+}
+
+/* ---------- Settings & data ---------- */
+const DEF = {
+  tab: 'home',
+  profile: { name: '', sex: '', birth: '', height: '', meds: '', cond: '', hosp: '' },
+  show: { weight: true, bp: true, glucose: true, sleep: true, hr: true, temp: true, spo2: false, steps: false, a1c: false },
+  custom: [],           // {id, name, unit, dec}
+  gUnit: 'mg',
+  goal: { weight: null, bpSys: 130, bpDia: 80, gFastLo: 70, gFastHi: 100, gPostHi: 140, sleepH: 7, steps: 8000 },
+  range: 30,
+  otherSel: 'hr',
+  formType: 'weight',
+  rep: { days: 30, from: null, to: null, types: { weight: true, bp: true, glucose: true, sleep: true, hr: true, temp: true, spo2: true, steps: true, a1c: true }, profile: true, charts: true, table: true, notes: true, blank: true, ask: '' },
+  tags: {},
+};
+let S = merge(DEF, store.get('settings', {}));
+const saveS = () => store.set('settings', S);
+let E = store.get('entries', []);        // {id, type, t, v:{...}, note, tags:[]}
+const saveE = () => store.set('entries', E);
+
+/* ---------- Metric types ---------- */
+const SIMPLE = {
+  hr: { name: '심박수', unit: 'bpm', dec: 0, icon: 'pulse', min: 25, max: 230, step: 1, def: 70 },
+  temp: { name: '체온', unit: '°C', dec: 1, icon: 'thermo', min: 33, max: 43, step: 0.1, def: 36.5 },
+  spo2: { name: '산소포화도', unit: '%', dec: 0, icon: 'o2', min: 50, max: 100, step: 1, def: 98 },
+  steps: { name: '걸음 수', unit: '걸음', dec: 0, icon: 'steps', min: 0, max: 200000, step: 500, def: 6000, daily: true },
+  a1c: { name: '당화혈색소', unit: '%', dec: 1, icon: 'lab', min: 3, max: 20, step: 0.1, def: 5.6 },
+};
+const MAIN = {
+  weight: { name: '체중', unit: 'kg', icon: 'scale' },
+  bp: { name: '혈압', unit: 'mmHg', icon: 'heart' },
+  glucose: { name: '혈당', unit: 'mg/dL', icon: 'drop' },
+  sleep: { name: '수면', unit: '시간', icon: 'moon' },
+};
+function T(type) {
+  if (MAIN[type]) return MAIN[type];
+  if (SIMPLE[type]) return SIMPLE[type];
+  const c = S.custom.find(c => c.id === type);
+  if (c) { const st = c.dec ? 1 / 10 ** c.dec : 1; return { name: c.name, unit: c.unit, dec: +c.dec || 0, icon: 'star', min: -1e9, max: 1e9, step: st, def: null, custom: true }; }
+  return { name: type, unit: '', dec: 1, icon: 'star' };
+}
+const isSimple = type => !MAIN[type];
+function otherTypes() { return [...Object.keys(SIMPLE), ...S.custom.map(c => c.id)]; }
+function shownTypes() { return [...Object.keys(MAIN), ...otherTypes()].filter(k => S.show[k] !== false && (S.show[k] || MAIN[k] || S.custom.some(c => c.id === k))); }
+const COLORS = { weight: '#244D3A', bp: '#A63A33', glucose: '#2a78d6', sleep: '#3E6F73', hr: '#B5443B', temp: '#eb6834', spo2: '#1baf7a', steps: '#8A5A3B', a1c: '#7A5C8E' };
+const tColor = type => COLORS[type] || '#9A7B3F';
+
+const DEF_TAGS = {
+  weight: ['아침 공복', '저녁', '운동 후', '외식 다음 날'],
+  bp: ['아침', '저녁', '약 먹기 전', '약 먹은 후', '운동 후', '커피 후', '스트레스', '두통'],
+  glucose: ['운동 후', '간식', '과식', '음주', '아플 때', '저혈당 증상'],
+  sleep: ['카페인', '음주', '운동함', '야근', '낮잠', '스마트폰', '꿈 많음', '코골이'],
+  _: ['운동 후', '아플 때', '약 먹은 후'],
+};
+const tagsFor = type => S.tags[type] || DEF_TAGS[type] || DEF_TAGS._;
+
+/* glucose */
+const GW = { fast: '공복', pre: '식전', post1: '식후 1시간', post2: '식후 2시간', bed: '취침 전', rand: '기타' };
+const GW_COLOR = { fast: '#2a78d6', pre: '#eb6834', post1: '#1baf7a', post2: '#eda100', bed: '#e87ba4', rand: '#898781' };
+const GW_SHAPE = { fast: 'circle', pre: 'square', post1: 'tri', post2: 'diamond', bed: 'circle', rand: 'square' };
+const isFastLike = w => w === 'fast' || w === 'pre';
+const gDisp = mg => S.gUnit === 'mmol' ? mg / 18.016 : mg;
+const gFromDisp = v => S.gUnit === 'mmol' ? v * 18.016 : v;
+const gUnit = () => S.gUnit === 'mmol' ? 'mmol/L' : 'mg/dL';
+const gDec = () => S.gUnit === 'mmol' ? 1 : 0;
+const gFmt = mg => fmt(gDisp(mg), gDec());
+
+/* ---------- Classification (reference only) ---------- */
+const ST = { ok: '정상', warn: '주의', high: '높음', low: '낮음' };
+function stBP(s, d) {
+  if (s == null || d == null) return null;
+  if (s >= 160 || d >= 100) return { k: 'high', l: '고혈압 2기' };
+  if (s >= 140 || d >= 90) return { k: 'high', l: '고혈압 1기' };
+  if (s >= 130 || d >= 80) return { k: 'warn', l: '고혈압 전단계' };
+  if (s >= 120) return { k: 'warn', l: '주의 혈압' };
+  if (s < 90 || d < 60) return { k: 'low', l: '낮은 혈압' };
+  return { k: 'ok', l: '정상' };
+}
+function stGlu(mg, w) {
+  if (mg == null) return null;
+  const G = S.goal;
+  if (mg < 54) return { k: 'low', l: '심한 저혈당' };
+  if (mg < 70) return { k: 'low', l: '저혈당' };
+  if (isFastLike(w)) {
+    if (mg >= 126) return { k: 'high', l: '높음' };
+    if (mg > G.gFastHi || mg < G.gFastLo) return { k: 'warn', l: mg < G.gFastLo ? '목표보다 낮음' : '목표보다 높음' };
+    return { k: 'ok', l: '목표 범위' };
+  }
+  if (mg >= 200) return { k: 'high', l: '높음' };
+  if (mg > G.gPostHi) return { k: 'warn', l: '목표보다 높음' };
+  return { k: 'ok', l: '목표 범위' };
+}
+function inTarget(mg, w) { const G = S.goal; return isFastLike(w) ? (mg >= G.gFastLo && mg <= G.gFastHi) : (mg >= 70 && mg <= G.gPostHi); }
+function heightM() { const h = num(S.profile.height); return h && h > 80 && h < 250 ? h / 100 : null; }
+function bmiOf(kg) { const h = heightM(); return h && kg ? kg / (h * h) : null; }
+function stBMI(b) {
+  if (b == null) return null;
+  if (b < 18.5) return { k: 'low', l: '저체중' };
+  if (b < 23) return { k: 'ok', l: '정상' };
+  if (b < 25) return { k: 'warn', l: '비만 전단계' };
+  if (b < 30) return { k: 'high', l: '1단계 비만' };
+  if (b < 35) return { k: 'high', l: '2단계 비만' };
+  return { k: 'high', l: '3단계 비만' };
+}
+function stSleep(h) {
+  if (h == null) return null;
+  if (h < 5) return { k: 'high', l: '많이 부족' };
+  if (h < S.goal.sleepH - .01) return { k: 'warn', l: '부족' };
+  if (h > 10) return { k: 'warn', l: '긴 수면' };
+  return { k: 'ok', l: '충분' };
+}
+function stSimple(type, v) {
+  if (v == null) return null;
+  switch (type) {
+    case 'hr': return v > 100 ? { k: 'high', l: '빠름' } : v < 50 ? { k: 'low', l: '느림' } : { k: 'ok', l: '정상' };
+    case 'temp': return v >= 38 ? { k: 'high', l: '발열' } : v >= 37.5 ? { k: 'warn', l: '미열' } : v < 35 ? { k: 'low', l: '저체온' } : { k: 'ok', l: '정상' };
+    case 'spo2': return v <= 90 ? { k: 'high', l: '낮음' } : v < 95 ? { k: 'warn', l: '주의' } : { k: 'ok', l: '정상' };
+    case 'a1c': return v >= 6.5 ? { k: 'high', l: '당뇨 범위' } : v >= 5.7 ? { k: 'warn', l: '당뇨 전단계' } : { k: 'ok', l: '정상' };
+    case 'steps': return v >= S.goal.steps ? { k: 'ok', l: '목표 달성' } : null;
+  }
+  return null;
+}
+function statusOf(e) {
+  switch (e.type) {
+    case 'weight': return stBMI(bmiOf(e.v.kg));
+    case 'bp': return stBP(e.v.sys, e.v.dia);
+    case 'glucose': return stGlu(e.v.mg, e.v.when);
+    case 'sleep': return stSleep(sleepH(e));
+    default: return stSimple(e.type, e.v.val);
+  }
+}
+const badge = (st, cls = '') => st ? `<span class="badge ${st.k} ${cls}">${esc(st.l)}</span>` : '';
+
+/* ---------- Entry values ---------- */
+const sleepH = e => (e.v.wake - e.v.bed) / 3600000;
+function mainVal(e) { // primary number for charts/stats
+  switch (e.type) {
+    case 'weight': return e.v.kg;
+    case 'bp': return e.v.sys;
+    case 'glucose': return e.v.mg;
+    case 'sleep': return sleepH(e);
+    default: return e.v.val;
+  }
+}
+function valHTML(e) {
+  switch (e.type) {
+    case 'weight': return `${fmt(e.v.kg, 1)}<small>kg</small>`;
+    case 'bp': return `${e.v.sys}/${e.v.dia}<small>mmHg</small>`;
+    case 'glucose': return `${gFmt(e.v.mg)}<small>${gUnit()}</small>`;
+    case 'sleep': return `${fmtDurH(sleepH(e))}`;
+    default: { const t = T(e.type); return `${fmt(e.v.val, t.dec)}<small>${esc(t.unit)}</small>`; }
+  }
+}
+function valText(e) { return valHTML(e).replace(/<small>/g, ' ').replace(/<[^>]+>/g, ''); }
+function subText(e) {
+  const p = [];
+  switch (e.type) {
+    case 'weight': { const b = bmiOf(e.v.kg); if (b) p.push('BMI ' + fmt(b, 1)); if (e.v.fat != null) p.push('체지방 ' + fmt(e.v.fat, 1) + '%'); if (e.v.muscle != null) p.push('골격근 ' + fmt(e.v.muscle, 1) + 'kg'); if (e.v.waist != null) p.push('허리 ' + fmt(e.v.waist, 1) + 'cm'); break; }
+    case 'bp': if (e.v.pulse) p.push('맥박 ' + e.v.pulse); if (e.v.arm) p.push(e.v.arm === 'L' ? '왼팔' : '오른팔'); if (e.v.pos && e.v.pos !== 'sit') p.push(e.v.pos === 'lie' ? '누워서' : '서서'); if (e.v.raw) p.push(e.v.raw.length + '번 잰 평균'); break;
+    case 'glucose': p.push(GW[e.v.when] || ''); break;
+    case 'sleep': p.push(`${fmtHM(e.v.bed)} → ${fmtHM(e.v.wake)}`); if (e.v.q) p.push('질 ' + e.v.q + '/5'); if (e.v.wk) p.push('깸 ' + e.v.wk + '번'); if (e.v.nap) p.push('낮잠 ' + e.v.nap + '분'); break;
+  }
+  return p.filter(Boolean).join(' · ');
+}
+const byType = type => E.filter(e => e.type === type).sort((a, b) => a.t - b.t);
+const latest = type => { let best = null; for (const e of E) if (e.type === type && (!best || e.t > best.t)) best = e; return best; };
+function inRange(list, days) { if (!days) return list; const from = dayStart(Date.now()) - (days - 1) * DAY; return list.filter(e => e.t >= from); }
+const isMorning = t => { const h = new Date(t).getHours(); return h >= 4 && h < 12; };
+const isEvening = t => { const h = new Date(t).getHours(); return h >= 17 || h < 4; };
+/* daily aggregation: average per day (sum for "daily" metrics like steps) */
+function daily(list, f = mainVal, sum = false) {
+  const m = new Map();
+  for (const e of list) { const k = dayStart(e.t); const v = f(e); if (v == null) continue; const a = m.get(k) || []; a.push(v); m.set(k, a); }
+  return [...m.entries()].sort((a, b) => a[0] - b[0]).map(([x, a]) => ({ x, y: sum ? a.reduce((s, v) => s + v, 0) : mean(a), n: a.length }));
+}
+function movingAvg(dailyPts, win = 7) {
+  return dailyPts.map(p => { const a = dailyPts.filter(q => q.x <= p.x && q.x > p.x - win * DAY).map(q => q.y); return { x: p.x + DAY / 2, y: mean(a) }; });
+}
+
+/* ========================================================================
+   Charts (inline SVG, hover/tap tooltip)
+   ======================================================================== */
+function niceTicks(lo, hi, n = 5) {
+  if (!(hi > lo)) { hi = lo + 1; lo = lo - 1; }
+  const raw = (hi - lo) / n, mag = 10 ** Math.floor(Math.log10(raw)), r = raw / mag;
+  const step = (r < 1.5 ? 1 : r < 3 ? 2 : r < 7 ? 5 : 10) * mag;
+  const a = Math.floor(lo / step) * step, b = Math.ceil(hi / step) * step, out = [];
+  for (let v = a; v <= b + step / 2; v += step) out.push(+v.toFixed(6));
+  return { ticks: out, lo: a, hi: b, step };
+}
+function xTicks(x0, x1, W) {
+  const span = (x1 - x0) / DAY, maxN = Math.max(2, Math.floor(W / 64)), out = [];
+  if (span <= 120) {
+    const steps = [1, 2, 3, 7, 14, 21, 28];
+    const st = steps.find(s => span / s <= maxN) || 28;
+    let d = new Date(dayStart(x0)); if (d.getTime() < x0) d.setDate(d.getDate() + 1);
+    if (st >= 7) { while (d.getDay() !== 1) d.setDate(d.getDate() + 1); }
+    for (; d.getTime() <= x1; d.setDate(d.getDate() + st)) out.push({ x: d.getTime(), l: fmtMD(d) });
+  } else {
+    const months = span / 30.4, steps = [1, 2, 3, 6, 12, 24], st = steps.find(s => months / s <= maxN) || 24;
+    let d = new Date(x0); d = new Date(d.getFullYear(), d.getMonth() + 1, 1);
+    while (d.getMonth() % st !== 0 && st <= 12) d.setMonth(d.getMonth() + 1);
+    for (; d.getTime() <= x1; d.setMonth(d.getMonth() + st)) out.push({ x: d.getTime(), l: d.getMonth() === 0 || st >= 12 ? `${String(d.getFullYear()).slice(2)}.${d.getMonth() + 1}` : `${d.getMonth() + 1}월` });
+  }
+  return out;
+}
+function marker(shape, x, y, r, color, cls = 'dot') {
+  if (shape === 'square') return `<rect class="${cls}" x="${x - r}" y="${y - r}" width="${2 * r}" height="${2 * r}" rx="1.5" fill="${color}"/>`;
+  if (shape === 'tri') return `<path class="${cls}" d="M${x} ${y - r * 1.2}L${x + r * 1.15} ${y + r * .85}L${x - r * 1.15} ${y + r * .85}Z" fill="${color}"/>`;
+  if (shape === 'diamond') return `<path class="${cls}" d="M${x} ${y - r * 1.3}L${x + r * 1.3} ${y}L${x} ${y + r * 1.3}L${x - r * 1.3} ${y}Z" fill="${color}"/>`;
+  return `<circle class="${cls}" cx="${x}" cy="${y}" r="${r}" fill="${color}"/>`;
+}
+/*
+  o = { w, h, x0, x1, series:[{name,color,pts:[{x,y,e?,tip?}],line,dots,dash,shape,width}],
+        bars:{pts:[{x,y,tip,low}], color, w(ms)}, ranges:[{x,y0,y1,tip}],
+        bands:[{y0,y1,color}], refs:[{y,label,color}], yMin, yMax, fmtY, yInvert, yTickFmt }
+  returns { svg, hit:[{px,py,tip}] }
+*/
+function chartSVG(o) {
+  const W = Math.round(o.w || 600), H = o.h || 220;
+  const m = { l: o.ml ?? 42, r: o.mr ?? ((o.refs || []).some(r => r.label) ? 62 : 14), t: 12, b: 24 };
+  const iw = W - m.l - m.r, ih = H - m.t - m.b;
+  let ys = [];
+  (o.series || []).forEach(s => s.pts.forEach(p => p.y != null && ys.push(p.y)));
+  (o.bars?.pts || []).forEach(p => ys.push(p.y));
+  (o.ranges || []).forEach(p => { ys.push(p.y0, p.y1); });
+  (o.refs || []).forEach(r => ys.push(r.y));
+  if (o.yMin != null) ys.push(o.yMin);
+  if (o.yMax != null) ys.push(o.yMax);
+  if (!ys.length) ys = [0, 1];
+  let lo = Math.min(...ys), hi = Math.max(...ys);
+  if (o.bars) lo = Math.min(0, lo);
+  const padY = (hi - lo) * .08 || Math.abs(hi) * .05 || 1;
+  if (!o.bars && o.yMin == null) lo -= padY;
+  if (o.yMax == null) hi += padY;
+  const nt = niceTicks(lo, hi, Math.max(3, Math.round(ih / 42)));
+  const y0 = o.yMinHard ?? nt.lo, y1 = o.yMaxHard ?? nt.hi;
+  const x0 = o.x0, x1 = Math.max(o.x1, o.x0 + 1);
+  const sx = x => m.l + (x - x0) / (x1 - x0) * iw;
+  const sy = y => o.yInvert ? m.t + (y - y0) / (y1 - y0) * ih : m.t + ih - (y - y0) / (y1 - y0) * ih;
+  const fy = o.yTickFmt || (v => fmt(v, nt.step < 1 ? (nt.step < .1 ? 2 : 1) : 0));
+  const hit = [];
+  let g = '';
+  // bands
+  (o.bands || []).forEach(b => { const a = sy(clamp(b.y0, y0, y1)), c = sy(clamp(b.y1, y0, y1)); g += `<rect class="band" x="${m.l}" y="${Math.min(a, c)}" width="${iw}" height="${Math.abs(c - a)}" fill="${b.color}"/>`; });
+  // grid + y labels
+  const ticks = o.yTicks || nt.ticks;
+  ticks.forEach(v => { if (v < y0 - 1e-9 || v > y1 + 1e-9) return; const y = sy(v); g += `<line class="grid" x1="${m.l}" x2="${m.l + iw}" y1="${y}" y2="${y}"/><text x="${m.l - 7}" y="${y + 3.5}" text-anchor="end">${fy(v)}</text>`; });
+  g += `<line class="base" x1="${m.l}" x2="${m.l + iw}" y1="${m.t + ih}" y2="${m.t + ih}"/>`;
+  // x labels
+  xTicks(x0, x1, iw).forEach(t => { const x = sx(t.x); if (x < m.l - 1 || x > m.l + iw + 1) return; g += `<line class="grid" x1="${x}" x2="${x}" y1="${m.t + ih}" y2="${m.t + ih + 4}"/><text x="${x}" y="${H - 6}" text-anchor="middle">${t.l}</text>`; });
+  // refs
+  (o.refs || []).forEach(r => { if (r.y < y0 || r.y > y1) return; const y = sy(r.y); g += `<line class="ref" x1="${m.l}" x2="${m.l + iw}" y1="${y}" y2="${y}" stroke="${r.color || '#8A5A3B'}"/>` + (r.label ? `<text class="lbl" x="${m.l + iw + 5}" y="${y + 3.5}" text-anchor="start" style="fill:${r.color || '#8A5A3B'}">${esc(r.label)}</text>` : ''); });
+  // bars
+  if (o.bars) {
+    const bw = Math.max(2, Math.min(28, (o.bars.w || DAY) / (x1 - x0) * iw - 2));
+    o.bars.pts.forEach(p => {
+      const cx = sx(p.x + (o.bars.w || DAY) / 2), yb = sy(Math.max(y0, 0)), yt = sy(p.y), h = Math.max(1, yb - yt), r = Math.min(4, bw / 2, h);
+      const x = cx - bw / 2;
+      g += `<path class="bar${p.low ? ' low' : ''}" d="M${x} ${yb}V${yt + r}Q${x} ${yt} ${x + r} ${yt}H${x + bw - r}Q${x + bw} ${yt} ${x + bw} ${yt + r}V${yb}Z"${o.bars.color && !p.low ? ` style="fill:${o.bars.color}"` : ''}/>`;
+      hit.push({ px: cx, py: yt, tip: p.tip, col: true });
+    });
+  }
+  // ranges (vertical floating bars, e.g. sleep schedule)
+  (o.ranges || []).forEach(p => {
+    const bw = Math.max(3, Math.min(16, DAY / (x1 - x0) * iw - 3)), cx = sx(p.x + DAY / 2);
+    const a = sy(p.y0), b = sy(p.y1), top = Math.min(a, b), h = Math.max(2, Math.abs(b - a)), r = Math.min(4, bw / 2);
+    g += `<rect x="${cx - bw / 2}" y="${top}" width="${bw}" height="${h}" rx="${r}" fill="${p.color || '#3E6F73'}"/>`;
+    hit.push({ px: cx, py: top + h / 2, tip: p.tip, col: true });
+  });
+  // series
+  (o.series || []).forEach(s => {
+    const pts = s.pts.filter(p => p.y != null && p.x >= x0 - DAY && p.x <= x1 + DAY);
+    if (s.line !== false && pts.length > 1) {
+      const d = pts.map((p, i) => (i ? 'L' : 'M') + sx(p.x).toFixed(1) + ' ' + sy(p.y).toFixed(1)).join('');
+      g += `<path d="${d}" fill="none" stroke="${s.color}" stroke-width="${s.width || 2}" stroke-linejoin="round" stroke-linecap="round"${s.dash ? ' stroke-dasharray="5 4"' : ''}${s.opacity ? ` opacity="${s.opacity}"` : ''}/>`;
+    }
+    if (s.dots !== false) {
+      const r = pts.length > 120 ? 3 : 4;
+      pts.forEach(p => { const x = sx(p.x), y = sy(p.y); g += marker(p.shape || s.shape, x, y, r, p.color || s.color); if (p.tip) hit.push({ px: x, py: y, tip: p.tip }); });
+    } else if (s.hover) pts.forEach(p => p.tip && hit.push({ px: sx(p.x), py: sy(p.y), tip: p.tip }));
+  });
+  const svg = `<svg class="chart" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="${esc(o.label || '그래프')}">${g}<g class="hl"></g></svg>`;
+  return { svg, hit, H, m, ih };
+}
+function mountChart(el, build) {
+  const draw = () => {
+    const w = el.clientWidth; if (!w) return;
+    const o = build(w); if (!o) { el.innerHTML = '<div class="chart-empty">이 기간에는 기록이 없어요</div>'; return; }
+    const r = chartSVG({ ...o, w }); el.innerHTML = r.svg + '<div class="tip" hidden></div>';
+    const svg = el.querySelector('svg'), tip = el.querySelector('.tip'), hl = svg.querySelector('.hl');
+    const show = ev => {
+      const b = svg.getBoundingClientRect(), sc = w / b.width, px = (ev.clientX - b.left) * sc, py = (ev.clientY - b.top) * sc;
+      let best = null, bd = 1e9;
+      for (const h of r.hit) { const d = h.col ? Math.abs(h.px - px) : Math.hypot((h.px - px), (h.py - py) * .6); if (d < bd) { bd = d; best = h; } }
+      if (!best || bd > 40) { tip.hidden = true; hl.innerHTML = ''; return; }
+      hl.innerHTML = `<line class="xcross" x1="${best.px}" x2="${best.px}" y1="${r.m.t}" y2="${r.m.t + r.ih}"/>` + (best.col ? '' : `<circle class="ring" cx="${best.px}" cy="${best.py}" r="7" stroke="#1C2824"/>`);
+      tip.innerHTML = best.tip; tip.hidden = false;
+      const tx = clamp(best.px / sc, 80, b.width - 80);
+      tip.style.left = tx + 'px'; tip.style.top = Math.max(best.py / sc, 34) + 'px';
+    };
+    svg.addEventListener('pointermove', show); svg.addEventListener('pointerdown', show);
+    svg.addEventListener('pointerleave', ev => { if (ev.pointerType === 'mouse') { tip.hidden = true; hl.innerHTML = ''; } });
+  };
+  el._draw = draw; chartEls.add(el); draw();
+}
+const chartEls = new Set();
+const ro = new ResizeObserver(ents => ents.forEach(en => { const el = en.target; if (el._w !== el.clientWidth) { el._w = el.clientWidth; el._draw && el._draw(); } }));
+function sparkSVG(pts, color, w = 200, h = 36) {
+  if (pts.length < 2) return `<svg class="spark" viewBox="0 0 ${w} ${h}"></svg>`;
+  const xs = pts.map(p => p.x), ys = pts.map(p => p.y);
+  const x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys);
+  const sx = x => 3 + (x - x0) / ((x1 - x0) || 1) * (w - 6), sy = y => h - 4 - (y - y0) / ((y1 - y0) || 1) * (h - 8);
+  const d = pts.map((p, i) => (i ? 'L' : 'M') + sx(p.x).toFixed(1) + ' ' + sy(p.y).toFixed(1)).join('');
+  const l = pts[pts.length - 1];
+  return `<svg class="spark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none"><path d="${d}" fill="none" stroke="${color}" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linejoin="round" opacity=".85"/><circle cx="${sx(l.x)}" cy="${sy(l.y)}" r="3" fill="${color}"/></svg>`;
+}
+const tipHead = e => `<b>${fmtDate(e.t)} ${fmtHM(e.t)}</b><br>`;
+
+/* ---------- Chart builders per type (shared by screen & report) ---------- */
+function rangeX(list, days) {
+  const now = Date.now();
+  if (days) return { x0: dayStart(now) - (days - 1) * DAY, x1: dayStart(now) + DAY };
+  if (!list.length) return { x0: dayStart(now) - 29 * DAY, x1: dayStart(now) + DAY };
+  return { x0: dayStart(list[0].t), x1: Math.max(dayStart(now) + DAY, dayStart(list[list.length - 1].t) + DAY) };
+}
+function buildChart(type, list, xr, which) {
+  if (!list.length) return null;
+  const { x0, x1 } = xr;
+  if (type === 'weight') {
+    const pts = list.map(e => ({ x: e.t, y: e.v.kg, tip: tipHead(e) + `체중 <b>${fmt(e.v.kg, 1)}kg</b>` + (bmiOf(e.v.kg) ? ` · BMI ${fmt(bmiOf(e.v.kg), 1)}` : '') + (e.v.fat != null ? `<br>체지방 ${fmt(e.v.fat, 1)}%` : '') }));
+    const ma = movingAvg(daily(list)).map(p => ({ ...p, tip: `<b>${fmtDate(p.x)}</b><br>7일 평균 ${fmt(p.y, 1)}kg` }));
+    const refs = S.goal.weight ? [{ y: S.goal.weight, label: '목표 ' + fmt(S.goal.weight, 1), color: '#8A5A3B' }] : [];
+    return { x0, x1, h: 230, label: '체중 그래프', refs, series: [{ name: '체중', color: '#244D3A', pts, width: 2, opacity: .55 }, { name: '7일 평균', color: '#8A5A3B', pts: ma, dots: false, dash: true, hover: false }] };
+  }
+  if (type === 'weightFat') {
+    const l = list.filter(e => e.v.fat != null); if (!l.length) return null;
+    return { x0, x1, h: 170, label: '체지방률 그래프', series: [{ name: '체지방률', color: '#3E6F73', pts: l.map(e => ({ x: e.t, y: e.v.fat, tip: tipHead(e) + `체지방 <b>${fmt(e.v.fat, 1)}%</b>` })) }] };
+  }
+  if (type === 'bp') {
+    const tip = e => tipHead(e) + `<b>${e.v.sys}/${e.v.dia}</b> mmHg` + (e.v.pulse ? ` · 맥박 ${e.v.pulse}` : '') + `<br>${stBP(e.v.sys, e.v.dia).l}`;
+    return {
+      x0, x1, h: 240, label: '혈압 그래프',
+      bands: [{ y0: 90, y1: S.goal.bpSys, color: '#2a78d6' }, { y0: 60, y1: S.goal.bpDia, color: '#eb6834' }],
+      refs: [{ y: S.goal.bpSys, label: '목표 ' + S.goal.bpSys, color: '#2a78d6' }, { y: S.goal.bpDia, label: '목표 ' + S.goal.bpDia, color: '#eb6834' }],
+      series: [
+        { name: '수축기', color: '#2a78d6', pts: list.map(e => ({ x: e.t, y: e.v.sys, tip: tip(e) })) },
+        { name: '이완기', color: '#eb6834', shape: 'square', pts: list.map(e => ({ x: e.t, y: e.v.dia, tip: tip(e) })) },
+      ],
+    };
+  }
+  if (type === 'pulse') {
+    const l = list.filter(e => e.v.pulse); if (!l.length) return null;
+    return { x0, x1, h: 160, label: '맥박 그래프', series: [{ name: '맥박', color: '#B5443B', pts: l.map(e => ({ x: e.t, y: e.v.pulse, tip: tipHead(e) + `맥박 <b>${e.v.pulse}</b> bpm` })) }] };
+  }
+  if (type === 'glucose') {
+    const G = S.goal, sel = which ? list.filter(e => which.includes(e.v.when)) : list;
+    if (!sel.length) return null;
+    return {
+      x0, x1, h: 240, label: '혈당 그래프', yTickFmt: v => fmt(gDisp(v), gDec()),
+      bands: [{ y0: G.gFastLo, y1: G.gFastHi, color: '#1baf7a' }],
+      refs: [{ y: 70, label: '저혈당 70', color: '#2F5F8A' }, { y: G.gPostHi, label: '식후 ' + gFmt(G.gPostHi), color: '#8A5A3B' }],
+      series: [{ name: '혈당', color: '#2a78d6', line: false, pts: sel.map(e => ({ x: e.t, y: e.v.mg, color: GW_COLOR[e.v.when], shape: GW_SHAPE[e.v.when], tip: tipHead(e) + `${GW[e.v.when]} <b>${gFmt(e.v.mg)}</b> ${gUnit()}<br>${stGlu(e.v.mg, e.v.when).l}` })) }],
+    };
+  }
+  if (type === 'sleep') {
+    const span = (x1 - x0) / DAY;
+    let pts = daily(list, sleepH, true);
+    let w = DAY;
+    if (span > 120) { pts = weekly(pts); w = 7 * DAY; }
+    return {
+      x0, x1, h: 220, label: '수면 시간 그래프', yTickFmt: v => v + 'h', yMin: 0,
+      refs: [{ y: S.goal.sleepH, label: '목표 ' + S.goal.sleepH + 'h', color: '#8A5A3B' }],
+      bars: { w, color: '#3E6F73', pts: pts.map(p => ({ x: p.x, y: p.y, low: p.y < S.goal.sleepH, tip: `<b>${w > DAY ? fmtDate(p.x, false) + ' 주' : fmtDate(p.x)}</b><br>${w > DAY ? '하루 평균 ' : ''}${fmtDurH(p.y)}` })) },
+    };
+  }
+  if (type === 'sleepSched') {
+    // y = minutes since 18:00 of previous evening
+    const toY = t => { const d = new Date(t); let m = d.getHours() * 60 + d.getMinutes() - 18 * 60; if (m < 0) m += 1440; return m; };
+    const ranges = list.map(e => ({ x: dayStart(e.v.wake), y0: toY(e.v.bed), y1: toY(e.v.wake), tip: tipHead({ t: e.v.wake }) + `${fmtHM(e.v.bed)} 잠듦 → ${fmtHM(e.v.wake)} 깸<br>${fmtDurH(sleepH(e))}` }));
+    const ys = ranges.flatMap(r => [r.y0, r.y1]);
+    const lo = Math.floor((Math.min(...ys) - 30) / 120) * 120, hi = Math.ceil((Math.max(...ys) + 30) / 120) * 120;
+    const ticks = []; for (let v = lo; v <= hi; v += 120) ticks.push(v);
+    return { x0, x1, h: 220, label: '수면 시간대 그래프', yInvert: true, yMinHard: lo, yMaxHard: hi, yMin: lo, yMax: hi, yTicks: ticks, yTickFmt: v => minToClock(v + 18 * 60), ranges };
+  }
+  // simple
+  const t = T(type);
+  if (t.daily) {
+    const span = (x1 - x0) / DAY; let pts = daily(list, mainVal, true), w = DAY;
+    if (span > 120) { pts = weekly(pts); w = 7 * DAY; }
+    return { x0, x1, h: 220, label: t.name, yMin: 0, refs: type === 'steps' ? [{ y: S.goal.steps, label: '목표 ' + fmt(S.goal.steps), color: '#8A5A3B' }] : [], bars: { w, color: tColor(type), pts: pts.map(p => ({ x: p.x, y: p.y, tip: `<b>${fmtDate(p.x)}</b><br>${fmt(p.y, t.dec)} ${esc(t.unit)}` })) } };
+  }
+  const refs = [];
+  if (type === 'temp') refs.push({ y: 37.5, label: '미열 37.5', color: '#8A5A3B' });
+  if (type === 'spo2') refs.push({ y: 95, label: '95%', color: '#8A5A3B' });
+  if (type === 'a1c') refs.push({ y: 6.5, label: '6.5%', color: '#8A5A3B' }, { y: 5.7, label: '5.7%', color: '#9A7B3F' });
+  return { x0, x1, h: 220, label: t.name, refs, series: [{ name: t.name, color: tColor(type), pts: list.map(e => ({ x: e.t, y: e.v.val, tip: tipHead(e) + `<b>${fmt(e.v.val, t.dec)}</b> ${esc(t.unit)}` })) }] };
+}
+function weekly(pts) {
+  const m = new Map();
+  for (const p of pts) { const d = new Date(p.x); const k = p.x - ((d.getDay() + 6) % 7) * DAY; const a = m.get(k) || []; a.push(p.y); m.set(k, a); }
+  return [...m.entries()].sort((a, b) => a[0] - b[0]).map(([x, a]) => ({ x, y: mean(a) }));
+}
+
+/* ========================================================================
+   Stats
+   ======================================================================== */
+function stats(type, list) {
+  const vals = list.map(mainVal).filter(v => v != null);
+  const r = { n: list.length, avg: mean(vals), min: vals.length ? Math.min(...vals) : null, max: vals.length ? Math.max(...vals) : null };
+  if (type === 'bp') {
+    r.sys = mean(list.map(e => e.v.sys)); r.dia = mean(list.map(e => e.v.dia));
+    const pl = list.map(e => e.v.pulse).filter(Boolean); r.pulse = mean(pl);
+    const mo = list.filter(e => isMorning(e.t)), ev = list.filter(e => isEvening(e.t));
+    r.am = mo.length ? { s: mean(mo.map(e => e.v.sys)), d: mean(mo.map(e => e.v.dia)), n: mo.length } : null;
+    r.pm = ev.length ? { s: mean(ev.map(e => e.v.sys)), d: mean(ev.map(e => e.v.dia)), n: ev.length } : null;
+    r.sysMin = Math.min(...list.map(e => e.v.sys)); r.sysMax = Math.max(...list.map(e => e.v.sys));
+    r.diaMin = Math.min(...list.map(e => e.v.dia)); r.diaMax = Math.max(...list.map(e => e.v.dia));
+    const c = {}; list.forEach(e => { const s = stBP(e.v.sys, e.v.dia).l; c[s] = (c[s] || 0) + 1; }); r.dist = c;
+    r.overTarget = list.filter(e => e.v.sys >= S.goal.bpSys || e.v.dia >= S.goal.bpDia).length;
+  }
+  if (type === 'glucose') {
+    r.byWhen = {}; for (const w in GW) { const l = list.filter(e => e.v.when === w).map(e => e.v.mg); if (l.length) r.byWhen[w] = { n: l.length, avg: mean(l), min: Math.min(...l), max: Math.max(...l) }; }
+    r.tir = list.length ? list.filter(e => inTarget(e.v.mg, e.v.when)).length / list.length : null;
+    r.lows = list.filter(e => e.v.mg < 70).length; r.highs = list.filter(e => stGlu(e.v.mg, e.v.when).k === 'high').length;
+    r.ea1c = vals.length >= 7 ? (r.avg + 46.7) / 28.7 : null;
+    r.cv = vals.length >= 5 ? sd(vals) / r.avg * 100 : null;
+  }
+  if (type === 'sleep') {
+    const bedM = list.map(e => { const d = new Date(e.v.bed); let m = d.getHours() * 60 + d.getMinutes(); if (m < 720) m += 1440; return m; });
+    const wakeM = list.map(e => { const d = new Date(e.v.wake); return d.getHours() * 60 + d.getMinutes(); });
+    r.bed = mean(bedM); r.wake = mean(wakeM); r.bedSd = sd(bedM);
+    const qs = list.map(e => e.v.q).filter(Boolean); r.q = mean(qs);
+    const wk = list.map(e => e.v.wk).filter(v => v != null); r.wk = mean(wk);
+    const d = daily(list, sleepH, true); r.dayAvg = mean(d.map(p => p.y));
+    r.goalDays = d.filter(p => p.y >= S.goal.sleepH).length; r.days = d.length;
+  }
+  if (type === 'weight') {
+    r.first = list[0]; r.last = list[list.length - 1];
+    r.change = list.length > 1 ? r.last.v.kg - r.first.v.kg : null;
+    const fats = list.map(e => e.v.fat).filter(v => v != null); r.fat = mean(fats);
+    r.lastFat = [...list].reverse().find(e => e.v.fat != null)?.v.fat ?? null;
+    r.lastWaist = [...list].reverse().find(e => e.v.waist != null)?.v.waist ?? null;
+  }
+  if (SIMPLE[type]?.daily) { const d = daily(list, mainVal, true); r.dayAvg = mean(d.map(p => p.y)); r.days = d.length; r.goalDays = type === 'steps' ? d.filter(p => p.y >= S.goal.steps).length : null; }
+  return r;
+}
+
+/* ========================================================================
+   Tabs & rendering
+   ======================================================================== */
+const TABS = ['home', 'weight', 'bp', 'glucose', 'sleep', 'other', 'report'];
+function curMetric() { return S.tab === 'other' ? S.otherSel : S.tab; }
+function setTab(t) {
+  if (!TABS.includes(t)) t = 'home';
+  S.tab = t; saveS();
+  $$('#tabs .tab').forEach(b => b.setAttribute('aria-selected', b.dataset.tab === t));
+  $$('#work [data-view]').forEach(v => v.hidden = v.dataset.view !== (t === 'home' ? 'home' : t === 'report' ? 'report' : 'metric'));
+  $$('#side [data-side]').forEach(v => v.hidden = v.dataset.side !== (t === 'report' ? 'report' : 'form'));
+  $('#fab').hidden = t === 'report';
+  if (t === 'report') { setText($('#sideT'), '리포트 설정'); setText($('#sideS'), '병원에 가져갈 기간과 항목을 골라요'); }
+  else {
+    setText($('#sideT'), editId ? '기록 고치기' : '기록하기'); setText($('#sideS'), '값을 넣고 저장하면 바로 그래프에 반영돼요');
+    if (t !== 'home' && !editId) setFormType(curMetric());
+  }
+  if (!editId) $('#side .pbody').scrollTop = 0;
+  render();
+  $('#tabs .tab[aria-selected="true"]')?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+}
+function render() {
+  chartEls.forEach(el => { if (!el.isConnected) { chartEls.delete(el); ro.unobserve(el); } });
+  if (S.tab === 'home') renderHome();
+  else if (S.tab === 'report') renderReport();
+  else renderMetric();
+  renderApplied();
+}
+function renderApplied() {
+  const today = E.filter(e => e.t >= dayStart(Date.now())).length;
+  const days = new Set(E.map(e => dayKey(e.t)));
+  let streak = 0; for (let d = dayStart(Date.now()); days.has(dayKey(d)); d -= DAY) streak++;
+  $('#applied').innerHTML = (E.length ? `<span class="achip">오늘 기록 ${today}개</span>` : '') + (streak > 1 ? `<span class="achip">${streak}일 연속 기록</span>` : '');
+}
+
+/* ---------- Home ---------- */
+let calMonth = (() => { const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), 1).getTime(); })();
+let calSel = dayStart(Date.now());
+function renderHome() {
+  const el = $('#homeScroll');
+  const now = new Date(), h = now.getHours();
+  const hi = h < 11 ? '좋은 아침이에요' : h < 17 ? '좋은 오후예요' : '편안한 저녁이에요';
+  const nm = S.profile.name ? esc(S.profile.name) + '님, ' : '';
+  let html = `<div class="hello"><div><h2>${nm}${hi}</h2><p>${fmtDate(Date.now())} · ${E.length ? `기록 ${fmt(E.length)}개` : '아직 기록이 없어요'}</p></div>`;
+  if (!E.length) html += `<button class="btn line sm" data-act="sample"><i data-icon="sparkle"></i>예시 데이터로 둘러보기</button>`;
+  html += `</div><div class="mgrid">`;
+  for (const type of shownTypes()) {
+    const t = T(type), l = latest(type);
+    const recent = inRange(byType(type), 30);
+    const sp = type === 'bp' ? daily(recent, e => e.v.sys) : type === 'glucose' ? daily(recent.filter(e => isFastLike(e.v.when)).length >= 3 ? recent.filter(e => isFastLike(e.v.when)) : recent) : SIMPLE[type]?.daily ? daily(recent, mainVal, true) : type === 'sleep' ? daily(recent, sleepH, true) : recent.map(e => ({ x: e.t, y: mainVal(e) }));
+    let meta = '';
+    if (l) {
+      meta = badge(statusOf(l)) + `<span>${fmtAgo(l.t)}</span>`;
+      const prev = byType(type).filter(e => e.t < l.t && e.t >= l.t - 8 * DAY);
+      if (prev.length && type !== 'sleep' && !SIMPLE[type]?.daily) {
+        const pv = mean(prev.map(mainVal)), dv = mainVal(l) - pv, dec = type === 'weight' || T(type).dec ? 1 : 0;
+        if (Math.abs(dv) >= (dec ? .05 : .5)) meta += `<span class="delta ${dv > 0 ? 'up' : 'down'}" title="지난 7일 평균과 비교">${dv > 0 ? '▲' : '▼'}${fmt(Math.abs(type === 'glucose' ? gDisp(dv) : dv), type === 'glucose' ? gDec() : dec)}</span>`;
+      }
+    }
+    let val = l ? valHTML(l) : '기록 없음';
+    if (l && type === 'steps') { const d = daily(byType(type).filter(e => e.t >= dayStart(l.t)), mainVal, true)[0]; val = `${fmt(d.y)}<small>걸음</small>`; }
+    html += `<div class="mcard" role="button" tabindex="0" data-go="${type}">
+      <div class="hd"><span class="ic" style="color:${tColor(type)}">${icon(t.icon)}</span>${esc(t.name)}<button class="add" data-add="${type}" title="${esc(t.name)} 기록하기">${icon('plus')}</button></div>
+      <div class="val${l ? '' : ' none'}">${val}</div>
+      <div class="meta">${meta || '<span>+ 를 눌러 첫 기록을 남겨요</span>'}</div>
+      ${sparkSVG(sp, tColor(type))}
+    </div>`;
+  }
+  html += `</div>`;
+  // calendar
+  const cm = new Date(calMonth), y = cm.getFullYear(), mo = cm.getMonth();
+  const first = new Date(y, mo, 1), startOff = first.getDay(), daysIn = new Date(y, mo + 1, 0).getDate();
+  const byDay = new Map(); E.forEach(e => { const k = dayKey(e.t); const s = byDay.get(k) || new Set(); s.add(e.type); byDay.set(k, s); });
+  let cal = WD.map((w, i) => `<div class="wd${i === 0 ? ' sun' : i === 6 ? ' sat' : ''}">${w}</div>`).join('');
+  const todayK = dayKey(Date.now());
+  for (let i = 0; i < 42; i++) {
+    const d = new Date(y, mo, 1 - startOff + i); if (i >= 35 && d.getMonth() !== mo) break;
+    const k = dayKey(d), ts = byDay.get(k);
+    cal += `<button data-day="${d.getTime()}" class="${d.getMonth() !== mo ? 'out' : ''}${k === todayK ? ' today' : ''}${d.getTime() === calSel ? ' sel' : ''}"><span class="d">${d.getDate()}</span><span class="dots">${ts ? [...ts].slice(0, 6).map(t => `<i style="--c:${tColor(t)}"></i>`).join('') : ''}</span></button>`;
+  }
+  const dayList = E.filter(e => dayStart(e.t) === calSel).sort((a, b) => b.t - a.t);
+  html += `<div class="card"><div class="ch"><h3>기록 달력</h3><div class="cal-h"><button class="icon-btn" data-cal="-1" title="이전 달">${icon('chevL')}</button><b>${y}년 ${mo + 1}월</b><button class="icon-btn" data-cal="1" title="다음 달">${icon('chevR')}</button><button class="btn sm ghost" data-cal="0">오늘</button></div></div>
+    <div class="cal">${cal}</div>
+    <div class="legend-row">${shownTypes().map(t => `<span><i class="tdot" style="--c:${tColor(t)}"></i>${esc(T(t).name)}</span>`).join('')}</div>
+    <div class="eday" style="margin-top:8px">${fmtDate(calSel)}<span>${dayList.length ? dayList.length + '개' : ''}</span></div>
+    ${dayList.length ? `<div class="elist">${dayList.map(e => rowHTML(e)).join('')}</div>` : `<div class="empty" style="padding:18px">이 날은 기록이 없어요</div>`}
+  </div>`;
+  // recent
+  const rec = [...E].sort((a, b) => b.t - a.t).slice(0, 12);
+  if (rec.length) html += `<div class="card"><div class="ch"><h3>최근 기록</h3><span class="cs">모든 항목</span></div>${listHTML(rec, true)}</div>`;
+  el.innerHTML = html;
+}
+function rowHTML(e, showType = true) {
+  const t = T(e.type), st = statusOf(e);
+  return `<div class="erow${e.id === editId ? ' editing' : ''}" data-id="${e.id}">
+    ${showType ? `<span class="k" style="color:${tColor(e.type)}" title="${esc(t.name)}">${icon(t.icon)}</span>` : ''}
+    <span class="tm">${fmtHM(e.t)}</span>
+    <div class="tx"><div class="v">${valHTML(e)} ${badge(st)}</div>
+      <div class="sub">${(e.tags || []).map(g => `<span class="tg">${esc(g)}</span>`).join('')}${esc([subText(e), e.note].filter(Boolean).join(' · '))}</div></div>
+    <button data-del="${e.id}" title="지우기">${icon('trash')}</button>
+  </div>`;
+}
+function listHTML(list, showType = false, limit = 0) {
+  if (!list.length) return `<div class="empty"><b>기록이 없어요</b>오른쪽에서 첫 기록을 남겨 보세요.</div>`;
+  const shown = limit ? list.slice(0, limit) : list;
+  let html = '<div class="elist">', last = '';
+  for (const e of shown) {
+    const k = dayKey(e.t);
+    if (k !== last) { const n = list.filter(x => dayKey(x.t) === k).length; html += `<div class="eday">${fmtDate(e.t)}${new Date(e.t).getFullYear() !== new Date().getFullYear() ? ' ' + new Date(e.t).getFullYear() : ''}<span>${n}개</span></div>`; last = k; }
+    html += rowHTML(e, showType);
+  }
+  html += '</div>';
+  if (limit && list.length > limit) html += `<button class="btn line sm more" data-more>${fmt(list.length - limit)}개 더 보기</button>`;
+  return html;
+}
+
+/* ---------- Metric tab ---------- */
+let listLimit = 60;
+function kpi(k, v, s = '') { return `<div class="kpi"><div class="k">${k}</div><div class="v">${v}</div>${s ? `<div class="s">${s}</div>` : ''}</div>`; }
+function renderMetric() {
+  const type = curMetric(), t = T(type);
+  $$('#rangeSeg button').forEach(b => b.setAttribute('aria-pressed', +b.dataset.r === S.range));
+  // other selector
+  const ob = $('#otherBar');
+  ob.hidden = S.tab !== 'other';
+  if (S.tab === 'other') {
+    ob.innerHTML = otherTypes().map(k => `<button class="tool" data-osel="${k}" aria-pressed="${k === type}">${icon(T(k).icon)}<span>${esc(T(k).name)}</span></button>`).join('') + `<span class="grow"></span><button class="tool" data-act="addCustom">${icon('plus')}<span>항목 추가</span></button>`;
+  }
+  const all = byType(type), list = inRange(all, S.range), st = stats(type, list), xr = rangeX(all, S.range);
+  setText($('#mCount'), `${t.name} ${fmt(list.length)}개` + (S.range ? '' : ' · 전체'));
+  let html = '<div class="kpis">';
+  const last = all[all.length - 1];
+  if (type === 'weight') {
+    const b = last ? bmiOf(last.v.kg) : null;
+    html += kpi('최근', last ? `${fmt(last.v.kg, 1)}<small>kg</small>` : '–', last ? fmtAgo(last.t) : '');
+    html += kpi('BMI', b ? fmt(b, 1) : '–', b ? stBMI(b).l : (heightM() ? '' : '설정에서 키를 넣어 주세요'));
+    html += kpi('기간 변화', st.change != null ? `${st.change > 0 ? '+' : ''}${fmt(st.change, 1)}<small>kg</small>` : '–', list.length ? `${fmt(st.min, 1)} ~ ${fmt(st.max, 1)}kg` : '');
+    const g = S.goal.weight;
+    html += kpi('목표까지', g && last ? `${fmt(Math.abs(last.v.kg - g), 1)}<small>kg</small>` : '–', g ? `목표 ${fmt(g, 1)}kg${last ? (last.v.kg > g ? ' · 빼야 해요' : last.v.kg < g ? ' · 늘려야 해요' : ' · 달성') : ''}` : '오른쪽 아래에서 목표를 정해요');
+  } else if (type === 'bp') {
+    html += kpi('최근', last ? `${last.v.sys}/${last.v.dia}` : '–', last ? `${fmtAgo(last.t)} · ${stBP(last.v.sys, last.v.dia).l}` : '');
+    html += kpi('평균', list.length ? `${fmt(st.sys)}/${fmt(st.dia)}` : '–', list.length ? `${st.n}번 측정` + (st.pulse ? ` · 맥박 ${fmt(st.pulse)}` : '') : '');
+    html += kpi('아침 평균', st.am ? `${fmt(st.am.s)}/${fmt(st.am.d)}` : '–', st.am ? `${st.am.n}번 · 4~12시` : '4~12시 측정');
+    html += kpi('저녁 평균', st.pm ? `${fmt(st.pm.s)}/${fmt(st.pm.d)}` : '–', st.pm ? `${st.pm.n}번 · 17시 이후` : '17시 이후 측정');
+  } else if (type === 'glucose') {
+    const f = st.byWhen?.fast, p2 = st.byWhen?.post2;
+    html += kpi('최근', last ? `${gFmt(last.v.mg)}<small>${gUnit()}</small>` : '–', last ? `${GW[last.v.when]} · ${fmtAgo(last.t)}` : '');
+    html += kpi('공복 평균', f ? `${gFmt(f.avg)}` : '–', f ? `${f.n}번 · ${gFmt(f.min)}~${gFmt(f.max)}` : '');
+    html += kpi('식후 2시간 평균', p2 ? `${gFmt(p2.avg)}` : '–', p2 ? `${p2.n}번 · ${gFmt(p2.min)}~${gFmt(p2.max)}` : '');
+    html += kpi('목표 범위 안', st.tir != null ? `${fmt(st.tir * 100)}<small>%</small>` : '–', list.length ? `저혈당 ${st.lows}번 · 높음 ${st.highs}번` : '');
+  } else if (type === 'sleep') {
+    html += kpi('최근', last ? fmtDurShort(sleepH(last)) : '–', last ? `${fmtHM(last.v.bed)} → ${fmtHM(last.v.wake)}` : '');
+    html += kpi('하루 평균', st.dayAvg != null ? fmtDurShort(st.dayAvg) : '–', list.length ? `목표 달성 ${st.goalDays}/${st.days}일` : '');
+    html += kpi('평균 잠든 시각', st.bed != null ? minToClock(st.bed) : '–', st.bedSd != null ? `들쭉날쭉 ±${Math.round(st.bedSd)}분` : '');
+    html += kpi('평균 깬 시각', st.wake != null ? minToClock(st.wake) : '–', st.q != null ? `수면의 질 ${fmt(st.q, 1)}/5` : '');
+  } else {
+    const d = t.dec;
+    if (t.daily) {
+      html += kpi('최근', last ? `${fmt(daily(all.filter(e => e.t >= dayStart(last.t)), mainVal, true)[0].y)}<small>${esc(t.unit)}</small>` : '–', last ? fmtDate(last.t) : '');
+      html += kpi('하루 평균', st.dayAvg != null ? fmt(st.dayAvg) : '–', list.length ? `${st.days}일` : '');
+      html += kpi('최고', list.length ? fmt(Math.max(...daily(list, mainVal, true).map(p => p.y))) : '–', '');
+      html += kpi('목표 달성', st.goalDays != null && list.length ? `${st.goalDays}<small>일</small>` : '–', `목표 ${fmt(S.goal.steps)}걸음`);
+    } else {
+      html += kpi('최근', last ? `${fmt(last.v.val, d)}<small>${esc(t.unit)}</small>` : '–', last ? fmtAgo(last.t) : '');
+      html += kpi('평균', list.length ? fmt(st.avg, d) : '–', list.length ? `${st.n}번 측정` : '');
+      html += kpi('최저', list.length ? fmt(st.min, d) : '–', '');
+      html += kpi('최고', list.length ? fmt(st.max, d) : '–', '');
+    }
+  }
+  html += '</div>';
+  // charts
+  const legend = items => `<div class="legend-row">${items.join('')}</div>`;
+  const L = (c, n, k = 'ln') => `<span><i class="${k}" style="--c:${c}"></i>${n}</span>`;
+  if (type === 'weight') {
+    html += `<div class="card"><div class="ch"><h3>체중 변화</h3><span class="cs">${list.length ? `평균 ${fmt(st.avg, 1)}kg` : ''}</span></div><div class="chart-box" data-chart="weight"></div>${legend([L('#244D3A', '체중', 'tdot'), L('#8A5A3B', '7일 평균', 'ln dash')].concat(S.goal.weight ? [`<span><i class="ln dash" style="--c:#8A5A3B"></i>목표</span>`] : []))}</div>`;
+    if (list.some(e => e.v.fat != null)) html += `<div class="card"><div class="ch"><h3>체지방률</h3><span class="cs">평균 ${fmt(st.fat, 1)}%</span></div><div class="chart-box" data-chart="weightFat"></div></div>`;
+  } else if (type === 'bp') {
+    html += `<div class="card"><div class="ch"><h3>혈압 변화</h3><span class="cs">목표 ${S.goal.bpSys}/${S.goal.bpDia} 넘은 측정 ${list.length ? st.overTarget + '번' : '–'}</span></div><div class="chart-box" data-chart="bp"></div>${legend([L('#2a78d6', '수축기 (위)', 'tdot'), L('#eb6834', '이완기 (아래)', 'bx'), `<span><i class="bx" style="--c:rgba(42,120,214,.25)"></i>목표 범위</span>`])}</div>`;
+    if (list.some(e => e.v.pulse)) html += `<div class="card"><div class="ch"><h3>맥박</h3><span class="cs">평균 ${fmt(st.pulse)} bpm</span></div><div class="chart-box" data-chart="pulse"></div></div>`;
+    if (list.length) {
+      const order = ['정상', '주의 혈압', '고혈압 전단계', '고혈압 1기', '고혈압 2기', '낮은 혈압'];
+      const col = { '정상': '#2F7D4F', '주의 혈압': '#C9A45C', '고혈압 전단계': '#D98A3D', '고혈압 1기': '#C2553F', '고혈압 2기': '#8E2C2C', '낮은 혈압': '#2F5F8A' };
+      html += `<div class="card"><div class="ch"><h3>분류별 횟수</h3><span class="cs">대한고혈압학회 기준 · 참고용</span></div>
+        <div class="dist">${order.filter(k => st.dist[k]).map(k => `<i style="flex:${st.dist[k]};background:${col[k]}" title="${k} ${st.dist[k]}번"></i>`).join('')}</div>
+        <div class="legend-row" style="margin-top:0">${order.filter(k => st.dist[k]).map(k => `<span><i class="bx" style="--c:${col[k]}"></i>${k} <b>${st.dist[k]}</b>번 (${fmt(st.dist[k] / list.length * 100)}%)</span>`).join('')}</div>
+        <div class="mini-kv" style="margin-top:12px"><div><div class="k">수축기 범위</div><div class="v">${st.sysMin}~${st.sysMax}</div></div><div><div class="k">이완기 범위</div><div class="v">${st.diaMin}~${st.diaMax}</div></div>${st.am && st.pm ? `<div><div class="k">아침−저녁 차이</div><div class="v">${fmt(st.am.s - st.pm.s)}<small>mmHg</small></div></div>` : ''}</div></div>`;
+    }
+  } else if (type === 'glucose') {
+    html += `<div class="card"><div class="ch"><h3>혈당 변화</h3><div class="seg" id="gWhichSeg"><button data-g="all">전체</button><button data-g="fast">공복·식전</button><button data-g="post">식후</button></div></div><div class="chart-box" data-chart="glucose"></div>${legend(Object.keys(GW).filter(w => list.some(e => e.v.when === w)).map(w => `<span>${shapeIcon(GW_SHAPE[w], GW_COLOR[w])}${GW[w]}</span>`).concat([`<span><i class="bx" style="--c:rgba(27,175,122,.3)"></i>공복 목표 범위</span>`]))}</div>`;
+    if (list.length) {
+      html += `<div class="card"><div class="ch"><h3>측정 시점별</h3><span class="cs">${gUnit()}</span></div><div class="tblwrap"><table class="stbl"><thead><tr><th>시점</th><th>횟수</th><th>평균</th><th>최저</th><th>최고</th></tr></thead><tbody>${Object.entries(st.byWhen).map(([w, s]) => `<tr><td class="nm">${shapeIcon(GW_SHAPE[w], GW_COLOR[w])}${GW[w]}</td><td>${s.n}</td><td><b>${gFmt(s.avg)}</b></td><td>${gFmt(s.min)}</td><td>${gFmt(s.max)}</td></tr>`).join('')}</tbody></table></div>
+      <div class="mini-kv" style="margin-top:12px"><div><div class="k">전체 평균</div><div class="v">${gFmt(st.avg)}<small>${gUnit()}</small></div></div><div><div class="k">추정 당화혈색소</div><div class="v">${st.ea1c ? fmt(st.ea1c, 1) + '<small>%</small>' : '–'}</div></div><div><div class="k">변동계수 (CV)</div><div class="v">${st.cv ? fmt(st.cv) + '<small>%</small>' : '–'}</div></div></div>
+      <div class="note">추정 당화혈색소는 기간 평균 혈당으로 계산한 값이라 병원 검사와 다를 수 있어요 (측정 7번 이상일 때 표시). 변동계수가 36%를 넘으면 혈당이 크게 오르내린다는 뜻이에요.</div></div>`;
+    }
+  } else if (type === 'sleep') {
+    html += `<div class="card"><div class="ch"><h3>수면 시간</h3><span class="cs">${(xr.x1 - xr.x0) / DAY > 120 ? '주별 하루 평균' : '하루 합계 (낮잠 제외)'}</span></div><div class="chart-box" data-chart="sleep"></div>${legend([L('#3E6F73', '목표 이상', 'bx'), L('#8FAE9A', '목표 미만', 'bx')])}</div>`;
+    if (list.length) html += `<div class="card"><div class="ch"><h3>잠든 시각과 깬 시각</h3><span class="cs">막대 위가 잠든 시각, 아래가 깬 시각</span></div><div class="chart-box" data-chart="sleepSched"></div></div>`;
+  } else {
+    html += `<div class="card"><div class="ch"><h3>${esc(t.name)} 변화</h3><span class="cs">${esc(t.unit)}</span></div><div class="chart-box" data-chart="${type}"></div></div>`;
+  }
+  html += `<div class="card"><div class="ch"><h3>기록 목록</h3><span class="cs">줄을 누르면 고칠 수 있어요</span></div>${listHTML([...list].reverse(), false, listLimit)}</div>`;
+  const sc = $('#mScroll'); sc.innerHTML = html;
+  $$('#gWhichSeg button').forEach(b => b.setAttribute('aria-pressed', b.dataset.g === gWhich));
+  $$('[data-chart]', sc).forEach(el => {
+    const key = el.dataset.chart;
+    ro.observe(el);
+    mountChart(el, () => {
+      const which = key === 'glucose' ? (gWhich === 'fast' ? ['fast', 'pre'] : gWhich === 'post' ? ['post1', 'post2', 'bed', 'rand'] : null) : null;
+      return buildChart(key, key === 'weightFat' || key === 'pulse' || key === 'sleepSched' ? list : list, xr, which);
+    });
+  });
+}
+let gWhich = 'all';
+function shapeIcon(shape, color) { return `<svg width="12" height="12" viewBox="0 0 12 12" style="flex:none">${marker(shape, 6, 6, 4.2, color, '')}</svg>`; }
+
+/* ========================================================================
+   Entry form
+   ======================================================================== */
+let editId = null, fTags = new Set(), fState = {};
+function formTypesHTML() {
+  return shownTypes().map(k => `<button data-ft="${k}" aria-pressed="${k === S.formType}">${icon(T(k).icon)}${esc(T(k).name)}</button>`).join('');
+}
+function setFormType(type, keep = false) {
+  if (!T(type)) type = 'weight';
+  S.formType = type; saveS();
+  $('#tsel').innerHTML = formTypesHTML();
+  if (!keep) { fTags = new Set(); fState = {}; $('#fNote').value = ''; $('#fT').value = toLocalInput(Date.now()); }
+  renderForm();
+}
+function lastOf(type) { return latest(type); }
+function stepper(id, val, unit, step, ph = '') {
+  return `<div class="bigin"><button data-step="${id}" data-d="-${step}" title="줄이기">${icon('minus')}</button><div class="mid"><input id="${id}" inputmode="decimal" autocomplete="off" value="${val ?? ''}" placeholder="${ph}" /><span class="u">${esc(unit)}</span></div><button data-step="${id}" data-d="${step}" title="늘리기">${icon('plus')}</button></div>`;
+}
+function renderForm() {
+  const type = S.formType, t = T(type), L = lastOf(type);
+  const ed = editId ? E.find(e => e.id === editId) : null, v = ed ? ed.v : null;
+  let h = '';
+  if (type === 'weight') {
+    h += `<div class="field"><label>체중 <span class="v">${L && !ed ? '지난번 ' + fmt(L.v.kg, 1) + 'kg' : ''}</span></label>${stepper('fKg', v ? v.kg : L ? L.v.kg.toFixed(1) : '', 'kg', .1)}</div>
+      <div class="row3"><div class="field"><label>체지방</label><input class="inp tc" id="fFat" inputmode="decimal" placeholder="%" value="${v?.fat ?? ''}" /></div>
+      <div class="field"><label>골격근</label><input class="inp tc" id="fMus" inputmode="decimal" placeholder="kg" value="${v?.muscle ?? ''}" /></div>
+      <div class="field"><label>허리</label><input class="inp tc" id="fWaist" inputmode="decimal" placeholder="cm" value="${v?.waist ?? ''}" /></div></div>`;
+  } else if (type === 'bp') {
+    const raw = v?.raw;
+    const one = (i, r) => `<div class="bp3" data-bpi="${i}">
+      <div class="bx"><label>수축기</label><input id="fSys${i}" inputmode="numeric" maxlength="3" value="${r?.[0] ?? ''}" placeholder="120" /><span class="u">mmHg</span></div>
+      <div class="bx"><label>이완기</label><input id="fDia${i}" inputmode="numeric" maxlength="3" value="${r?.[1] ?? ''}" placeholder="80" /><span class="u">mmHg</span></div>
+      <div class="bx"><label>맥박</label><input id="fPul${i}" inputmode="numeric" maxlength="3" value="${r?.[2] ?? ''}" placeholder="70" /><span class="u">회/분</span></div></div>`;
+    const n = fState.bpN || (raw ? raw.length : 1); fState.bpN = n;
+    const rows = raw || (v ? [[v.sys, v.dia, v.pulse ?? '']] : []);
+    h += `<div class="field"><label>측정값 <span class="v">${L && !ed ? `지난번 ${L.v.sys}/${L.v.dia}` : ''}</span></label>${one(0, rows[0])}</div>`;
+    for (let i = 1; i < n; i++) h += `<div class="field"><label>${i + 1}번째 측정</label>${one(i, rows[i])}</div>`;
+    h += `<div class="qrow" style="margin:-4px 0 12px">${n < 3 ? `<button class="btn line" data-act="bpMore">${icon('plus')}한 번 더 재기 (평균 저장)</button>` : ''}${n > 1 ? `<button class="btn ghost" data-act="bpLess">${icon('minus')}한 번 빼기</button>` : ''}</div>`;
+    const arm = fState.arm ?? v?.arm ?? L?.v.arm ?? 'L', pos = fState.pos ?? v?.pos ?? 'sit';
+    fState.arm = arm; fState.pos = pos;
+    h += `<div><div class="field"><label>팔</label><div class="seg" data-fs="arm"><button data-v="L" aria-pressed="${arm === 'L'}">왼팔</button><button data-v="R" aria-pressed="${arm === 'R'}">오른팔</button></div></div>
+      <div class="field"><label>자세</label><div class="seg" data-fs="pos"><button data-v="sit" aria-pressed="${pos === 'sit'}">앉아서</button><button data-v="lie" aria-pressed="${pos === 'lie'}">누워</button><button data-v="stand" aria-pressed="${pos === 'stand'}">서서</button></div></div></div>`;
+  } else if (type === 'glucose') {
+    const when = fState.when ?? v?.when ?? guessWhen(); fState.when = when;
+    h += `<div class="field"><label>혈당 <span class="v">${L && !ed ? `지난번 ${gFmt(L.v.mg)} (${GW[L.v.when]})` : ''}</span></label>${stepper('fMg', v ? fmt(gDisp(v.mg), gDec()).replace(/,/g, '') : '', gUnit(), S.gUnit === 'mmol' ? .1 : 1, L ? fmt(gDisp(L.v.mg), gDec()).replace(/,/g, '') : (S.gUnit === 'mmol' ? '5.5' : '100'))}</div>
+      <div class="field"><label>측정 시점</label><div class="seg" data-fs="when" style="display:grid;grid-template-columns:repeat(3,1fr)">${Object.entries(GW).map(([k, n]) => `<button data-v="${k}" aria-pressed="${k === when}">${n}</button>`).join('')}</div></div>`;
+  } else if (type === 'sleep') {
+    const now = Date.now();
+    let bed = v?.bed, wake = v?.wake;
+    if (!ed) {
+      const lb = L ? new Date(L.v.bed) : null, lw = L ? new Date(L.v.wake) : null;
+      const w = new Date(now); w.setSeconds(0, 0); if (lw) { w.setHours(lw.getHours(), lw.getMinutes()); if (w.getTime() > now) w.setTime(now); }
+      else { w.setHours(7, 0); if (w.getTime() > now) w.setTime(now); }
+      const b = new Date(w); if (lb) b.setHours(lb.getHours(), lb.getMinutes()); else b.setHours(23, 0);
+      if (b.getTime() >= w.getTime()) b.setDate(b.getDate() - 1);
+      if (w.getTime() - b.getTime() > 20 * 3600000) b.setDate(b.getDate() + 1);
+      bed = b.getTime(); wake = w.getTime();
+    }
+    const q = fState.q ?? v?.q ?? 3; fState.q = q;
+    h += `<div><div class="field"><label>잠든 시각</label><input class="inp" type="datetime-local" id="fBed" value="${toLocalInput(bed)}" /></div>
+      <div class="field"><label>깬 시각</label><input class="inp" type="datetime-local" id="fWake" value="${toLocalInput(wake)}" /></div></div>
+      <div class="qrow" style="margin:-6px 0 12px"><button class="btn line" data-bed="-30">잠 −30분</button><button class="btn line" data-bed="30">잠 +30분</button><button class="btn line" data-wake="-30">깸 −30분</button><button class="btn line" data-wake="30">깸 +30분</button></div>
+      <div class="field"><label>수면의 질</label><div class="stars" data-fs="q">${['아주 나쁨', '나쁨', '보통', '좋음', '아주 좋음'].map((n, i) => `<button data-v="${i + 1}" aria-pressed="${q === i + 1}"><b>${i + 1}</b>${n}</button>`).join('')}</div></div>
+      <div class="row2"><div class="field"><label>밤에 깬 횟수</label><input class="inp tc" id="fWk" inputmode="numeric" value="${v?.wk ?? ''}" placeholder="0" /></div>
+      <div class="field"><label>낮잠 <span class="v">분</span></label><input class="inp tc" id="fNap" inputmode="numeric" value="${v?.nap ?? ''}" placeholder="0" /></div></div>`;
+  } else {
+    h += `<div class="field"><label>${esc(t.name)} <span class="v">${L && !ed ? '지난번 ' + fmt(L.v.val, t.dec) : ''}</span></label>${stepper('fVal', v ? v.val : '', t.unit, t.step, L ? L.v.val : (t.def ?? ''))}</div>`;
+  }
+  h += `<div class="field"><div class="preview" id="fPrev"></div></div>`;
+  $('#formBody').innerHTML = h;
+  if (ed) { $('#fT').value = toLocalInput(ed.t); }
+  // tags
+  const tags = [...new Set([...tagsFor(type), ...fTags])];
+  $('#fTags').innerHTML = tags.map(g => `<button class="chip" data-tag="${esc(g)}" aria-pressed="${fTags.has(g)}">${esc(g)}</button>`).join('') + `<button class="chip" data-act="tagAdd">${icon('plus', 'sm')}직접</button>`;
+  $('#tselSec').hidden = !!editId;
+  $('#editFlag').hidden = !editId;
+  setText($('#fSaveT'), editId ? '고친 내용 저장' : `${t.name} 저장`);
+  $$('#fT').forEach(i => i.closest('.field').hidden = type === 'sleep');
+  renderGoals();
+  updatePreview();
+}
+function guessWhen() {
+  const h = new Date().getHours();
+  if (h >= 5 && h < 9) return 'fast';
+  if (h >= 21 || h < 2) return 'bed';
+  return 'post2';
+}
+function readForm() {
+  const type = S.formType, t = T(type);
+  const r = { type, v: {} };
+  r.t = fromLocalInput($('#fT').value) ?? Date.now();
+  if (type === 'weight') {
+    const kg = num($('#fKg').value); if (kg == null || kg < 2 || kg > 400) return { err: '체중을 2~400kg 사이로 넣어 주세요', focus: '#fKg' };
+    r.v.kg = Math.round(kg * 100) / 100;
+    for (const [id, k, lo, hi] of [['#fFat', 'fat', 1, 80], ['#fMus', 'muscle', 1, 150], ['#fWaist', 'waist', 30, 250]]) { const x = num($(id).value); if (x != null) { if (x < lo || x > hi) return { err: '값을 확인해 주세요', focus: id }; r.v[k] = x; } }
+  } else if (type === 'bp') {
+    const raw = [];
+    for (let i = 0; i < fState.bpN; i++) {
+      const s = num($('#fSys' + i).value), d = num($('#fDia' + i).value), p = num($('#fPul' + i).value);
+      if (s == null && d == null && i > 0) continue;
+      if (s == null || s < 50 || s > 300) return { err: '수축기 혈압을 50~300 사이로 넣어 주세요', focus: '#fSys' + i };
+      if (d == null || d < 20 || d > 200) return { err: '이완기 혈압을 20~200 사이로 넣어 주세요', focus: '#fDia' + i };
+      if (d >= s) return { err: '이완기가 수축기보다 낮아야 해요', focus: '#fDia' + i };
+      if (p != null && (p < 20 || p > 250)) return { err: '맥박을 확인해 주세요', focus: '#fPul' + i };
+      raw.push([s, d, p]);
+    }
+    r.v.sys = Math.round(mean(raw.map(x => x[0]))); r.v.dia = Math.round(mean(raw.map(x => x[1])));
+    const ps = raw.map(x => x[2]).filter(x => x != null); if (ps.length) r.v.pulse = Math.round(mean(ps));
+    if (raw.length > 1) r.v.raw = raw;
+    r.v.arm = fState.arm; r.v.pos = fState.pos;
+  } else if (type === 'glucose') {
+    const x = num($('#fMg').value); if (x == null) return { err: '혈당 값을 넣어 주세요', focus: '#fMg' };
+    const mg = Math.round(gFromDisp(x)); if (mg < 10 || mg > 900) return { err: '혈당 값을 확인해 주세요', focus: '#fMg' };
+    r.v.mg = mg; r.v.when = fState.when;
+  } else if (type === 'sleep') {
+    const b = fromLocalInput($('#fBed').value), w = fromLocalInput($('#fWake').value);
+    if (b == null || w == null) return { err: '잠든 시각과 깬 시각을 넣어 주세요' };
+    if (w <= b) return { err: '깬 시각이 잠든 시각보다 뒤여야 해요', focus: '#fWake' };
+    if (w - b > 20 * 3600000) return { err: '수면 시간이 20시간을 넘어요. 날짜를 확인해 주세요', focus: '#fBed' };
+    r.v.bed = b; r.v.wake = w; r.t = w; r.v.q = fState.q;
+    const wk = num($('#fWk').value); if (wk != null) r.v.wk = clamp(Math.round(wk), 0, 50);
+    const nap = num($('#fNap').value); if (nap) r.v.nap = clamp(Math.round(nap), 0, 600);
+  } else {
+    const x = num($('#fVal').value); if (x == null) return { err: '값을 넣어 주세요', focus: '#fVal' };
+    if (x < t.min || x > t.max) return { err: `${t.name} 값을 ${t.min}~${fmt(t.max)} 사이로 넣어 주세요`, focus: '#fVal' };
+    r.v.val = x;
+  }
+  r.note = $('#fNote').value.trim(); r.tags = [...fTags];
+  return r;
+}
+function updatePreview() {
+  const el = $('#fPrev'); if (!el) return;
+  const type = S.formType; let r;
+  try { r = readForm(); } catch { r = { err: '' }; }
+  if (r.err !== undefined) {
+    const hint = { weight: '키를 넣어 두면 BMI도 계산해요', bp: '1~2분 쉬었다가 두 번 재서 평균을 남기면 더 정확해요', glucose: '측정 시점을 고르면 목표 범위로 판정해요', sleep: '잠든 시각과 깬 시각으로 수면 시간을 계산해요' }[type] || '값을 넣으면 여기에 판정이 보여요';
+    el.innerHTML = `<span>${esc(hint)}</span>`; return;
+  }
+  const e = { ...r, id: 'tmp' }, st = statusOf(e);
+  let s = `<b>${valHTML(e).replace(/<small>/g, ' <small>')}</b>${badge(st)}`;
+  if (type === 'weight') { const L = lastOf('weight'); if (L && !editId) { const d = r.v.kg - L.v.kg; s += `<span>지난번보다 ${d > 0 ? '+' : ''}${fmt(d, 1)}kg</span>`; } const b = bmiOf(r.v.kg); if (b) s += `<span>BMI ${fmt(b, 1)}</span>`; }
+  if (type === 'bp' && r.v.raw) s += `<span>${r.v.raw.length}번 평균</span>`;
+  if (type === 'sleep') s += `<span>${fmtHM(r.v.bed)} → ${fmtHM(r.v.wake)}</span>`;
+  el.innerHTML = s;
+}
+function saveForm() {
+  const r = readForm();
+  if (r.err) { toast(r.err, { err: true }); if (r.focus) $(r.focus)?.focus(); return; }
+  if (editId) {
+    const e = E.find(x => x.id === editId);
+    if (e) Object.assign(e, { t: r.t, v: r.v, note: r.note, tags: r.tags, type: r.type });
+    toast('고친 내용을 저장했어요');
+    editId = null;
+  } else {
+    const e = { id: uid(), type: r.type, t: r.t, v: r.v, note: r.note, tags: r.tags };
+    E.push(e);
+    const st = statusOf(e);
+    toast(`${T(r.type).name} ${valText(e)} 저장했어요` + (st ? ` · ${st.l}` : ''), { action: '되돌리기', onAction: () => { E = E.filter(x => x.id !== e.id); saveE(); render(); toast('되돌렸어요'); } });
+    calSel = dayStart(e.t);
+  }
+  saveE();
+  fTags = new Set(); fState = {}; $('#fNote').value = ''; $('#fT').value = toLocalInput(Date.now());
+  setText($('#sideT'), '기록하기');
+  renderForm(); render();
+}
+function startEdit(id) {
+  const e = E.find(x => x.id === id); if (!e) return;
+  editId = id; fTags = new Set(e.tags || []); fState = {};
+  $('#fNote').value = e.note || '';
+  S.formType = e.type; saveS();
+  $('#tsel').innerHTML = formTypesHTML();
+  renderForm(); $('#fT').value = toLocalInput(e.t);
+  setText($('#sideT'), '기록 고치기');
+  render();
+  openSide();
+}
+function cancelEdit() { editId = null; fTags = new Set(); fState = {}; $('#fNote').value = ''; setText($('#sideT'), '기록하기'); setFormType(S.tab === 'home' || S.tab === 'report' ? S.formType : curMetric()); render(); }
+function delEntry(id) {
+  const i = E.findIndex(x => x.id === id); if (i < 0) return;
+  const [e] = E.splice(i, 1); saveE();
+  if (editId === id) cancelEdit();
+  render();
+  toast(`${T(e.type).name} 기록을 지웠어요`, { action: '되돌리기', onAction: () => { E.push(e); saveE(); render(); } });
+}
+function openSide() {
+  if (matchMedia('(max-width: 999px)').matches) { $('#side').classList.remove('closed'); $('#side').scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+}
+function focusMain() {
+  const id = { weight: '#fKg', bp: '#fSys0', glucose: '#fMg', sleep: '#fBed' }[S.formType] || '#fVal';
+  setTimeout(() => $(id)?.focus({ preventScroll: true }), 50);
+}
+
+/* ---------- Goals (side) ---------- */
+function renderGoals() {
+  const type = S.formType, G = S.goal;
+  let h = '<h3>내 목표</h3>';
+  const inp = (key, label, unit, ph, extra = '') => `<div class="field"><label>${label} <span class="v">${unit}</span></label><input class="inp tc" data-goal="${key}" inputmode="decimal" value="${G[key] ?? ''}" placeholder="${ph}" ${extra}/></div>`;
+  if (type === 'weight') h += inp('weight', '목표 체중', 'kg', '예: 65') + (heightM() ? `<p class="hint">키 ${S.profile.height}cm 기준 정상 BMI 체중: ${fmt(18.5 * heightM() ** 2, 1)}~${fmt(22.9 * heightM() ** 2, 1)}kg</p>` : `<p class="hint">설정에서 키를 넣으면 BMI를 계산해요.</p>`);
+  else if (type === 'bp') h += `<div class="row2">${inp('bpSys', '수축기 목표', 'mmHg', '130')}${inp('bpDia', '이완기 목표', 'mmHg', '80')}</div><p class="hint">일반적인 고혈압 치료 목표는 130/80 미만이에요. 의사와 정한 값이 있다면 바꿔 주세요.</p>`;
+  else if (type === 'glucose') h += `<div class="row3">${gGoal('gFastLo', '공복 하한')}${gGoal('gFastHi', '공복 상한')}${gGoal('gPostHi', '식후 상한')}</div><p class="hint">기본값은 정상 기준(공복 70~100, 식후 140)이에요. 당뇨가 있다면 흔히 공복 80~130, 식후 180 미만을 목표로 해요.</p>`;
+  else if (type === 'sleep') h += inp('sleepH', '목표 수면 시간', '시간', '7') + `<p class="hint">성인은 하루 7~9시간을 권해요.</p>`;
+  else if (type === 'steps') h += inp('steps', '하루 목표', '걸음', '8000');
+  else { $('#goalSec').innerHTML = `<h3>참고</h3><p class="hint">${esc(simpleHint(type))}</p>`; return; }
+  $('#goalSec').innerHTML = h;
+}
+function gGoal(k, l) { return `<div class="field"><label>${l}</label><input class="inp tc" data-goal="${k}" data-glu="1" inputmode="decimal" value="${fmt(gDisp(S.goal[k]), gDec()).replace(/,/g, '')}" /></div>`; }
+function simpleHint(type) {
+  return { hr: '쉬고 있을 때 심박수는 보통 분당 60~100회예요. 100회가 넘거나 50회 미만이 계속되면 진료를 받아 보세요.', temp: '37.5°C 이상은 미열, 38°C 이상은 발열로 봐요.', spo2: '보통 95% 이상이에요. 90% 이하가 계속되면 바로 진료가 필요해요.', a1c: '5.7% 미만 정상, 5.7~6.4% 당뇨 전단계, 6.5% 이상 당뇨 범위예요. 보통 3개월마다 검사해요.' }[type] || '직접 만든 항목이에요. 설정에서 지울 수 있어요.';
+}
+
+/* ========================================================================
+   Report
+   ======================================================================== */
+function repRange() {
+  const R = S.rep, today = dayStart(Date.now());
+  if (R.days > 0) return { from: today - (R.days - 1) * DAY, to: today + DAY - 1 };
+  const f = fromDateInput(R.from) ?? today - 29 * DAY, t = fromDateInput(R.to) ?? today;
+  return { from: Math.min(f, t), to: Math.max(f, t) + DAY - 1 };
+}
+function age() { const b = fromDateInput(S.profile.birth); if (!b) return null; const d = new Date(b), n = new Date(); let a = n.getFullYear() - d.getFullYear(); if (n.getMonth() < d.getMonth() || (n.getMonth() === d.getMonth() && n.getDate() < d.getDate())) a--; return a; }
+function buildReport() {
+  const R = S.rep, { from, to } = repRange(), P = S.profile;
+  const types = shownTypes().filter(t => R.types[t] !== false);
+  const xr = { x0: from, x1: to + 1 };
+  const data = {}; types.forEach(t => data[t] = E.filter(e => e.type === t && e.t >= from && e.t <= to).sort((a, b) => a.t - b.t));
+  const used = types.filter(t => data[t].length);
+  const W = 700;
+  const logo = $('.logo').getAttribute('src');
+  let h = `<div class="rp-head"><div><div class="brandline"><img src="${logo}" alt="OUTGRID" /></div><h1>건강 기록 리포트</h1></div>
+    <div class="per"><b>${fmtYMD(from)} ~ ${fmtYMD(to)}</b>${Math.round((to + 1 - from) / DAY)}일 · 출력 ${fmtYMD(Date.now())}</div></div>`;
+  if (R.profile) {
+    const a = age(), sex = P.sex === 'M' ? '남' : P.sex === 'F' ? '여' : '';
+    const lw = latest('weight'), b = lw ? bmiOf(lw.v.kg) : null;
+    h += `<div class="rp-prof">
+      <div><span class="k">이름</span><span class="v">${esc(P.name) || '&nbsp;'}</span></div>
+      <div><span class="k">나이·성별</span><span class="v">${a != null ? a + '세' : ''}${a != null && sex ? ' · ' : ''}${sex}&nbsp;</span></div>
+      <div><span class="k">키</span><span class="v">${P.height ? esc(P.height) + 'cm' : '&nbsp;'}</span></div>
+      <div><span class="k">최근 체중·BMI</span><span class="v">${lw ? fmt(lw.v.kg, 1) + 'kg' : ''}${b ? ' · ' + fmt(b, 1) : ''}&nbsp;</span></div>
+      <div class="w2"><span class="k">복용 중인 약</span><span class="v">${esc(P.meds) || '&nbsp;'}</span></div>
+      <div class="w2"><span class="k">질환·알레르기</span><span class="v">${esc(P.cond) || '&nbsp;'}</span></div>
+      ${P.hosp ? `<div class="w4"><span class="k">병원·담당의</span><span class="v">${esc(P.hosp)}</span></div>` : ''}
+    </div>`;
+  }
+  // summary
+  h += `<div class="rp-sec"><h2>요약</h2>`;
+  if (!used.length) h += `<p style="color:var(--faint)">이 기간에는 기록이 없어요.</p>`;
+  else {
+    h += `<table class="rp-tbl"><thead><tr><th>항목</th><th class="r">횟수</th><th class="r">평균</th><th class="r">최저 ~ 최고</th><th class="r">최근</th><th>판정 (참고)</th></tr></thead><tbody>`;
+    for (const t of used) {
+      const l = data[t], st = stats(t, l), last = l[l.length - 1], tt = T(t);
+      let avg, rng, lastV = valText(last);
+      if (t === 'bp') { avg = `${fmt(st.sys)}/${fmt(st.dia)}`; rng = `${st.sysMin}~${st.sysMax} / ${st.diaMin}~${st.diaMax}`; }
+      else if (t === 'glucose') { avg = gFmt(st.avg); rng = `${gFmt(st.min)} ~ ${gFmt(st.max)}`; }
+      else if (t === 'sleep') { avg = fmtDurShort(st.dayAvg) + ' /일'; rng = `${fmtDurShort(st.min)} ~ ${fmtDurShort(st.max)}`; }
+      else if (t === 'weight') { avg = fmt(st.avg, 1); rng = `${fmt(st.min, 1)} ~ ${fmt(st.max, 1)}`; }
+      else if (tt.daily) { avg = fmt(st.dayAvg) + ' /일'; rng = `${fmt(st.min)} ~ ${fmt(st.max)}`; }
+      else { avg = fmt(st.avg, tt.dec); rng = `${fmt(st.min, tt.dec)} ~ ${fmt(st.max, tt.dec)}`; }
+      const unit = t === 'glucose' ? gUnit() : t === 'sleep' ? '' : tt.unit;
+      h += `<tr><td><b>${esc(tt.name)}</b>${unit ? ` <span style="color:var(--faint)">${esc(unit)}</span>` : ''}</td><td class="r">${l.length}</td><td class="r"><b>${avg}</b></td><td class="r">${rng}</td><td class="r">${esc(lastV)}</td><td>${esc(statusOf(last)?.l || '')}</td></tr>`;
+    }
+    h += `</tbody></table>`;
+  }
+  h += `</div>`;
+  // per-type sections
+  for (const t of used) {
+    const l = data[t], st = stats(t, l), tt = T(t);
+    const ch = k => { const o = buildChart(k, l, xr); return o ? `<div class="rp-chart">${chartSVG({ ...o, w: W, h: Math.round((o.h || 220) * .85) }).svg}</div>` : ''; };
+    let notes = '';
+    if (t === 'weight') notes = `<div>시작 <b>${fmt(st.first.v.kg, 1)}kg</b> → 마지막 <b>${fmt(st.last.v.kg, 1)}kg</b> (${st.change > 0 ? '+' : ''}${fmt(st.change || 0, 1)}kg)</div>` + (st.lastFat != null ? `<div>최근 체지방 <b>${fmt(st.lastFat, 1)}%</b></div>` : '') + (st.lastWaist != null ? `<div>최근 허리둘레 <b>${fmt(st.lastWaist, 1)}cm</b></div>` : '') + (S.goal.weight ? `<div>목표 체중 <b>${fmt(S.goal.weight, 1)}kg</b></div>` : '');
+    if (t === 'bp') notes = `<div>전체 평균 <b>${fmt(st.sys)}/${fmt(st.dia)}</b>${st.pulse ? ` · 맥박 ${fmt(st.pulse)}` : ''}</div>` + (st.am ? `<div>아침(4~12시) 평균 <b>${fmt(st.am.s)}/${fmt(st.am.d)}</b> · ${st.am.n}번</div>` : '') + (st.pm ? `<div>저녁(17시~) 평균 <b>${fmt(st.pm.s)}/${fmt(st.pm.d)}</b> · ${st.pm.n}번</div>` : '') + `<div>목표 ${S.goal.bpSys}/${S.goal.bpDia} 이상 <b>${st.overTarget}번</b> (${fmt(st.overTarget / l.length * 100)}%)</div><div>분류: ${Object.entries(st.dist).map(([k, v]) => `${k} ${v}번`).join(', ')}</div>`;
+    if (t === 'glucose') notes = Object.entries(st.byWhen).map(([w, s]) => `<div>${GW[w]} 평균 <b>${gFmt(s.avg)}</b> (${s.n}번, ${gFmt(s.min)}~${gFmt(s.max)})</div>`).join('') + `<div>목표 범위 안 <b>${fmt((st.tir || 0) * 100)}%</b> · 저혈당(&lt;70) <b>${st.lows}번</b></div>` + (st.ea1c ? `<div>추정 당화혈색소 <b>${fmt(st.ea1c, 1)}%</b></div>` : '');
+    if (t === 'sleep') notes = `<div>하루 평균 <b>${fmtDurH(st.dayAvg)}</b></div><div>평균 잠든 시각 <b>${minToClock(st.bed)}</b>, 깬 시각 <b>${minToClock(st.wake)}</b></div>` + (st.q ? `<div>수면의 질 평균 <b>${fmt(st.q, 1)}/5</b></div>` : '') + (st.wk != null ? `<div>밤에 깬 횟수 평균 <b>${fmt(st.wk, 1)}번</b></div>` : '') + `<div>목표(${S.goal.sleepH}시간) 달성 <b>${st.goalDays}/${st.days}일</b></div>`;
+    if (isSimple(t) && t !== 'steps') notes = `<div>평균 <b>${fmt(st.avg, tt.dec)}${esc(tt.unit)}</b> · ${l.length}번 측정</div>`;
+    if (t === 'steps') notes = `<div>하루 평균 <b>${fmt(st.dayAvg)}걸음</b> · 목표 달성 ${st.goalDays}/${st.days}일</div>`;
+    h += `<div class="rp-sec"><h2>${esc(tt.name)}<small>${l.length}번 기록</small></h2>`;
+    if (R.charts) { h += ch(t); if (t === 'sleep') h += `<div style="font-size:11px;color:var(--faint);margin:8px 0 2px">잠든 시각(위) ~ 깬 시각(아래)</div>` + ch('sleepSched'); }
+    if (t === 'glucose' && R.charts) h += `<div class="legend-row" style="margin:4px 0 0">${Object.keys(GW).filter(w => st.byWhen[w]).map(w => `<span>${shapeIcon(GW_SHAPE[w], GW_COLOR[w])}${GW[w]}</span>`).join('')}</div>`;
+    if (t === 'bp' && R.charts) h += `<div class="legend-row" style="margin:4px 0 0"><span><i class="tdot" style="--c:#2a78d6"></i>수축기</span><span><i class="bx" style="--c:#eb6834"></i>이완기</span></div>`;
+    h += `<div class="rp-notes">${notes}</div></div>`;
+  }
+  // table
+  if (R.table && used.length) {
+    const all = used.flatMap(t => data[t]).sort((a, b) => a.t - b.t);
+    h += `<div class="rp-sec" style="break-inside:auto;page-break-inside:auto"><h2>전체 기록<small>${all.length}개</small></h2><table class="rp-tbl"><thead><tr><th>날짜</th><th>시각</th><th>항목</th><th class="r">값</th><th>세부</th>${R.notes ? '<th>메모</th>' : ''}</tr></thead><tbody>`;
+    for (const e of all) h += `<tr><td style="white-space:nowrap">${fmtYMD(e.t).slice(2)} (${WD[new Date(e.t).getDay()]})</td><td>${fmtHM(e.t)}</td><td>${esc(T(e.type).name)}</td><td class="r" style="white-space:nowrap"><b>${esc(valText(e))}</b></td><td>${esc(subText(e))}</td>${R.notes ? `<td>${esc([(e.tags || []).join(', '), e.note].filter(Boolean).join(' · '))}</td>` : ''}</tr>`;
+    h += `</tbody></table></div>`;
+  }
+  if (R.ask.trim()) h += `<div class="rp-sec"><h2>진료 때 물어볼 것</h2><div class="rp-memo">${esc(R.ask)}</div></div>`;
+  if (R.blank) h += `<div class="rp-sec"><h2>의사 소견</h2><div class="rp-blank"></div></div>`;
+  h += `<div class="rp-foot"><span>Healther · OUTGRID — 직접 측정해 기록한 값입니다. 판정은 일반 기준에 따른 참고용이며 진단이 아닙니다.</span><span>${fmtYMD(Date.now())}</span></div>`;
+  return h;
+}
+function renderReport() {
+  const R = S.rep;
+  $$('#repSeg button').forEach(b => b.setAttribute('aria-pressed', +b.dataset.d === R.days));
+  const { from, to } = repRange();
+  $('#repFrom').value = dateInput(from); $('#repTo').value = dateInput(to);
+  $('#repTypes').innerHTML = shownTypes().map(t => `<button class="chip" data-rt="${t}" aria-pressed="${R.types[t] !== false}">${esc(T(t).name)}</button>`).join('');
+  $$('[data-rep]').forEach(i => i.checked = !!R[i.dataset.rep]);
+  if (document.activeElement !== $('#repAsk')) $('#repAsk').value = R.ask;
+  $('#repPaper').innerHTML = buildReport();
+}
+function printReport() {
+  $('#printRoot').innerHTML = `<div class="paper">${buildReport()}</div>`;
+  const old = document.title; const { from, to } = repRange();
+  document.title = `건강기록_${dayKey(from)}_${dayKey(to)}`;
+  setTimeout(() => { window.print(); setTimeout(() => { document.title = old; }, 500); }, 60);
+}
+function reportHTMLFile() {
+  const css = $$('style').map(s => s.textContent).join('\n');
+  return `<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>건강 기록 리포트</title><style>${css}\nbody{display:block;height:auto;background:#F5F1E8;padding:20px 10px}@media print{body{padding:0}}</style></head><body><div class="paper">${buildReport()}</div></body></html>`;
+}
+
+/* ========================================================================
+   Export / import
+   ======================================================================== */
+function csvOf(list) {
+  const q = s => { s = String(s ?? ''); return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; };
+  const rows = [['날짜', '시각', '항목', '값', '단위', '값2', '값3', '세부', '태그', '메모']];
+  for (const e of [...list].sort((a, b) => a.t - b.t)) {
+    const t = T(e.type); let v1 = '', v2 = '', v3 = '', unit = t.unit;
+    if (e.type === 'weight') { v1 = e.v.kg; v2 = e.v.fat ?? ''; v3 = e.v.waist ?? ''; }
+    else if (e.type === 'bp') { v1 = e.v.sys; v2 = e.v.dia; v3 = e.v.pulse ?? ''; }
+    else if (e.type === 'glucose') { v1 = fmt(gDisp(e.v.mg), gDec()).replace(/,/g, ''); unit = gUnit(); v2 = GW[e.v.when]; }
+    else if (e.type === 'sleep') { v1 = sleepH(e).toFixed(2); v2 = toLocalInput(e.v.bed).replace('T', ' '); v3 = toLocalInput(e.v.wake).replace('T', ' '); }
+    else v1 = e.v.val;
+    rows.push([dayKey(e.t), fmtHM(e.t), t.name, v1, unit, v2, v3, subText(e), (e.tags || []).join(' '), e.note || '']);
+  }
+  return '﻿' + rows.map(r => r.map(q).join(',')).join('\r\n');
+}
+function backup() { download(`healther-backup-${dayKey(Date.now())}.json`, JSON.stringify({ app: 'healther', v: 1, at: Date.now(), settings: S, entries: E }, null, 1), 'application/json'); toast('백업 파일을 받았어요'); }
+async function importFile(f) {
+  try {
+    const j = JSON.parse(await f.text());
+    if (!j || !Array.isArray(j.entries)) throw 0;
+    const ok = j.entries.filter(e => e && e.id && e.type && Number.isFinite(e.t) && e.v && typeof e.v === 'object');
+    const have = new Set(E.map(e => e.id)); let add = 0;
+    ok.forEach(e => { if (!have.has(e.id)) { E.push(e); add++; } });
+    if (j.settings && await confirmDlg('설정도 불러올까요?', '백업에 들어 있는 내 정보, 목표, 직접 만든 항목도 가져와요. 지금 설정은 바뀌어요.', '설정도 불러오기')) { S = merge(DEF, j.settings); saveS(); }
+    else if (j.settings?.custom) { j.settings.custom.forEach(c => { if (!S.custom.some(x => x.id === c.id)) S.custom.push(c); }); saveS(); }
+    saveE(); toast(`${add}개 기록을 불러왔어요` + (ok.length - add ? ` (${ok.length - add}개는 이미 있음)` : ''));
+    setFormType(S.formType); setTab(S.tab); fillSettings();
+  } catch { toast('Healther 백업 파일이 아니에요', { err: true }); }
+}
+
+/* ---------- Sample data ---------- */
+function sample() {
+  const out = [], now = Date.now(), rnd = (a, b) => a + Math.random() * (b - a), g = () => (Math.random() + Math.random() + Math.random() - 1.5) / 1.5;
+  for (let i = 59; i >= 0; i--) {
+    const d = new Date(dayStart(now) - i * DAY);
+    const at = (h, m) => { const x = new Date(d); x.setHours(h, m); return x.getTime(); };
+    const push = (type, t, v, extra = {}) => { if (t <= now) out.push({ id: uid(), type, t, v, note: '', tags: [], sample: true, ...extra }); };
+    if (Math.random() < .8) push('weight', at(7, 10 + (Math.random() * 20 | 0)), { kg: +(74.5 - (59 - i) * .045 + g() * .5).toFixed(1), ...(i % 7 === 0 ? { fat: +(27 - (59 - i) * .03 + g() * .4).toFixed(1) } : {}) });
+    const base = 136 - (59 - i) * .12;
+    push('bp', at(7, 30), { sys: Math.round(base + 4 + g() * 7), dia: Math.round(87 + g() * 5), pulse: Math.round(72 + g() * 6), arm: 'L', pos: 'sit' }, i % 9 === 0 ? { tags: ['아침', '약 먹기 전'] } : {});
+    if (Math.random() < .7) push('bp', at(21, 10), { sys: Math.round(base - 4 + g() * 7), dia: Math.round(82 + g() * 5), pulse: Math.round(68 + g() * 6), arm: 'L', pos: 'sit' }, i % 11 === 0 ? { tags: ['저녁', '스트레스'], note: '회식' } : {});
+    push('glucose', at(7, 5), { mg: Math.round(104 + g() * 10), when: 'fast' });
+    if (Math.random() < .6) push('glucose', at(14, 0), { mg: Math.round(148 + g() * 28), when: 'post2' }, Math.random() < .15 ? { tags: ['과식'] } : {});
+    if (Math.random() < .2) push('glucose', at(22, 30), { mg: Math.round(118 + g() * 15), when: 'bed' });
+    const bed = at(23, 0) - DAY + rnd(-50, 70) * 60000, wake = at(6, 45) + rnd(-30, 40) * 60000;
+    push('sleep', wake, { bed: Math.round(bed / 60000) * 60000, wake: Math.round(wake / 60000) * 60000, q: clamp(Math.round(3.4 + g() * 1.4), 1, 5), wk: Math.max(0, Math.round(1 + g() * 1.3)) }, Math.random() < .15 ? { tags: ['카페인'] } : {});
+    push('hr', at(7, 31), { val: Math.round(70 + g() * 6) });
+    if (i % 5 === 0) push('temp', at(8, 0), { val: +(36.5 + g() * .25).toFixed(1) });
+  }
+  E = E.filter(e => !e.sample).concat(out); saveE();
+  if (!S.profile.height) { S.profile.height = '172'; }
+  if (!S.goal.weight) S.goal.weight = 70;
+  saveS(); render(); renderForm(); fillSettings();
+  toast(`예시 기록 ${out.length}개를 넣었어요. 설정에서 지울 수 있어요`);
+}
+
+/* ========================================================================
+   Settings dialog
+   ======================================================================== */
+function fillSettings() {
+  $$('[data-p]').forEach(i => i.value = S.profile[i.dataset.p] ?? '');
+  $('#showChips').innerHTML = otherTypes().map(k => {
+    const c = S.custom.find(x => x.id === k);
+    return `<button class="chip" data-show="${k}" aria-pressed="${S.show[k] !== false && (S.show[k] || !!c)}">${esc(T(k).name)}${c ? `<span class="x" data-cdel="${k}" title="항목 지우기">${icon('x')}</span>` : ''}</button>`;
+  }).join('');
+  $$('#gUnitSeg button').forEach(b => b.setAttribute('aria-pressed', b.dataset.u === S.gUnit));
+  const sz = new Blob([localStorage.getItem('healther.entries') || '']).size;
+  const counts = {}; E.forEach(e => counts[e.type] = (counts[e.type] || 0) + 1);
+  const first = E.length ? Math.min(...E.map(e => e.t)) : null;
+  $('#dataInfo').innerHTML = `<dt style="color:var(--muted)">기록</dt><dd style="margin:0;font-weight:600">${fmt(E.length)}개${E.length ? ' · ' + Object.entries(counts).map(([k, n]) => `${esc(T(k).name)} ${n}`).join(', ') : ''}</dd>` + (first ? `<dt style="color:var(--muted)">기간</dt><dd style="margin:0;font-weight:600">${fmtYMD(first)}부터</dd>` : '') + `<dt style="color:var(--muted)">용량</dt><dd style="margin:0;font-weight:600">${fmt(sz / 1024, 1)}KB</dd>`;
+  $('#sampleBtn').innerHTML = E.some(e => e.sample) ? `${icon('trash')}예시 데이터 지우기` : `${icon('sparkle')}예시 데이터 넣어 보기`;
+}
+async function addCustom(name, unit, dec) {
+  name = (name || '').trim(); if (!name) { toast('항목 이름을 넣어 주세요', { err: true }); return false; }
+  const id = 'c_' + uid(); S.custom.push({ id, name: name.slice(0, 20), unit: (unit || '').trim().slice(0, 8), dec: +dec || 0 }); S.show[id] = true; saveS();
+  toast(`'${name}' 항목을 만들었어요`); return id;
+}
+
+/* ========================================================================
+   Events
+   ======================================================================== */
+function bind() {
+  hydrateIcons();
+  $('#tabs').onclick = e => { const b = e.target.closest('.tab'); if (b) setTab(b.dataset.tab); };
+  $('#sideToggle').onclick = () => { $('#side').classList.toggle('closed'); store.set('sideClosed', $('#side').classList.contains('closed')); };
+  $('#repBtn').onclick = () => setTab('report');
+  $('#fab').onclick = () => { openSide(); focusMain(); };
+  $('#helpBtn').onclick = () => $('#helpDlg').showModal();
+  $('#setBtn').onclick = () => { fillSettings(); $('#setDlg').showModal(); };
+  $$('dialog').forEach(d => d.addEventListener('click', e => { if (e.target === d || e.target.closest('[data-close]')) d.close(); }));
+  $('#setDlg').addEventListener('close', () => { render(); renderForm(); $('#tsel').innerHTML = formTypesHTML(); });
+
+  // work panel delegation
+  $('#work').addEventListener('click', e => {
+    const t = e.target;
+    const del = t.closest('[data-del]'); if (del) { e.stopPropagation(); delEntry(del.dataset.del); return; }
+    const add = t.closest('[data-add]'); if (add) { e.stopPropagation(); if (editId) cancelEdit(); setFormType(add.dataset.add); openSide(); focusMain(); return; }
+    const row = t.closest('.erow'); if (row) { startEdit(row.dataset.id); return; }
+    const go = t.closest('[data-go]'); if (go) { const k = go.dataset.go; if (MAIN[k]) setTab(k); else { S.otherSel = k; setTab('other'); } return; }
+    const cal = t.closest('[data-cal]'); if (cal) { const d = +cal.dataset.cal, c = new Date(calMonth); if (!d) { const n = new Date(); calMonth = new Date(n.getFullYear(), n.getMonth(), 1).getTime(); calSel = dayStart(Date.now()); } else calMonth = new Date(c.getFullYear(), c.getMonth() + d, 1).getTime(); renderHome(); return; }
+    const day = t.closest('[data-day]'); if (day) { calSel = +day.dataset.day; const d = new Date(calSel); if (d.getMonth() !== new Date(calMonth).getMonth()) calMonth = new Date(d.getFullYear(), d.getMonth(), 1).getTime(); renderHome(); return; }
+    const os = t.closest('[data-osel]'); if (os) { S.otherSel = os.dataset.osel; saveS(); if (!editId) setFormType(S.otherSel); renderMetric(); return; }
+    const gw = t.closest('#gWhichSeg button'); if (gw) { gWhich = gw.dataset.g; renderMetric(); return; }
+    if (t.closest('[data-more]')) { listLimit += 200; renderMetric(); return; }
+    const act = t.closest('[data-act]')?.dataset.act;
+    if (act === 'sample') sample();
+    if (act === 'addCustom') { fillSettings(); $('#setDlg').showModal(); setTimeout(() => $('#cName').focus(), 50); }
+  });
+  $('#work').addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('.mcard')) { e.preventDefault(); e.target.click(); } });
+  $('#rangeSeg').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.range = +b.dataset.r; saveS(); listLimit = 60; renderMetric(); };
+
+  // form
+  $('#tsel').onclick = e => { const b = e.target.closest('[data-ft]'); if (b) { setFormType(b.dataset.ft); focusMain(); } };
+  $('#side').addEventListener('click', e => {
+    const t = e.target;
+    const st = t.closest('[data-step]'); if (st) {
+      const inp = $('#' + st.dataset.step), d = +st.dataset.d, dec = (String(st.dataset.d).split('.')[1] || '').length;
+      let v = num(inp.value); if (v == null) { const L = lastOf(S.formType); v = S.formType === 'glucose' ? (L ? gDisp(L.v.mg) : (S.gUnit === 'mmol' ? 5.5 : 100)) : (L ? mainVal(L) : (T(S.formType).def ?? 0)); }
+      inp.value = (Math.round((v + d) * 10 ** dec) / 10 ** dec).toFixed(dec); updatePreview(); return;
+    }
+    const fs = t.closest('[data-fs] button'); if (fs) { const k = fs.parentElement.dataset.fs; fState[k] = k === 'q' ? +fs.dataset.v : fs.dataset.v; $$('button', fs.parentElement).forEach(b => b.setAttribute('aria-pressed', b === fs)); updatePreview(); return; }
+    const tag = t.closest('[data-tag]'); if (tag) { const g = tag.dataset.tag; fTags.has(g) ? fTags.delete(g) : fTags.add(g); tag.setAttribute('aria-pressed', fTags.has(g)); return; }
+    const sb = t.closest('[data-bed],[data-wake]'); if (sb) { const id = sb.dataset.bed != null ? '#fBed' : '#fWake', d = +(sb.dataset.bed ?? sb.dataset.wake); const v = fromLocalInput($(id).value); if (v) $(id).value = toLocalInput(v + d * 60000); updatePreview(); return; }
+    const act = t.closest('[data-act]')?.dataset.act;
+    if (act === 'bpMore' || act === 'bpLess') { const keep = []; for (let i = 0; i < fState.bpN; i++) keep.push([$('#fSys' + i).value, $('#fDia' + i).value, $('#fPul' + i).value]); fState.bpN += act === 'bpMore' ? 1 : -1; const ed = editId; editId = null; renderForm(); editId = ed; keep.slice(0, fState.bpN).forEach((r, i) => { $('#fSys' + i).value = r[0]; $('#fDia' + i).value = r[1]; $('#fPul' + i).value = r[2]; }); $('#editFlag').hidden = !editId; $('#tselSec').hidden = !!editId; updatePreview(); if (act === 'bpMore') $('#fSys' + (fState.bpN - 1)).focus(); return; }
+    if (act === 'tagAdd') { const g = prompt('태그 이름'); if (g && g.trim()) { const v = g.trim().slice(0, 16); const list = [...tagsFor(S.formType)]; if (!list.includes(v)) { list.push(v); S.tags[S.formType] = list; saveS(); } fTags.add(v); renderForm(); } return; }
+    const rt = t.closest('[data-rt]'); if (rt) { const k = rt.dataset.rt; S.rep.types[k] = S.rep.types[k] === false; saveS(); renderReport(); return; }
+  });
+  $('#side').addEventListener('input', e => {
+    if (e.target.closest('#formBody') || e.target.id === 'fT') updatePreview();
+    const g = e.target.closest('[data-goal]'); if (g) { let v = num(g.value); if (v != null && g.dataset.glu) v = Math.round(gFromDisp(v)); S.goal[g.dataset.goal] = v ?? (g.dataset.goal === 'weight' ? null : DEF.goal[g.dataset.goal]); saveS(); clearTimeout(g._t); g._t = setTimeout(() => { render(); updatePreview(); }, 400); }
+  });
+  $('#fSave').onclick = saveForm;
+  $('#fNow').onclick = () => { $('#fT').value = toLocalInput(Date.now()); };
+  $('#editCancel').onclick = cancelEdit;
+  $('#side').addEventListener('keydown', e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey || (e.target.matches('#formBody input') && !e.target.matches('[type=datetime-local]')))) { e.preventDefault(); saveForm(); } });
+
+  // report
+  $('#repSeg').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.rep.days = +b.dataset.d; if (S.rep.days < 0) { const r = repRange(); S.rep.from = S.rep.from || dateInput(r.from); S.rep.to = S.rep.to || dateInput(r.to); } saveS(); renderReport(); };
+  const rd = () => { S.rep.days = -1; S.rep.from = $('#repFrom').value; S.rep.to = $('#repTo').value; saveS(); renderReport(); };
+  $('#repFrom').onchange = rd; $('#repTo').onchange = rd;
+  $$('[data-rep]').forEach(i => i.onchange = () => { S.rep[i.dataset.rep] = i.checked; saveS(); renderReport(); });
+  $('#repAsk').oninput = () => { S.rep.ask = $('#repAsk').value; saveS(); clearTimeout(rd._t); rd._t = setTimeout(() => $('#repPaper').innerHTML = buildReport(), 350); };
+  $('#repPrint').onclick = printReport; $('#repPrint2').onclick = printReport;
+  $('#repCsv').onclick = () => { const { from, to } = repRange(); download(`건강기록_${dayKey(from)}_${dayKey(to)}.csv`, csvOf(E.filter(e => e.t >= from && e.t <= to && S.rep.types[e.type] !== false && shownTypes().includes(e.type))), 'text/csv'); };
+  $('#repHtml').onclick = () => { const { from, to } = repRange(); download(`건강기록_${dayKey(from)}_${dayKey(to)}.html`, reportHTMLFile(), 'text/html'); };
+
+  // settings
+  $$('[data-p]').forEach(i => i.oninput = () => { S.profile[i.dataset.p] = i.value; saveS(); });
+  $('#showChips').onclick = async e => {
+    const x = e.target.closest('[data-cdel]');
+    if (x) { e.stopPropagation(); const id = x.dataset.cdel, n = E.filter(en => en.type === id).length; if (!(await confirmDlg('항목을 지울까요?', `'${T(id).name}' 항목${n ? `과 기록 ${n}개` : ''}를 지워요.`, '지우기', true))) return; S.custom = S.custom.filter(c => c.id !== id); delete S.show[id]; E = E.filter(en => en.type !== id); if (S.otherSel === id) S.otherSel = 'hr'; if (S.formType === id) S.formType = 'weight'; saveS(); saveE(); fillSettings(); return; }
+    const b = e.target.closest('[data-show]'); if (!b) return; const k = b.dataset.show; const on = b.getAttribute('aria-pressed') !== 'true'; S.show[k] = on; saveS(); b.setAttribute('aria-pressed', on);
+  };
+  $('#cAdd').onclick = async () => { const id = await addCustom($('#cName').value, $('#cUnit').value, $('#cDec').value); if (id) { $('#cName').value = ''; $('#cUnit').value = ''; S.otherSel = id; saveS(); fillSettings(); } };
+  $('#gUnitSeg').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.gUnit = b.dataset.u; saveS(); fillSettings(); };
+  $('#bkJson').onclick = backup;
+  $('#bkCsv').onclick = () => download(`healther-${dayKey(Date.now())}.csv`, csvOf(E), 'text/csv');
+  $('#bkImport').onclick = () => $('#fileIn').click();
+  $('#fileIn').onchange = e => { const f = e.target.files[0]; e.target.value = ''; if (f) importFile(f); };
+  $('#sampleBtn').onclick = () => { if (E.some(e => e.sample)) { E = E.filter(e => !e.sample); saveE(); render(); renderForm(); fillSettings(); toast('예시 데이터를 지웠어요'); } else { sample(); } };
+  $('#wipeBtn').onclick = async () => { if (!E.length) return; if (!(await confirmDlg('기록을 모두 지울까요?', `기록 ${E.length}개가 이 기기에서 사라져요. 지우기 전에 백업을 받아 두는 걸 권해요.`, '모두 지우기', true))) return; E = []; saveE(); editId = null; fillSettings(); render(); renderForm(); toast('모든 기록을 지웠어요'); };
+
+  // keyboard
+  document.addEventListener('keydown', e => {
+    if (e.target.closest('input, textarea, select, dialog[open]') || e.ctrlKey || e.metaKey || e.altKey) return;
+    if (/^[1-7]$/.test(e.key)) { setTab(TABS[+e.key - 1]); e.preventDefault(); }
+    else if (e.key === 'n' || e.key === 'N') { if (S.tab === 'report') setTab('home'); openSide(); focusMain(); e.preventDefault(); }
+    else if ((e.key === 'p' || e.key === 'P') && S.tab === 'report') { printReport(); e.preventDefault(); }
+    else if (e.key === 'Escape' && editId) cancelEdit();
+  });
+  window.addEventListener('storage', e => { if (e.key === 'healther.entries') { E = store.get('entries', []); render(); } });
+  // refresh relative times
+  setInterval(() => { if (S.tab === 'home' && !document.hidden) renderHome(); }, 60000);
+}
+
+/* ---------- Init ---------- */
+bind();
+if (matchMedia('(max-width: 999px)').matches && store.get('sideClosed', false)) $('#side').classList.add('closed');
+$('#fT').value = toLocalInput(Date.now());
+setFormType(S.formType);
+setTab(S.tab);
+</script>
+</body>
+</html>
