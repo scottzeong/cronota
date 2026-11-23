@@ -1,0 +1,2228 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#F5F1E8" />
+<title>Pillser · 아웃그리드 복약 관리</title>
+<meta name="description" content="브라우저 안에서만 동작하는 복약 관리. 약·영양제 복용 일정, 먹었는지 체크, 남은 수량과 처방 기간, 가족별 관리, 복용률 달력, 병원에 가져갈 복약 기록표 인쇄. 기록은 내 기기에만 저장됩니다." />
+<!-- Fonts: outgrid's own files first (fonts/ next to this page), public CDN as a fallback. -->
+<style>
+  @font-face { font-family: "wantedSans"; src: url("fonts/WantedSansVariable.woff2") format("woff2"); font-weight: 100 800; font-style: normal; font-display: swap; }
+  @font-face { font-family: "maruBuri"; src: url("fonts/MaruBuri-Regular.woff2") format("woff2"); font-weight: 400; font-style: normal; font-display: swap; }
+  @font-face { font-family: "maruBuri"; src: url("fonts/MaruBuri-SemiBold.woff2") format("woff2"); font-weight: 600; font-style: normal; font-display: swap; }
+</style>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/wanteddev/wanted-sans@v1.0.3/packages/wanted-sans/fonts/webfonts/variable/split/WantedSansVariable.min.css" />
+<link rel="stylesheet" href="https://hangeul.pstatic.net/hangeul_static/css/maru-buri.css" />
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23244D3A'/%3E%3Cg transform='rotate(-35 32 32)'%3E%3Cpath d='M32 22H22a10 10 0 0 0 0 20h10z' fill='%23F5F1E8'/%3E%3Cpath d='M32 22h10a10 10 0 0 1 0 20H32z' fill='%23D9C8A9'/%3E%3C/g%3E%3C/svg%3E" />
+<style>
+  :root {
+    --bg: #F5F1E8;
+    --surface: #FCFAF5;
+    --paper: #FFFDF8;
+    --ink: #1C2824;
+    --ink-2: #33403A;
+    --muted: #5E665F;
+    --faint: #9A9F95;
+    --hair: #E3DCCB;
+    --hover: #F0EADD;
+    --press: #E7DFCD;
+    --dark: #244D3A;
+    --dark-2: #1B3B2C;
+    --river: #3E6F73;
+    --clay: #8A5A3B;
+    --sand: #D9C8A9;
+    --focus: #8A5A3B;
+    --danger: #963F3B;
+    --rec: #B5443B;
+    --shadow: 0 1px 0 rgba(28,40,36,.03), 0 18px 40px -30px rgba(28,40,36,.30);
+    --sans: "wantedSans", "Wanted Sans Variable", "Wanted Sans", -apple-system, BlinkMacSystemFont, "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+    --serif: "maruBuri", "MaruBuri", "Batang", "Noto Serif KR", serif;
+    --r-sm: 10px;
+    --r-md: 13px;
+    --r-lg: 20px;
+    /* phase colors */
+    --ph-focus: #244D3A;
+    --ph-short: #3E6F73;
+    --ph-long: #8A5A3B;
+    --ph-prep: #9A7B3F;
+    --ph-work: #B5443B;
+    --ph-rest: #3E6F73;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    font-family: var(--sans); word-break: keep-all; background: var(--bg); color: var(--ink);
+    font-size: 14px; letter-spacing: -0.005em; -webkit-font-smoothing: antialiased;
+    min-height: 100dvh; display: flex; flex-direction: column;
+  }
+  [hidden] { display: none !important; }
+  button { font: inherit; color: inherit; cursor: pointer; border: 0; background: none; padding: 0; -webkit-tap-highlight-color: transparent; }
+  button:disabled { cursor: default; opacity: .35; }
+  input, select, textarea { font: inherit; color: inherit; }
+  :focus-visible { outline: 2.5px solid var(--focus); outline-offset: 3px; }
+  ::selection { background: rgba(36,77,58,.16); }
+  svg.i { width: 19px; height: 19px; stroke: currentColor; fill: none; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+  svg.i.sm { width: 16px; height: 16px; }
+  .muted { color: var(--faint); }
+  .tnum { font-variant-numeric: tabular-nums; }
+
+  /* ---------- Header ---------- */
+  .top { position: sticky; top: 0; z-index: 40; background: var(--bg); }
+  .top-inner { max-width: 1440px; margin: 0 auto; padding: 14px 24px 8px; display: flex; align-items: center; gap: 14px; }
+  .brand { display: flex; align-items: center; gap: 12px; flex: none; text-decoration: none; color: inherit; }
+  .logo { display: block; height: 34px; width: auto; flex: none; }
+  .app-name { font-family: var(--serif); font-weight: 600; font-size: 23px; letter-spacing: -.02em; color: var(--dark); line-height: 1; padding-left: 12px; border-left: 1.5px solid var(--hair); }
+  .app-name small { display: block; font-family: var(--sans); font-size: 11px; font-weight: 500; color: var(--faint); letter-spacing: 0; margin-top: 4px; }
+  .head-actions { margin-left: auto; display: flex; align-items: center; gap: 6px; min-width: 0; }
+  .icon-btn { width: 38px; height: 38px; border-radius: 999px; display: grid; place-items: center; color: var(--ink-2); transition: background .15s, color .15s; flex: none; }
+  .icon-btn:hover:not(:disabled) { background: var(--hover); color: var(--ink); }
+  .icon-btn[aria-pressed="true"] { background: var(--dark); color: var(--surface); }
+  .icon-btn.off { color: var(--faint); }
+  .run-pill { height: 34px; padding: 0 14px 0 12px; border-radius: 999px; background: #E8EFE8; color: var(--dark); font-weight: 700; font-size: 13px; display: inline-flex; align-items: center; gap: 8px; font-variant-numeric: tabular-nums; max-width: 46vw; overflow: hidden; white-space: nowrap; cursor: pointer; }
+  .dot { width: 9px; height: 9px; border-radius: 999px; background: currentColor; flex: none; }
+  .run-pill .dot { animation: blink 1.6s ease-in-out infinite; }
+  @keyframes blink { 50% { opacity: .25; } }
+
+  /* ---------- Buttons ---------- */
+  .btn { height: 38px; padding: 0 16px; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; font-weight: 600; font-size: 13.5px; background: var(--hover); color: var(--ink-2); white-space: nowrap; transition: background .15s, box-shadow .15s; flex: none; }
+  .btn:hover:not(:disabled) { background: var(--press); }
+  .btn.primary { background: var(--dark); color: var(--surface); box-shadow: 0 8px 18px -10px rgba(36,77,58,.7); }
+  .btn.primary:hover:not(:disabled) { background: var(--dark-2); }
+  .btn.clay { background: var(--clay); color: var(--surface); }
+  .btn.clay:hover:not(:disabled) { background: #74492F; }
+  .btn.ghost { background: none; color: var(--muted); }
+  .btn.ghost:hover:not(:disabled) { background: var(--hover); color: var(--ink); }
+  .btn.line { background: var(--surface); box-shadow: inset 0 0 0 1px var(--hair); }
+  .btn.line:hover:not(:disabled) { background: var(--hover); }
+  .btn.sm { height: 32px; padding: 0 12px; font-size: 12.5px; gap: 5px; }
+  .btn.lg { height: 46px; padding: 0 22px; font-size: 14.5px; }
+  .btn.block { width: 100%; }
+  .btn.danger { color: var(--danger); }
+  .btn.rec { background: var(--rec); color: #fff; }
+
+  /* ---------- Tabs ---------- */
+  .tabs-wrap { max-width: 1440px; margin: 0 auto; padding: 4px 24px 10px; display: flex; align-items: center; gap: 12px; }
+  .tabs { display: flex; gap: 2px; padding: 4px; background: var(--press); border-radius: 999px; overflow-x: auto; scrollbar-width: none; flex: none; max-width: 100%; }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab { height: 34px; padding: 0 15px; border-radius: 999px; font-weight: 600; font-size: 13px; color: var(--muted); white-space: nowrap; display: inline-flex; align-items: center; gap: 6px; transition: background .15s, color .15s; flex: none; }
+  .tab svg.i { width: 16px; height: 16px; }
+  .tab:hover { color: var(--ink); }
+  .tab[aria-selected="true"] { background: var(--dark); color: var(--surface); box-shadow: 0 6px 14px -8px rgba(36,77,58,.6); }
+  .tab .n { font-size: 11px; font-weight: 700; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px; background: rgba(28,40,36,.08); display: inline-grid; place-items: center; font-variant-numeric: tabular-nums; }
+  .tab[aria-selected="true"] .n { background: rgba(255,255,255,.18); }
+  .tab .live { width: 7px; height: 7px; border-radius: 999px; background: #6FBF8B; }
+  .applied { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; min-width: 0; align-items: center; }
+  .applied::-webkit-scrollbar { display: none; }
+  .achip { height: 28px; padding: 0 11px; border-radius: 999px; font-size: 12px; font-weight: 600; background: #E8EFE8; color: var(--dark); white-space: nowrap; display: inline-flex; align-items: center; gap: 5px; flex: none; font-variant-numeric: tabular-nums; }
+  .achip.warn { background: #F3E7DC; color: var(--clay); }
+
+  /* ---------- Layout ---------- */
+  main { flex: 1; width: 100%; max-width: 1440px; margin: 0 auto; padding: 0 24px 24px; display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 16px; height: calc(100dvh - 122px); min-height: 520px; }
+  .panel { background: var(--surface); border-radius: var(--r-lg); display: flex; flex-direction: column; min-height: 0; overflow: hidden; box-shadow: 0 0 0 1px var(--hair), var(--shadow); }
+  .view { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+  .wbar { display: flex; align-items: center; gap: 6px; padding: 10px 12px; border-bottom: 1px solid var(--hair); flex-wrap: wrap; row-gap: 8px; min-height: 59px; }
+  .wbar .count { font-size: 13px; color: var(--muted); margin: 0 6px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .wbar .count b { color: var(--ink); font-weight: 600; }
+  .grow { flex: 1; }
+  .sep { width: 1px; height: 20px; background: var(--hair); margin: 0 4px; flex: none; }
+  .tool { height: 36px; min-width: 36px; padding: 0 9px; border-radius: var(--r-sm); display: inline-flex; align-items: center; justify-content: center; gap: 6px; color: var(--ink-2); font-size: 12.5px; font-weight: 600; transition: background .15s, color .15s; flex: none; white-space: nowrap; }
+  .tool:hover:not(:disabled) { background: var(--hover); color: var(--ink); }
+  .tool[aria-pressed="true"] { background: var(--dark); color: var(--surface); }
+  .tool.danger:hover:not(:disabled) { color: var(--danger); }
+  .scroll { flex: 1; min-height: 0; overflow: auto; overscroll-behavior: contain; position: relative; }
+
+  /* ---------- Stats ---------- */
+  .kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; padding: 18px 18px 6px; }
+  .kpi { border-radius: 16px; background: #fff; box-shadow: 0 0 0 1px var(--hair); padding: 14px 16px; min-width: 0; }
+  .kpi .k { font-size: 12px; font-weight: 600; color: var(--muted); }
+  .kpi .v { font-size: 26px; font-weight: 700; letter-spacing: -.03em; margin-top: 6px; font-variant-numeric: tabular-nums; color: var(--ink); white-space: nowrap; }
+  .kpi .v small { font-size: 13px; font-weight: 600; color: var(--muted); margin-left: 2px; letter-spacing: 0; }
+  .kpi .s { font-size: 11.5px; color: var(--faint); margin-top: 3px; font-variant-numeric: tabular-nums; }
+  .card { border-radius: 16px; background: #fff; box-shadow: 0 0 0 1px var(--hair); padding: 14px 16px 12px; margin: 12px 18px 0; position: relative; }
+  .card h3 { margin: 0; font-family: var(--serif); font-size: 16px; font-weight: 600; color: var(--dark); letter-spacing: -.02em; }
+  .card .ch { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+  .card .cs { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .chart { width: 100%; display: block; overflow: visible; }
+  .chart text { font-family: var(--sans); font-size: 11px; fill: var(--faint); font-variant-numeric: tabular-nums; }
+  .chart .grid { stroke: var(--hover); stroke-width: 1; }
+  .chart .base { stroke: var(--hair); stroke-width: 1; }
+  .chart .goal { stroke: var(--clay); stroke-width: 1.2; stroke-dasharray: 4 4; }
+  .chart .b { fill: var(--dark); }
+  .chart .b.today { fill: var(--clay); }
+  .chart .hit { fill: transparent; }
+  .chart .hit:hover + .b, .chart g:hover .b { fill: var(--dark-2); }
+  .chart g:hover .b.today { fill: #74492F; }
+  .tip { position: absolute; pointer-events: none; background: var(--ink); color: var(--surface); padding: 7px 10px; border-radius: 9px; font-size: 12px; line-height: 1.45; white-space: nowrap; z-index: 5; transform: translate(-50%, calc(-100% - 10px)); font-variant-numeric: tabular-nums; box-shadow: 0 10px 24px -12px rgba(0,0,0,.5); }
+  .tip b { font-weight: 700; }
+  .hbars { display: flex; flex-direction: column; gap: 8px; }
+  .hbar { display: grid; grid-template-columns: minmax(70px, 140px) 1fr auto; gap: 10px; align-items: center; font-size: 12.5px; }
+  .hbar .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ink-2); font-weight: 600; }
+  .hbar .tr { height: 12px; border-radius: 4px; background: var(--hover); overflow: hidden; }
+  .hbar .tr i { display: block; height: 100%; background: var(--river); border-radius: 0 4px 4px 0; }
+  .hbar .v { color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; min-width: 86px; text-align: right; }
+  .heat { display: grid; grid-auto-flow: column; grid-template-rows: repeat(7, 1fr); gap: 3px; overflow-x: auto; padding-bottom: 2px; }
+  .heat i { width: 13px; height: 13px; border-radius: 3px; background: var(--hover); display: block; }
+  .heat i.l1 { background: #CFDFD2; } .heat i.l2 { background: #9DBFA6; } .heat i.l3 { background: #5E8F6E; } .heat i.l4 { background: #244D3A; }
+  .heat i.fut { background: transparent; }
+  .legend { display: flex; gap: 4px; align-items: center; font-size: 11px; color: var(--faint); margin-top: 8px; }
+  .legend i { width: 11px; height: 11px; border-radius: 3px; display: inline-block; }
+  .sess-day { padding: 12px 0 4px; font-size: 12px; font-weight: 700; color: var(--clay); letter-spacing: .03em; display: flex; justify-content: space-between; }
+  .sess { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--hover); font-size: 13px; }
+  .sess:last-child { border-bottom: 0; }
+  .sess .k { width: 30px; height: 30px; border-radius: 10px; display: grid; place-items: center; flex: none; background: #E8EFE8; color: var(--dark); }
+  .sess .k svg { width: 16px; height: 16px; }
+  .sess .k.timer { background: #E4EEEE; color: var(--river); }
+  .sess .k.stopwatch { background: #F3E7DC; color: var(--clay); }
+  .sess .k.interval { background: #F6E9E6; color: var(--rec); }
+  .sess .tx { flex: 1; min-width: 0; }
+  .sess .nm { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .sess .mt { font-size: 11.5px; color: var(--faint); font-variant-numeric: tabular-nums; }
+  .sess .du { font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .sess button { width: 30px; height: 30px; border-radius: 999px; display: grid; place-items: center; color: var(--faint); flex: none; }
+  .sess button:hover { background: var(--hover); color: var(--ink); }
+  .sess button svg { width: 15px; height: 15px; }
+  .empty { padding: 50px 24px; text-align: center; color: var(--faint); font-size: 13px; line-height: 1.7; }
+  .empty b { display: block; font-family: var(--serif); color: var(--dark); font-size: 18px; font-weight: 600; margin-bottom: 4px; }
+  .seg { display: flex; padding: 3px; gap: 2px; background: var(--press); border-radius: 999px; flex-wrap: wrap; }
+  .seg button { flex: 1; height: 30px; border-radius: 999px; font-size: 12.5px; font-weight: 600; color: var(--muted); padding: 0 10px; white-space: nowrap; }
+  .seg button[aria-pressed="true"] { background: var(--surface); color: var(--dark); box-shadow: 0 2px 6px -3px rgba(28,40,36,.3); }
+
+  /* ---------- Side panel ---------- */
+  #side .ph { padding: 16px 20px 12px; border-bottom: 1px solid var(--hair); display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  #side .ph h2 { margin: 0; font-family: var(--serif); font-size: 19px; font-weight: 600; color: var(--dark); letter-spacing: -.02em; }
+  #side .ph p { margin: 3px 0 0; font-size: 12px; color: var(--faint); }
+  #side .collapse { display: none; }
+  .pbody { flex: 1; min-height: 0; overflow-y: auto; padding: 6px 20px 20px; overscroll-behavior: contain; }
+  .sec { padding: 16px 0; border-bottom: 1px solid var(--hair); }
+  .sec:last-child { border-bottom: 0; }
+  .sec h3 { margin: 0 0 10px; font-size: 12px; font-weight: 700; color: var(--clay); letter-spacing: .04em; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .sec h3 .v { color: var(--faint); font-weight: 600; letter-spacing: 0; font-variant-numeric: tabular-nums; }
+  .sec p.hint { margin: 0 0 10px; font-size: 12.5px; color: var(--muted); line-height: 1.6; }
+  .btns { display: flex; flex-wrap: wrap; gap: 6px; }
+  .btns.g2 { display: grid; grid-template-columns: 1fr 1fr; }
+  .btns.g2 .btn { width: 100%; }
+  .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+  .field:last-child { margin-bottom: 0; }
+  .field > label, .field > .lbl { font-size: 12px; font-weight: 600; color: var(--ink-2); display: flex; justify-content: space-between; gap: 6px; }
+  .field > label .v, .field > .lbl .v { color: var(--faint); font-weight: 500; font-variant-numeric: tabular-nums; }
+  .inp, select.inp { width: 100%; height: 40px; border: 0; background: #fff; box-shadow: inset 0 0 0 1px var(--hair); border-radius: 999px; padding: 0 14px; font-size: 13.5px; outline: none; transition: box-shadow .15s; min-width: 0; }
+  select.inp { appearance: none; -webkit-appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235E665F' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; background-size: 16px; padding-right: 34px; }
+  .inp:focus { box-shadow: inset 0 0 0 1.5px var(--dark), 0 0 0 4px rgba(36,77,58,.08); }
+  .inp.tc { text-align: center; font-variant-numeric: tabular-nums; padding: 0 6px; }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+  .hms { display: grid; grid-template-columns: 1fr auto 1fr auto 1fr; gap: 6px; align-items: center; }
+  .hms span { font-size: 12px; color: var(--faint); font-weight: 600; }
+  .num { display: grid; grid-template-columns: 34px 1fr 34px; align-items: center; background: #fff; box-shadow: inset 0 0 0 1px var(--hair); border-radius: 999px; height: 40px; }
+  .num button { height: 34px; width: 34px; border-radius: 999px; display: grid; place-items: center; color: var(--muted); margin: 3px; }
+  .num button:hover { background: var(--hover); color: var(--ink); }
+  .num input { border: 0; background: none; text-align: center; width: 100%; height: 100%; outline: none; font-weight: 600; font-variant-numeric: tabular-nums; min-width: 0; -moz-appearance: textfield; }
+  .num input::-webkit-inner-spin-button { -webkit-appearance: none; }
+  .num svg.i { width: 15px; height: 15px; }
+  .range { width: 100%; accent-color: var(--dark); margin: 4px 0 0; }
+  .switch { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 13px; font-weight: 600; color: var(--ink-2); cursor: pointer; padding: 6px 0; }
+  .switch small { display: block; font-size: 11.5px; font-weight: 500; color: var(--faint); margin-top: 2px; line-height: 1.45; }
+  .switch input { appearance: none; -webkit-appearance: none; width: 40px; height: 24px; border-radius: 999px; background: var(--sand); position: relative; cursor: pointer; transition: background .15s; flex: none; margin: 0; }
+  .switch input::after { content: ''; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 999px; background: #fff; transition: transform .15s; box-shadow: 0 1px 3px rgba(0,0,0,.2); }
+  .switch input:checked { background: var(--dark); }
+  .switch input:checked::after { transform: translateX(16px); }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip { height: 32px; padding: 0 12px; border-radius: 999px; background: #fff; box-shadow: inset 0 0 0 1px var(--hair); font-size: 12.5px; font-weight: 600; color: var(--ink-2); display: inline-flex; align-items: center; gap: 6px; }
+  .chip:hover { background: var(--hover); }
+  .chip small { color: var(--faint); font-weight: 500; font-variant-numeric: tabular-nums; }
+  .chip .x { width: 18px; height: 18px; border-radius: 999px; display: grid; place-items: center; color: var(--faint); margin-right: -6px; }
+  .chip .x:hover { background: var(--press); color: var(--danger); }
+  .chip .x svg { width: 12px; height: 12px; }
+  .note { font-size: 12px; padding: 10px 12px; border-radius: var(--r-md); background: var(--hover); color: var(--muted); line-height: 1.6; margin-top: 10px; }
+  .note.ok { background: #E8F0E9; color: var(--dark); }
+  .note.warn { background: #F3E7DC; color: #6E4429; }
+  .goalbar { display: flex; align-items: center; gap: 10px; font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .goalbar .bar { flex: 1; height: 8px; }
+  .goalbar b { color: var(--ink); }
+
+  /* tasks */
+  .tasks { display: flex; flex-direction: column; gap: 6px; }
+  .task { display: flex; align-items: center; gap: 8px; padding: 8px 8px 8px 10px; border-radius: var(--r-md); background: #fff; box-shadow: inset 0 0 0 1px var(--hair); cursor: pointer; transition: box-shadow .15s, background .15s; }
+  .task:hover { background: var(--paper); }
+  .task.cur { box-shadow: inset 0 0 0 2px var(--dark); background: #F2F6F1; }
+  .task .ck { width: 22px; height: 22px; border-radius: 999px; box-shadow: inset 0 0 0 1.6px var(--sand); display: grid; place-items: center; flex: none; color: transparent; }
+  .task .ck svg { width: 14px; height: 14px; stroke-width: 2.2; }
+  .task.done .ck { background: var(--dark); box-shadow: none; color: #fff; }
+  /* ---------- Dialogs ---------- */
+  dialog { border: 0; border-radius: 22px; padding: 0; width: min(520px, calc(100vw - 32px)); background: var(--surface); box-shadow: 0 0 0 1px var(--hair), 0 30px 70px -30px rgba(28,40,36,.45); color: var(--ink); }
+  dialog::backdrop { background: rgba(28,40,36,.32); backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px); }
+  .dlg-head { display: flex; align-items: center; justify-content: space-between; padding: 20px 22px 8px; }
+  .dlg-head h2 { margin: 0; font-family: var(--serif); font-size: 20px; font-weight: 600; letter-spacing: -.02em; color: var(--dark); }
+  .dlg-body { padding: 8px 22px 22px; display: flex; flex-direction: column; gap: 14px; max-height: 76vh; overflow-y: auto; }
+  .dlg-body p { margin: 0; font-size: 13px; color: var(--muted); line-height: 1.65; }
+  .dlg-body .sec { padding: 12px 0; }
+  .btn-row { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+  .help h4 { margin: 4px 0 6px; font-size: 12px; font-weight: 700; color: var(--clay); letter-spacing: .04em; }
+  .help ul { margin: 0; padding-left: 18px; font-size: 13px; color: var(--ink-2); line-height: 1.75; }
+  .keys { display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; font-size: 13px; align-items: center; }
+  kbd { font-family: var(--sans); font-size: 11.5px; font-weight: 700; padding: 3px 7px; border-radius: 6px; background: #fff; box-shadow: inset 0 0 0 1px var(--hair), 0 1px 0 var(--hair); color: var(--ink-2); white-space: nowrap; }
+
+  /* ---------- Toast ---------- */
+  #toast { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom)); transform: translateX(-50%); background: var(--dark); color: var(--surface); padding: 11px 18px; border-radius: 999px; box-shadow: 0 14px 30px -14px rgba(28,40,36,.55); font-size: 13px; font-weight: 600; z-index: 200; display: none; align-items: center; gap: 14px; max-width: calc(100vw - 32px); }
+  #toast.show { display: flex; }
+  #toast.err { background: var(--danger); }
+  #toast button { color: var(--sand); font-weight: 600; white-space: nowrap; text-decoration: underline; text-underline-offset: 3px; }
+
+  .foot { max-width: 1440px; margin: 0 auto; padding: 0 24px 16px; font-size: 11.5px; color: var(--faint); display: flex; gap: 6px; align-items: center; }
+  .foot svg { width: 13px; height: 13px; }
+
+
+  /* ---------- Pillser ---------- */
+  :root { --ok: #2F6B48; --late: #B07A2A; --miss: #B5443B; --skip: #9A9F95; }
+  body.big-text { font-size: 16px; }
+  body.big-text .dose .nm { font-size: 17px; }
+  body.big-text .dose .meta { font-size: 13.5px; }
+  body.big-text .slot-h .tm { font-size: 22px; }
+  .datebar { display: flex; align-items: center; gap: 2px; }
+  .datebar .dl { font-family: var(--serif); font-weight: 600; font-size: 16.5px; color: var(--dark); padding: 0 8px; white-space: nowrap; min-width: 128px; text-align: center; cursor: pointer; border-radius: 10px; height: 36px; display: grid; place-items: center; }
+  .datebar .dl:hover { background: var(--hover); }
+  .datebar input[type=date] { position: absolute; opacity: 0; pointer-events: none; width: 1px; height: 1px; }
+  .pad { padding: 16px 18px 24px; }
+  .sum { display: grid; grid-template-columns: auto 1fr; gap: 18px; align-items: center; padding: 16px 18px; border-radius: 18px; background: #fff; box-shadow: 0 0 0 1px var(--hair); }
+  .pring { position: relative; width: 96px; height: 96px; }
+  .pring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+  .pring .trk { fill: none; stroke: var(--press); stroke-width: 9; }
+  .pring .prg { fill: none; stroke: var(--dark); stroke-width: 9; stroke-linecap: round; transition: stroke-dashoffset .4s; }
+  .pring .c { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; line-height: 1.1; }
+  .pring .c b { font-size: 22px; font-weight: 700; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+  .pring .c small { display: block; font-size: 11px; color: var(--muted); font-weight: 600; }
+  .sum .nx { min-width: 0; }
+  .sum .nx .k { font-size: 12px; font-weight: 700; color: var(--clay); letter-spacing: .04em; }
+  .sum .nx .v { font-family: var(--serif); font-size: 22px; font-weight: 600; color: var(--dark); letter-spacing: -.02em; margin-top: 4px; line-height: 1.25; }
+  .sum .nx .v .cd { font-family: var(--sans); font-size: 14px; font-weight: 600; color: var(--muted); margin-left: 6px; letter-spacing: 0; font-variant-numeric: tabular-nums; }
+  .sum .nx .s { font-size: 12.5px; color: var(--muted); margin-top: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .sum .stats { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+  .pill-st { height: 26px; padding: 0 10px; border-radius: 999px; font-size: 12px; font-weight: 700; display: inline-flex; align-items: center; gap: 5px; background: var(--hover); color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .pill-st.ok { background: #E3EEE5; color: var(--ok); }
+  .pill-st.late { background: #F5EBD9; color: #8A5E1C; }
+  .pill-st.miss { background: #F6E3E0; color: var(--miss); }
+  .pill-st.warn { background: #F3E7DC; color: var(--clay); }
+  .banner { margin-top: 12px; display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-radius: 16px; background: #F6E3E0; color: #7D2E29; font-size: 13px; font-weight: 600; flex-wrap: wrap; }
+  .banner.warn { background: #F3E7DC; color: #6E4429; }
+  .banner.info { background: #E8EFE8; color: var(--dark); }
+  .banner .tx { flex: 1; min-width: 180px; line-height: 1.5; }
+  .banner .tx small { display: block; font-weight: 500; opacity: .85; }
+  .slot { margin-top: 18px; }
+  .slot-h { display: flex; align-items: center; gap: 10px; padding: 0 2px 8px; }
+  .slot-h .tm { font-size: 19px; font-weight: 700; letter-spacing: -.02em; font-variant-numeric: tabular-nums; color: var(--ink); }
+  .slot-h .lb { font-size: 12.5px; font-weight: 600; color: var(--muted); }
+  .slot-h .st { font-size: 11.5px; font-weight: 700; padding: 3px 8px; border-radius: 999px; }
+  .slot-h .st.now { background: var(--dark); color: #fff; }
+  .slot-h .st.late { background: #F5EBD9; color: #8A5E1C; }
+  .slot-h .st.miss { background: #F6E3E0; color: var(--miss); }
+  .slot-h .st.done { background: #E3EEE5; color: var(--ok); }
+  .slot-h .grow { flex: 1; }
+  .doses { display: flex; flex-direction: column; gap: 8px; }
+  .dose { display: flex; align-items: center; gap: 12px; padding: 10px 10px 10px 12px; border-radius: 16px; background: #fff; box-shadow: 0 0 0 1px var(--hair); position: relative; overflow: hidden; transition: box-shadow .15s, background .15s; }
+  .dose::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--pc, var(--sand)); }
+  .dose.due { box-shadow: 0 0 0 1.5px var(--dark), 0 12px 26px -22px rgba(28,40,36,.55); }
+  .dose.late { box-shadow: 0 0 0 1.5px var(--late); }
+  .dose.miss { background: #FDF6F4; }
+  .dose.taken { background: var(--paper); }
+  .dose.taken .nm, .dose.skipped .nm { color: var(--muted); }
+  .dose.skipped .nm { text-decoration: line-through; }
+  .dose .pic { width: 44px; height: 44px; border-radius: 13px; display: grid; place-items: center; flex: none; background: var(--bg); overflow: hidden; }
+  .dose .pic img { width: 100%; height: 100%; object-fit: cover; }
+  .dose .tx { flex: 1; min-width: 0; }
+  .dose .nm { font-weight: 700; font-size: 14.5px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .dose .nm .q { font-weight: 600; color: var(--muted); font-size: 13px; }
+  .dose .meta { font-size: 12px; color: var(--muted); margin-top: 3px; display: flex; gap: 4px 10px; flex-wrap: wrap; line-height: 1.45; }
+  .dose .meta .w { color: var(--clay); font-weight: 600; }
+  .dose .meta .r { color: var(--ok); font-weight: 600; }
+  .dose .meta .m { color: var(--miss); font-weight: 600; }
+  .who { height: 21px; padding: 0 8px 0 6px; border-radius: 999px; font-size: 11.5px; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; background: color-mix(in srgb, var(--pc, #999) 14%, #fff); color: color-mix(in srgb, var(--pc, #555) 82%, #000); white-space: nowrap; }
+  .who::before { content: ''; width: 7px; height: 7px; border-radius: 999px; background: var(--pc, #999); }
+  .ckb { width: 48px; height: 48px; border-radius: 999px; display: grid; place-items: center; flex: none; box-shadow: inset 0 0 0 2px var(--sand); color: transparent; transition: background .15s, box-shadow .15s, color .15s, transform .1s; }
+  .ckb:hover { box-shadow: inset 0 0 0 2px var(--dark); color: var(--sand); }
+  .ckb:active { transform: scale(.94); }
+  .ckb svg.i { width: 24px; height: 24px; stroke-width: 2.4; }
+  .dose.due .ckb { box-shadow: inset 0 0 0 2.5px var(--dark); color: rgba(36,77,58,.25); }
+  .dose.taken .ckb { background: var(--ok); box-shadow: none; color: #fff; }
+  .dose.skipped .ckb { background: var(--hover); box-shadow: none; color: var(--skip); }
+  .more { width: 34px; height: 34px; border-radius: 999px; display: grid; place-items: center; color: var(--faint); flex: none; }
+  .more:hover { background: var(--hover); color: var(--ink); }
+  .prn-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 8px; }
+  .prn { display: flex; align-items: center; gap: 10px; padding: 10px 10px 10px 12px; border-radius: 16px; background: #fff; box-shadow: 0 0 0 1px var(--hair); position: relative; overflow: hidden; }
+  .prn::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--pc, var(--sand)); }
+  .prn .pic { width: 38px; height: 38px; border-radius: 12px; display: grid; place-items: center; background: var(--bg); flex: none; overflow: hidden; }
+  .prn .pic img { width: 100%; height: 100%; object-fit: cover; }
+  .prn .tx { flex: 1; min-width: 0; }
+  .prn .nm { font-weight: 700; font-size: 13.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .prn .meta { font-size: 11.5px; color: var(--muted); margin-top: 2px; font-variant-numeric: tabular-nums; }
+  .prn .meta .w { color: var(--clay); font-weight: 600; }
+  .sec-h { font-size: 12px; font-weight: 700; color: var(--clay); letter-spacing: .04em; margin: 22px 2px 8px; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .sec-h .v { color: var(--faint); font-weight: 600; letter-spacing: 0; }
+
+  /* med cards */
+  .mgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; padding: 16px 18px 24px; }
+  .mgroup { grid-column: 1 / -1; display: flex; align-items: center; gap: 8px; margin-top: 6px; font-size: 13px; font-weight: 700; color: var(--ink-2); }
+  .mgroup:first-child { margin-top: 0; }
+  .mgroup .dot { color: var(--pc); }
+  .mgroup small { color: var(--faint); font-weight: 600; }
+  .mcard { border-radius: 18px; background: #fff; box-shadow: 0 0 0 1px var(--hair); padding: 14px 14px 12px 16px; display: flex; flex-direction: column; gap: 10px; position: relative; overflow: hidden; cursor: pointer; transition: box-shadow .15s; }
+  .mcard:hover { box-shadow: 0 0 0 1px var(--sand), 0 14px 30px -26px rgba(28,40,36,.6); }
+  .mcard::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--pc, var(--sand)); }
+  .mcard.off { opacity: .62; }
+  .mcard .hd { display: flex; gap: 12px; align-items: flex-start; }
+  .mcard .pic { width: 48px; height: 48px; border-radius: 14px; display: grid; place-items: center; background: var(--bg); flex: none; overflow: hidden; }
+  .mcard .pic img { width: 100%; height: 100%; object-fit: cover; }
+  .mcard .tt { flex: 1; min-width: 0; }
+  .mcard .nm { font-weight: 700; font-size: 15px; line-height: 1.3; }
+  .mcard .pp { font-size: 12px; color: var(--muted); margin-top: 3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .mcard .tags { display: flex; gap: 5px; flex-wrap: wrap; }
+  .tag { height: 22px; padding: 0 8px; border-radius: 999px; font-size: 11px; font-weight: 700; background: var(--hover); color: var(--muted); display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
+  .tag.g { background: #E8EFE8; color: var(--dark); }
+  .tag.c { background: #F3E7DC; color: var(--clay); }
+  .tag.r { background: #F6E3E0; color: var(--miss); }
+  .tag.b { background: #E4EEEE; color: var(--river); }
+  .mcard .sch { font-size: 12.5px; color: var(--ink-2); line-height: 1.55; }
+  .mcard .sch b { font-weight: 700; }
+  .mcard .times { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 4px; }
+  .mcard .times span { font-size: 11.5px; font-weight: 700; padding: 2px 7px; border-radius: 7px; background: var(--bg); color: var(--ink-2); font-variant-numeric: tabular-nums; }
+  .stock { display: flex; flex-direction: column; gap: 5px; }
+  .stock .l { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; gap: 8px; }
+  .stock .l b { color: var(--ink); }
+  .stock .l .w { color: var(--clay); font-weight: 700; }
+  .stock .l .r { color: var(--miss); font-weight: 700; }
+  .stock .bar { height: 6px; }
+  .stock .bar i.low { background: var(--clay); }
+  .stock .bar i.out { background: var(--miss); }
+  .mcard .ft { display: flex; gap: 4px; justify-content: flex-end; margin: 0 -4px -4px 0; }
+  .mini { width: 32px; height: 32px; border-radius: 999px; display: grid; place-items: center; color: var(--muted); flex: none; }
+  .mini:hover { background: var(--hover); color: var(--ink); }
+  .mini.danger:hover { color: var(--danger); }
+  .mini svg.i { width: 16px; height: 16px; }
+  .search { height: 36px; border: 0; background: #fff; box-shadow: inset 0 0 0 1px var(--hair); border-radius: 999px; padding: 0 14px 0 34px; font-size: 13px; outline: none; width: 190px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%239A9F95' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='6.5'/%3E%3Cpath d='m20 20-4.2-4.2'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: 11px center; background-size: 16px; }
+  .search:focus { box-shadow: inset 0 0 0 1.5px var(--dark); }
+  .seg.inline { display: inline-flex; flex-wrap: nowrap; }
+  .seg.inline button { flex: none; }
+
+  /* tables */
+  .tbl-wrap { border-radius: 16px; background: #fff; box-shadow: 0 0 0 1px var(--hair); overflow: auto; }
+  table.tbl { width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
+  .tbl th { text-align: left; font-size: 11.5px; font-weight: 700; color: var(--faint); padding: 10px 12px; border-bottom: 1px solid var(--hair); background: var(--paper); white-space: nowrap; }
+  .tbl td { padding: 10px 12px; border-bottom: 1px solid var(--hover); vertical-align: middle; }
+  .tbl tr:last-child td { border-bottom: 0; }
+  .tbl td.n { text-align: right; white-space: nowrap; }
+  .tbl th.n { text-align: right; }
+  .tbl .nm { font-weight: 700; display: flex; align-items: center; gap: 8px; }
+  .tbl .nm .pic { width: 30px; height: 30px; border-radius: 9px; background: var(--bg); display: grid; place-items: center; flex: none; overflow: hidden; }
+  .tbl .nm .pic img { width: 100%; height: 100%; object-fit: cover; }
+  .tbl .w { color: var(--clay); font-weight: 700; }
+  .tbl .r { color: var(--miss); font-weight: 700; }
+  .tbl .ok { color: var(--ok); font-weight: 700; }
+
+  /* calendar */
+  .cal { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 5px; }
+  .cal .wd { font-size: 11px; font-weight: 700; color: var(--faint); text-align: center; padding: 4px 0; }
+  .cal .wd.sun { color: var(--miss); }
+  .cal .d { aspect-ratio: 1.25; border-radius: 11px; background: var(--bg); padding: 6px 7px; display: flex; flex-direction: column; justify-content: space-between; text-align: left; font-variant-numeric: tabular-nums; min-width: 0; position: relative; }
+  .cal .d:hover { box-shadow: inset 0 0 0 1.5px var(--dark); }
+  .cal .d .n { font-size: 12px; font-weight: 700; color: var(--ink-2); }
+  .cal .d .p { font-size: 11px; font-weight: 700; align-self: flex-end; }
+  .cal .d.l0 { background: #F6E3E0; } .cal .d.l0 .p { color: var(--miss); }
+  .cal .d.l1 { background: #F3E7DC; } .cal .d.l1 .p { color: var(--clay); }
+  .cal .d.l2 { background: #DCE9DE; } .cal .d.l2 .p { color: var(--ok); }
+  .cal .d.l3 { background: var(--dark); } .cal .d.l3 .n, .cal .d.l3 .p { color: #fff; }
+  .cal .d.none { background: transparent; box-shadow: inset 0 0 0 1px var(--hover); }
+  .cal .d.fut { background: transparent; box-shadow: inset 0 0 0 1px var(--hover); opacity: .6; }
+  .cal .d.out { visibility: hidden; }
+  .cal .d.today { outline: 2px solid var(--clay); outline-offset: 1px; }
+  .legend i.l0 { background: #F6E3E0; } .legend i.l1 { background: #F3E7DC; } .legend i.l2 { background: #DCE9DE; } .legend i.l3 { background: var(--dark); }
+  .loglist .sess .k { background: #E3EEE5; color: var(--ok); }
+  .loglist .sess .k.skip { background: var(--hover); color: var(--skip); }
+  .loglist .sess .k.miss { background: #F6E3E0; color: var(--miss); }
+  .loglist .sess .k.prn { background: #E4EEEE; color: var(--river); }
+
+  /* people */
+  .pgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 12px; padding: 16px 18px 24px; }
+  .pcard { border-radius: 18px; background: #fff; box-shadow: 0 0 0 1px var(--hair); padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+  .pcard .hd { display: flex; align-items: center; gap: 12px; }
+  .av { width: 48px; height: 48px; border-radius: 999px; background: var(--pc); color: #fff; display: grid; place-items: center; font-weight: 700; font-size: 19px; flex: none; font-family: var(--serif); }
+  .av.sm { width: 30px; height: 30px; font-size: 13px; }
+  .pcard .nm { font-family: var(--serif); font-size: 19px; font-weight: 600; color: var(--dark); letter-spacing: -.02em; }
+  .pcard .rl { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .pcard .info { font-size: 12.5px; color: var(--ink-2); line-height: 1.6; display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; }
+  .pcard .info dt { color: var(--faint); font-weight: 600; }
+  .pcard .info dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+  .pcard .info dd.al { color: var(--miss); font-weight: 600; }
+  .pcard .ft { display: flex; gap: 6px; flex-wrap: wrap; }
+
+  /* side */
+  .nextbox { border-radius: 16px; background: var(--dark); color: var(--surface); padding: 14px 16px; }
+  .nextbox .k { font-size: 11.5px; font-weight: 700; opacity: .7; letter-spacing: .04em; }
+  .nextbox .t { font-size: 30px; font-weight: 700; letter-spacing: -.03em; font-variant-numeric: tabular-nums; margin-top: 4px; line-height: 1.1; }
+  .nextbox .t small { font-size: 13px; font-weight: 600; opacity: .75; margin-left: 6px; letter-spacing: 0; }
+  .nextbox .s { font-size: 12.5px; opacity: .85; margin-top: 6px; line-height: 1.5; }
+  .nextbox.none { background: var(--hover); color: var(--muted); }
+  .pprog { display: flex; flex-direction: column; gap: 8px; }
+  .pprog .r { display: grid; grid-template-columns: 30px 1fr auto; gap: 10px; align-items: center; font-size: 12.5px; }
+  .pprog .r .nm { font-weight: 700; color: var(--ink-2); font-size: 12.5px; }
+  .pprog .r .bar { height: 7px; margin-top: 4px; }
+  .pprog .r .bar i { background: var(--pc); }
+  .pprog .r .v { font-weight: 700; font-variant-numeric: tabular-nums; color: var(--muted); }
+  .lowlist { display: flex; flex-direction: column; gap: 6px; }
+  .lowlist .it { display: flex; align-items: center; gap: 8px; font-size: 12.5px; padding: 8px 10px; border-radius: 12px; background: #fff; box-shadow: inset 0 0 0 1px var(--hair); }
+  .lowlist .it .nm { flex: 1; min-width: 0; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .lowlist .it .v { font-weight: 700; color: var(--clay); white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .lowlist .it .v.r { color: var(--miss); }
+
+  /* med dialog */
+  dialog.wide { width: min(640px, calc(100vw - 24px)); }
+  .fgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 10px; }
+  .fgrid .full { grid-column: 1 / -1; }
+  .fgrid .field { margin-bottom: 0; }
+  textarea.inp { border-radius: 14px; height: auto; min-height: 64px; padding: 10px 14px; resize: vertical; line-height: 1.5; }
+  .swatches { display: flex; gap: 6px; flex-wrap: wrap; }
+  .sw { width: 30px; height: 30px; border-radius: 999px; background: var(--c); box-shadow: inset 0 0 0 1px rgba(0,0,0,.12); display: grid; place-items: center; }
+  .sw[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--dark); }
+  .shapes { display: flex; gap: 6px; flex-wrap: wrap; }
+  .shp { width: 46px; height: 46px; border-radius: 13px; background: #fff; box-shadow: inset 0 0 0 1px var(--hair); display: grid; place-items: center; }
+  .shp[aria-pressed="true"] { box-shadow: inset 0 0 0 2px var(--dark); background: #F2F6F1; }
+  .whochips { display: flex; gap: 6px; flex-wrap: wrap; }
+  .whochips button { height: 34px; padding: 0 14px 0 10px; border-radius: 999px; background: #fff; box-shadow: inset 0 0 0 1px var(--hair); font-weight: 700; font-size: 13px; display: inline-flex; align-items: center; gap: 7px; color: var(--ink-2); }
+  .whochips button::before { content: ''; width: 10px; height: 10px; border-radius: 999px; background: var(--pc); }
+  .whochips button[aria-pressed="true"] { background: var(--pc); color: #fff; box-shadow: none; }
+  .whochips button[aria-pressed="true"]::before { background: #fff; }
+  .trows { display: flex; flex-direction: column; gap: 6px; }
+  .trow { display: grid; grid-template-columns: 1fr 120px 34px; gap: 6px; align-items: center; }
+  .trow .inp { text-align: center; font-variant-numeric: tabular-nums; }
+  .quick { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+  .daypick { display: flex; gap: 4px; }
+  .daypick button { flex: 1; height: 36px; border-radius: 999px; background: #fff; box-shadow: inset 0 0 0 1px var(--hair); font-weight: 700; font-size: 13px; color: var(--muted); }
+  .daypick button[aria-pressed="true"] { background: var(--dark); color: #fff; box-shadow: none; }
+  .photo-row { display: flex; gap: 10px; align-items: center; }
+  .photo-row .pv { width: 64px; height: 64px; border-radius: 16px; background: var(--bg); display: grid; place-items: center; overflow: hidden; flex: none; box-shadow: inset 0 0 0 1px var(--hair); }
+  .photo-row .pv img { width: 100%; height: 100%; object-fit: cover; }
+  details.more-f { border-top: 1px solid var(--hair); padding-top: 12px; }
+  details.more-f summary { cursor: pointer; font-size: 13px; font-weight: 700; color: var(--clay); list-style: none; display: flex; align-items: center; gap: 6px; }
+  details.more-f summary::-webkit-details-marker { display: none; }
+  details.more-f summary svg { transition: transform .15s; }
+  details.more-f[open] summary svg { transform: rotate(180deg); }
+  details.more-f .fgrid { margin-top: 12px; }
+  .dlg-foot { display: flex; gap: 6px; padding: 12px 22px 18px; border-top: 1px solid var(--hair); justify-content: flex-end; flex-wrap: wrap; }
+  .dlg-foot .grow { flex: 1; }
+  .menu-list { display: flex; flex-direction: column; gap: 4px; }
+  .menu-list button { height: 46px; border-radius: 14px; padding: 0 14px; display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 14px; color: var(--ink-2); background: #fff; box-shadow: inset 0 0 0 1px var(--hair); text-align: left; }
+  .menu-list button:hover { background: var(--hover); }
+  .menu-list button.danger { color: var(--danger); }
+  .menu-list .row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
+  .menu-list .row button { justify-content: center; }
+
+
+  /* standby (big) */
+  #big { position: fixed; inset: 0; z-index: 120; background: var(--bg); display: none; flex-direction: column; padding: calc(18px + env(safe-area-inset-top)) 22px calc(18px + env(safe-area-inset-bottom)); gap: 18px; overflow: auto; }
+  #big.show { display: flex; }
+  #big .bh { display: flex; align-items: flex-start; gap: 12px; }
+  #big .clk { font-size: min(15vw, 120px); font-weight: 600; letter-spacing: -.045em; line-height: .95; font-variant-numeric: tabular-nums; }
+  #big .dt { font-family: var(--serif); font-size: clamp(16px, 2.4vw, 24px); color: var(--muted); margin-top: 8px; }
+  #big .bh .grow { flex: 1; }
+  #big .nx { border-radius: 22px; background: var(--dark); color: #fff; padding: 18px 22px; font-size: clamp(16px, 2.4vw, 24px); font-weight: 600; line-height: 1.45; }
+  #big .nx b { font-size: 1.35em; font-variant-numeric: tabular-nums; }
+  #big .nx.none { background: var(--hover); color: var(--muted); }
+  #big .blist { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 10px; }
+  #big .dose { padding: 14px 14px 14px 16px; }
+  #big .dose .nm { font-size: 18px; }
+  #big .dose .meta { font-size: 14px; }
+  #big .ckb { width: 60px; height: 60px; }
+  #big .ckb svg.i { width: 30px; height: 30px; }
+  #big .bt { font-size: 14px; font-weight: 700; color: var(--clay); letter-spacing: .04em; }
+  #big.dark { background: #111816; color: #EDE8DC; }
+  #big.dark .dt, #big.dark .bt { color: #B7A487; }
+  #big.dark .dose { background: #1B2420; box-shadow: 0 0 0 1px rgba(255,255,255,.08); color: #EDE8DC; }
+  #big.dark .dose.taken { background: #151D1A; }
+  #big.dark .dose .meta, #big.dark .dose .nm .q { color: #9AA59D; }
+  #big.dark .dose .pic { background: #26302B; }
+  #big.dark .cbtn { background: rgba(255,255,255,.06); color: #EDE8DC; box-shadow: inset 0 0 0 1px rgba(255,255,255,.12); }
+  #big.dark .nx { background: #244D3A; }
+  #big.dark .nx.none { background: #1B2420; color: #9AA59D; }
+  .cbtn { width: 48px; height: 48px; border-radius: 999px; display: grid; place-items: center; background: var(--surface); color: var(--ink-2); box-shadow: inset 0 0 0 1px var(--hair); flex: none; }
+  .cbtn:hover { background: var(--hover); }
+
+  /* print */
+  #print { display: none; }
+  @media print {
+    @page { size: A4; margin: 14mm 12mm; }
+    body { background: #fff; display: block; min-height: 0; height: auto; font-size: 11pt; }
+    body > *:not(#print) { display: none !important; }
+    #print { display: block; color: #000; }
+    #print h1 { font-family: var(--serif); font-size: 20pt; margin: 0 0 2mm; color: #244D3A; }
+    #print .sub { font-size: 9.5pt; color: #555; margin-bottom: 6mm; }
+    #print h2 { font-family: var(--serif); font-size: 13pt; margin: 7mm 0 2mm; color: #244D3A; border-bottom: 1px solid #ccc; padding-bottom: 1.5mm; }
+    #print table { width: 100%; border-collapse: collapse; font-size: 9.5pt; }
+    #print th, #print td { border: 1px solid #bbb; padding: 1.6mm 2mm; text-align: left; vertical-align: top; }
+    #print th { background: #F1EEE6; font-weight: 700; }
+    #print td.n, #print th.n { text-align: right; }
+    #print .grid14 td, #print .grid14 th { text-align: center; padding: 1.2mm .6mm; font-size: 8.5pt; }
+    #print .grid14 td:first-child, #print .grid14 th:first-child { text-align: left; padding-left: 2mm; }
+    #print .person { break-before: page; }
+    #print .person:first-of-type { break-before: auto; }
+    #print .info { font-size: 9.5pt; line-height: 1.6; }
+    #print .foot { display: block; font-size: 8.5pt; color: #777; margin-top: 8mm; padding: 0; max-width: none; }
+  }
+
+  /* responsive */
+  @media (max-width: 999px) {
+    main { display: flex; flex-direction: column; height: auto; min-height: 0; padding: 0 12px 16px; }
+    #side .collapse { display: grid; }
+    #side.closed .pbody { display: none; }
+    #side.closed .ph { border-bottom: 0; }
+    .pbody { overflow: visible; }
+    #work { min-height: 64vh; }
+    .scroll { overflow: visible; }
+    .tabs-wrap { padding: 2px 12px 10px; }
+    .top-inner { padding: 12px 12px 6px; gap: 8px; }
+    .foot { padding: 0 12px 12px; }
+    .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+  @media (min-width: 1000px) {
+    body { height: 100dvh; min-height: 560px; }
+    main { flex: 1; height: auto; min-height: 0; }
+  }
+  @media (max-width: 1100px) and (min-width: 1000px) { main { grid-template-columns: minmax(0, 1fr) 320px; } }
+  @media (max-width: 760px) {
+    .logo { height: 27px; }
+    .app-name { font-size: 19px; padding-left: 10px; }
+    .app-name small { display: none; }
+    .tool .t { display: none; }
+    .head-actions .btn .lbl { display: none; }
+    .head-actions .btn { width: 38px; padding: 0; }
+    .tabs-wrap { flex-direction: column; align-items: stretch; gap: 8px; }
+    .pad { padding: 12px; }
+    .mgrid, .pgrid { padding: 12px; grid-template-columns: 1fr; }
+    .kpis { padding: 12px 12px 4px; gap: 8px; }
+    .card { margin: 10px 12px 0; }
+    .sum { grid-template-columns: 1fr; justify-items: start; }
+    .search { width: 140px; }
+    .fgrid { grid-template-columns: 1fr; }
+    .trow { grid-template-columns: 1fr 100px 34px; }
+    .run-pill { display: none !important; }
+    #big .blist { grid-template-columns: 1fr; }
+    .dose .pic { width: 38px; height: 38px; }
+  }
+  #cfM { white-space: pre-line; }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="top-inner">
+    <a class="brand" href="./" aria-label="Pillser">
+      <img class="logo" alt="OUTGRID" src="data:image/png;base64,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" />
+      <span class="app-name">Pillser<small>복약 관리</small></span>
+    </a>
+    <div class="head-actions">
+      <button class="run-pill" id="nextPill" hidden title="다음 복용"><span class="dot"></span><span id="nextPillT"></span></button>
+            <button class="icon-btn" id="helpBtn" title="도움말"><i data-icon="help"></i></button>
+      <button class="icon-btn" id="setBtn" title="설정"><i data-icon="gear"></i></button>
+      <button class="btn primary" id="bigBtn" title="대기 화면 (F)"><i data-icon="expand"></i><span class="lbl">대기 화면</span></button>
+    </div>
+  </div>
+  <div class="tabs-wrap">
+    <nav class="tabs" id="tabs" role="tablist">
+      <button class="tab" role="tab" data-tab="today" aria-selected="true"><i data-icon="sun"></i>오늘<span class="n" id="cToday">0</span></button>
+      <button class="tab" role="tab" data-tab="meds"><i data-icon="pill"></i>약 목록<span class="n" id="cMeds">0</span></button>
+      <button class="tab" role="tab" data-tab="stock"><i data-icon="box"></i>재고·처방<span class="n" id="cStock" hidden>0</span></button>
+      <button class="tab" role="tab" data-tab="history"><i data-icon="calendar"></i>기록</button>
+      <button class="tab" role="tab" data-tab="people"><i data-icon="users"></i>가족</button>
+    </nav>
+    <div class="applied" id="whoFilter"></div>
+  </div>
+</header>
+
+<main>
+  <section class="panel" id="work">
+
+    <!-- ===== Today ===== -->
+    <div class="view" data-view="today">
+      <div class="wbar">
+        <div class="datebar">
+          <button class="tool" id="dPrev" title="전날"><i data-icon="left"></i></button>
+          <label class="dl" id="dLabel" title="날짜 고르기"></label>
+          <input type="date" id="dPick" />
+          <button class="tool" id="dNext" title="다음날"><i data-icon="right"></i></button>
+          <button class="tool" id="dToday" hidden>오늘</button>
+        </div>
+        <span class="grow"></span>
+        <button class="tool" id="prnBtn" title="필요할 때 먹는 약 기록"><i data-icon="plus"></i><span class="t">지금 먹은 약</span></button>
+        <button class="tool" id="newMed1"><i data-icon="pill"></i><span class="t">약 추가</span></button>
+      </div>
+      <div class="scroll"><div class="pad" id="todayBody"></div></div>
+    </div>
+
+    <!-- ===== Meds ===== -->
+    <div class="view" data-view="meds" hidden>
+      <div class="wbar">
+        <button class="tool" id="newMed2"><i data-icon="plus"></i><span class="t">새 약</span></button>
+        <span class="sep"></span>
+        <div class="seg inline" id="kindSeg"><button data-k="" aria-pressed="true">전체</button><button data-k="rx">처방약</button><button data-k="otc">일반약</button><button data-k="sup">영양제</button></div>
+        <span class="grow"></span>
+        <input class="search" id="medSearch" type="search" placeholder="약 이름 찾기" />
+        <button class="tool" id="showOff" title="중단·끝난 약도 보기"><i data-icon="archive"></i><span class="t">지난 약</span></button>
+      </div>
+      <div class="scroll"><div class="mgrid" id="medGrid"></div></div>
+    </div>
+
+    <!-- ===== Stock ===== -->
+    <div class="view" data-view="stock" hidden>
+      <div class="wbar">
+        <span class="count" id="stockInfo"></span>
+        <span class="grow"></span>
+        <button class="tool" id="stockCopy" title="부족한 약 목록 복사 (약국에 보낼 때)"><i data-icon="copy"></i><span class="t">부족한 약 복사</span></button>
+      </div>
+      <div class="scroll"><div class="pad" id="stockBody"></div></div>
+    </div>
+
+    <!-- ===== History ===== -->
+    <div class="view" data-view="history" hidden>
+      <div class="wbar">
+        <div class="datebar">
+          <button class="tool" id="mPrev" title="지난달"><i data-icon="left"></i></button>
+          <span class="dl" id="mLabel" style="cursor:default"></span>
+          <button class="tool" id="mNext" title="다음달"><i data-icon="right"></i></button>
+        </div>
+        <span class="grow"></span>
+        <button class="tool" id="printBtn" title="병원에 가져갈 복약 기록표"><i data-icon="print"></i><span class="t">기록표 인쇄·PDF</span></button>
+        <button class="tool" id="csvBtn"><i data-icon="download"></i><span class="t">CSV</span></button>
+      </div>
+      <div class="scroll" id="histBody"></div>
+    </div>
+
+    <!-- ===== People ===== -->
+    <div class="view" data-view="people" hidden>
+      <div class="wbar">
+        <button class="tool" id="newPerson"><i data-icon="plus"></i><span class="t">가족 추가</span></button>
+        <span class="grow"></span>
+        <span class="count" id="pplInfo"></span>
+      </div>
+      <div class="scroll"><div class="pgrid" id="pplGrid"></div></div>
+    </div>
+  </section>
+
+  <aside class="panel" id="side">
+    <div class="ph">
+      <div><h2>오늘</h2><p id="sideS">다음 복용과 가족별 현황</p></div>
+      <button class="icon-btn collapse" id="sideToggle" title="접기·펼치기"><i data-icon="chevron"></i></button>
+    </div>
+    <div class="pbody">
+      <div class="sec">
+        <div class="nextbox" id="nextBox"></div>
+      </div>
+      <div class="sec">
+        <h3>오늘 가족별 <span class="v" id="pprogV"></span></h3>
+        <div class="pprog" id="pprog"></div>
+      </div>
+      <div class="sec" id="lowSec">
+        <h3>곧 떨어지는 약 <span class="v" id="lowV"></span></h3>
+        <div class="lowlist" id="lowList"></div>
+      </div>
+      <div class="sec">
+        <h3>데이터</h3>
+        <div class="btns g2">
+          <button class="btn line sm" id="exportBtn"><i data-icon="download"></i>백업 저장</button>
+          <button class="btn line sm" id="importBtn"><i data-icon="upload"></i>백업 열기</button>
+        </div>
+        <p class="hint" style="margin:10px 0 0">기록은 이 기기 브라우저에만 저장돼요. 다른 기기로 옮기거나 가족에게 넘길 때 백업 파일을 쓰세요.</p>
+      </div>
+    </div>
+  </aside>
+</main>
+
+<div class="foot"><i data-icon="shield"></i>Pillser는 브라우저 안에서만 동작합니다. 약과 복용 기록은 이 기기에만 저장되고 어디에도 전송되지 않아요. 복약 지도는 의사·약사의 안내를 따르세요.</div>
+
+<input type="file" id="fileIn" accept=".json,application/json" hidden />
+<input type="file" id="photoIn" accept="image/*" hidden />
+
+<!-- Standby screen -->
+<div id="big" role="dialog" aria-label="대기 화면">
+  <div class="bh">
+    <div><div class="clk" id="bigClk">00:00</div><div class="dt" id="bigDate"></div></div>
+    <span class="grow"></span>
+    <button class="cbtn" id="bigTheme" title="밝게·어둡게"><i data-icon="moon"></i></button>
+    <button class="cbtn" id="bigClose" title="닫기 (Esc)"><i data-icon="x"></i></button>
+  </div>
+  <div class="nx" id="bigNext"></div>
+  <div class="bt" id="bigT">오늘 복용</div>
+  <div class="blist" id="bigList"></div>
+</div>
+
+<!-- Med dialog -->
+<dialog id="medDlg" class="wide">
+  <div class="dlg-head"><h2 id="medT">약 추가</h2><button class="icon-btn" data-close><i data-icon="x"></i></button></div>
+  <div class="dlg-body">
+    <div class="field"><span class="lbl">누가 먹나요</span><div class="whochips" id="mWho"></div></div>
+    <div class="fgrid">
+      <div class="field full"><label for="mName">이름</label><input class="inp" id="mName" maxlength="60" placeholder="예: 혈압약 (암로디핀 5mg)" list="medNames" /></div>
+      <div class="field"><span class="lbl">종류</span><div class="seg" id="mKind"><button data-v="rx">처방약</button><button data-v="otc">일반약</button><button data-v="sup">영양제</button></div></div>
+      <div class="field"><label for="mPurpose">무엇에 먹나요 <span class="v">선택</span></label><input class="inp" id="mPurpose" maxlength="60" placeholder="예: 혈압, 위 보호, 비타민D" /></div>
+    </div>
+    <div class="field"><span class="lbl">모양과 색</span>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center">
+        <div class="shapes" id="mShape"></div>
+        <div class="swatches" id="mColor"></div>
+      </div>
+    </div>
+    <div class="field"><span class="lbl">사진 <span class="v">알약을 구분하기 쉽게, 선택</span></span>
+      <div class="photo-row"><div class="pv" id="mPhotoPv"></div><button class="btn line sm" id="mPhotoBtn"><i data-icon="camera"></i>사진 넣기</button><button class="btn ghost sm" id="mPhotoDel" hidden>지우기</button></div>
+    </div>
+
+    <div class="sec" style="padding:6px 0 0;border:0">
+      <h3>언제 먹나요</h3>
+      <div class="field"><div class="seg" id="mSched"><button data-v="daily">매일</button><button data-v="days">요일</button><button data-v="every">며칠마다</button><button data-v="cycle">복용·휴약</button><button data-v="prn">필요할 때</button></div></div>
+      <div class="field" id="mDaysF" hidden><div class="daypick" id="mDays"></div></div>
+      <div class="field" id="mEveryF" hidden><label>며칠마다 <span class="v">시작일부터 셈</span></label>
+        <div class="num" id="mEvery" data-min="2" data-max="60"><button data-d="-1"><i data-icon="minus"></i></button><input type="number" inputmode="numeric" /><button data-d="1"><i data-icon="plus"></i></button></div></div>
+      <div class="row2" id="mCycleF" hidden>
+        <div class="field"><label>복용 <span class="v">일</span></label><div class="num" id="mCycOn" data-min="1" data-max="90"><button data-d="-1"><i data-icon="minus"></i></button><input type="number" inputmode="numeric" /><button data-d="1"><i data-icon="plus"></i></button></div></div>
+        <div class="field"><label>휴약 <span class="v">일</span></label><div class="num" id="mCycOff" data-min="1" data-max="90"><button data-d="-1"><i data-icon="minus"></i></button><input type="number" inputmode="numeric" /><button data-d="1"><i data-icon="plus"></i></button></div></div>
+      </div>
+      <div id="mTimesF">
+        <div class="field"><span class="lbl">복용 시간과 1회 양</span>
+          <div class="trows" id="mTimes"></div>
+          <div class="quick" id="mQuick"></div>
+        </div>
+        <div class="fgrid">
+          <div class="field"><label for="mMeal">식사와의 관계</label><select class="inp" id="mMeal">
+            <option value="">상관없음</option><option value="before30">식전 30분</option><option value="before">식사 직전</option><option value="with">식사와 함께</option><option value="after">식사 직후</option><option value="after30">식후 30분</option><option value="empty">공복</option><option value="bed">자기 전</option>
+          </select></div>
+          <div class="field"><label for="mUnit">단위</label><select class="inp" id="mUnit">
+            <option>정</option><option>캡슐</option><option>포</option><option>ml</option><option>방울</option><option>회</option><option>개</option><option>스푼</option><option>퍼프</option><option>단위</option><option>장</option>
+          </select></div>
+        </div>
+      </div>
+      <div id="mPrnF" hidden>
+        <div class="fgrid">
+          <div class="field"><label>1회 양</label><input class="inp tc" id="mPrnQty" type="number" min="0.25" step="0.25" inputmode="decimal" /></div>
+          <div class="field"><label for="mUnit2">단위</label><select class="inp" id="mUnit2"></select></div>
+          <div class="field"><label>최소 간격 <span class="v">시간</span></label><input class="inp tc" id="mPrnGap" type="number" min="0" max="48" step="0.5" inputmode="decimal" placeholder="예: 4" /></div>
+          <div class="field"><label>하루 최대 <span class="v">회</span></label><input class="inp tc" id="mPrnMax" type="number" min="0" max="24" inputmode="numeric" placeholder="예: 3" /></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="fgrid">
+      <div class="field"><label for="mStart">시작일</label><input class="inp" id="mStart" type="date" /></div>
+      <div class="field"><label for="mEndMode">언제까지</label><select class="inp" id="mEndMode"><option value="">계속</option><option value="days">며칠분</option><option value="date">날짜 지정</option></select></div>
+      <div class="field" id="mEndDaysF" hidden><label>며칠분 <span class="v" id="mEndDaysV"></span></label><input class="inp tc" id="mEndDays" type="number" min="1" max="365" inputmode="numeric" /></div>
+      <div class="field" id="mEndF" hidden><label for="mEnd">마지막 날</label><input class="inp" id="mEnd" type="date" /></div>
+    </div>
+
+    <div class="fgrid">
+      <div class="field"><label>남은 수량 <span class="v">비우면 재고 안 셈</span></label><input class="inp tc" id="mStock" type="number" min="0" step="0.5" inputmode="decimal" placeholder="예: 30" /></div>
+      <div class="field"><label>미리 알려줄 때 <span class="v">일분 남으면</span></label><input class="inp tc" id="mLow" type="number" min="0" max="60" inputmode="numeric" /></div>
+    </div>
+    
+    <details class="more-f" id="mMore">
+      <summary><i data-icon="chevron"></i>처방·메모 <span class="muted" style="font-weight:500">병원, 약국, 주의사항</span></summary>
+      <div class="fgrid">
+        <div class="field"><label for="mHosp">병원·진료과</label><input class="inp" id="mHosp" maxlength="60" list="hospList" /></div>
+        <div class="field"><label for="mDoc">의사</label><input class="inp" id="mDoc" maxlength="30" /></div>
+        <div class="field"><label for="mPharm">약국</label><input class="inp" id="mPharm" maxlength="60" list="pharmList" /></div>
+        <div class="field"><label for="mRxDate">처방일</label><input class="inp" id="mRxDate" type="date" /></div>
+        <div class="field full"><label for="mNote">주의사항·메모</label><textarea class="inp" id="mNote" maxlength="600" placeholder="예: 자몽주스와 같이 먹지 않기, 졸릴 수 있음"></textarea></div>
+      </div>
+    </details>
+  </div>
+  <div class="dlg-foot">
+    <button class="btn ghost danger" id="mDel" hidden><i data-icon="trash"></i>삭제</button>
+    <span class="grow"></span>
+    <button class="btn ghost" data-close>취소</button>
+    <button class="btn primary" id="mSave">저장</button>
+  </div>
+</dialog>
+
+<!-- Person dialog -->
+<dialog id="pDlg">
+  <div class="dlg-head"><h2 id="pT">가족 추가</h2><button class="icon-btn" data-close><i data-icon="x"></i></button></div>
+  <div class="dlg-body">
+    <div class="fgrid">
+      <div class="field"><label for="pName">이름·호칭</label><input class="inp" id="pName" maxlength="20" placeholder="예: 엄마" /></div>
+      <div class="field"><label for="pRel">관계 <span class="v">선택</span></label><input class="inp" id="pRel" maxlength="20" placeholder="예: 어머니" list="relList" /></div>
+      <div class="field"><label for="pBirth">생년 <span class="v">선택</span></label><input class="inp tc" id="pBirth" type="number" min="1900" max="2100" inputmode="numeric" placeholder="예: 1958" /></div>
+      <div class="field"><label for="pBlood">혈액형 <span class="v">선택</span></label><select class="inp" id="pBlood"><option value="">모름</option><option>A+</option><option>A-</option><option>B+</option><option>B-</option><option>O+</option><option>O-</option><option>AB+</option><option>AB-</option></select></div>
+      <div class="field full"><span class="lbl">색</span><div class="swatches" id="pColor"></div></div>
+      <div class="field full"><label for="pAllergy">알레르기·먹으면 안 되는 약</label><input class="inp" id="pAllergy" maxlength="120" placeholder="예: 페니실린, 아스피린" /></div>
+      <div class="field full"><label for="pCond">앓는 병·다니는 병원</label><input class="inp" id="pCond" maxlength="160" placeholder="예: 고혈압(○○내과), 당뇨" /></div>
+      <div class="field full"><label for="pNote">메모</label><textarea class="inp" id="pNote" maxlength="400"></textarea></div>
+    </div>
+  </div>
+  <div class="dlg-foot">
+    <button class="btn ghost danger" id="pDel" hidden><i data-icon="trash"></i>삭제</button>
+    <span class="grow"></span>
+    <button class="btn ghost" data-close>취소</button>
+    <button class="btn primary" id="pSave">저장</button>
+  </div>
+</dialog>
+
+<!-- Dose menu -->
+<dialog id="doseDlg">
+  <div class="dlg-head"><h2 id="dmT"></h2><button class="icon-btn" data-close><i data-icon="x"></i></button></div>
+  <div class="dlg-body">
+    <p id="dmS"></p>
+    <div class="menu-list" id="dmList"></div>
+  </div>
+</dialog>
+
+<!-- PRN picker -->
+<dialog id="prnDlg">
+  <div class="dlg-head"><h2>지금 먹은 약 기록</h2><button class="icon-btn" data-close><i data-icon="x"></i></button></div>
+  <div class="dlg-body">
+    <p>정해진 시간 없이 먹은 약을 기록해요. 진통제, 소화제처럼 필요할 때 먹는 약이나 일정 밖에 먹은 약에 쓰세요.</p>
+    <div class="menu-list" id="prnList"></div>
+  </div>
+</dialog>
+
+<!-- Refill -->
+<dialog id="refDlg">
+  <div class="dlg-head"><h2 id="refT">약 받아 오기</h2><button class="icon-btn" data-close><i data-icon="x"></i></button></div>
+  <div class="dlg-body">
+    <p id="refS"></p>
+    <div class="fgrid">
+      <div class="field"><label>받은 수량</label><input class="inp tc" id="refQty" type="number" min="0" step="0.5" inputmode="decimal" /></div>
+      <div class="field"><label>받은 날</label><input class="inp" id="refDate" type="date" /></div>
+    </div>
+    <div class="quick" id="refQuick"></div>
+    <label class="switch"><span>새 처방으로 기간 늘리기<small>마지막 날이 있으면 받은 만큼 뒤로 미뤄요</small></span><input type="checkbox" id="refExtend" /></label>
+    <div class="btn-row"><button class="btn ghost" id="refSet" title="지금 남은 수량을 직접 맞추기">수량 직접 맞추기</button><span class="grow"></span><button class="btn ghost" data-close>취소</button><button class="btn primary" id="refOk">더하기</button></div>
+  </div>
+</dialog>
+
+<!-- Settings -->
+<dialog id="setDlg">
+  <div class="dlg-head"><h2>설정</h2><button class="icon-btn" data-close><i data-icon="x"></i></button></div>
+  <div class="dlg-body">
+    <div class="sec" style="padding-top:0">
+      <h3>식사·취침 시간 <span class="v">빠른 시간 버튼에 써요</span></h3>
+      <div class="row2">
+        <div class="field"><label>아침</label><input class="inp tc" type="time" data-meal="morning" /></div>
+        <div class="field"><label>점심</label><input class="inp tc" type="time" data-meal="lunch" /></div>
+        <div class="field"><label>저녁</label><input class="inp tc" type="time" data-meal="dinner" /></div>
+        <div class="field"><label>자기 전</label><input class="inp tc" type="time" data-meal="bed" /></div>
+      </div>
+    </div>
+    <div class="sec">
+      <h3>기록</h3>
+      <div class="field"><label>못 먹은 것으로 볼 때</label><div class="seg" id="setMiss"><button data-v="60">1시간 지나면</button><button data-v="120">2시간</button><button data-v="240">4시간</button><button data-v="0">그날이 지나면</button></div></div>
+      <label class="switch"><span>대기 화면에서 화면 꺼짐 방지</span><input type="checkbox" data-bool="wake" /></label>
+    </div>
+    <div class="sec">
+      <h3>보기</h3>
+      <label class="switch"><span>글자 크게<small>어르신이 보시기 편하게</small></span><input type="checkbox" data-bool="bigText" /></label>
+      <label class="switch"><span>먹은 약은 아래로 내리기</span><input type="checkbox" data-bool="sinkDone" /></label>
+      <label class="switch"><span>먹으면 재고에서 빼기</span><input type="checkbox" data-bool="autoStock" /></label>
+    </div>
+    <div class="sec">
+      <h3>데이터</h3>
+      <div class="btns">
+        <button class="btn line sm" id="sampleBtn"><i data-icon="sparkle"></i>예시 불러오기</button>
+        <button class="btn line sm danger" id="resetBtn"><i data-icon="trash"></i>모두 지우기</button>
+      </div>
+    </div>
+  </div>
+</dialog>
+
+<!-- Help -->
+<dialog id="helpDlg">
+  <div class="dlg-head"><h2>Pillser 도움말</h2><button class="icon-btn" data-close><i data-icon="x"></i></button></div>
+  <div class="dlg-body help">
+    <div><h4>무엇을 할 수 있나요</h4><ul>
+      <li><b>오늘</b>: 시간별로 먹을 약을 보여 줘요. 동그라미를 누르면 먹은 것으로 기록돼요. 길게 누르거나 ⋯ 를 누르면 건너뛰기, 먹은 시각 고치기를 할 수 있어요.</li>
+      <li><b>약 목록</b>: 매일, 요일, 며칠마다, 복용·휴약(예: 21일 복용 7일 휴약), 필요할 때 먹는 약까지 등록해요.</li>
+      <li><b>재고·처방</b>: 남은 수량과 며칠분 남았는지, 처방이 언제 끝나는지 보여 줘요.</li>
+      <li><b>기록</b>: 달력으로 복용률을 보고, 병원에 가져갈 복약 기록표를 인쇄하거나 PDF로 저장해요.</li>
+      <li><b>가족</b>: 가족마다 색을 정하고 알레르기, 앓는 병을 적어 두세요. 위쪽 이름을 눌러 한 사람만 볼 수 있어요.</li>
+      <li><b>대기 화면</b>: 태블릿을 거실이나 부엌에 세워 두고 큰 글씨로 보며 체크할 때 좋아요.</li>
+    </ul></div>
+    <div><h4>단축키</h4><div class="keys">
+      <kbd>←</kbd><span>전날 · <kbd>→</kbd> 다음날 · <kbd>T</kbd> 오늘</span>
+      <kbd>N</kbd><span>약 추가</span>
+      <kbd>F</kbd><span>대기 화면</span>
+      <kbd>1</kbd><span>~ <kbd>5</kbd> 탭 이동</span>
+      <kbd>Esc</kbd><span>대기 화면 닫기</span>
+    </div></div>
+    <div class="note">Pillser는 복약을 돕는 기록 도구예요. 약의 용량, 함께 먹어도 되는지는 반드시 의사·약사에게 물어보세요.</div>
+  </div>
+</dialog>
+
+<!-- Confirm -->
+<dialog id="cfDlg">
+  <div class="dlg-head"><h2 id="cfT"></h2></div>
+  <div class="dlg-body"><p id="cfM"></p><div class="btn-row"><button class="btn ghost" id="cfNo">취소</button><button class="btn primary" id="cfOk">확인</button></div></div>
+</dialog>
+
+<datalist id="medNames"></datalist>
+<datalist id="hospList"></datalist>
+<datalist id="pharmList"></datalist>
+<datalist id="relList"><option>나</option><option>배우자</option><option>어머니</option><option>아버지</option><option>아들</option><option>딸</option><option>할머니</option><option>할아버지</option><option>반려동물</option></datalist>
+
+<div id="print"></div>
+<div id="toast" role="status" aria-live="polite"><span id="toastMsg"></span><button id="toastAct" hidden></button></div>
+<script>
+'use strict';
+/* Pillser · outgrid — browser-only medication reminder. Nothing leaves the device. */
+const ICONS = {
+  play: '<path d="M7.5 5.5v13l11-6.5z"/>',
+  pause: '<path d="M9 6v12M15 6v12"/>',
+  reset: '<path d="M4.5 12a7.5 7.5 0 1 0 2.2-5.3"/><path d="M4.5 4.5v4h4"/>',
+  skip: '<path d="M6 5.5v13l9-6.5z"/><path d="M18 5.5v13"/>',
+  prev: '<path d="M18 5.5v13l-9-6.5z"/><path d="M6 5.5v13"/>',
+  plus: '<path d="M12 5v14M5 12h14"/>',
+  minus: '<path d="M5 12h14"/>',
+  repeat: '<path d="M4.5 11V9a3 3 0 0 1 3-3h11"/><path d="m15.5 3 3 3-3 3"/><path d="M19.5 13v2a3 3 0 0 1-3 3h-11"/><path d="m8.5 21-3-3 3-3"/>',
+  chart: '<path d="M4 20h16"/><rect x="5.5" y="11" width="3" height="6.5" rx="1"/><rect x="10.5" y="6.5" width="3" height="11" rx="1"/><rect x="15.5" y="9" width="3" height="8.5" rx="1"/>',
+  volume: '<path d="M4.5 9.5v5h3.5l4.5 4v-13l-4.5 4z"/><path d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11"/>',
+  mute: '<path d="M4.5 9.5v5h3.5l4.5 4v-13l-4.5 4z"/><path d="m16 9.5 5 5M21 9.5l-5 5"/>',
+  help: '<circle cx="12" cy="12" r="8.5"/><path d="M9.6 9.5a2.5 2.5 0 0 1 4.8.9c0 1.7-2.4 2-2.4 3.6M12 16.8v.1"/>',
+  gear: '<circle cx="12" cy="12" r="3"/><path d="M19.4 13.5a7.6 7.6 0 0 0 0-3l2-1.5-2-3.4-2.3.9a7.5 7.5 0 0 0-2.6-1.5L14 2.5h-4l-.5 2.5A7.5 7.5 0 0 0 6.9 6.5l-2.3-.9-2 3.4 2 1.5a7.6 7.6 0 0 0 0 3l-2 1.5 2 3.4 2.3-.9a7.5 7.5 0 0 0 2.6 1.5l.5 2.5h4l.5-2.5a7.5 7.5 0 0 0 2.6-1.5l2.3.9 2-3.4z"/>',
+  expand: '<path d="M4.5 9V4.5H9M15 4.5h4.5V9M19.5 15v4.5H15M9 19.5H4.5V15"/>',
+  trash: '<path d="M4.5 7h15"/><path d="M9.5 7V5.2a1.2 1.2 0 0 1 1.2-1.2h2.6a1.2 1.2 0 0 1 1.2 1.2V7"/><path d="m6.5 7 .9 11.3a2 2 0 0 0 2 1.7h5.2a2 2 0 0 0 2-1.7L17.5 7"/>',
+  save: '<path d="M5 4.5h11l3 3V19a.5.5 0 0 1-.5.5h-13A.5.5 0 0 1 5 19z"/><path d="M8.5 4.5v4h6v-4M8 19.5v-5.5h8v5.5"/>',
+  download: '<path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/>',
+  upload: '<path d="M12 16V5"/><path d="m7 9.5 5-5 5 5"/><path d="M5 20h14"/>',
+  copy: '<rect x="8.5" y="8.5" width="11" height="11" rx="2.2"/><path d="M15.5 8.5V6.2A1.7 1.7 0 0 0 13.8 4.5H6.2A1.7 1.7 0 0 0 4.5 6.2v7.6a1.7 1.7 0 0 0 1.7 1.7h2.3"/>',
+  table: '<rect x="3.5" y="5" width="17" height="14" rx="2"/><path d="M3.5 10h17M3.5 14.5h17M9.5 10v9"/>',
+  shield: '<path d="M12 3.5 5 6.2v5.3c0 4.3 3 7.6 7 9 4-1.4 7-4.7 7-9V6.2z"/><path d="m9.2 12 2 2 3.8-4"/>',
+  chevron: '<path d="m6 9 6 6 6-6"/>',
+  check: '<path d="m5 12.5 4.5 4.5L19 7.5"/>',
+  x: '<path d="M6 6l12 12M18 6 6 18"/>',
+  bell: '<path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 2h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/>',
+  moon: '<path d="M19.5 14.5A8 8 0 0 1 9.5 4.5a8 8 0 1 0 10 10z"/>',
+  pen: '<path d="M14.5 5.5 18.5 9.5"/><path d="M4 20l1-4.5L15.8 4.7a2 2 0 0 1 2.8 0l.7.7a2 2 0 0 1 0 2.8L8.5 19 4 20z"/>',
+  sun: '<circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6 7 7M17 17l1.4 1.4M5.6 18.4 7 17M17 7l1.4-1.4"/>',
+  pill: '<rect x="3.5" y="8.5" width="17" height="7" rx="3.5" transform="rotate(-35 12 12)"/><path d="M10 9.1 14 14.9"/>',
+  box: '<path d="M4 8.5 12 4.5l8 4v7l-8 4-8-4z"/><path d="M4 8.5l8 4 8-4M12 12.5v7"/>',
+  calendar: '<rect x="4" y="5.5" width="16" height="14" rx="2.5"/><path d="M4 10h16M8.5 3.5v4M15.5 3.5v4"/>',
+  users: '<circle cx="9" cy="9" r="3.2"/><path d="M3.5 19a5.5 5.5 0 0 1 11 0"/><circle cx="16.5" cy="9.5" r="2.6"/><path d="M15.5 14.2a4.6 4.6 0 0 1 5 4.8"/>',
+  left: '<path d="m14.5 6-6 6 6 6"/>',
+  right: '<path d="m9.5 6 6 6-6 6"/>',
+  archive: '<rect x="3.5" y="4.5" width="17" height="4.5" rx="1.2"/><path d="M5 9v9.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V9M10 13h4"/>',
+  print: '<path d="M7 9V4.5h10V9"/><rect x="4" y="9" width="16" height="7.5" rx="2"/><path d="M7 14h10v6H7z"/>',
+  camera: '<path d="M4 8.5a1.5 1.5 0 0 1 1.5-1.5h2.2l1.5-2h5.6l1.5 2h2.2A1.5 1.5 0 0 1 20 8.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 17.5z"/><circle cx="12" cy="12.8" r="3.3"/>',
+  sparkle: '<path d="M12 4l1.8 5.2L19 11l-5.2 1.8L12 18l-1.8-5.2L5 11l5.2-1.8z"/>',
+  clock: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
+  undo: '<path d="M9 14 4.5 9.5 9 5"/><path d="M4.5 9.5H14a5.5 5.5 0 0 1 0 11h-3"/>',
+  ban: '<circle cx="12" cy="12" r="8.5"/><path d="m6 6 12 12"/>',
+  alert: '<path d="M12 4 2.8 19.5h18.4z"/><path d="M12 10v4.5M12 17v.1"/>',
+  info: '<circle cx="12" cy="12" r="8.5"/><path d="M12 11v5M12 8v.1"/>',
+  bellOff: '<path d="M6 16.5V11a6 6 0 0 1 9.5-4.9M18 11v5.5l1.5 2h-15"/><path d="M10 20.5a2 2 0 0 0 4 0M4 4l16 16"/>',
+  more: '<circle cx="6" cy="12" r="1.2" fill="currentColor"/><circle cx="12" cy="12" r="1.2" fill="currentColor"/><circle cx="18" cy="12" r="1.2" fill="currentColor"/>',
+  refill: '<path d="M4 8.5 12 4.5l8 4v7l-8 4-8-4z"/><path d="M12 9v6M9 12h6"/>',
+  dup: '<rect x="8.5" y="8.5" width="11" height="11" rx="2.2"/><path d="M15.5 8.5V6.2A1.7 1.7 0 0 0 13.8 4.5H6.2A1.7 1.7 0 0 0 4.5 6.2v7.6a1.7 1.7 0 0 0 1.7 1.7h2.3"/><path d="M14 12v4M12 14h4"/>',
+  eye: '<path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="2.8"/>',
+  phone: '<rect x="6.5" y="3" width="11" height="18" rx="2.2"/><path d="M10.5 18h3"/>',
+};
+function icon(n, cls = '') { return `<svg class="i ${cls}" viewBox="0 0 24 24" aria-hidden="true">${ICONS[n] || ''}</svg>`; }
+function hydrateIcons(root = document) { root.querySelectorAll('i[data-icon]').forEach(el => { const t = document.createElement('template'); t.innerHTML = icon(el.dataset.icon, el.className); el.replaceWith(t.content.firstChild); }); }
+
+/* ---------- Helpers ---------- */
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const pad2 = n => String(n).padStart(2, '0');
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+const store = {
+  get(k, d) { try { const v = localStorage.getItem('pillser.' + k); return v == null ? d : JSON.parse(v); } catch { return d; } },
+  set(k, v) { try { localStorage.setItem('pillser.' + k, JSON.stringify(v)); return true; } catch { return false; } },
+};
+function setHTML(el, s) { if (el && el._h !== s) { el._h = s; el.innerHTML = s; } }
+function setText(el, s) { if (el && el.textContent !== s) el.textContent = s; }
+const WD = ['일', '월', '화', '수', '목', '금', '토'];
+const WD_ICS = ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'];
+function dk(d = new Date()) { d = new Date(d); return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`; }
+function pd(s) { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); }
+function addDays(s, n) { const d = pd(s); d.setDate(d.getDate() + n); return dk(d); }
+function diffDays(a, b) { const A = pd(a), B = pd(b); return Math.round((Date.UTC(B.getFullYear(), B.getMonth(), B.getDate()) - Date.UTC(A.getFullYear(), A.getMonth(), A.getDate())) / 864e5); }
+function tmin(t) { const [h, m] = t.split(':').map(Number); return h * 60 + m; }
+function atTime(day, t) { const d = pd(day); const m = tmin(t); d.setHours(Math.floor(m / 60), m % 60, 0, 0); return d.getTime(); }
+function hm(ts) { const d = new Date(ts); return `${pad2(d.getHours())}:${pad2(d.getMinutes())}`; }
+function fmtDay(s, long = false) { const d = pd(s); return long ? `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일 (${WD[d.getDay()]})` : `${d.getMonth() + 1}월 ${d.getDate()}일 (${WD[d.getDay()]})`; }
+function fmtMD(s) { const d = pd(s); return `${d.getMonth() + 1}/${d.getDate()}`; }
+function fmtQ(q) { return (Math.round(q * 100) / 100).toString(); }
+function relMin(min) { min = Math.round(min); if (min < 60) return min + '분'; const h = Math.floor(min / 60), m = min % 60; if (h < 24) return h + '시간' + (m ? ' ' + m + '분' : ''); const d = Math.floor(h / 24); return d + '일' + (h % 24 ? ' ' + (h % 24) + '시간' : ''); }
+function ampm(t) { const m = tmin(t), h = Math.floor(m / 60); return (h < 12 ? '오전 ' : '오후 ') + ((h % 12) || 12) + ':' + pad2(m % 60); }
+function download(name, data, type) {
+  const blob = data instanceof Blob ? data : new Blob([data], { type });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name;
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+}
+function getPath(o, p) { return p.split('.').reduce((a, k) => a?.[k], o); }
+function setPath(o, p, v) { const ks = p.split('.'); const last = ks.pop(); ks.reduce((a, k) => a[k] ??= {}, o)[last] = v; }
+function josa(word, a, b) { const c = (word || '').charCodeAt(word.length - 1); if (c < 0xAC00 || c > 0xD7A3) return word + a; return word + ((c - 0xAC00) % 28 ? a : b); }
+
+let toastTimer;
+function toast(msg, { err = false, action, onAction, ms = 3200 } = {}) {
+  const t = $('#toast'); $('#toastMsg').textContent = msg; t.classList.toggle('err', err);
+  const b = $('#toastAct'); b.hidden = !action; b.textContent = action || ''; b.onclick = () => { t.classList.remove('show'); onAction && onAction(); };
+  t.classList.add('show'); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), action ? Math.max(ms, 6000) : ms);
+}
+function confirmDlg(title, msg, okLabel = '확인', danger = false) {
+  return new Promise(res => {
+    const d = $('#cfDlg'); $('#cfT').textContent = title; $('#cfM').textContent = msg;
+    const ok = $('#cfOk'); ok.textContent = okLabel; ok.className = 'btn ' + (danger ? 'rec' : 'primary');
+    const done = v => { d.close(); res(v); };
+    ok.onclick = () => done(true); $('#cfNo').onclick = () => done(false); d.oncancel = e => { e.preventDefault(); done(false); };
+    d.showModal();
+  });
+}
+
+/* ---------- Constants ---------- */
+const PILL_COLORS = ['#FFFFFF', '#F3E7C9', '#F2C94C', '#E9884A', '#EE9BB0', '#C9473F', '#5B8DD6', '#5FA777', '#8A5A3B', '#9A7BC9', '#A9ADA6', '#2F3A36'];
+const PERSON_COLORS = ['#244D3A', '#8A5A3B', '#3E6F73', '#B5443B', '#9A7B3F', '#6B5B95', '#C06C84', '#4A6FA5'];
+const SHAPES = [['round', '둥근 알약'], ['oval', '타원 알약'], ['capsule', '캡슐'], ['softgel', '연질 캡슐'], ['powder', '가루약'], ['liquid', '물약·시럽'], ['drop', '안약·점적'], ['tube', '연고·크림'], ['inhaler', '흡입기'], ['syringe', '주사'], ['patch', '패치·파스']];
+const KIND = { rx: '처방약', otc: '일반약', sup: '영양제' };
+const MEAL = { '': '', before30: '식전 30분', before: '식사 직전', with: '식사와 함께', after: '식사 직후', after30: '식후 30분', empty: '공복', bed: '자기 전' };
+const SCHED_LBL = { daily: '매일', days: '요일', every: '며칠마다', cycle: '복용·휴약', prn: '필요할 때' };
+
+function shade(hex, f) { // f<0 darker, f>0 lighter
+  const n = parseInt(hex.slice(1), 16); let r = n >> 16, g = (n >> 8) & 255, b = n & 255;
+  const t = f < 0 ? 0 : 255, p = Math.abs(f);
+  r = Math.round((t - r) * p + r); g = Math.round((t - g) * p + g); b = Math.round((t - b) * p + b);
+  return '#' + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+}
+function pillSvg(shape = 'round', c = '#FFFFFF', size = 30) {
+  const e = shade(c, -0.28), l = shade(c, 0.55), st = `stroke="${c.toUpperCase() === '#FFFFFF' ? '#C9C2B2' : e}" stroke-width="1.4"`;
+  let g = '';
+  switch (shape) {
+    case 'oval': g = `<ellipse cx="20" cy="20" rx="15" ry="10" fill="${c}" ${st}/><path d="M9 20h22" stroke="rgba(0,0,0,.16)" stroke-width="1.4"/>`; break;
+    case 'capsule': g = `<g transform="rotate(-35 20 20)"><path d="M20 13H12a7 7 0 0 0 0 14h8z" fill="${c}" ${st}/><path d="M20 13h8a7 7 0 0 1 0 14h-8z" fill="${l}" ${st}/></g>`; break;
+    case 'softgel': g = `<ellipse cx="20" cy="20" rx="14" ry="10" fill="${c}" ${st} opacity=".92"/><ellipse cx="15" cy="16" rx="5" ry="2.4" fill="#fff" opacity=".55"/>`; break;
+    case 'powder': g = `<path d="M9 9l2.2-2 2.2 2 2.2-2 2.2 2 2.2-2 2.2 2 2.2-2 2.2 2 2.2-2 2.2 2V32a1.5 1.5 0 0 1-1.5 1.5h-19A1.5 1.5 0 0 1 9 32z" fill="${l}" ${st}/><path d="M13 17h14M13 22h14M13 27h9" stroke="${e}" stroke-width="1.4" stroke-linecap="round" opacity=".55"/>`; break;
+    case 'liquid': g = `<path d="M16 5h8v5l3.5 3.5V32a2 2 0 0 1-2 2h-11a2 2 0 0 1-2-2V13.5L16 10z" fill="#fff" stroke="#B9B2A2" stroke-width="1.4"/><path d="M13.9 20h12.2v12a1 1 0 0 1-1 1H14.9a1 1 0 0 1-1-1z" fill="${c}" ${st}/>`; break;
+    case 'drop': g = `<path d="M20 5c6 8 10.5 13 10.5 18.5a10.5 10.5 0 0 1-21 0C9.5 18 14 13 20 5z" fill="${c}" ${st}/><path d="M15 23a5 5 0 0 0 4 5" stroke="#fff" stroke-width="2" stroke-linecap="round" opacity=".6" fill="none"/>`; break;
+    case 'tube': g = `<g transform="rotate(-35 20 20)"><path d="M6 14h22l4 3v6l-4 3H6z" fill="${c}" ${st}/><rect x="32" y="17.5" width="4" height="5" rx="1" fill="#B9B2A2"/><path d="M6 14v12" stroke="${e}" stroke-width="2"/></g>`; break;
+    case 'inhaler': g = `<path d="M14 6h8a2 2 0 0 1 2 2v16H12V8a2 2 0 0 1 2-2z" fill="${l}" ${st}/><path d="M12 22h16a3 3 0 0 1 3 3v6a2 2 0 0 1-2 2H14a2 2 0 0 1-2-2z" fill="${c}" ${st}/>`; break;
+    case 'syringe': g = `<g transform="rotate(-45 20 20)"><rect x="9" y="16" width="18" height="8" rx="1.2" fill="#fff" stroke="#B9B2A2" stroke-width="1.4"/><rect x="10" y="17.2" width="10" height="5.6" fill="${c}" opacity=".9"/><path d="M27 20h8M5 20h4M5 16.5v7" stroke="#8E877A" stroke-width="1.6" stroke-linecap="round"/></g>`; break;
+    case 'patch': g = `<rect x="7" y="10" width="26" height="20" rx="5" fill="${l}" ${st}/><rect x="13" y="14" width="14" height="12" rx="2.5" fill="${c}" opacity=".85"/>`; break;
+    default: g = `<circle cx="20" cy="20" r="13" fill="${c}" ${st}/><path d="M10 20h20" stroke="rgba(0,0,0,.16)" stroke-width="1.4"/>`;
+  }
+  return `<svg viewBox="0 0 40 40" width="${size}" height="${size}" aria-hidden="true">${g}</svg>`;
+}
+function medPic(m, size = 30) { return m.photo ? `<img src="${m.photo}" alt="">` : pillSvg(m.shape, m.color, size); }
+
+/* ---------- Settings & data ---------- */
+const DEF = {
+  meals: { morning: '08:00', lunch: '12:30', dinner: '18:30', bed: '22:00' },
+  miss: 120,
+  wake: true, bigText: false, sinkDone: false, autoStock: true, bigDark: false,
+  who: '', tab: 'today', showOff: false, kind: '',
+};
+function merge(d, s) { const o = Array.isArray(d) ? [...d] : { ...d }; if (s && typeof s === 'object') for (const k in s) o[k] = (d[k] && typeof d[k] === 'object' && !Array.isArray(d[k])) ? merge(d[k], s[k]) : s[k]; return o; }
+let S = merge(DEF, store.get('settings', {}));
+const saveS = () => store.set('settings', S);
+
+const EMPTY = () => ({ people: [], meds: [], logs: {}, prn: [], refills: [] });
+let D = Object.assign(EMPTY(), store.get('data', {}));
+let saveTimer = null;
+function saveD(now = false) {
+  clearTimeout(saveTimer);
+  const f = () => { if (!store.set('data', D)) toast('저장 공간이 부족해요. 약 사진을 지우거나 백업 후 오래된 기록을 정리하세요.', { err: true, ms: 6000 }); };
+  if (now) f(); else saveTimer = setTimeout(f, 250);
+}
+window.addEventListener('pagehide', () => saveD(true));
+let F = store.get('fired', {});   // { low: {medId: day} }: low-stock notice shown once a day
+const saveF = () => store.set('fired', F);
+function pruneBook() {
+  const cut = addDays(dk(), -3);
+  for (const k in F) if (k !== 'low' && k.slice(0, 10) < cut) delete F[k];
+  saveF();
+}
+
+if (!D.people.length) { D.people.push({ id: uid(), name: '나', rel: '나', color: PERSON_COLORS[0] }); saveD(true); }
+
+const person = id => D.people.find(p => p.id === id) || D.people[0];
+const medById = id => D.meds.find(m => m.id === id);
+const whoOk = m => !S.who || m.who === S.who;
+function pc(m) { return (person(m.who) || {}).color || '#999'; }
+function whoChip(id) { const p = person(id); return p ? `<span class="who" style="--pc:${p.color}">${esc(p.name)}</span>` : ''; }
+const showWho = () => D.people.length > 1;
+
+/* ---------- Schedule ---------- */
+function isEnded(m, day = dk()) { return !!(m.end && day > m.end); }
+function isOff(m, day = dk()) { return m.paused || isEnded(m, day); }
+function activeOn(m, day) {
+  if (m.sched.type === 'prn') return false;
+  if (m.start && day < m.start) return false;
+  if (m.end && day > m.end) return false;
+  if (m.paused && (!m.pausedAt || day >= m.pausedAt)) return false;
+  const st = m.start || day, n = diffDays(st, day);
+  switch (m.sched.type) {
+    case 'days': return (m.sched.days || []).includes(pd(day).getDay());
+    case 'every': return n % Math.max(1, m.sched.every || 2) === 0;
+    case 'cycle': { const on = m.sched.on || 21, off = m.sched.off || 7; return ((n % (on + off)) + (on + off)) % (on + off) < on; }
+    default: return true;
+  }
+}
+function dosesFor(day, filter = true) {
+  const out = [];
+  for (const m of D.meds) {
+    if (filter && !whoOk(m)) continue;
+    if (!activeOn(m, day)) continue;
+    const born = m.created && dk(m.created) === day && m.start === day ? m.created : 0;
+    for (const tt of m.times) { const key = m.id + '@' + tt.t; if (born && atTime(day, tt.t) < born - 15 * 60e3 && !D.logs[day]?.[key]) continue; out.push({ m, t: tt.t, q: tt.q, key, day }); }
+  }
+  const L = D.logs[day];
+  if (L) for (const k in L) {
+    if (out.some(o => o.key === k)) continue;
+    const [id, t] = k.split('@'); const m = medById(id);
+    if (m && (!filter || whoOk(m))) out.push({ m, t, q: L[k].q ?? 1, key: k, day, orphan: true });
+  }
+  const order = id => D.people.findIndex(p => p.id === id);
+  out.sort((a, b) => a.t.localeCompare(b.t) || order(a.m.who) - order(b.m.who) || a.m.name.localeCompare(b.m.name));
+  return out;
+}
+const getLog = d => D.logs[d.day]?.[d.key];
+function status(d, now = Date.now()) {
+  const log = getLog(d);
+  if (log) return log.s === 't' ? 'taken' : 'skipped';
+  const T = atTime(d.day, d.t);
+  if (now < T) return 'upcoming';
+  const missAt = S.miss ? T + S.miss * 60e3 : atTime(addDays(d.day, 1), '00:00');
+  if (now >= missAt) return 'missed';
+  return now - T < 15 * 60e3 ? 'due' : 'late';
+}
+function dailyUse(m) {
+  if (m.sched.type === 'prn') {
+    const since = Date.now() - 14 * 864e5; const q = D.prn.filter(x => x.med === m.id && x.at >= since).reduce((a, x) => a + x.q, 0);
+    return q / 14;
+  }
+  const per = m.times.reduce((a, t) => a + (+t.q || 0), 0);
+  const f = m.sched.type === 'days' ? (m.sched.days || []).length / 7 : m.sched.type === 'every' ? 1 / Math.max(1, m.sched.every || 2) : m.sched.type === 'cycle' ? (m.sched.on || 21) / ((m.sched.on || 21) + (m.sched.off || 7)) : 1;
+  return per * f;
+}
+function stockInfo(m) {
+  if (m.stock == null || m.stock === '') return null;
+  const use = isOff(m) ? 0 : dailyUse(m);
+  const days = use > 0 ? Math.floor(m.stock / use + 1e-9) : Infinity;
+  const low = m.stock <= 0 ? 'out' : days <= (m.low ?? 7) ? 'low' : '';
+  return { stock: m.stock, use, days, low, runOut: isFinite(days) ? addDays(dk(), days) : null };
+}
+function lowMeds(filter = true) { return D.meds.filter(m => (!filter || whoOk(m)) && !isOff(m)).map(m => ({ m, s: stockInfo(m) })).filter(x => x.s && x.s.low).sort((a, b) => a.s.days - b.s.days); }
+function endingMeds(filter = true) { const t = dk(); return D.meds.filter(m => (!filter || whoOk(m)) && !m.paused && m.end && m.end >= t && diffDays(t, m.end) <= 3); }
+function schedText(m) {
+  const s = m.sched; let a;
+  switch (s.type) {
+    case 'days': a = (s.days || []).slice().sort((x, y) => ((x + 6) % 7) - ((y + 6) % 7)).map(d => WD[d]).join('·') || '요일 없음'; break;
+    case 'every': a = `${s.every || 2}일마다`; break;
+    case 'cycle': a = `${s.on || 21}일 복용 · ${s.off || 7}일 휴약`; break;
+    case 'prn': a = '필요할 때' + (m.prn?.gap ? ` · ${m.prn.gap}시간 간격` : '') + (m.prn?.max ? ` · 하루 ${m.prn.max}회까지` : ''); break;
+    default: a = '매일';
+  }
+  return a;
+}
+function qtyText(m, q) { return `${fmtQ(q)}${m.unit || '정'}`; }
+function slotLabel(t) {
+  const m = tmin(t), M = S.meals, near = (x, r = 75) => Math.abs(m - tmin(x)) <= r;
+  if (near(M.bed, 60) || m >= 23 * 60) return '자기 전';
+  if (near(M.morning, 100) && m < 11 * 60) return '아침';
+  if (near(M.lunch)) return '점심';
+  if (near(M.dinner, 100)) return '저녁';
+  return m < 5 * 60 ? '새벽' : m < 12 * 60 ? '오전' : m < 18 * 60 ? '오후' : '밤';
+}
+function nextDoses(now = Date.now(), filter = true) {
+  for (let i = 0; i < 8; i++) {
+    const day = addDays(dk(now), i);
+    const list = dosesFor(day, filter).filter(d => !getLog(d) && atTime(day, d.t) > now);
+    if (list.length) { const t = list[0].t; return { day, t, at: atTime(day, t), list: list.filter(d => d.t === t) }; }
+  }
+  return null;
+}
+
+/* ---------- Logging ---------- */
+let viewDay = dk();
+function setLog(d, s, at) {
+  const L = D.logs[d.day] ??= {};
+  const prev = L[d.key]; if (prev) clearLog(d, true);
+  const m = d.m; let stk = 0;
+  if (s === 't' && S.autoStock && m.stock != null && m.stock !== '') { stk = Math.min(m.stock, d.q); m.stock = Math.max(0, Math.round((m.stock - d.q) * 100) / 100); }
+  const T = atTime(d.day, d.t);
+  L[d.key] = { s, at: at ?? (d.day === dk() ? Date.now() : T), q: d.q, stk };
+  saveD(); checkLowNotify(m);
+}
+function clearLog(d, silent) {
+  const L = D.logs[d.day]; if (!L || !L[d.key]) return;
+  const log = L[d.key];
+  if (log.stk && d.m.stock != null && d.m.stock !== '') d.m.stock = Math.round((d.m.stock + log.stk) * 100) / 100;
+  delete L[d.key]; if (!Object.keys(L).length) delete D.logs[d.day];
+  if (!silent) saveD();
+}
+function take(list, s = 't') {
+  list = list.filter(d => s === 't' ? getLog(d)?.s !== 't' : !getLog(d));
+  if (!list.length) return;
+  const snap = list.map(d => ({ d, prev: getLog(d) ? { ...getLog(d) } : null }));
+  list.forEach(d => setLog(d, s));
+  render();
+  if (s === 't') { const n = list.length; toast(n === 1 ? `${list[0].m.name} 먹음` : `${n}개 먹음`, { action: '되돌리기', onAction: () => { snap.forEach(({ d, prev }) => { clearLog(d); if (prev) { (D.logs[d.day] ??= {})[d.key] = prev; } }); saveD(); render(); } }); }
+  else toast(list.length === 1 ? `${list[0].m.name} 건너뜀` : `${list.length}개 건너뜀`, { action: '되돌리기', onAction: () => { snap.forEach(({ d }) => clearLog(d)); render(); } });
+}
+function toggleDose(d) {
+  const log = getLog(d);
+  if (log) { clearLog(d); render(); toast(`${d.m.name} 기록을 지웠어요`); }
+  else take([d]);
+}
+function prnTake(m, q = m.prn?.q || 1) {
+  const now = Date.now(), today = dk();
+  const todays = D.prn.filter(x => x.med === m.id && dk(x.at) === today);
+  const last = D.prn.filter(x => x.med === m.id).sort((a, b) => b.at - a.at)[0];
+  const warn = [];
+  if (m.prn?.max && todays.length >= m.prn.max) warn.push(`오늘 이미 ${todays.length}번 먹었어요 (하루 ${m.prn.max}회까지)`);
+  if (m.prn?.gap && last && now - last.at < m.prn.gap * 36e5) warn.push(`마지막으로 먹은 지 ${relMin((now - last.at) / 6e4)}밖에 안 됐어요 (${m.prn.gap}시간 간격)`);
+  const go = () => {
+    let stk = 0;
+    if (S.autoStock && m.stock != null && m.stock !== '') { stk = Math.min(m.stock, q); m.stock = Math.max(0, Math.round((m.stock - q) * 100) / 100); }
+    const rec = { id: uid(), med: m.id, at: now, q, stk };
+    D.prn.push(rec); saveD(); checkLowNotify(m); render();
+    toast(`${m.name} ${qtyText(m, q)} 기록`, { action: '되돌리기', onAction: () => { removePrn(rec.id); } });
+  };
+  if (warn.length) confirmDlg('정말 먹을까요?', warn.join('\n') + '\n그래도 기록할까요? 복용량은 의사·약사의 안내를 따르세요.', '기록하기', true).then(ok => ok && go());
+  else go();
+}
+function removePrn(id) {
+  const i = D.prn.findIndex(x => x.id === id); if (i < 0) return;
+  const r = D.prn[i], m = medById(r.med);
+  if (m && r.stk && m.stock != null && m.stock !== '') m.stock = Math.round((m.stock + r.stk) * 100) / 100;
+  D.prn.splice(i, 1); saveD(); render();
+}
+
+/* ---------- Low stock notice (once a day per med, on screen only) ---------- */
+function checkLowNotify(m) {
+  const s = stockInfo(m); if (!s || !s.low) return;
+  F.low ??= {}; const day = dk();
+  if (F.low[m.id] === day) return;
+  F.low[m.id] = day; saveF();
+  const msg = s.low === 'out' ? `${m.name}이(가) 다 떨어졌어요` : `${m.name} ${s.days}일분 남았어요`;
+  toast(msg + '. 재고·처방 탭에서 확인하세요.', { ms: 5000 });
+}
+
+/* ---------- Ticker: keeps statuses and the clock fresh ---------- */
+let tickIv = null, tickerMs = 0, lastDay = dk();
+function ensureTicker() {
+  const ms = big.on ? 1000 : 15000;
+  if (ms === tickerMs) return; tickerMs = ms;
+  clearInterval(tickIv); tickIv = setInterval(loop, ms);
+}
+let lastRender = 0;
+function loop() {
+  const now = Date.now(), day = dk(now);
+  if (day !== lastDay) { if (viewDay === lastDay) viewDay = day; lastDay = day; pruneBook(); render(); return; }
+  if (big.on) renderBigClock();
+  if (now - lastRender > 30e3) render();
+  else renderNext();
+}
+
+/* ---------- Wake lock (standby screen) ---------- */
+let wakeLock = null;
+async function syncWake() {
+  const want = S.wake && document.visibilityState === 'visible' && big.on;
+  if (want && !wakeLock && 'wakeLock' in navigator) {
+    try { wakeLock = await navigator.wakeLock.request('screen'); wakeLock.addEventListener('release', () => { wakeLock = null; }); } catch { wakeLock = null; }
+  } else if (!want && wakeLock) { try { await wakeLock.release(); } catch {} wakeLock = null; }
+}
+
+/* ---------- Clean up what the earlier alarm version left behind ---------- */
+try { navigator.serviceWorker?.getRegistrations?.().then(rs => rs.forEach(r => { const u = r.active?.scriptURL || r.installing?.scriptURL || r.waiting?.scriptURL || ''; if (/pillser-sw\.js/.test(u)) r.unregister(); })).catch(() => {}); } catch {}
+try { localStorage.removeItem('pillser.snooze'); } catch {}
+
+/* ---------- Tabs & filter ---------- */
+function goTab(t) {
+  S.tab = t; saveS();
+  $$('#tabs .tab').forEach(b => b.setAttribute('aria-selected', b.dataset.tab === t));
+  $$('#work .view').forEach(v => v.hidden = v.dataset.view !== t);
+  render();
+}
+function renderWho() {
+  const el = $('#whoFilter');
+  if (!showWho()) { setHTML(el, ''); if (S.who) { S.who = ''; saveS(); } return; }
+  if (S.who && !D.people.some(p => p.id === S.who)) S.who = '';
+  setHTML(el, `<button class="achip" data-w="" style="${S.who ? 'background:var(--hover);color:var(--muted)' : ''}">전체</button>` +
+    D.people.map(p => `<button class="achip" data-w="${p.id}" style="${S.who === p.id ? `background:${p.color};color:#fff` : `background:var(--hover);color:var(--ink-2)`}"><span class="dot" style="color:${S.who === p.id ? '#fff' : p.color}"></span>${esc(p.name)}</button>`).join(''));
+}
+
+/* ---------- Render: today ---------- */
+function doseRow(d, now, big = false) {
+  const st = status(d, now), m = d.m, log = getLog(d), T = atTime(d.day, d.t);
+  const meta = [];
+  if (big) meta.push(`<span><b>${ampm(d.t)}</b></span>`);
+  if (m.meal) meta.push(`<span>${MEAL[m.meal]}</span>`);
+  if (m.purpose && !big) meta.push(`<span>${esc(m.purpose)}</span>`);
+  if (st === 'taken') { const late = Math.round((log.at - T) / 6e4); meta.push(`<span class="r">${hm(log.at)}에 먹음${late >= 60 ? ` · ${relMin(late)} 늦게` : ''}</span>`); }
+  else if (st === 'skipped') meta.push(`<span>건너뜀</span>`);
+  else if (st === 'missed') meta.push(`<span class="m">못 먹음</span>`);
+  else if (st === 'late') meta.push(`<span class="w">${relMin((now - T) / 6e4)} 지남</span>`);
+  else if (st === 'due') meta.push(`<span class="w">지금 드세요</span>`);
+  if (d.orphan) meta.push(`<span>지금 일정에 없는 시간</span>`);
+  const si = stockInfo(m); if (si && si.low && !log) meta.push(`<span class="w">${si.low === 'out' ? '재고 없음' : si.days + '일분 남음'}</span>`);
+  const cls = { taken: 'taken', skipped: 'skipped', missed: 'miss', late: 'late', due: 'due', upcoming: '' }[st];
+  return `<div class="dose ${cls}" style="--pc:${pc(m)}" data-k="${d.day}|${d.key}">
+    <div class="pic">${medPic(m, big ? 34 : 30)}</div>
+    <div class="tx"><div class="nm">${esc(m.name)}<span class="q">${qtyText(m, d.q)}</span>${showWho() && !S.who ? whoChip(m.who) : ''}</div><div class="meta">${meta.join('')}</div></div>
+    ${big ? '' : `<button class="more" data-act="menu" title="더 보기">${icon('more')}</button>`}
+    <button class="ckb" data-act="toggle" title="${log ? '기록 지우기' : '먹었어요'}">${st === 'skipped' ? icon('ban') : icon('check')}</button>
+  </div>`;
+}
+function findDose(k) {
+  const [day, key] = k.split('|');
+  return dosesFor(day, false).find(d => d.key === key);
+}
+function dayStats(list, now = Date.now()) {
+  const c = { taken: 0, skipped: 0, missed: 0, late: 0, due: 0, upcoming: 0 };
+  list.forEach(d => c[status(d, now)]++);
+  c.total = list.length; c.done = c.taken + c.skipped;
+  return c;
+}
+function renderToday() {
+  const now = Date.now(), today = dk(now), day = viewDay;
+  setText($('#dLabel'), day === today ? '오늘 · ' + fmtDay(day) : fmtDay(day));
+  $('#dPick').value = day;
+  $('#dToday').hidden = day === today;
+  const body = $('#todayBody');
+  if (!D.meds.length) {
+    setHTML(body, `<div class="empty"><b>먹는 약을 등록해 보세요</b>약이나 영양제를 등록하면 시간마다 알려 드리고,<br>먹었는지 기록하고, 남은 수량도 세어 드려요.<br><br>
+      <div class="btns" style="justify-content:center"><button class="btn primary" data-act="new">${icon('plus')}약 추가</button><button class="btn line" data-act="person">${icon('users')}가족 추가</button><button class="btn ghost" data-act="sample">${icon('sparkle')}예시로 둘러보기</button></div></div>`);
+    return;
+  }
+  let list = dosesFor(day);
+  const c = dayStats(list, now);
+  const pct = c.total ? Math.round(c.taken / c.total * 100) : 0;
+  const nx = day === today ? nextDoses(now) : null;
+  let nxHtml;
+  if (day !== today) nxHtml = `<div class="k">${day < today ? '지난 날' : '앞으로'}</div><div class="v">${fmtDay(day)}</div><div class="s">${day < today ? '동그라미를 눌러 늦게라도 기록할 수 있어요' : '미리 먹었다면 기록해 두세요'}</div>`;
+  else if (nx) { const sameDay = nx.day === today; nxHtml = `<div class="k">다음 복용</div><div class="v">${sameDay ? '' : '내일 '}${ampm(nx.t)}<span class="cd" id="todayCd">${relMin((nx.at - now) / 6e4)} 뒤</span></div><div class="s">${esc(nx.list.map(d => d.m.name).join(', '))}</div>`; }
+  else nxHtml = `<div class="k">다음 복용</div><div class="v">${c.total ? '오늘은 모두 끝났어요' : '정해진 약이 없어요'}</div>`;
+  const chips = [];
+  chips.push(`<span class="pill-st ok">${icon('check', 'sm')}먹음 ${c.taken}</span>`);
+  if (c.upcoming) chips.push(`<span class="pill-st">남음 ${c.upcoming}</span>`);
+  if (c.due + c.late) chips.push(`<span class="pill-st late">지금·늦음 ${c.due + c.late}</span>`);
+  if (c.missed) chips.push(`<span class="pill-st miss">못 먹음 ${c.missed}</span>`);
+  if (c.skipped) chips.push(`<span class="pill-st">건너뜀 ${c.skipped}</span>`);
+  const prnToday = D.prn.filter(x => dk(x.at) === day && whoOk(medById(x.med) || {}));
+  if (prnToday.length) chips.push(`<span class="pill-st">필요할 때 ${prnToday.length}회</span>`);
+  const R = 40, C = 2 * Math.PI * R;
+  let h = `<div class="sum"><div class="pring"><svg viewBox="0 0 100 100"><circle class="trk" cx="50" cy="50" r="${R}"/><circle class="prg" cx="50" cy="50" r="${R}" stroke-dasharray="${C.toFixed(2)}" stroke-dashoffset="${(C * (1 - (c.total ? c.taken / c.total : 0))).toFixed(2)}" ${c.total && c.taken === c.total ? 'style="stroke:var(--ok)"' : ''}/></svg><div class="c"><div><b>${c.total ? pct + '%' : '–'}</b><small>${c.taken}/${c.total}</small></div></div></div>
+    <div class="nx">${nxHtml}<div class="stats">${chips.join('')}</div></div></div>`;
+  // banners
+  const lateList = list.filter(d => ['late', 'due'].includes(status(d, now)));
+  const missList = list.filter(d => status(d, now) === 'missed');
+  if (day === today && lateList.length > 1) h += `<div class="banner warn">${icon('clock')}<div class="tx">지금 드실 약이 ${lateList.length}개 있어요<small>${esc(lateList.map(d => d.m.name).join(', '))}</small></div><button class="btn sm primary" data-act="takeLate">모두 먹었어요</button></div>`;
+  if (missList.length && day <= today) h += `<div class="banner">${icon('alert')}<div class="tx">기록이 없는 복용 ${missList.length}개<small>먹었는데 기록을 잊었다면 동그라미를 눌러 주세요. 안 먹었다면 그대로 두면 돼요.</small></div><button class="btn sm line" data-act="skipMissed">건너뜀으로</button></div>`;
+  if (day === today) {
+    const low = lowMeds(); if (low.length) h += `<div class="banner warn">${icon('box')}<div class="tx">곧 떨어지는 약 ${low.length}개<small>${esc(low.map(x => `${x.m.name} ${x.s.low === 'out' ? '없음' : x.s.days + '일분'}`).join(', '))}</small></div><button class="btn sm line" data-act="gostock">재고 보기</button></div>`;
+    const ending = endingMeds(); if (ending.length) h += `<div class="banner info">${icon('calendar')}<div class="tx">처방이 곧 끝나요<small>${esc(ending.map(m => `${m.name} ${m.end === today ? '오늘까지' : fmtMD(m.end) + '까지'}`).join(', '))}</small></div></div>`;
+  }
+  if (!list.length) h += `<div class="empty"><b>이 날은 정해진 약이 없어요</b>${S.who ? esc(person(S.who).name) + '의 약만 보고 있어요.' : ''}</div>`;
+  // slots
+  const slots = [];
+  list.forEach(d => { let s = slots.find(x => x.t === d.t); if (!s) slots.push(s = { t: d.t, list: [] }); s.list.push(d); });
+  for (const s of slots) {
+    const T = atTime(day, s.t), sc = dayStats(s.list, now);
+    let tag = '';
+    if (sc.taken + sc.skipped === sc.total) tag = `<span class="st done">완료</span>`;
+    else if (sc.missed && !sc.due && !sc.late && !sc.upcoming) tag = `<span class="st miss">못 먹음</span>`;
+    else if (sc.due) tag = `<span class="st now">지금</span>`;
+    else if (sc.late) tag = `<span class="st late">늦음</span>`;
+    const open = s.list.filter(d => !getLog(d));
+    const canAll = open.length > 1 && (T - now < 2 * 36e5);
+    let rows = s.list;
+    if (S.sinkDone) rows = rows.slice().sort((a, b) => (!!getLog(a)) - (!!getLog(b)));
+    h += `<div class="slot"><div class="slot-h"><span class="tm">${ampm(s.t)}</span><span class="lb">${slotLabel(s.t)}</span>${tag}<span class="grow"></span>${canAll ? `<button class="btn sm line" data-act="takeSlot" data-t="${s.t}">${icon('check', 'sm')}모두 먹음</button>` : ''}</div>
+      <div class="doses">${rows.map(d => doseRow(d, now)).join('')}</div></div>`;
+  }
+  // PRN
+  const prns = D.meds.filter(m => m.sched.type === 'prn' && whoOk(m) && !isOff(m, day));
+  if (prns.length || prnToday.length) {
+    h += `<div class="sec-h">필요할 때 먹는 약<span class="v">${prnToday.length ? '이 날 ' + prnToday.length + '회 기록' : ''}</span></div><div class="prn-list">`;
+    for (const m of prns) {
+      const mine = D.prn.filter(x => x.med === m.id).sort((a, b) => b.at - a.at);
+      const td = mine.filter(x => dk(x.at) === day);
+      const last = mine[0];
+      let meta = td.length ? `이 날 ${td.length}회` : '이 날 기록 없음';
+      if (last) meta += ` · 마지막 ${dk(last.at) === today ? hm(last.at) : fmtMD(dk(last.at)) + ' ' + hm(last.at)}`;
+      let w = '';
+      if (m.prn?.gap && last && now - last.at < m.prn.gap * 36e5) w = `${hm(last.at + m.prn.gap * 36e5)}부터 다시 먹을 수 있어요`;
+      if (m.prn?.max && day === today && td.length >= m.prn.max) w = `오늘 최대 횟수(${m.prn.max}회)를 채웠어요`;
+      h += `<div class="prn" style="--pc:${pc(m)}"><div class="pic">${medPic(m, 26)}</div><div class="tx"><div class="nm">${esc(m.name)} ${showWho() && !S.who ? whoChip(m.who) : ''}</div><div class="meta">${meta}${w ? `<br><span class="w">${w}</span>` : ''}</div></div>${day === today ? `<button class="btn sm ${w ? 'line' : 'primary'}" data-act="prn" data-id="${m.id}">먹기</button>` : ''}</div>`;
+    }
+    h += `</div>`;
+    if (prnToday.length) h += `<div class="loglist" style="margin-top:8px">${prnToday.sort((a, b) => a.at - b.at).map(x => { const m = medById(x.med); return m ? `<div class="sess"><span class="k prn">${icon('pill')}</span><div class="tx"><div class="nm">${esc(m.name)} ${qtyText(m, x.q)}</div><div class="mt">${hm(x.at)}${showWho() ? ' · ' + esc(person(m.who).name) : ''}</div></div><button data-act="prnDel" data-id="${x.id}" title="기록 지우기">${icon('x')}</button></div>` : ''; }).join('')}</div>`;
+  }
+  setHTML(body, h);
+}
+
+/* ---------- Render: meds ---------- */
+function renderMeds() {
+  const q = $('#medSearch').value.trim().toLowerCase();
+  $$('#kindSeg button').forEach(b => b.setAttribute('aria-pressed', b.dataset.k === S.kind));
+  $('#showOff').setAttribute('aria-pressed', S.showOff);
+  const list = D.meds.filter(m => whoOk(m) && (!S.kind || m.kind === S.kind) && (S.showOff || !isOff(m)) && (!q || (m.name + ' ' + (m.purpose || '') + ' ' + (m.hosp || '')).toLowerCase().includes(q)));
+  const offN = D.meds.filter(m => whoOk(m) && isOff(m)).length;
+  setText($('#showOff .t'), offN ? `지난 약 ${offN}` : '지난 약');
+  if (!list.length) {
+    setHTML($('#medGrid'), `<div class="empty" style="grid-column:1/-1"><b>${D.meds.length ? '맞는 약이 없어요' : '아직 등록한 약이 없어요'}</b>${D.meds.length ? '검색어나 종류를 바꿔 보세요.' : ''}<br><br><button class="btn primary" data-act="new">${icon('plus')}약 추가</button></div>`);
+    return;
+  }
+  let h = '';
+  for (const p of D.people) {
+    const ms = list.filter(m => m.who === p.id); if (!ms.length) continue;
+    if (showWho()) h += `<div class="mgroup" style="--pc:${p.color}"><span class="dot"></span>${esc(p.name)}<small>${ms.length}개</small></div>`;
+    ms.sort((a, b) => (isOff(a) - isOff(b)) || ((a.times[0]?.t || '99').localeCompare(b.times[0]?.t || '99')) || a.name.localeCompare(b.name));
+    for (const m of ms) {
+      const si = stockInfo(m), tags = [];
+      tags.push(`<span class="tag ${m.kind === 'rx' ? 'g' : m.kind === 'sup' ? 'b' : ''}">${KIND[m.kind] || '약'}</span>`);
+      if (m.paused) tags.push(`<span class="tag">중단함</span>`);
+      else if (isEnded(m)) tags.push(`<span class="tag">끝남</span>`);
+      else if (m.start && m.start > dk()) tags.push(`<span class="tag b">${fmtMD(m.start)} 시작</span>`);
+      else if (m.end) { const left = diffDays(dk(), m.end); tags.push(`<span class="tag ${left <= 3 ? 'c' : ''}">${left === 0 ? '오늘까지' : left + '일 남음'}</span>`); }
+      let stock = '';
+      if (si) {
+        const full = Math.max(si.stock, (m.lastRefill || 0), 1), pct = clamp(si.stock / full * 100, 0, 100);
+        stock = `<div class="stock"><div class="l"><span>남은 <b>${fmtQ(si.stock)}${m.unit}</b></span><span class="${si.low === 'out' ? 'r' : si.low ? 'w' : ''}">${si.low === 'out' ? '다 떨어짐' : isFinite(si.days) ? si.days + '일분 · ' + fmtMD(si.runOut) + '쯤' : ''}</span></div><div class="bar"><i class="${si.low}" style="width:${pct}%"></i></div></div>`;
+      }
+      const times = m.sched.type === 'prn' ? '' : `<div class="times">${m.times.map(t => `<span>${t.t} · ${qtyText(m, t.q)}</span>`).join('')}</div>`;
+      h += `<div class="mcard ${isOff(m) ? 'off' : ''}" style="--pc:${pc(m)}" data-id="${m.id}">
+        <div class="hd"><div class="pic">${medPic(m, 34)}</div><div class="tt"><div class="nm">${esc(m.name)}</div><div class="pp">${esc([m.purpose, m.hosp].filter(Boolean).join(' · ')) || '&nbsp;'}</div></div></div>
+        <div class="tags">${tags.join('')}</div>
+        <div class="sch"><b>${schedText(m)}</b>${m.meal ? ' · ' + MEAL[m.meal] : ''}${m.end ? ` · ${fmtMD(m.start)}~${fmtMD(m.end)}` : ''}${times}</div>
+        ${stock}
+        <div class="ft">
+          <button class="mini" data-act="refill" title="약 받아 오기 (재고 더하기)">${icon('refill')}</button>
+          <button class="mini" data-act="pause" title="${m.paused ? '다시 먹기' : '잠시 중단'}">${icon(m.paused ? 'play' : 'pause')}</button>
+          <button class="mini" data-act="dup" title="복제">${icon('dup')}</button>
+          <button class="mini" data-act="edit" title="고치기">${icon('pen')}</button>
+        </div></div>`;
+    }
+  }
+  setHTML($('#medGrid'), h);
+}
+
+/* ---------- Render: stock ---------- */
+function renderStock() {
+  const today = dk();
+  const meds = D.meds.filter(m => whoOk(m) && !isOff(m));
+  const tracked = meds.map(m => ({ m, s: stockInfo(m) })).filter(x => x.s).sort((a, b) => a.s.days - b.s.days);
+  const untracked = meds.filter(m => !stockInfo(m));
+  const low = tracked.filter(x => x.s.low);
+  const rx = D.meds.filter(m => whoOk(m) && !m.paused && m.end && m.end >= addDays(today, -14)).sort((a, b) => a.end.localeCompare(b.end));
+  setText($('#stockInfo'), `재고를 세는 약 ${tracked.length}개 · 곧 떨어짐 ${low.length}개`);
+  let h = `<div class="kpis" style="padding:0 0 6px"><div class="kpi"><div class="k">재고 세는 약</div><div class="v">${tracked.length}<small>개</small></div></div>
+    <div class="kpi"><div class="k">곧 떨어짐</div><div class="v" style="${low.length ? 'color:var(--clay)' : ''}">${low.length}<small>개</small></div><div class="s">약마다 정한 날 수 이하</div></div>
+    <div class="kpi"><div class="k">처방 3일 안에 끝남</div><div class="v">${endingMeds().length}<small>개</small></div></div>
+    <div class="kpi"><div class="k">가장 먼저 떨어지는 날</div><div class="v" style="font-size:20px">${tracked[0] && tracked[0].s.runOut ? fmtDay(tracked[0].s.runOut) : '–'}</div><div class="s">${tracked[0] ? esc(tracked[0].m.name) : ''}</div></div></div>`;
+  h += `<div class="sec-h">남은 수량<span class="v">먹었다고 체크하면 자동으로 줄어요</span></div>`;
+  if (tracked.length) {
+    h += `<div class="tbl-wrap"><table class="tbl"><thead><tr><th>약</th>${showWho() ? '<th>누구</th>' : ''}<th class="n">남은 수량</th><th class="n">하루</th><th class="n">남은 날</th><th class="n">떨어지는 날</th><th></th></tr></thead><tbody>`;
+    for (const { m, s } of tracked) {
+      h += `<tr data-id="${m.id}"><td><div class="nm"><span class="pic">${medPic(m, 22)}</span>${esc(m.name)}</div></td>${showWho() ? `<td>${whoChip(m.who)}</td>` : ''}
+        <td class="n"><b>${fmtQ(s.stock)}</b>${m.unit}</td><td class="n">${s.use ? fmtQ(Math.round(s.use * 100) / 100) + m.unit : '–'}</td>
+        <td class="n ${s.low === 'out' ? 'r' : s.low ? 'w' : ''}">${s.low === 'out' ? '없음' : isFinite(s.days) ? s.days + '일' : '–'}</td><td class="n">${s.runOut ? fmtMD(s.runOut) : '–'}</td>
+        <td class="n"><button class="btn sm line" data-act="refill">${icon('refill', 'sm')}받아 오기</button></td></tr>`;
+    }
+    h += `</tbody></table></div>`;
+  } else h += `<div class="note">아직 재고를 세는 약이 없어요. 약을 고칠 때 '남은 수량'을 적으면 먹을 때마다 줄어들고, 떨어지기 전에 알려 드려요.</div>`;
+  if (untracked.length) h += `<div class="note">재고를 세지 않는 약: ${untracked.map(m => `<a href="#" data-act="refillM" data-id="${m.id}" style="color:inherit;font-weight:700">${esc(m.name)}</a>`).join(', ')}</div>`;
+  h += `<div class="sec-h">처방 기간<span class="v">다음 진료 날짜를 놓치지 않게</span></div>`;
+  if (rx.length) {
+    h += `<div class="tbl-wrap"><table class="tbl"><thead><tr><th>약</th>${showWho() ? '<th>누구</th>' : ''}<th>병원·약국</th><th>처방일</th><th>마지막 날</th><th class="n">남은 날</th></tr></thead><tbody>`;
+    for (const m of rx) {
+      const left = diffDays(today, m.end);
+      h += `<tr data-id="${m.id}"><td><div class="nm"><span class="pic">${medPic(m, 22)}</span>${esc(m.name)}</div></td>${showWho() ? `<td>${whoChip(m.who)}</td>` : ''}<td>${esc([m.hosp, m.pharm].filter(Boolean).join(' · ')) || '<span class="muted">–</span>'}</td><td>${m.rxDate ? fmtMD(m.rxDate) : '–'}</td><td>${fmtDay(m.end)}</td><td class="n ${left < 0 ? '' : left <= 3 ? 'w' : ''}">${left < 0 ? '끝남' : left === 0 ? '오늘' : left + '일'}</td></tr>`;
+    }
+    h += `</tbody></table></div>`;
+  } else h += `<div class="note">기간이 정해진 약이 없어요. 약을 고칠 때 '언제까지'를 정하면 여기에 보여요.</div>`;
+  const refs = D.refills.filter(r => { const m = medById(r.med); return m && whoOk(m); }).sort((a, b) => b.at - a.at).slice(0, 20);
+  if (refs.length) {
+    h += `<div class="sec-h">받아 온 기록</div><div class="loglist">` + refs.map(r => { const m = medById(r.med); return `<div class="sess"><span class="k prn">${icon('refill')}</span><div class="tx"><div class="nm">${esc(m.name)} ${r.set ? '수량을 ' + fmtQ(r.q) + m.unit + '로 맞춤' : '+' + fmtQ(r.q) + m.unit}</div><div class="mt">${fmtDay(dk(r.at))}${showWho() ? ' · ' + esc(person(m.who).name) : ''}</div></div></div>`; }).join('') + `</div>`;
+  }
+  setHTML($('#stockBody'), h);
+}
+
+/* ---------- Render: history ---------- */
+let histMonth = dk().slice(0, 7);
+function rangeStats(from, to, filterMed) {
+  const now = Date.now(), r = { taken: 0, skipped: 0, missed: 0, lateTaken: 0, delaySum: 0, days: 0, perfect: 0 };
+  for (let day = from; day <= to; day = addDays(day, 1)) {
+    let list = dosesFor(day); if (filterMed) list = list.filter(filterMed);
+    let t = 0, n = 0;
+    for (const d of list) {
+      const st = status(d, now);
+      if (st === 'taken') { r.taken++; t++; n++; const lg = getLog(d), dl = (lg.at - atTime(d.day, d.t)) / 6e4; if (dl > 0) r.delaySum += dl; if (dl >= 60) r.lateTaken++; }
+      else if (st === 'skipped') { r.skipped++; n++; }
+      else if (st === 'missed') { r.missed++; n++; }
+    }
+    if (n) { r.days++; if (t === n) r.perfect++; }
+  }
+  const den = r.taken + r.skipped + r.missed;
+  r.rate = den ? r.taken / den : null; r.den = den;
+  return r;
+}
+function dayLevel(day, now) {
+  const list = dosesFor(day); if (!list.length) return { cls: 'none', p: '' };
+  let t = 0, n = 0, pend = 0;
+  list.forEach(d => { const st = status(d, now); if (st === 'taken') { t++; n++; } else if (st === 'skipped' || st === 'missed') n++; else pend++; });
+  if (!n) return { cls: pend ? 'fut' : 'none', p: '' };
+  const r = t / n;
+  return { cls: r >= 1 ? 'l3' : r >= .8 ? 'l2' : r >= .5 ? 'l1' : 'l0', p: Math.round(r * 100) + '%', pend };
+}
+function streak() {
+  let s = 0, day = dk(); const now = Date.now();
+  const lv = dayLevel(day, now); if (lv.cls === 'l3' && !lv.pend) s++;
+  for (let i = 1; i < 400; i++) { day = addDays(day, -1); const l = dayLevel(day, now); if (l.cls === 'none') continue; if (l.cls === 'l3') s++; else break; }
+  return s;
+}
+function renderHistory() {
+  const now = Date.now(), today = dk(now);
+  const [y, mo] = histMonth.split('-').map(Number);
+  setText($('#mLabel'), `${y}년 ${mo}월`);
+  const first = `${histMonth}-01`, last = dk(new Date(y, mo, 0));
+  const r30 = rangeStats(addDays(today, -29), today), rM = rangeStats(first, last < today ? last : today);
+  const pct = r => r.rate == null ? '–' : Math.round(r.rate * 100);
+  let h = `<div class="kpis"><div class="kpi"><div class="k">최근 30일 복용률</div><div class="v">${pct(r30)}<small>${r30.rate == null ? '' : '%'}</small></div><div class="s">${r30.taken} / ${r30.den}회</div></div>
+    <div class="kpi"><div class="k">${mo}월 복용률</div><div class="v">${pct(rM)}<small>${rM.rate == null ? '' : '%'}</small></div><div class="s">못 먹음 ${rM.missed} · 건너뜀 ${rM.skipped}</div></div>
+    <div class="kpi"><div class="k">빠짐없이 먹은 날</div><div class="v">${streak()}<small>일 연속</small></div><div class="s">30일 중 ${r30.perfect}일</div></div>
+    <div class="kpi"><div class="k">평균 늦은 시간</div><div class="v">${r30.taken ? Math.round(r30.delaySum / r30.taken) : 0}<small>분</small></div><div class="s">1시간 넘게 늦음 ${r30.lateTaken}회</div></div></div>`;
+  // calendar
+  const startW = new Date(y, mo - 1, 1).getDay(), nDays = new Date(y, mo, 0).getDate();
+  let cal = WD.map((w, i) => `<div class="wd ${i === 0 ? 'sun' : ''}">${w}</div>`).join('');
+  for (let i = 0; i < startW; i++) cal += `<div class="d out"></div>`;
+  for (let d = 1; d <= nDays; d++) {
+    const day = `${histMonth}-${pad2(d)}`;
+    const lv = day > today ? { cls: dosesFor(day).length ? 'fut' : 'none', p: '' } : dayLevel(day, now);
+    cal += `<button class="d ${lv.cls} ${day === today ? 'today' : ''}" data-day="${day}" title="${fmtDay(day)}"><span class="n">${d}</span><span class="p">${lv.p}</span></button>`;
+  }
+  h += `<div class="card"><div class="ch"><h3>달력</h3><span class="cs">날짜를 누르면 그날 기록을 보고 고칠 수 있어요</span></div><div class="cal">${cal}</div>
+    <div class="legend"><span>복용률</span><i class="l0"></i>50% 미만<i class="l1"></i>50%~<i class="l2"></i>80%~<i class="l3"></i>100%</div></div>`;
+  // per med
+  const meds = D.meds.filter(m => whoOk(m) && m.sched.type !== 'prn');
+  const rows = meds.map(m => ({ m, r: rangeStats(addDays(today, -29), today, d => d.m.id === m.id) })).filter(x => x.r.den).sort((a, b) => a.r.rate - b.r.rate);
+  if (rows.length) h += `<div class="card"><div class="ch"><h3>약별 복용률</h3><span class="cs">최근 30일</span></div><div class="hbars">${rows.map(({ m, r }) => `<div class="hbar"><span class="nm">${esc(m.name)}</span><span class="tr"><i style="width:${Math.round(r.rate * 100)}%;background:${pc(m)}"></i></span><span class="v">${Math.round(r.rate * 100)}% · ${r.taken}/${r.den}</span></div>`).join('')}</div></div>`;
+  // by time slot miss rate
+  const slotMap = {};
+  for (let day = addDays(today, -29); day <= today; day = addDays(day, 1)) for (const d of dosesFor(day)) { const st = status(d, now); if (!['taken', 'skipped', 'missed'].includes(st)) continue; const s = slotMap[d.t] ??= { n: 0, miss: 0 }; s.n++; if (st !== 'taken') s.miss++; }
+  const slots = Object.entries(slotMap).filter(([, s]) => s.n).sort((a, b) => a[0].localeCompare(b[0]));
+  if (slots.length > 1) h += `<div class="card"><div class="ch"><h3>시간대별로 놓친 비율</h3><span class="cs">자주 놓치는 시간이면 복용 시간을 바꿔 보세요</span></div><div class="hbars">${slots.map(([t, s]) => `<div class="hbar"><span class="nm">${ampm(t)} ${slotLabel(t)}</span><span class="tr"><i style="width:${Math.round(s.miss / s.n * 100)}%;background:var(--clay)"></i></span><span class="v">${Math.round(s.miss / s.n * 100)}% · ${s.miss}/${s.n}</span></div>`).join('')}</div></div>`;
+  // recent log
+  let logH = '';
+  for (let i = 0; i < 7; i++) {
+    const day = addDays(today, -i);
+    const items = [];
+    for (const d of dosesFor(day)) { const st = status(d, now); if (['taken', 'skipped', 'missed'].includes(st)) items.push({ at: getLog(d)?.at || atTime(day, d.t), st, d }); }
+    D.prn.filter(x => dk(x.at) === day).forEach(x => { const m = medById(x.med); if (m && whoOk(m)) items.push({ at: x.at, st: 'prn', d: { m, q: x.q, t: hm(x.at) } }); });
+    if (!items.length) continue;
+    items.sort((a, b) => a.at - b.at);
+    logH += `<div class="sess-day"><span>${i === 0 ? '오늘' : i === 1 ? '어제' : fmtDay(day)}</span><span>${items.filter(x => x.st === 'taken').length}회 먹음</span></div>`;
+    logH += items.map(x => `<div class="sess"><span class="k ${x.st === 'skipped' ? 'skip' : x.st === 'missed' ? 'miss' : x.st === 'prn' ? 'prn' : ''}">${icon(x.st === 'missed' ? 'x' : x.st === 'skipped' ? 'ban' : x.st === 'prn' ? 'pill' : 'check')}</span><div class="tx"><div class="nm">${esc(x.d.m.name)} ${qtyText(x.d.m, x.d.q)}</div><div class="mt">${x.st === 'prn' ? '필요할 때 · ' + hm(x.at) : ampm(x.d.t) + (x.st === 'taken' ? ' → ' + hm(x.at) + '에 먹음' : x.st === 'skipped' ? ' · 건너뜀' : ' · 못 먹음')}${showWho() && !S.who ? ' · ' + esc(person(x.d.m.who).name) : ''}</div></div></div>`).join('');
+  }
+  h += `<div class="card" style="margin-bottom:18px"><div class="ch"><h3>최근 7일 기록</h3></div><div class="loglist">${logH || '<div class="empty" style="padding:20px">아직 기록이 없어요</div>'}</div></div>`;
+  setHTML($('#histBody'), h);
+}
+
+/* ---------- Render: people ---------- */
+function renderPeople() {
+  const now = Date.now(), today = dk(now);
+  setText($('#pplInfo'), `${D.people.length}명`);
+  let h = '';
+  for (const p of D.people) {
+    const meds = D.meds.filter(m => m.who === p.id && !isOff(m));
+    const list = dosesFor(today, false).filter(d => d.m.who === p.id), c = dayStats(list, now);
+    const r = rangeStats(addDays(today, -29), today, d => d.m.who === p.id);
+    const age = p.birth ? (new Date().getFullYear() - p.birth) : null;
+    const info = [];
+    if (age != null) info.push(`<dt>나이</dt><dd>${p.birth}년생 · ${age}세</dd>`);
+    if (p.blood) info.push(`<dt>혈액형</dt><dd>${esc(p.blood)}</dd>`);
+    if (p.allergy) info.push(`<dt>알레르기</dt><dd class="al">${esc(p.allergy)}</dd>`);
+    if (p.cond) info.push(`<dt>병·병원</dt><dd>${esc(p.cond)}</dd>`);
+    if (p.note) info.push(`<dt>메모</dt><dd>${esc(p.note)}</dd>`);
+    h += `<div class="pcard" data-id="${p.id}"><div class="hd"><span class="av" style="--pc:${p.color}">${esc(p.name.slice(0, 1))}</span><div style="flex:1;min-width:0"><div class="nm">${esc(p.name)}</div><div class="rl">${esc(p.rel || '')}${p.rel ? ' · ' : ''}약 ${meds.length}개</div></div><button class="mini" data-act="pedit" title="고치기">${icon('pen')}</button></div>
+      <div class="kpis" style="padding:0;grid-template-columns:1fr 1fr;gap:8px"><div class="kpi" style="padding:10px 12px"><div class="k">오늘</div><div class="v" style="font-size:20px">${c.taken}<small>/ ${c.total}</small></div></div><div class="kpi" style="padding:10px 12px"><div class="k">30일 복용률</div><div class="v" style="font-size:20px">${r.rate == null ? '–' : Math.round(r.rate * 100)}<small>${r.rate == null ? '' : '%'}</small></div></div></div>
+      ${info.length ? `<dl class="info">${info.join('')}</dl>` : ''}
+      <div class="ft"><button class="btn sm line" data-act="only">${icon('eye', 'sm')}${S.who === p.id ? '모두 보기' : '이 사람만 보기'}</button><button class="btn sm line" data-act="addfor">${icon('plus', 'sm')}약 추가</button><button class="btn sm line" data-act="print">${icon('print', 'sm')}기록표</button></div></div>`;
+  }
+  h += `<button class="tadd" data-act="newp" style="border-radius:18px;border:2px dashed var(--sand);background:var(--paper);min-height:160px;color:var(--muted);font-weight:600;display:grid;place-items:center;align-content:center;gap:6px">${icon('plus')}가족 추가</button>`;
+  setHTML($('#pplGrid'), h);
+}
+
+/* ---------- Render: side & header ---------- */
+function renderNext() {
+  const now = Date.now(), nx = nextDoses(now);
+  const pill = $('#nextPill');
+  if (nx) {
+    pill.hidden = false;
+    setText($('#nextPillT'), `다음 ${nx.day === dk(now) ? '' : '내일 '}${nx.t} · ${relMin((nx.at - now) / 6e4)} 뒤`);
+    setHTML($('#nextBox'), `<div class="k">다음 복용 ${nx.day === dk(now) ? '' : '· 내일'}</div><div class="t">${ampm(nx.t)}<small>${relMin((nx.at - now) / 6e4)} 뒤</small></div><div class="s">${nx.list.map(d => `${showWho() && !S.who ? esc(person(d.m.who).name) + ' · ' : ''}${esc(d.m.name)} ${qtyText(d.m, d.q)}`).join('<br>')}</div>`);
+    $('#nextBox').className = 'nextbox';
+  } else {
+    pill.hidden = true;
+    setHTML($('#nextBox'), `<div class="k">다음 복용</div><div class="t" style="font-size:18px">${D.meds.length ? '예정된 복용이 없어요' : '약을 등록해 보세요'}</div>`);
+    $('#nextBox').className = 'nextbox none';
+  }
+  const cd = $('#todayCd'); if (cd && nx) setText(cd, relMin((nx.at - now) / 6e4) + ' 뒤');
+}
+function renderSide() {
+  renderNext();
+  // per person
+  const now = Date.now(), list = dosesFor(dk(now), false);
+  const ppl = D.people.map(p => { const c = dayStats(list.filter(d => d.m.who === p.id), now); return { p, c }; }).filter(x => x.c.total);
+  setText($('#pprogV'), ppl.length ? `${ppl.reduce((a, x) => a + x.c.taken, 0)} / ${ppl.reduce((a, x) => a + x.c.total, 0)}` : '');
+  setHTML($('#pprog'), ppl.length ? ppl.map(({ p, c }) => `<div class="r" style="--pc:${p.color}"><span class="av sm" style="--pc:${p.color}">${esc(p.name.slice(0, 1))}</span><div><div class="nm">${esc(p.name)}</div><div class="bar"><i style="width:${c.taken / c.total * 100}%"></i></div></div><span class="v">${c.taken}/${c.total}</span></div>`).join('') : '<p class="hint" style="margin:0">오늘 정해진 약이 없어요.</p>');
+  const low = lowMeds(false);
+  $('#lowSec').hidden = !low.length;
+  setText($('#lowV'), low.length + '개');
+  setHTML($('#lowList'), low.map(({ m, s }) => `<div class="it" data-id="${m.id}"><span class="dot" style="color:${pc(m)}"></span><span class="nm">${esc(m.name)}</span><span class="v ${s.low === 'out' ? 'r' : ''}">${s.low === 'out' ? '없음' : s.days + '일분'}</span><button class="mini" data-act="refill" title="받아 오기">${icon('refill')}</button></div>`).join(''));
+}
+function renderCounts() {
+  const now = Date.now();
+  const list = dosesFor(dk(now));
+  setText($('#cToday'), String(list.filter(d => !getLog(d) && status(d, now) !== 'missed').length));
+  setText($('#cMeds'), String(D.meds.filter(m => whoOk(m) && !isOff(m)).length));
+  const low = lowMeds().length + endingMeds().length; const c = $('#cStock'); c.hidden = !low; setText(c, String(low));
+  document.title = (() => { const due = list.filter(d => ['due', 'late'].includes(status(d, now))).length; return (due ? `(${due}) ` : '') + 'Pillser · 아웃그리드 복약 관리'; })();
+}
+function render() {
+  lastRender = Date.now();
+  document.body.classList.toggle('big-text', !!S.bigText);
+  renderWho();
+  const t = S.tab;
+  if (t === 'today') renderToday(); else if (t === 'meds') renderMeds(); else if (t === 'stock') renderStock(); else if (t === 'history') renderHistory(); else if (t === 'people') renderPeople();
+  renderSide(); renderCounts();
+  if (big.on) renderBig();
+}
+
+/* ---------- Standby screen ---------- */
+const big = { on: false };
+function openBig() { big.on = true; $('#big').classList.add('show'); $('#big').classList.toggle('dark', !!S.bigDark); renderBig(); ensureTicker(); syncWake(); try { document.documentElement.requestFullscreen?.().catch(() => {}); } catch {} }
+function closeBig() { big.on = false; $('#big').classList.remove('show'); ensureTicker(); syncWake(); try { document.fullscreenElement && document.exitFullscreen(); } catch {} }
+function renderBigClock() {
+  const d = new Date(); setText($('#bigClk'), `${pad2(d.getHours())}:${pad2(d.getMinutes())}`);
+  setText($('#bigDate'), fmtDay(dk(d), true));
+}
+function renderBig() {
+  renderBigClock();
+  const now = Date.now(), today = dk(now), nx = nextDoses(now);
+  const list = dosesFor(today);
+  const due = list.filter(d => ['due', 'late'].includes(status(d, now)));
+  const nb = $('#bigNext');
+  if (due.length) { nb.className = 'nx'; setHTML(nb, `지금 드실 약 <b>${due.length}개</b><br>${esc(due.map(d => (showWho() && !S.who ? person(d.m.who).name + ' ' : '') + d.m.name).join(', '))}`); }
+  else if (nx) { nb.className = 'nx'; setHTML(nb, `다음 복용 <b>${nx.day === today ? '' : '내일 '}${ampm(nx.t)}</b> · ${relMin((nx.at - now) / 6e4)} 뒤<br>${esc(nx.list.map(d => (showWho() && !S.who ? person(d.m.who).name + ' ' : '') + d.m.name).join(', '))}`); }
+  else { nb.className = 'nx none'; setHTML(nb, list.length ? '오늘 약은 모두 끝났어요' : '오늘은 정해진 약이 없어요'); }
+  const c = dayStats(list, now);
+  setText($('#bigT'), `오늘 복용 · ${c.taken} / ${c.total}`);
+  setHTML($('#bigList'), list.map(d => doseRow(d, now, true)).join(''));
+}
+
+/* ---------- Med dialog ---------- */
+let editMed = null, mPhoto = null;
+const medDraft = {};
+function segSet(el, v) { $$('button', el).forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === String(v)))); }
+function segGet(el) { return $('button[aria-pressed="true"]', el)?.dataset.v; }
+function numSet(el, v) { $('input', el).value = v; }
+function numGet(el) { const i = $('input', el); return clamp(parseInt(i.value) || +el.dataset.min, +el.dataset.min, +el.dataset.max); }
+function timeRow(t = '08:00', q = 1) {
+  return `<div class="trow"><input class="inp" type="time" value="${t}" data-f="t" /><div class="num" data-min="0.25" data-max="99" data-step="0.5"><button data-d="-1" type="button">${icon('minus')}</button><input type="number" inputmode="decimal" step="0.25" value="${q}" data-f="q" /><button data-d="1" type="button">${icon('plus')}</button></div><button class="mini danger" data-act="rmTime" type="button" title="빼기">${icon('x')}</button></div>`;
+}
+function openMed(m, preset = {}) {
+  editMed = m || null;
+  const v = m ? JSON.parse(JSON.stringify(m)) : {
+    who: S.who || D.people[0].id, name: '', kind: 'rx', purpose: '', shape: 'round', color: '#FFFFFF', photo: null,
+    sched: { type: 'daily', days: [1, 3, 5], every: 2, on: 21, off: 7 }, times: [{ t: S.meals.morning, q: 1 }], meal: 'after30', unit: '정',
+    prn: { q: 1, gap: 4, max: 3 }, start: dk(), end: '', stock: null, low: 7, ...preset,
+  };
+  v.sched = { days: [1, 3, 5], every: 2, on: 21, off: 7, ...v.sched }; v.prn = { q: 1, gap: '', max: '', ...(v.prn || {}) };
+  $('#medT').textContent = m ? '약 고치기' : '약 추가';
+  $('#mDel').hidden = !m;
+  $('#mWho').innerHTML = D.people.map(p => `<button type="button" data-v="${p.id}" style="--pc:${p.color}" aria-pressed="${p.id === v.who}">${esc(p.name)}</button>`).join('');
+  $('#mName').value = v.name; segSet($('#mKind'), v.kind); $('#mPurpose').value = v.purpose || '';
+  $('#mShape').innerHTML = SHAPES.map(([k, l]) => `<button type="button" class="shp" data-v="${k}" title="${l}" aria-pressed="${k === v.shape}">${pillSvg(k, v.color, 30)}</button>`).join('');
+  $('#mColor').innerHTML = PILL_COLORS.map(c => `<button type="button" class="sw" data-v="${c}" style="--c:${c}" title="${c}" aria-pressed="${c === v.color}"></button>`).join('');
+  mPhoto = v.photo || null; renderPhoto();
+  segSet($('#mSched'), v.sched.type);
+  $('#mDays').innerHTML = [1, 2, 3, 4, 5, 6, 0].map(d => `<button type="button" data-v="${d}" aria-pressed="${v.sched.days.includes(d)}">${WD[d]}</button>`).join('');
+  numSet($('#mEvery'), v.sched.every); numSet($('#mCycOn'), v.sched.on); numSet($('#mCycOff'), v.sched.off);
+  $('#mTimes').innerHTML = (v.times.length ? v.times : [{ t: S.meals.morning, q: 1 }]).map(t => timeRow(t.t, t.q)).join('');
+  $('#mMeal').value = v.meal || ''; $('#mUnit').value = v.unit || '정';
+  $('#mPrnQty').value = v.prn.q || 1; $('#mPrnGap').value = v.prn.gap || ''; $('#mPrnMax').value = v.prn.max || '';
+  $('#mStart').value = v.start || dk();
+  $('#mEndMode').value = v.end ? 'date' : ''; $('#mEnd').value = v.end || ''; $('#mEndDays').value = v.end && v.start ? diffDays(v.start, v.end) + 1 : 7;
+  $('#mStock').value = v.stock ?? ''; $('#mLow').value = v.low ?? 7;
+  $('#mHosp').value = v.hosp || ''; $('#mDoc').value = v.doc || ''; $('#mPharm').value = v.pharm || ''; $('#mRxDate').value = v.rxDate || ''; $('#mNote').value = v.note || '';
+  $('#mMore').open = !!(v.hosp || v.doc || v.pharm || v.note);
+  fillDatalists();
+  syncMedForm();
+  $('#medDlg').showModal();
+  if (!m) setTimeout(() => $('#mName').focus(), 50);
+}
+function renderPhoto() { $('#mPhotoPv').innerHTML = mPhoto ? `<img src="${mPhoto}" alt="">` : pillSvg(segGet($('#mShape')) || 'round', segGet($('#mColor')) || '#FFFFFF', 40); $('#mPhotoDel').hidden = !mPhoto; }
+function syncMedForm() {
+  const t = segGet($('#mSched'));
+  $('#mDaysF').hidden = t !== 'days'; $('#mEveryF').hidden = t !== 'every'; $('#mCycleF').hidden = t !== 'cycle';
+  $('#mTimesF').hidden = t === 'prn'; $('#mPrnF').hidden = t !== 'prn';
+  const em = $('#mEndMode').value; $('#mEndDaysF').hidden = em !== 'days'; $('#mEndF').hidden = em !== 'date';
+  if (em === 'days') { const n = clamp(parseInt($('#mEndDays').value) || 1, 1, 365); $('#mEndDaysV').textContent = `${fmtMD(addDays($('#mStart').value || dk(), n - 1))}까지`; }
+  $('#mUnit2').innerHTML = $('#mUnit').innerHTML; $('#mUnit2').value = $('#mUnit').value;
+  const M = S.meals, meal = $('#mMeal').value;
+  const off = { before30: -30, before: -5, with: 0, after: 5, after30: 30, empty: -60, '': 0, bed: 0 }[meal] || 0;
+  const adj = t => { if (!t) return t; let m = tmin(t) + off; m = (m + 1440) % 1440; return `${pad2(Math.floor(m / 60))}:${pad2(m % 60)}`; };
+  const q = [['아침', adj(M.morning)], ['점심', adj(M.lunch)], ['저녁', adj(M.dinner)], ['자기 전', M.bed]];
+  $('#mQuick').innerHTML = q.map(([l, t]) => `<button type="button" class="chip" data-t="${t}">${icon('plus', 'sm')}${l} <small>${t}</small></button>`).join('') +
+    `<button type="button" class="chip" data-preset="1">하루 1번</button><button type="button" class="chip" data-preset="2">하루 2번</button><button type="button" class="chip" data-preset="3">하루 3번</button>`;
+  renderPhoto();
+}
+function readTimes() {
+  const rows = $$('#mTimes .trow').map(r => ({ t: $('[data-f="t"]', r).value, q: Math.max(0.25, parseFloat($('[data-f="q"]', r).value) || 1) })).filter(x => /^\d\d:\d\d$/.test(x.t));
+  const seen = new Set(); return rows.filter(r => !seen.has(r.t) && seen.add(r.t)).sort((a, b) => a.t.localeCompare(b.t));
+}
+function saveMed() {
+  const name = $('#mName').value.trim();
+  if (!name) { $('#mName').focus(); toast('약 이름을 적어 주세요', { err: true }); return; }
+  const type = segGet($('#mSched'));
+  const times = type === 'prn' ? [] : readTimes();
+  if (type !== 'prn' && !times.length) { toast('복용 시간을 하나 이상 넣어 주세요', { err: true }); return; }
+  const days = $$('#mDays button[aria-pressed="true"]').map(b => +b.dataset.v);
+  if (type === 'days' && !days.length) { toast('요일을 하나 이상 골라 주세요', { err: true }); return; }
+  const start = $('#mStart').value || dk();
+  const em = $('#mEndMode').value;
+  let end = em === 'date' ? $('#mEnd').value : em === 'days' ? addDays(start, clamp(parseInt($('#mEndDays').value) || 1, 1, 365) - 1) : '';
+  if (end && end < start) { toast('마지막 날이 시작일보다 빨라요', { err: true }); return; }
+  const stockV = $('#mStock').value.trim();
+  const m = editMed || { id: uid(), created: Date.now() };
+  const oldTimes = editMed ? editMed.times.map(t => t.t).join() : '';
+  Object.assign(m, {
+    who: segGet($('#mWho')) || D.people[0].id, name, kind: segGet($('#mKind')) || 'rx', purpose: $('#mPurpose').value.trim(),
+    shape: segGet($('#mShape')) || 'round', color: segGet($('#mColor')) || '#FFFFFF', photo: mPhoto,
+    sched: { type, days, every: numGet($('#mEvery')), on: numGet($('#mCycOn')), off: numGet($('#mCycOff')) },
+    times, meal: $('#mMeal').value, unit: type === 'prn' ? $('#mUnit2').value : $('#mUnit').value,
+    prn: { q: Math.max(0.25, parseFloat($('#mPrnQty').value) || 1), gap: parseFloat($('#mPrnGap').value) || 0, max: parseInt($('#mPrnMax').value) || 0 },
+    start, end, stock: stockV === '' ? null : Math.max(0, parseFloat(stockV) || 0), low: clamp(parseInt($('#mLow').value) || 0, 0, 60),
+    hosp: $('#mHosp').value.trim(), doc: $('#mDoc').value.trim(), pharm: $('#mPharm').value.trim(), rxDate: $('#mRxDate').value, note: $('#mNote').value.trim(),
+  });
+  if (m.stock != null && (!m.lastRefill || m.stock > m.lastRefill)) m.lastRefill = m.stock;
+  if (!editMed) D.meds.push(m);
+  saveD(true); $('#medDlg').close();
+  if (editMed && oldTimes && oldTimes !== m.times.map(t => t.t).join()) toast('저장했어요. 바뀐 시간은 오늘부터 적용돼요.');
+  else toast(editMed ? '저장했어요' : `${m.name}${josa(m.name, '을', '를').slice(m.name.length)} 추가했어요`);
+  render();
+}
+async function deleteMed(m) {
+  const hasLogs = Object.values(D.logs).some(L => Object.keys(L).some(k => k.startsWith(m.id + '@'))) || D.prn.some(x => x.med === m.id);
+  const ok = await confirmDlg(`${m.name} 삭제`, hasLogs ? '이 약의 복용 기록도 함께 지워져요. 기록을 남기려면 삭제 대신 "잠시 중단"을 쓰세요.' : '이 약을 지울까요?', '삭제', true);
+  if (!ok) return;
+  D.meds = D.meds.filter(x => x.id !== m.id);
+  for (const day in D.logs) { for (const k in D.logs[day]) if (k.startsWith(m.id + '@')) delete D.logs[day][k]; if (!Object.keys(D.logs[day]).length) delete D.logs[day]; }
+  D.prn = D.prn.filter(x => x.med !== m.id); D.refills = D.refills.filter(x => x.med !== m.id);
+  saveD(true); $('#medDlg').close(); render(); toast('삭제했어요');
+}
+function togglePause(m) {
+  if (m.paused) { m.paused = false; m.pausedAt = null; toast(`${m.name} 다시 먹기 시작`); }
+  else { m.paused = true; m.pausedAt = dk(); toast(`${m.name} 잠시 중단. 지난 기록은 남아요.`, { action: '되돌리기', onAction: () => { m.paused = false; m.pausedAt = null; saveD(); render(); } }); }
+  saveD(); render();
+}
+function dupMed(m) {
+  const c = JSON.parse(JSON.stringify(m)); c.id = uid(); c.name = m.name + ' (복사)'; c.created = Date.now(); c.paused = false; c.pausedAt = null;
+  D.meds.push(c); saveD(); render(); openMed(c);
+}
+function fillDatalists() {
+  const uniq = a => [...new Set(a.filter(Boolean))];
+  $('#medNames').innerHTML = uniq(D.meds.map(m => m.name)).map(x => `<option value="${esc(x)}">`).join('');
+  $('#hospList').innerHTML = uniq(D.meds.map(m => m.hosp)).map(x => `<option value="${esc(x)}">`).join('');
+  $('#pharmList').innerHTML = uniq(D.meds.map(m => m.pharm)).map(x => `<option value="${esc(x)}">`).join('');
+}
+function loadPhoto(file) {
+  if (!file) return;
+  const img = new Image(), url = URL.createObjectURL(file);
+  img.onload = () => {
+    const s = 200, c = document.createElement('canvas'); c.width = c.height = s; const x = c.getContext('2d');
+    const r = Math.max(s / img.width, s / img.height), w = img.width * r, h = img.height * r;
+    x.drawImage(img, (s - w) / 2, (s - h) / 2, w, h);
+    mPhoto = c.toDataURL('image/jpeg', .72); URL.revokeObjectURL(url); renderPhoto();
+  };
+  img.onerror = () => { URL.revokeObjectURL(url); toast('사진을 열 수 없어요', { err: true }); };
+  img.src = url;
+}
+
+/* ---------- Person dialog ---------- */
+let editP = null;
+function openPerson(p) {
+  editP = p || null;
+  $('#pT').textContent = p ? '가족 고치기' : '가족 추가';
+  $('#pDel').hidden = !p || D.people.length < 2;
+  $('#pName').value = p?.name || ''; $('#pRel').value = p?.rel || ''; $('#pBirth').value = p?.birth || ''; $('#pBlood').value = p?.blood || '';
+  $('#pAllergy').value = p?.allergy || ''; $('#pCond').value = p?.cond || ''; $('#pNote').value = p?.note || '';
+  const used = D.people.map(x => x.color), col = p?.color || PERSON_COLORS.find(c => !used.includes(c)) || PERSON_COLORS[D.people.length % PERSON_COLORS.length];
+  $('#pColor').innerHTML = PERSON_COLORS.map(c => `<button type="button" class="sw" data-v="${c}" style="--c:${c}" aria-pressed="${c === col}"></button>`).join('');
+  $('#pDlg').showModal();
+  setTimeout(() => $('#pName').focus(), 50);
+}
+function savePerson() {
+  const name = $('#pName').value.trim(); if (!name) { $('#pName').focus(); toast('이름을 적어 주세요', { err: true }); return; }
+  const p = editP || { id: uid() };
+  Object.assign(p, { name, rel: $('#pRel').value.trim(), birth: parseInt($('#pBirth').value) || null, blood: $('#pBlood').value, color: segGet($('#pColor')) || PERSON_COLORS[0], allergy: $('#pAllergy').value.trim(), cond: $('#pCond').value.trim(), note: $('#pNote').value.trim() });
+  if (!editP) D.people.push(p);
+  saveD(true); $('#pDlg').close(); render(); toast(editP ? '저장했어요' : `${name} 추가했어요`);
+}
+async function deletePerson(p) {
+  const meds = D.meds.filter(m => m.who === p.id);
+  const ok = await confirmDlg(`${p.name} 삭제`, meds.length ? `${p.name}의 약 ${meds.length}개와 복용 기록도 함께 지워져요.` : `${p.name}${josa(p.name, '을', '를').slice(p.name.length)} 지울까요?`, '삭제', true);
+  if (!ok) return;
+  const ids = new Set(meds.map(m => m.id));
+  D.meds = D.meds.filter(m => !ids.has(m.id));
+  for (const day in D.logs) { for (const k in D.logs[day]) if (ids.has(k.split('@')[0])) delete D.logs[day][k]; if (!Object.keys(D.logs[day]).length) delete D.logs[day]; }
+  D.prn = D.prn.filter(x => !ids.has(x.med)); D.refills = D.refills.filter(x => !ids.has(x.med));
+  D.people = D.people.filter(x => x.id !== p.id); if (S.who === p.id) S.who = '';
+  saveD(true); saveS(); $('#pDlg').close(); render();
+}
+
+/* ---------- Dose menu ---------- */
+function openDoseMenu(d) {
+  const log = getLog(d), st = status(d), m = d.m;
+  $('#dmT').textContent = m.name;
+  $('#dmS').textContent = `${fmtDay(d.day)} ${ampm(d.t)} · ${qtyText(m, d.q)}${m.meal ? ' · ' + MEAL[m.meal] : ''}${showWho() ? ' · ' + person(m.who).name : ''}${log ? (log.s === 't' ? ` · ${hm(log.at)}에 먹음` : ' · 건너뜀') : ''}`;
+  const b = [];
+  if (!log || log.s !== 't') b.push(`<button data-a="take">${icon('check')}먹었어요</button>`);
+  if (!log) b.push(`<button data-a="skip">${icon('ban')}건너뛰기 (안 먹음)</button>`);
+  if (log?.s === 't') b.push(`<button data-a="time">${icon('clock')}먹은 시각 고치기 <input type="time" value="${hm(log.at)}" style="margin-left:auto;height:32px;border:0;background:var(--hover);border-radius:999px;padding:0 10px;font:inherit"></button>`);
+  if (log) b.push(`<button data-a="clear">${icon('undo')}기록 지우기</button>`);
+  b.push(`<button data-a="edit">${icon('pen')}약 정보 고치기</button>`);
+  if (m.note) b.push(`<div class="note">${esc(m.note)}</div>`);
+  $('#dmList').innerHTML = b.join('');
+  $$('#dmList [data-a]').forEach(btn => btn.onclick = e => {
+    const a = btn.dataset.a;
+    if (a === 'time') { if (e.target.tagName === 'INPUT') return; const v = $('input', btn).value; if (v) { const lg = getLog(d); lg.at = atTime(d.day, v); saveD(); render(); toast('먹은 시각을 고쳤어요'); } $('#doseDlg').close(); return; }
+    $('#doseDlg').close();
+    if (a === 'take') take([d]); else if (a === 'skip') take([d], 's');
+    else if (a === 'clear') { clearLog(d); render(); } else if (a === 'edit') openMed(m);
+  });
+  const ti = $('#dmList input[type=time]'); if (ti) ti.onchange = () => { const lg = getLog(d); if (lg && ti.value) { lg.at = atTime(d.day, ti.value); saveD(); render(); toast('먹은 시각을 고쳤어요'); } };
+  $('#doseDlg').showModal();
+}
+
+/* ---------- PRN dialog ---------- */
+function openPrn() {
+  const meds = D.meds.filter(m => whoOk(m) && !isOff(m)).sort((a, b) => (a.sched.type !== 'prn') - (b.sched.type !== 'prn') || a.name.localeCompare(b.name));
+  if (!meds.length) { toast('먼저 약을 등록해 주세요'); openMed(null, { sched: { type: 'prn' } }); return; }
+  $('#prnList').innerHTML = meds.map(m => `<button data-id="${m.id}"><span style="width:28px;display:grid;place-items:center">${pillSvg(m.shape, m.color, 24)}</span>${esc(m.name)} <span class="muted" style="font-weight:500;margin-left:auto">${m.sched.type === 'prn' ? '필요할 때' : '추가로'} · ${qtyText(m, m.sched.type === 'prn' ? m.prn?.q || 1 : m.times[0]?.q || 1)}${showWho() ? ' · ' + esc(person(m.who).name) : ''}</span></button>`).join('') +
+    `<button data-new="1">${icon('plus')}목록에 없는 약 추가</button>`;
+  $$('#prnList button').forEach(b => b.onclick = () => { $('#prnDlg').close(); if (b.dataset.new) return openMed(null, { sched: { type: 'prn' } }); const m = medById(b.dataset.id); prnTake(m, m.sched.type === 'prn' ? m.prn?.q || 1 : m.times[0]?.q || 1); });
+  $('#prnDlg').showModal();
+}
+
+/* ---------- Refill dialog ---------- */
+let refM = null;
+function openRefill(m) {
+  refM = m; const si = stockInfo(m);
+  $('#refT').textContent = `${m.name} 받아 오기`;
+  $('#refS').textContent = si ? `지금 ${fmtQ(si.stock)}${m.unit} 남았어요${si.use ? ` · 하루 ${fmtQ(Math.round(si.use * 100) / 100)}${m.unit}씩` : ''}` : '아직 재고를 세지 않는 약이에요. 받은 수량을 넣으면 지금부터 세어요.';
+  const per = Math.max(dailyUse(m), 0) || 1;
+  $('#refQty').value = ''; $('#refDate').value = dk();
+  $('#refQuick').innerHTML = [7, 14, 28, 30, 60, 90].map(n => `<button type="button" class="chip" data-q="${Math.round(per * n * 100) / 100}">${n}일분 <small>${fmtQ(Math.round(per * n * 100) / 100)}${m.unit}</small></button>`).join('');
+  $('#refExtend').checked = !!m.end; $('#refExtend').closest('label').hidden = !m.end;
+  $('#refDlg').showModal(); setTimeout(() => $('#refQty').focus(), 50);
+}
+function doRefill(set = false) {
+  const m = refM, q = parseFloat($('#refQty').value);
+  if (!(q >= 0) || (!set && !q)) { $('#refQty').focus(); toast('수량을 넣어 주세요', { err: true }); return; }
+  const at = atTime($('#refDate').value || dk(), hm(Date.now()));
+  const before = m.stock ?? 0;
+  m.stock = set ? q : Math.round(((m.stock ?? 0) + q) * 100) / 100;
+  m.lastRefill = Math.max(m.stock, m.lastRefill || 0); if (!set) m.lastRefill = m.stock;
+  if (!set && $('#refExtend').checked && m.end) { const use = dailyUse(m); if (use > 0) m.end = addDays(m.end < dk() ? dk() : m.end, Math.floor(q / use)); }
+  D.refills.push({ id: uid(), med: m.id, at, q, set, before });
+  if (F.low) delete F.low[m.id];
+  saveD(true); $('#refDlg').close(); render();
+  toast(set ? `${m.name} 수량을 ${fmtQ(q)}${m.unit}로 맞췄어요` : `${m.name} +${fmtQ(q)}${m.unit} · 이제 ${fmtQ(m.stock)}${m.unit}`);
+}
+
+/* ---------- Settings ---------- */
+function openSettings() {
+  $$('[data-meal]').forEach(i => i.value = S.meals[i.dataset.meal]);
+  segSet($('#setMiss'), S.miss);
+  $$('#setDlg [data-bool]').forEach(c => c.checked = !!getPath(S, c.dataset.bool));
+  $('#setDlg').showModal();
+}
+/* ---------- Print report ---------- */
+function printReport(whoId = S.who) {
+  const today = dk(), now = Date.now(), from = addDays(today, -13);
+  const ppl = whoId ? [person(whoId)] : D.people.filter(p => D.meds.some(m => m.who === p.id));
+  if (!ppl.length) { toast('인쇄할 약이 없어요'); return; }
+  let h = '';
+  for (const p of ppl) {
+    const meds = D.meds.filter(m => m.who === p.id && !isOff(m));
+    const r30 = rangeStats(addDays(today, -29), today, d => d.m.who === p.id);
+    h += `<section class="person"><h1>복약 기록표 · ${esc(p.name)}</h1><div class="sub">${esc([p.rel, p.birth ? p.birth + '년생' : '', p.blood].filter(Boolean).join(' · '))}${p.rel || p.birth || p.blood ? ' · ' : ''}출력 ${fmtDay(today, true)} · 최근 30일 복용률 ${r30.rate == null ? '–' : Math.round(r30.rate * 100) + '%'} (${r30.taken}/${r30.den}회)</div>`;
+    if (p.allergy || p.cond || p.note) h += `<div class="info">${p.allergy ? `<b>알레르기·금기:</b> ${esc(p.allergy)}<br>` : ''}${p.cond ? `<b>앓는 병·병원:</b> ${esc(p.cond)}<br>` : ''}${p.note ? `<b>메모:</b> ${esc(p.note)}` : ''}</div>`;
+    h += `<h2>지금 먹는 약 (${meds.length}개)</h2><table><thead><tr><th>약 이름</th><th>용도</th><th>언제·얼마나</th><th>기간</th><th>병원·약국</th><th>메모</th></tr></thead><tbody>`;
+    h += meds.map(m => `<tr><td><b>${esc(m.name)}</b><br><span style="color:#666">${KIND[m.kind] || ''}</span></td><td>${esc(m.purpose || '')}</td><td>${schedText(m)}${m.meal ? ', ' + MEAL[m.meal] : ''}<br>${m.sched.type === 'prn' ? `1회 ${qtyText(m, m.prn?.q || 1)}` : m.times.map(t => `${t.t} ${qtyText(m, t.q)}`).join(', ')}</td><td>${m.start ? fmtMD(m.start) : ''}${m.end ? ' ~ ' + fmtMD(m.end) : ' ~'}</td><td>${esc([m.hosp, m.doc, m.pharm].filter(Boolean).join(' · '))}${m.rxDate ? '<br>처방 ' + fmtMD(m.rxDate) : ''}</td><td>${esc(m.note || '')}</td></tr>`).join('') || '<tr><td colspan="6">없음</td></tr>';
+    h += `</tbody></table>`;
+    // 14 day grid
+    const days = []; for (let d = from; d <= today; d = addDays(d, 1)) days.push(d);
+    const rows = [];
+    for (const m of D.meds.filter(m => m.who === p.id && m.sched.type !== 'prn')) for (const t of m.times) {
+      const cells = days.map(day => { if (!activeOn(m, day)) { const lg = D.logs[day]?.[m.id + '@' + t.t]; if (!lg) return ''; } const d = { m, t: t.t, q: t.q, key: m.id + '@' + t.t, day }; const st = status(d, now); return st === 'taken' ? '○' : st === 'skipped' ? '–' : st === 'missed' ? '×' : '·'; });
+      if (cells.some(Boolean)) rows.push(`<tr><td>${esc(m.name)} ${t.t}</td>${cells.map(c => `<td>${c}</td>`).join('')}</tr>`);
+    }
+    if (rows.length) h += `<h2>최근 14일 복용</h2><table class="grid14"><thead><tr><th>약 · 시간</th>${days.map(d => `<th>${pd(d).getDate()}<br>${WD[pd(d).getDay()]}</th>`).join('')}</tr></thead><tbody>${rows.join('')}</tbody></table><div class="sub" style="margin-top:2mm">○ 먹음 · × 못 먹음 · – 건너뜀 · · 아직</div>`;
+    const prn = D.prn.filter(x => { const m = medById(x.med); return m && m.who === p.id && x.at >= atTime(addDays(today, -29), '00:00'); }).sort((a, b) => a.at - b.at);
+    if (prn.length) h += `<h2>필요할 때 먹은 약 (최근 30일)</h2><table><thead><tr><th>날짜·시각</th><th>약</th><th class="n">양</th></tr></thead><tbody>${prn.map(x => { const m = medById(x.med); return `<tr><td>${fmtDay(dk(x.at))} ${hm(x.at)}</td><td>${esc(m.name)}</td><td class="n">${qtyText(m, x.q)}</td></tr>`; }).join('')}</tbody></table>`;
+    h += `<div class="foot">Pillser(아웃그리드)로 기록한 복약 기록표입니다. 기록은 본인·가족이 직접 입력한 내용입니다.</div></section>`;
+  }
+  $('#print').innerHTML = h;
+  setTimeout(() => window.print(), 60);
+}
+
+/* ---------- Exports ---------- */
+function csvCell(v) { v = String(v ?? ''); return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }
+function exportCsv() {
+  const now = Date.now(), rows = [['날짜', '예정 시각', '누구', '약', '양', '단위', '상태', '먹은 시각']];
+  const days = Object.keys(D.logs).concat(D.meds.map(m => m.start).filter(Boolean)).sort();
+  const first = days[0] || dk(); const today = dk();
+  for (let day = first; day <= today; day = addDays(day, 1)) {
+    for (const d of dosesFor(day)) { const st = status(d, now); if (st === 'upcoming') continue; const lg = getLog(d); rows.push([day, d.t, person(d.m.who).name, d.m.name, d.q, d.m.unit, { taken: '먹음', skipped: '건너뜀', missed: '못 먹음', late: '늦음', due: '지금' }[st], lg && lg.s === 't' ? hm(lg.at) : '']); }
+    D.prn.filter(x => dk(x.at) === day).forEach(x => { const m = medById(x.med); if (m && whoOk(m)) rows.push([day, '', person(m.who).name, m.name, x.q, m.unit, '필요할 때', hm(x.at)]); });
+  }
+  download(`pillser-복용기록-${today}.csv`, '\ufeff' + rows.map(r => r.map(csvCell).join(',')).join('\r\n'), 'text/csv;charset=utf-8');
+  toast(`${rows.length - 1}줄을 CSV로 저장했어요`);
+}
+function exportBackup() {
+  const data = { app: 'pillser', ver: 1, exported: new Date().toISOString(), data: D, settings: { ...S, tab: undefined } };
+  download(`pillser-백업-${dk()}.json`, JSON.stringify(data), 'application/json');
+  toast('백업 파일을 저장했어요');
+}
+async function importBackup(file) {
+  try {
+    const j = JSON.parse(await file.text());
+    if (j.app !== 'pillser' || !j.data) throw 0;
+    const ok = await confirmDlg('백업 합치기', `가족 ${j.data.people?.length || 0}명, 약 ${j.data.meds?.length || 0}개를 지금 기록에 합쳐요. 같은 약은 백업 내용으로 바뀌어요.`, '합치기');
+    if (!ok) return;
+    const byId = (a, b) => { const m = new Map(a.map(x => [x.id, x])); (b || []).forEach(x => m.set(x.id, x)); return [...m.values()]; };
+    // if this device only has the default empty "나", drop it
+    if (D.people.length === 1 && !D.meds.length && j.data.people?.length) D.people = [];
+    D.people = byId(D.people, j.data.people); D.meds = byId(D.meds, j.data.meds);
+    for (const day in j.data.logs || {}) D.logs[day] = { ...(D.logs[day] || {}), ...j.data.logs[day] };
+    D.prn = byId(D.prn, j.data.prn); D.refills = byId(D.refills, j.data.refills);
+    if (j.settings?.meals) S.meals = j.settings.meals;
+    saveD(true); saveS(); render(); toast('백업을 합쳤어요');
+  } catch { toast('Pillser 백업 파일이 아니에요', { err: true }); }
+}
+
+/* ---------- Sample ---------- */
+async function loadSample() {
+  if (D.meds.length && !await confirmDlg('예시 불러오기', '지금 기록에 예시 가족과 약을 더해요. 나중에 가족 탭에서 지울 수 있어요.', '불러오기')) return;
+  const me = D.people[0], mom = { id: uid(), name: '엄마', rel: '어머니', birth: 1958, color: PERSON_COLORS[1], allergy: '페니실린', cond: '고혈압·당뇨 (○○내과)' }, kid = { id: uid(), name: '지우', rel: '딸', birth: 2017, color: PERSON_COLORS[2] };
+  D.people.push(mom, kid);
+  const today = dk(), M = S.meals;
+  const mk = o => ({ id: uid(), created: Date.now(), kind: 'rx', purpose: '', shape: 'round', color: '#FFFFFF', photo: null, sched: { type: 'daily', days: [], every: 2, on: 21, off: 7 }, times: [], meal: '', unit: '정', prn: { q: 1, gap: 0, max: 0 }, start: addDays(today, -20), end: '', stock: null, low: 7, alarm: true, ...o });
+  const meds = [
+    mk({ who: mom.id, name: '혈압약 (암로디핀 5mg)', purpose: '혈압', times: [{ t: '08:30', q: 1 }], meal: 'after30', color: '#FFFFFF', shape: 'round', stock: 24, hosp: '○○내과', pharm: '△△약국', rxDate: addDays(today, -20), end: addDays(today, 9), note: '자몽주스와 함께 먹지 않기' }),
+    mk({ who: mom.id, name: '당뇨약 (메트포르민 500mg)', purpose: '혈당', times: [{ t: '08:30', q: 1 }, { t: '19:00', q: 1 }], meal: 'after', shape: 'oval', color: '#F3E7C9', stock: 9, hosp: '○○내과', pharm: '△△약국', rxDate: addDays(today, -20) }),
+    mk({ who: mom.id, name: '칼슘·비타민D', kind: 'sup', purpose: '뼈 건강', times: [{ t: '19:00', q: 2 }], meal: 'after', shape: 'oval', color: '#A9ADA6', stock: 80 }),
+    mk({ who: me.id, name: '오메가3', kind: 'sup', purpose: '혈행', times: [{ t: M.morning, q: 1 }], meal: 'with', shape: 'softgel', color: '#F2C94C', unit: '캡슐', stock: 52 }),
+    mk({ who: me.id, name: '비타민D 1000IU', kind: 'sup', sched: { type: 'days', days: [1, 3, 5], every: 2, on: 21, off: 7 }, times: [{ t: M.morning, q: 1 }], shape: 'softgel', color: '#E9884A', unit: '캡슐' }),
+    mk({ who: me.id, name: '타이레놀 500mg', kind: 'otc', purpose: '두통·열', sched: { type: 'prn', days: [], every: 2, on: 21, off: 7 }, prn: { q: 1, gap: 4, max: 6 }, shape: 'oval', color: '#FFFFFF', stock: 16 }),
+    mk({ who: kid.id, name: '감기 시럽', purpose: '기침·콧물', times: [{ t: '08:00', q: 5 }, { t: '13:00', q: 5 }, { t: '19:30', q: 5 }], meal: 'after30', shape: 'liquid', color: '#EE9BB0', unit: 'ml', start: addDays(today, -2), end: addDays(today, 2), stock: 60, hosp: '소아과', low: 1 }),
+  ];
+  D.meds.push(...meds);
+  // fake history
+  const now = Date.now();
+  for (let i = 20; i >= 0; i--) {
+    const day = addDays(today, -i);
+    for (const d of dosesFor(day, false)) {
+      if (!meds.includes(d.m)) continue;
+      const T = atTime(day, d.t); if (T > now) continue;
+      const r = Math.random();
+      if (i === 0 && now - T < 2 * 36e5) continue;
+      if (r < .86) (D.logs[day] ??= {})[d.key] = { s: 't', at: T + Math.round((Math.random() * 40 - 5)) * 6e4, q: d.q, stk: 0 };
+      else if (r < .91) (D.logs[day] ??= {})[d.key] = { s: 's', at: T, q: d.q, stk: 0 };
+    }
+  }
+  D.prn.push({ id: uid(), med: meds[5].id, at: now - 3 * 864e5, q: 1, stk: 0 }, { id: uid(), med: meds[5].id, at: now - 26 * 36e5, q: 1, stk: 0 });
+  saveD(true); render(); toast('예시를 불러왔어요. 둘러보고 필요 없으면 가족 탭에서 지우세요.', { ms: 5000 });
+}
+
+/* ---------- Events ---------- */
+function bindSeg(el, fn) { el.addEventListener('click', e => { const b = e.target.closest('button[data-v]'); if (!b || !el.contains(b)) return; segSet(el, b.dataset.v); fn && fn(b.dataset.v); }); }
+function wire() {
+  $('#tabs').onclick = e => { const b = e.target.closest('.tab'); if (b) goTab(b.dataset.tab); };
+  $('#whoFilter').onclick = e => { const b = e.target.closest('[data-w]'); if (!b) return; S.who = b.dataset.w; saveS(); render(); };
+  $('#helpBtn').onclick = () => $('#helpDlg').showModal();
+  $('#setBtn').onclick = openSettings;
+  $('#bigBtn').onclick = openBig;
+  $('#nextPill').onclick = () => { viewDay = dk(); goTab('today'); };
+  $('#sideToggle').onclick = () => $('#side').classList.toggle('closed');
+  $$('dialog [data-close]').forEach(b => b.onclick = () => b.closest('dialog').close());
+
+  // today
+  $('#dPrev').onclick = () => { viewDay = addDays(viewDay, -1); render(); };
+  $('#dNext').onclick = () => { viewDay = addDays(viewDay, 1); render(); };
+  $('#dToday').onclick = () => { viewDay = dk(); render(); };
+  $('#dLabel').onclick = () => { const i = $('#dPick'); try { i.showPicker(); } catch { i.style.pointerEvents = 'auto'; i.focus(); i.click(); } };
+  $('#dPick').onchange = e => { if (e.target.value) { viewDay = e.target.value; render(); } };
+  $('#prnBtn').onclick = openPrn;
+  $('#newMed1').onclick = $('#newMed2').onclick = () => openMed();
+  const doseClick = e => {
+    const a = e.target.closest('[data-act]'); if (!a) return;
+    const act = a.dataset.act, row = a.closest('.dose');
+    if (row && pressFired) { pressFired = false; return; }
+    const d = row ? findDose(row.dataset.k) : null;
+    switch (act) {
+      case 'toggle': if (d) toggleDose(d); break;
+      case 'menu': if (d) openDoseMenu(d); break;
+      case 'new': openMed(); break;
+      case 'person': openPerson(); break;
+      case 'sample': loadSample(); break;
+      case 'takeLate': take(dosesFor(viewDay).filter(x => ['late', 'due'].includes(status(x)))); break;
+      case 'skipMissed': take(dosesFor(viewDay).filter(x => status(x) === 'missed'), 's'); break;
+      case 'gostock': goTab('stock'); break;
+      case 'takeSlot': take(dosesFor(viewDay).filter(x => x.t === a.dataset.t && !getLog(x))); break;
+      case 'prn': prnTake(medById(a.dataset.id)); break;
+      case 'prnDel': { const r = D.prn.find(x => x.id === a.dataset.id); if (r) { removePrn(r.id); toast('기록을 지웠어요'); } break; }
+    }
+  };
+  $('#todayBody').addEventListener('click', doseClick);
+  $('#bigList').addEventListener('click', doseClick);
+  // long press on a dose row -> menu
+  let pressT = null, pressFired = false, pressXY = null;
+  const startPress = e => { const row = e.target.closest('.dose'); if (!row || e.target.closest('.ckb')) return; pressFired = false; pressXY = [e.clientX, e.clientY]; clearTimeout(pressT); pressT = setTimeout(() => { pressFired = true; const d = findDose(row.dataset.k); if (d) { try { navigator.vibrate && navigator.vibrate(20); } catch {} openDoseMenu(d); } }, 550); };
+  const cancelPress = e => { if (e && e.type === 'pointermove' && pressXY && Math.hypot(e.clientX - pressXY[0], e.clientY - pressXY[1]) < 10) return; clearTimeout(pressT); };
+  ['#todayBody', '#bigList'].forEach(s => { const el = $(s); el.addEventListener('pointerdown', startPress); el.addEventListener('pointermove', cancelPress); el.addEventListener('pointerup', cancelPress); el.addEventListener('pointercancel', cancelPress); el.addEventListener('contextmenu', e => { if (e.target.closest('.dose')) e.preventDefault(); }); });
+  $('#todayBody').addEventListener('click', e => { if (pressFired && e.target.closest('.dose')) { pressFired = false; e.stopImmediatePropagation(); } }, true);
+
+  // meds
+  $('#kindSeg').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.kind = b.dataset.k; saveS(); render(); };
+  $('#medSearch').oninput = () => renderMeds();
+  $('#showOff').onclick = () => { S.showOff = !S.showOff; saveS(); render(); };
+  $('#medGrid').onclick = e => {
+    const a = e.target.closest('[data-act]'); const card = e.target.closest('.mcard');
+    if (a && a.dataset.act === 'new') return openMed();
+    if (!card) return; const m = medById(card.dataset.id); if (!m) return;
+    const act = a ? a.dataset.act : 'edit';
+    if (act === 'refill') openRefill(m); else if (act === 'pause') togglePause(m); else if (act === 'dup') dupMed(m); else openMed(m);
+  };
+  // stock
+  $('#stockBody').onclick = e => {
+    const a = e.target.closest('[data-act]');
+    if (a?.dataset.act === 'refillM') { e.preventDefault(); const m = medById(a.dataset.id); if (m) openMed(m); return; }
+    const tr = e.target.closest('tr[data-id]'); if (!tr) return; const m = medById(tr.dataset.id); if (!m) return;
+    if (a?.dataset.act === 'refill') openRefill(m); else openMed(m);
+  };
+  $('#stockCopy').onclick = () => {
+    const low = lowMeds();
+    if (!low.length) { toast('곧 떨어지는 약이 없어요'); return; }
+    const txt = '다시 받아야 할 약\n' + low.map(({ m, s }) => `- ${showWho() ? person(m.who).name + ' · ' : ''}${m.name} (${s.low === 'out' ? '다 떨어짐' : s.days + '일분 남음'})${m.hosp ? ' · ' + m.hosp : ''}`).join('\n');
+    navigator.clipboard?.writeText(txt).then(() => toast('복사했어요. 문자나 메신저에 붙여 넣으세요.'), () => toast('복사하지 못했어요', { err: true }));
+  };
+  $('#lowList').onclick = e => { const it = e.target.closest('.it'); if (!it) return; const m = medById(it.dataset.id); if (m) openRefill(m); };
+  // history
+  $('#mPrev').onclick = () => { const [y, m] = histMonth.split('-').map(Number); histMonth = dk(new Date(y, m - 2, 1)).slice(0, 7); render(); };
+  $('#mNext').onclick = () => { const [y, m] = histMonth.split('-').map(Number); histMonth = dk(new Date(y, m, 1)).slice(0, 7); render(); };
+  $('#histBody').onclick = e => { const d = e.target.closest('.d[data-day]'); if (d) { viewDay = d.dataset.day; goTab('today'); } };
+  $('#printBtn').onclick = () => printReport();
+  $('#csvBtn').onclick = exportCsv;
+  // people
+  $('#newPerson').onclick = () => openPerson();
+  $('#pplGrid').onclick = e => {
+    const a = e.target.closest('[data-act]'); if (!a) return;
+    if (a.dataset.act === 'newp') return openPerson();
+    const p = D.people.find(x => x.id === a.closest('.pcard')?.dataset.id); if (!p) return;
+    const act = a.dataset.act;
+    if (act === 'pedit') openPerson(p);
+    else if (act === 'only') { S.who = S.who === p.id ? '' : p.id; saveS(); render(); }
+    else if (act === 'addfor') openMed(null, { who: p.id });
+    else if (act === 'print') printReport(p.id);
+  };
+  // side
+  $('#exportBtn').onclick = exportBackup;
+  $('#importBtn').onclick = () => $('#fileIn').click();
+  $('#fileIn').onchange = e => { const f = e.target.files[0]; e.target.value = ''; if (f) importBackup(f); };
+
+
+  // standby
+  $('#bigClose').onclick = closeBig;
+  $('#bigTheme').onclick = () => { S.bigDark = !S.bigDark; saveS(); $('#big').classList.toggle('dark', S.bigDark); };
+
+  // number steppers (dialogs)
+  document.addEventListener('click', e => {
+    const b = e.target.closest('.num button[data-d]'); if (!b) return;
+    const el = b.closest('.num'), i = $('input', el), st = parseFloat(el.dataset.step) || 1;
+    let v = (parseFloat(i.value) || 0) + st * +b.dataset.d;
+    v = clamp(Math.round(v * 100) / 100, parseFloat(el.dataset.min) || 0, parseFloat(el.dataset.max) || 999);
+    i.value = v; i.dispatchEvent(new Event('change', { bubbles: true }));
+  });
+
+  // med dialog
+  bindSeg($('#mWho')); bindSeg($('#mKind')); bindSeg($('#mSched'), syncMedForm);
+  bindSeg($('#mShape'), renderPhoto);
+  bindSeg($('#mColor'), c => { $$('#mShape .shp').forEach(b => b.innerHTML = pillSvg(b.dataset.v, c, 30)); renderPhoto(); });
+  $('#mDays').onclick = e => { const b = e.target.closest('button'); if (b) b.setAttribute('aria-pressed', String(b.getAttribute('aria-pressed') !== 'true')); };
+  $('#mTimes').onclick = e => { const b = e.target.closest('[data-act="rmTime"]'); if (!b) return; if ($$('#mTimes .trow').length > 1) b.closest('.trow').remove(); else toast('시간이 하나는 있어야 해요'); };
+  $('#mQuick').onclick = e => {
+    const b = e.target.closest('.chip'); if (!b) return;
+    const q = parseFloat($('#mTimes .trow [data-f="q"]')?.value) || 1;
+    if (b.dataset.preset) {
+      const M = S.meals, n = +b.dataset.preset, chips = $$('#mQuick .chip[data-t]').map(c => c.dataset.t);
+      const ts = n === 1 ? [chips[0]] : n === 2 ? [chips[0], chips[2]] : [chips[0], chips[1], chips[2]];
+      $('#mTimes').innerHTML = ts.map(t => timeRow(t, q)).join(''); return;
+    }
+    if (readTimes().some(x => x.t === b.dataset.t)) { toast('이미 있는 시간이에요'); return; }
+    $('#mTimes').insertAdjacentHTML('beforeend', timeRow(b.dataset.t, q));
+    const rows = $$('#mTimes .trow').sort((a, c) => $('[data-f="t"]', a).value.localeCompare($('[data-f="t"]', c).value)); rows.forEach(r => $('#mTimes').appendChild(r));
+  };
+  ['#mMeal', '#mUnit', '#mEndMode', '#mEndDays', '#mStart'].forEach(s => $(s).addEventListener('change', syncMedForm));
+  $('#mEndDays').addEventListener('input', syncMedForm);
+  $('#mPhotoBtn').onclick = () => $('#photoIn').click();
+  $('#photoIn').onchange = e => { const f = e.target.files[0]; e.target.value = ''; loadPhoto(f); };
+  $('#mPhotoDel').onclick = () => { mPhoto = null; renderPhoto(); };
+  $('#mSave').onclick = saveMed;
+  $('#mDel').onclick = () => editMed && deleteMed(editMed);
+  $('#mName').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); saveMed(); } });
+  // person dialog
+  bindSeg($('#pColor'));
+  $('#pSave').onclick = savePerson;
+  $('#pDel').onclick = () => editP && deletePerson(editP);
+  $('#pName').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); savePerson(); } });
+  // refill
+  $('#refQuick').onclick = e => { const b = e.target.closest('.chip'); if (b) $('#refQty').value = b.dataset.q; };
+  $('#refOk').onclick = () => doRefill(false);
+  $('#refSet').onclick = () => doRefill(true);
+  $('#refQty').addEventListener('keydown', e => { if (e.key === 'Enter') doRefill(false); });
+  // settings
+  $$('[data-meal]').forEach(i => i.onchange = () => { if (i.value) { S.meals[i.dataset.meal] = i.value; saveS(); render(); } });
+  bindSeg($('#setMiss'), v => { S.miss = +v; saveS(); render(); });
+  $$('#setDlg [data-bool]').forEach(c => c.addEventListener('change', () => { setPath(S, c.dataset.bool, c.checked); saveS(); render(); if (c.dataset.bool === 'wake') syncWake(); }));
+  $('#sampleBtn').onclick = () => { $('#setDlg').close(); loadSample(); };
+  $('#resetBtn').onclick = async () => {
+    if (!await confirmDlg('모두 지우기', '가족, 약, 복용 기록을 모두 지워요. 되돌릴 수 없으니 먼저 백업을 저장하세요.', '모두 지우기', true)) return;
+    D = EMPTY(); D.people.push({ id: uid(), name: '나', rel: '나', color: PERSON_COLORS[0] }); F = {}; S.who = '';
+    saveD(true); saveF(); saveS(); $('#setDlg').close(); render(); toast('모두 지웠어요');
+  };
+
+  // keyboard
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') { if (big.on && !$('dialog[open]')) { closeBig(); return; } }
+    if (e.ctrlKey || e.metaKey || e.altKey || $('dialog[open]') || /INPUT|TEXTAREA|SELECT/.test(document.activeElement?.tagName)) return;
+    const k = e.key.toLowerCase();
+    if (k === 'arrowleft' && S.tab === 'today') { viewDay = addDays(viewDay, -1); render(); }
+    else if (k === 'arrowright' && S.tab === 'today') { viewDay = addDays(viewDay, 1); render(); }
+    else if (k === 't') { viewDay = dk(); goTab('today'); }
+    else if (k === 'n') { e.preventDefault(); openMed(); }
+    else if (k === 'f') big.on ? closeBig() : openBig();
+    else if (/^[1-5]$/.test(k)) goTab(['today', 'meds', 'stock', 'history', 'people'][+k - 1]);
+  });
+  document.addEventListener('visibilitychange', () => { syncWake(); if (document.visibilityState === 'visible') { loop(); render(); } });
+  window.addEventListener('focus', () => loop());
+  window.addEventListener('storage', e => { if (e.key === 'pillser.data') { D = Object.assign(EMPTY(), store.get('data', {})); render(); } });
+  window.addEventListener('afterprint', () => { $('#print').innerHTML = ''; });
+}
+
+/* ---------- Init ---------- */
+hydrateIcons();
+wire();
+pruneBook();
+goTab(['today', 'meds', 'stock', 'history', 'people'].includes(S.tab) ? S.tab : 'today');
+ensureTicker();
+loop();
+</script>
+</body>
+</html>
