@@ -4,8 +4,8 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <meta name="theme-color" content="#F5F1E8" />
-<title>Pillser · 아웃그리드 복약 알림</title>
-<meta name="description" content="브라우저 안에서만 동작하는 복약 알림. 약·영양제 복용 시간 알림, 먹었는지 체크, 남은 수량과 처방 기간, 가족별 관리, 복용률 달력, 병원에 가져갈 복약 기록표 인쇄, 캘린더 내보내기. 기록은 내 기기에만 저장됩니다." />
+<title>Pillser · 아웃그리드 복약 관리</title>
+<meta name="description" content="브라우저 안에서만 동작하는 복약 관리. 약·영양제 복용 일정, 먹었는지 체크, 남은 수량과 처방 기간, 가족별 관리, 복용률 달력, 병원에 가져갈 복약 기록표 인쇄. 기록은 내 기기에만 저장됩니다." />
 <!-- Fonts: outgrid's own files first (fonts/ next to this page), public CDN as a fallback. -->
 <style>
   @font-face { font-family: "wantedSans"; src: url("fonts/WantedSansVariable.woff2") format("woff2"); font-weight: 100 800; font-style: normal; font-display: swap; }
@@ -461,12 +461,6 @@
   .nextbox .t small { font-size: 13px; font-weight: 600; opacity: .75; margin-left: 6px; letter-spacing: 0; }
   .nextbox .s { font-size: 12.5px; opacity: .85; margin-top: 6px; line-height: 1.5; }
   .nextbox.none { background: var(--hover); color: var(--muted); }
-  .nstat { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 14px; background: #fff; box-shadow: inset 0 0 0 1px var(--hair); font-size: 12.5px; font-weight: 600; color: var(--ink-2); margin-bottom: 8px; }
-  .nstat .ic { width: 30px; height: 30px; border-radius: 999px; display: grid; place-items: center; flex: none; background: var(--hover); color: var(--muted); }
-  .nstat.ok .ic { background: #E3EEE5; color: var(--ok); }
-  .nstat.bad .ic { background: #F6E3E0; color: var(--miss); }
-  .nstat .tx { flex: 1; min-width: 0; line-height: 1.4; }
-  .nstat .tx small { display: block; font-weight: 500; color: var(--faint); font-size: 11.5px; }
   .pprog { display: flex; flex-direction: column; gap: 8px; }
   .pprog .r { display: grid; grid-template-columns: 30px 1fr auto; gap: 10px; align-items: center; font-size: 12.5px; }
   .pprog .r .nm { font-weight: 700; color: var(--ink-2); font-size: 12.5px; }
@@ -521,24 +515,6 @@
   .menu-list .row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
   .menu-list .row button { justify-content: center; }
 
-  /* alarm banner */
-  #alarm { position: fixed; left: 50%; top: calc(16px + env(safe-area-inset-top)); transform: translateX(-50%); z-index: 160; width: min(520px, calc(100vw - 24px)); background: var(--dark); color: #fff; border-radius: 22px; padding: 16px; display: none; flex-direction: column; gap: 12px; box-shadow: 0 24px 60px -20px rgba(28,40,36,.7); }
-  #alarm.show { display: flex; animation: drop .3s ease-out; }
-  @keyframes drop { from { transform: translate(-50%, -20px); opacity: 0; } }
-  #alarm .atop { display: flex; gap: 12px; align-items: center; }
-  #alarm .ai { width: 44px; height: 44px; border-radius: 999px; background: rgba(255,255,255,.14); display: grid; place-items: center; flex: none; animation: wob .5s ease-in-out infinite alternate; }
-  @keyframes wob { from { transform: rotate(-12deg); } to { transform: rotate(12deg); } }
-  #alarm .tx { flex: 1; min-width: 0; }
-  #alarm .tx b { display: block; font-size: 16px; }
-  #alarm .tx small { display: block; font-size: 12.5px; opacity: .8; margin-top: 2px; }
-  #alarm ul { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 4px; max-height: 40vh; overflow: auto; }
-  #alarm li { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 12px; background: rgba(255,255,255,.08); font-size: 13.5px; }
-  #alarm li b { font-weight: 700; }
-  #alarm li .q { opacity: .75; }
-  #alarm li .who { background: rgba(255,255,255,.92); }
-  #alarm .acts { display: flex; gap: 6px; flex-wrap: wrap; }
-  #alarm .btn { background: #fff; color: var(--dark); flex: 1; }
-  #alarm .btn.ghost { background: rgba(255,255,255,.14); color: #fff; flex: none; }
 
   /* standby (big) */
   #big { position: fixed; inset: 0; z-index: 120; background: var(--bg); display: none; flex-direction: column; padding: calc(18px + env(safe-area-inset-top)) 22px calc(18px + env(safe-area-inset-bottom)); gap: 18px; overflow: auto; }
@@ -639,13 +615,12 @@
   <div class="top-inner">
     <a class="brand" href="./" aria-label="Pillser">
       <img class="logo" alt="OUTGRID" src="data:image/png;base64,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" />
-      <span class="app-name">Pillser<small>복약 알림</small></span>
+      <span class="app-name">Pillser<small>복약 관리</small></span>
     </a>
     <div class="head-actions">
       <button class="run-pill" id="nextPill" hidden title="다음 복용"><span class="dot"></span><span id="nextPillT"></span></button>
-      <button class="icon-btn" id="muteBtn" title="소리 끄기·켜기"><i data-icon="volume"></i></button>
-      <button class="icon-btn" id="helpBtn" title="도움말"><i data-icon="help"></i></button>
-      <button class="icon-btn" id="setBtn" title="알림·설정"><i data-icon="gear"></i></button>
+            <button class="icon-btn" id="helpBtn" title="도움말"><i data-icon="help"></i></button>
+      <button class="icon-btn" id="setBtn" title="설정"><i data-icon="gear"></i></button>
       <button class="btn primary" id="bigBtn" title="대기 화면 (F)"><i data-icon="expand"></i><span class="lbl">대기 화면</span></button>
     </div>
   </div>
@@ -732,21 +707,12 @@
 
   <aside class="panel" id="side">
     <div class="ph">
-      <div><h2>알림</h2><p id="sideS">다음 복용과 알림 상태</p></div>
+      <div><h2>오늘</h2><p id="sideS">다음 복용과 가족별 현황</p></div>
       <button class="icon-btn collapse" id="sideToggle" title="접기·펼치기"><i data-icon="chevron"></i></button>
     </div>
     <div class="pbody">
       <div class="sec">
         <div class="nextbox" id="nextBox"></div>
-      </div>
-      <div class="sec">
-        <h3>알림 상태</h3>
-        <div id="nstats"></div>
-        <div class="btns g2">
-          <button class="btn line sm" id="testAlarm"><i data-icon="bell"></i>알림 시험</button>
-          <button class="btn line sm" id="icsBtn"><i data-icon="calendar"></i>캘린더로</button>
-        </div>
-        <div class="note warn" id="limitNote">브라우저 알림은 <b>이 페이지가 열려 있을 때만</b> 울려요. 탭을 닫거나 화면이 꺼진 채 오래 두면 안드로이드가 페이지를 멈춰서 늦거나 안 울릴 수 있어요. 확실히 받으려면 <b>대기 화면</b>을 켜 두거나, <b>캘린더로</b> 내보내 휴대폰 캘린더 알림을 함께 쓰세요. 닫혀 있던 동안 놓친 복용은 다시 열면 보여 드려요.</div>
       </div>
       <div class="sec">
         <h3>오늘 가족별 <span class="v" id="pprogV"></span></h3>
@@ -784,17 +750,6 @@
   <div class="nx" id="bigNext"></div>
   <div class="bt" id="bigT">오늘 복용</div>
   <div class="blist" id="bigList"></div>
-</div>
-
-<!-- Alarm banner -->
-<div id="alarm" role="alertdialog" aria-live="assertive">
-  <div class="atop"><span class="ai"><i data-icon="bell"></i></span><div class="tx"><b id="alarmT"></b><small id="alarmS"></small></div></div>
-  <ul id="alarmList"></ul>
-  <div class="acts">
-    <button class="btn" id="alarmTake"><i data-icon="check"></i>먹었어요</button>
-    <button class="btn ghost" id="alarmSnooze">10분 뒤</button>
-    <button class="btn ghost" id="alarmClose">닫기</button>
-  </div>
 </div>
 
 <!-- Med dialog -->
@@ -862,8 +817,7 @@
       <div class="field"><label>남은 수량 <span class="v">비우면 재고 안 셈</span></label><input class="inp tc" id="mStock" type="number" min="0" step="0.5" inputmode="decimal" placeholder="예: 30" /></div>
       <div class="field"><label>미리 알려줄 때 <span class="v">일분 남으면</span></label><input class="inp tc" id="mLow" type="number" min="0" max="60" inputmode="numeric" /></div>
     </div>
-    <label class="switch"><span>복용 알림<small>이 약은 시간에 맞춰 울려요</small></span><input type="checkbox" id="mAlarm" /></label>
-
+    
     <details class="more-f" id="mMore">
       <summary><i data-icon="chevron"></i>처방·메모 <span class="muted" style="font-weight:500">병원, 약국, 주의사항</span></summary>
       <div class="fgrid">
@@ -941,7 +895,7 @@
 
 <!-- Settings -->
 <dialog id="setDlg">
-  <div class="dlg-head"><h2>알림·설정</h2><button class="icon-btn" data-close><i data-icon="x"></i></button></div>
+  <div class="dlg-head"><h2>설정</h2><button class="icon-btn" data-close><i data-icon="x"></i></button></div>
   <div class="dlg-body">
     <div class="sec" style="padding-top:0">
       <h3>식사·취침 시간 <span class="v">빠른 시간 버튼에 써요</span></h3>
@@ -953,20 +907,8 @@
       </div>
     </div>
     <div class="sec">
-      <h3>알림</h3>
-      <label class="switch"><span>브라우저 알림<small id="notifyHint">다른 앱을 보고 있어도 알려줘요</small></span><input type="checkbox" id="setNotify" /></label>
-      <div class="field"><label>알림 소리</label>
-        <div style="display:flex;gap:6px"><select class="inp" id="setSound">
-          <option value="chime">차임</option><option value="bell">종소리</option><option value="soft">부드러운 알림</option><option value="marimba">마림바</option><option value="digital">디지털 삐삐</option><option value="none">소리 없음</option>
-        </select><button class="btn line" id="setTry"><i data-icon="play"></i>듣기</button></div></div>
-      <div class="field"><label>음량 <span class="v" id="setVolV"></span></label><input type="range" class="range" id="setVol" min="0" max="100" /></div>
-      <div class="field"><label>미리 알림</label><div class="seg" id="setEarly"><button data-v="0">안 함</button><button data-v="5">5분 전</button><button data-v="10">10분 전</button><button data-v="30">30분 전</button></div></div>
-      <div class="field"><label>안 먹으면 다시 알림</label><div class="seg" id="setRepeat"><button data-v="0">안 함</button><button data-v="5">5분마다</button><button data-v="10">10분마다</button><button data-v="30">30분마다</button></div></div>
-      <div class="field"><label>다시 알림 최대 <span class="v">번</span></label><div class="seg" id="setRepMax"><button data-v="2">2번</button><button data-v="3">3번</button><button data-v="6">6번</button></div></div>
-      <div class="field"><label>"나중에" 누르면</label><div class="seg" id="setSnooze"><button data-v="5">5분 뒤</button><button data-v="10">10분 뒤</button><button data-v="15">15분 뒤</button><button data-v="30">30분 뒤</button></div></div>
+      <h3>기록</h3>
       <div class="field"><label>못 먹은 것으로 볼 때</label><div class="seg" id="setMiss"><button data-v="60">1시간 지나면</button><button data-v="120">2시간</button><button data-v="240">4시간</button><button data-v="0">그날이 지나면</button></div></div>
-      <label class="switch"><span>진동<small>지원하는 휴대폰·태블릿에서</small></span><input type="checkbox" data-bool="vibrate" /></label>
-      <label class="switch"><span>소리 내어 읽어 주기<small>"엄마, 혈압약 드실 시간이에요"</small></span><input type="checkbox" data-bool="voice" /></label>
       <label class="switch"><span>대기 화면에서 화면 꺼짐 방지</span><input type="checkbox" data-bool="wake" /></label>
     </div>
     <div class="sec">
@@ -990,26 +932,19 @@
   <div class="dlg-head"><h2>Pillser 도움말</h2><button class="icon-btn" data-close><i data-icon="x"></i></button></div>
   <div class="dlg-body help">
     <div><h4>무엇을 할 수 있나요</h4><ul>
-      <li><b>오늘</b>: 시간별로 먹을 약을 보여 줘요. 동그라미를 누르면 먹은 것으로 기록돼요. 길게 누르거나 ⋯ 를 누르면 건너뛰기, 나중에, 시간 고치기를 할 수 있어요.</li>
+      <li><b>오늘</b>: 시간별로 먹을 약을 보여 줘요. 동그라미를 누르면 먹은 것으로 기록돼요. 길게 누르거나 ⋯ 를 누르면 건너뛰기, 먹은 시각 고치기를 할 수 있어요.</li>
       <li><b>약 목록</b>: 매일, 요일, 며칠마다, 복용·휴약(예: 21일 복용 7일 휴약), 필요할 때 먹는 약까지 등록해요.</li>
-      <li><b>재고·처방</b>: 남은 수량과 며칠분 남았는지, 처방이 언제 끝나는지 보여 주고 미리 알려 줘요.</li>
+      <li><b>재고·처방</b>: 남은 수량과 며칠분 남았는지, 처방이 언제 끝나는지 보여 줘요.</li>
       <li><b>기록</b>: 달력으로 복용률을 보고, 병원에 가져갈 복약 기록표를 인쇄하거나 PDF로 저장해요.</li>
       <li><b>가족</b>: 가족마다 색을 정하고 알레르기, 앓는 병을 적어 두세요. 위쪽 이름을 눌러 한 사람만 볼 수 있어요.</li>
       <li><b>대기 화면</b>: 태블릿을 거실이나 부엌에 세워 두고 큰 글씨로 보며 체크할 때 좋아요.</li>
-    </ul></div>
-    <div><h4>알림에 대해 꼭 알아 두세요</h4><ul>
-      <li>웹 페이지는 <b>열려 있을 때만</b> 알림을 울릴 수 있어요. 닫혀 있을 때 울리는 기능은 브라우저가 지원하지 않아요.</li>
-      <li>휴대폰·태블릿에서 화면을 끄거나 다른 앱을 오래 쓰면 브라우저가 페이지를 멈춰서 알림이 늦을 수 있어요.</li>
-      <li>꼭 챙겨야 하는 약은 <b>캘린더로</b> 버튼으로 일정을 내보내 휴대폰 캘린더(삼성 캘린더 등)의 알림을 함께 쓰세요.</li>
-      <li>홈 화면에 추가해 두면 앱처럼 빨리 열 수 있어요.</li>
     </ul></div>
     <div><h4>단축키</h4><div class="keys">
       <kbd>←</kbd><span>전날 · <kbd>→</kbd> 다음날 · <kbd>T</kbd> 오늘</span>
       <kbd>N</kbd><span>약 추가</span>
       <kbd>F</kbd><span>대기 화면</span>
-      <kbd>M</kbd><span>소리 끄기·켜기</span>
       <kbd>1</kbd><span>~ <kbd>5</kbd> 탭 이동</span>
-      <kbd>Esc</kbd><span>알림 닫기, 대기 화면 닫기</span>
+      <kbd>Esc</kbd><span>대기 화면 닫기</span>
     </div></div>
     <div class="note">Pillser는 복약을 돕는 기록 도구예요. 약의 용량, 함께 먹어도 되는지는 반드시 의사·약사에게 물어보세요.</div>
   </div>
@@ -1174,8 +1109,8 @@ function medPic(m, size = 30) { return m.photo ? `<img src="${m.photo}" alt="">`
 /* ---------- Settings & data ---------- */
 const DEF = {
   meals: { morning: '08:00', lunch: '12:30', dinner: '18:30', bed: '22:00' },
-  notify: true, sound: 'chime', volume: 75, muted: false, early: 0, repeat: 10, repMax: 3, snooze: 10, miss: 120,
-  vibrate: true, voice: false, wake: true, bigText: false, sinkDone: false, autoStock: true, bigDark: false,
+  miss: 120,
+  wake: true, bigText: false, sinkDone: false, autoStock: true, bigDark: false,
   who: '', tab: 'today', showOff: false, kind: '',
 };
 function merge(d, s) { const o = Array.isArray(d) ? [...d] : { ...d }; if (s && typeof s === 'object') for (const k in s) o[k] = (d[k] && typeof d[k] === 'object' && !Array.isArray(d[k])) ? merge(d[k], s[k]) : s[k]; return o; }
@@ -1191,15 +1126,12 @@ function saveD(now = false) {
   if (now) f(); else saveTimer = setTimeout(f, 250);
 }
 window.addEventListener('pagehide', () => saveD(true));
-let F = store.get('fired', {});   // alarm bookkeeping: { "day|key": {pre, n, last} , low: {medId: day} }
+let F = store.get('fired', {});   // { low: {medId: day} }: low-stock notice shown once a day
 const saveF = () => store.set('fired', F);
-let SN = store.get('snooze', {}); // "day|key" -> until ts
-const saveSN = () => store.set('snooze', SN);
 function pruneBook() {
   const cut = addDays(dk(), -3);
   for (const k in F) if (k !== 'low' && k.slice(0, 10) < cut) delete F[k];
-  for (const k in SN) if (k.slice(0, 10) < cut || SN[k] < Date.now() - 864e5) delete SN[k];
-  saveF(); saveSN();
+  saveF();
 }
 
 if (!D.people.length) { D.people.push({ id: uid(), name: '나', rel: '나', color: PERSON_COLORS[0] }); saveD(true); }
@@ -1311,7 +1243,6 @@ function setLog(d, s, at) {
   if (s === 't' && S.autoStock && m.stock != null && m.stock !== '') { stk = Math.min(m.stock, d.q); m.stock = Math.max(0, Math.round((m.stock - d.q) * 100) / 100); }
   const T = atTime(d.day, d.t);
   L[d.key] = { s, at: at ?? (d.day === dk() ? Date.now() : T), q: d.q, stk };
-  delete SN[d.day + '|' + d.key]; saveSN();
   saveD(); checkLowNotify(m);
 }
 function clearLog(d, silent) {
@@ -1329,11 +1260,10 @@ function take(list, s = 't') {
   render();
   if (s === 't') { const n = list.length; toast(n === 1 ? `${list[0].m.name} 먹음` : `${n}개 먹음`, { action: '되돌리기', onAction: () => { snap.forEach(({ d, prev }) => { clearLog(d); if (prev) { (D.logs[d.day] ??= {})[d.key] = prev; } }); saveD(); render(); } }); }
   else toast(list.length === 1 ? `${list[0].m.name} 건너뜀` : `${list.length}개 건너뜀`, { action: '되돌리기', onAction: () => { snap.forEach(({ d }) => clearLog(d)); render(); } });
-  if (ring.active) refreshRing();
 }
 function toggleDose(d) {
   const log = getLog(d);
-  if (log) { clearLog(d); render(); toast(`${d.m.name} 기록을 지웠어요`); if (ring.active) refreshRing(); }
+  if (log) { clearLog(d); render(); toast(`${d.m.name} 기록을 지웠어요`); }
   else take([d]);
 }
 function prnTake(m, q = m.prn?.q || 1) {
@@ -1360,157 +1290,7 @@ function removePrn(id) {
   D.prn.splice(i, 1); saveD(); render();
 }
 
-/* ---------- Audio ---------- */
-const audio = {
-  ctx: null, master: null,
-  ensure() {
-    if (!this.ctx) {
-      const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return null;
-      this.ctx = new AC(); this.master = this.ctx.createGain(); this.master.connect(this.ctx.destination); this.vol();
-    }
-    if (this.ctx.state === 'suspended') this.ctx.resume().then(() => renderSide()).catch(() => {});
-    return this.ctx;
-  },
-  vol() { if (this.master) this.master.gain.value = S.muted ? 0 : Math.pow(S.volume / 100, 1.6); },
-  ready() { return !!this.ctx && this.ctx.state === 'running'; },
-};
-function tone(f, t0, dur, { type = 'sine', g = .3, a = .006, f2 } = {}) {
-  const c = audio.ctx, o = c.createOscillator(), v = c.createGain();
-  o.type = type; o.frequency.setValueAtTime(f, t0); if (f2) o.frequency.exponentialRampToValueAtTime(f2, t0 + dur);
-  v.gain.setValueAtTime(0.0001, t0); v.gain.exponentialRampToValueAtTime(g, t0 + a); v.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
-  o.connect(v); v.connect(audio.master); o.start(t0); o.stop(t0 + dur + .05);
-}
-const SOUNDS = {
-  chime(t) { [1047, 1319, 1568, 2093].forEach((f, i) => tone(f, t + i * .16, 1.4, { g: .22 })); return 2; },
-  bell(t) { [[880, .32], [880 * 2.76, .08], [880 * 5.4, .04], [880 * 1.5, .05]].forEach(([f, g]) => tone(f, t, 2.2, { g })); return 2.2; },
-  soft(t) { tone(523, t, 1.2, { type: 'triangle', g: .3, a: .04 }); tone(784, t + .35, 1.5, { type: 'triangle', g: .26, a: .04 }); return 1.9; },
-  marimba(t) { [[784, 0], [988, .18], [1175, .36], [988, .54], [1568, .78]].forEach(([f, d]) => { tone(f, t + d, .5, { g: .3, a: .003 }); tone(f * 4, t + d, .12, { g: .04, a: .002 }); }); return 1.4; },
-  digital(t) { for (let k = 0; k < 2; k++) for (let i = 0; i < 4; i++) tone(2000, t + k * .9 + i * .14, .08, { type: 'square', g: .08, a: .002 }); return 1.8; },
-  none() { return 1.5; },
-};
-function playSound(name = S.sound) { if (!audio.ensure()) return 1.5; return (SOUNDS[name] || SOUNDS.chime)(audio.ctx.currentTime + .03); }
-function say(text) {
-  if (!S.voice || S.muted || !('speechSynthesis' in window)) return;
-  try { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(text); u.lang = 'ko-KR'; u.rate = .95; u.volume = S.volume / 100; speechSynthesis.speak(u); } catch {}
-}
-
-/* ---------- Notifications ---------- */
-let swReg = null;
-function initSW() {
-  if (!('serviceWorker' in navigator) || !/^https?:$/.test(location.protocol)) return;
-  navigator.serviceWorker.register('pillser-sw.js').then(r => { swReg = r; renderSide(); }).catch(() => { swReg = null; });
-  navigator.serviceWorker.addEventListener('message', e => { const m = e.data || {}; if (m.type === 'pillser-act') handleAct(m.act, m.items); });
-}
-function notifState() {
-  if (!('Notification' in window)) return 'unsupported';
-  return Notification.permission; // granted | denied | default
-}
-async function sysNotify(title, body, items = [], { quiet = false } = {}) {
-  if (!S.notify || notifState() !== 'granted') return;
-  const opt = { body, tag: 'pillser-' + (items[0] || 'x'), renotify: true, requireInteraction: !quiet, silent: quiet, data: { items, url: location.href.split('?')[0] }, icon: FAV_PNG, badge: FAV_PNG };
-  if (items.length && !quiet) opt.actions = [{ action: 'take', title: '먹었어요' }, { action: 'snooze', title: `${S.snooze}분 뒤` }];
-  try {
-    const r = swReg || (navigator.serviceWorker && await navigator.serviceWorker.getRegistration?.());
-    if (r) { await r.showNotification(title, opt); return; }
-  } catch {}
-  try { delete opt.actions; const n = new Notification(title, opt); n.onclick = () => { window.focus(); n.close(); }; } catch {}
-}
-function handleAct(act, items) {
-  const all = dosesFor(dk(), false).concat(dosesFor(addDays(dk(), -1), false));
-  const list = (items || []).map(k => all.find(d => d.day + '|' + d.key === k)).filter(Boolean);
-  if (!list.length) return;
-  if (act === 'take') take(list);
-  else if (act === 'snooze') snoozeList(list);
-  else { goTab('today'); }
-}
-
-/* ---------- Alarm (ringing) ---------- */
-const ring = { active: false, items: [], plays: 0, next: 0 };
-function startRing(list, kind = 'due') {
-  audio.ensure();
-  const keys = new Set(ring.active ? ring.items : []);
-  list.forEach(d => keys.add(d.day + '|' + d.key));
-  Object.assign(ring, { active: true, items: [...keys], plays: 0, next: 0 });
-  refreshRing();
-  $('#alarm').classList.add('show');
-  if (S.vibrate && navigator.vibrate) try { navigator.vibrate([500, 200, 500, 200, 800]); } catch {}
-  const g = groupText(list);
-  sysNotify(kind === 'repeat' ? '아직 안 드셨어요' : '약 드실 시간이에요', g.text, ring.items);
-  say(g.voice);
-  ensureTicker();
-}
-function ringDoses() {
-  const all = dosesFor(dk(), false).concat(dosesFor(addDays(dk(), -1), false));
-  return ring.items.map(k => all.find(d => d.day + '|' + d.key === k)).filter(d => d && !getLog(d));
-}
-function refreshRing() {
-  const list = ringDoses();
-  if (!list.length) return stopRing();
-  ring.items = list.map(d => d.day + '|' + d.key);
-  const t = list[0].t;
-  $('#alarmT').textContent = '약 드실 시간이에요';
-  $('#alarmS').textContent = `${ampm(t)} · ${list.length}개`;
-  $('#alarmList').innerHTML = list.map((d, i) => `<li>${showWho() ? whoChip(d.m.who) : ''}<b>${esc(d.m.name)}</b><span class="q">${qtyText(d.m, d.q)}${d.m.meal ? ' · ' + MEAL[d.m.meal] : ''}</span><span class="grow" style="flex:1"></span><button class="btn sm" data-i="${i}" style="flex:none;height:30px">먹음</button></li>`).join('');
-  $$('#alarmList button').forEach(b => b.onclick = () => take([list[+b.dataset.i]]));
-  $('#alarmSnooze').textContent = `${S.snooze}분 뒤`;
-}
-function ringStep(now) {
-  if (!ring.active || S.muted) return;
-  if (ring.plays >= 3) return;
-  if (now >= ring.next) { const len = playSound(); ring.plays++; ring.next = now + len * 1000 + 1600; }
-}
-function stopRing() {
-  if (!ring.active) return;
-  ring.active = false; ring.items = [];
-  $('#alarm').classList.remove('show');
-  try { navigator.vibrate && navigator.vibrate(0); } catch {}
-  try { speechSynthesis.cancel(); } catch {}
-  ensureTicker();
-}
-function snoozeList(list, min = S.snooze) {
-  const until = Date.now() + min * 60e3;
-  list.forEach(d => { SN[d.day + '|' + d.key] = until; });
-  saveSN();
-  toast(`${min}분 뒤 (${hm(until)}) 다시 알려 드릴게요`);
-  if (ring.active) { ring.items = ring.items.filter(k => !list.some(d => d.day + '|' + d.key === k)); if (!ring.items.length) stopRing(); else refreshRing(); }
-  render();
-}
-function groupText(list) {
-  const byWho = {};
-  list.forEach(d => (byWho[d.m.who] ??= []).push(d));
-  const parts = Object.entries(byWho).map(([w, ds]) => (showWho() ? person(w).name + ': ' : '') + ds.map(d => `${d.m.name} ${qtyText(d.m, d.q)}`).join(', '));
-  const voice = Object.entries(byWho).map(([w, ds]) => { const p = person(w); const nm = p && p.rel !== '나' && showWho() ? p.name + ', ' : ''; return `${nm}${ds.map(d => d.m.name.replace(/\(.*?\)/g, '')).join(', ')} 드실 시간이에요.`; }).join(' ');
-  return { text: parts.join('\n'), voice };
-}
-
-/* ---------- Alarm engine ---------- */
-let lastDay = dk();
-function checkAlarms() {
-  const now = Date.now(), day = dk(now);
-  const due = [], rep = [], pre = [];
-  const days = [day]; if (S.miss === 0 || S.miss > 60) days.push(addDays(day, -1));
-  for (const dday of days) for (const d of dosesFor(dday, false)) {
-    if (d.m.alarm === false || getLog(d)) continue;
-    const T = atTime(dday, d.t), base = dday + '|' + d.key, f = F[base] ??= { n: 0, last: 0, pre: 0 };
-    if (dday === day && S.early && !f.pre && !f.n && now >= T - S.early * 60e3 && now < T) { f.pre = now; pre.push(d); }
-    const st = status(d, now);
-    if (st === 'missed' || st === 'upcoming') continue;
-    const sn = SN[base];
-    if (sn) { if (now >= sn) { delete SN[base]; saveSN(); f.n++; f.last = now; due.push(d); } continue; }
-    if (!f.n) { if (now - T < 15 * 60e3) { f.n = 1; f.last = now; due.push(d); } else { f.n = 1; f.last = now; f.quiet = 1; } continue; }
-    if (S.repeat && f.n <= S.repMax && now >= f.last + S.repeat * 60e3 && !f.quiet) { f.n++; f.last = now; rep.push(d); }
-  }
-  for (const k in F) if (k !== 'low' && !F[k].n && !F[k].pre) delete F[k];
-  if (due.length || rep.length || pre.length) saveF();
-  if (due.length || rep.length) { startRing(due.concat(rep), due.length ? 'due' : 'repeat'); render(); }
-  if (pre.length) {
-    const g = groupText(pre), t = pre[0].t;
-    toast(`${S.early}분 뒤 ${ampm(t)} 복용: ${g.text.replace(/\n/g, ' · ')}`, { ms: 8000 });
-    if (!S.muted) { audio.ensure() && SOUNDS.soft(audio.ctx.currentTime + .03); }
-    sysNotify(`${S.early}분 뒤 약 드실 시간`, g.text, [], { quiet: true });
-  }
-  if (day !== lastDay) { lastDay = day; if (viewDay === addDays(day, -1)) viewDay = day; pruneBook(); render(); }
-}
+/* ---------- Low stock notice (once a day per med, on screen only) ---------- */
 function checkLowNotify(m) {
   const s = stockInfo(m); if (!s || !s.low) return;
   F.low ??= {}; const day = dk();
@@ -1518,28 +1298,25 @@ function checkLowNotify(m) {
   F.low[m.id] = day; saveF();
   const msg = s.low === 'out' ? `${m.name}이(가) 다 떨어졌어요` : `${m.name} ${s.days}일분 남았어요`;
   toast(msg + '. 재고·처방 탭에서 확인하세요.', { ms: 5000 });
-  sysNotify('약이 곧 떨어져요', (showWho() ? person(m.who).name + ' · ' : '') + msg, [], { quiet: true });
 }
 
-/* ---------- Ticker (worker keeps going in background tabs) ---------- */
-let worker = null, fallbackIv = null, tickerMs = 0;
-try { worker = new Worker(URL.createObjectURL(new Blob(['let i=null;onmessage=e=>{clearInterval(i);i=e.data>0?setInterval(()=>postMessage(0),e.data):null}'], { type: 'text/javascript' }))); worker.onmessage = () => loop(); } catch { worker = null; }
+/* ---------- Ticker: keeps statuses and the clock fresh ---------- */
+let tickIv = null, tickerMs = 0, lastDay = dk();
 function ensureTicker() {
-  const ms = ring.active || big.on ? 500 : 5000;
+  const ms = big.on ? 1000 : 15000;
   if (ms === tickerMs) return; tickerMs = ms;
-  if (worker) worker.postMessage(ms); else { clearInterval(fallbackIv); fallbackIv = setInterval(loop, ms); }
+  clearInterval(tickIv); tickIv = setInterval(loop, ms);
 }
 let lastRender = 0;
 function loop() {
-  const now = Date.now();
-  checkAlarms();
-  ringStep(now);
+  const now = Date.now(), day = dk(now);
+  if (day !== lastDay) { if (viewDay === lastDay) viewDay = day; lastDay = day; pruneBook(); render(); return; }
   if (big.on) renderBigClock();
   if (now - lastRender > 30e3) render();
   else renderNext();
 }
 
-/* ---------- Wake lock ---------- */
+/* ---------- Wake lock (standby screen) ---------- */
 let wakeLock = null;
 async function syncWake() {
   const want = S.wake && document.visibilityState === 'visible' && big.on;
@@ -1548,17 +1325,9 @@ async function syncWake() {
   } else if (!want && wakeLock) { try { await wakeLock.release(); } catch {} wakeLock = null; }
 }
 
-/* ---------- App icon for notifications (drawn once) ---------- */
-const FAV_PNG = (() => {
-  try {
-    const c = document.createElement('canvas'); c.width = c.height = 192; const x = c.getContext('2d');
-    x.fillStyle = '#244D3A'; x.beginPath(); x.roundRect ? x.roundRect(0, 0, 192, 192, 42) : x.rect(0, 0, 192, 192); x.fill();
-    x.translate(96, 96); x.rotate(-35 * Math.PI / 180);
-    x.fillStyle = '#F5F1E8'; x.beginPath(); x.arc(-30, 0, 30, Math.PI / 2, Math.PI * 1.5); x.lineTo(0, -30); x.lineTo(0, 30); x.closePath(); x.fill();
-    x.fillStyle = '#D9C8A9'; x.beginPath(); x.arc(30, 0, 30, -Math.PI / 2, Math.PI / 2); x.lineTo(0, 30); x.lineTo(0, -30); x.closePath(); x.fill();
-    return c.toDataURL('image/png');
-  } catch { return undefined; }
-})();
+/* ---------- Clean up what the earlier alarm version left behind ---------- */
+try { navigator.serviceWorker?.getRegistrations?.().then(rs => rs.forEach(r => { const u = r.active?.scriptURL || r.installing?.scriptURL || r.waiting?.scriptURL || ''; if (/pillser-sw\.js/.test(u)) r.unregister(); })).catch(() => {}); } catch {}
+try { localStorage.removeItem('pillser.snooze'); } catch {}
 
 /* ---------- Tabs & filter ---------- */
 function goTab(t) {
@@ -1578,7 +1347,6 @@ function renderWho() {
 /* ---------- Render: today ---------- */
 function doseRow(d, now, big = false) {
   const st = status(d, now), m = d.m, log = getLog(d), T = atTime(d.day, d.t);
-  const sn = SN[d.day + '|' + d.key];
   const meta = [];
   if (big) meta.push(`<span><b>${ampm(d.t)}</b></span>`);
   if (m.meal) meta.push(`<span>${MEAL[m.meal]}</span>`);
@@ -1586,10 +1354,8 @@ function doseRow(d, now, big = false) {
   if (st === 'taken') { const late = Math.round((log.at - T) / 6e4); meta.push(`<span class="r">${hm(log.at)}에 먹음${late >= 60 ? ` · ${relMin(late)} 늦게` : ''}</span>`); }
   else if (st === 'skipped') meta.push(`<span>건너뜀</span>`);
   else if (st === 'missed') meta.push(`<span class="m">못 먹음</span>`);
-  else if (sn && sn > now) meta.push(`<span class="w">${hm(sn)}에 다시 알림</span>`);
   else if (st === 'late') meta.push(`<span class="w">${relMin((now - T) / 6e4)} 지남</span>`);
   else if (st === 'due') meta.push(`<span class="w">지금 드세요</span>`);
-  if (m.alarm === false && !log) meta.push(`<span>알림 끔</span>`);
   if (d.orphan) meta.push(`<span>지금 일정에 없는 시간</span>`);
   const si = stockInfo(m); if (si && si.low && !log) meta.push(`<span class="w">${si.low === 'out' ? '재고 없음' : si.days + '일분 남음'}</span>`);
   const cls = { taken: 'taken', skipped: 'skipped', missed: 'miss', late: 'late', due: 'due', upcoming: '' }[st];
@@ -1641,7 +1407,7 @@ function renderToday() {
   let h = `<div class="sum"><div class="pring"><svg viewBox="0 0 100 100"><circle class="trk" cx="50" cy="50" r="${R}"/><circle class="prg" cx="50" cy="50" r="${R}" stroke-dasharray="${C.toFixed(2)}" stroke-dashoffset="${(C * (1 - (c.total ? c.taken / c.total : 0))).toFixed(2)}" ${c.total && c.taken === c.total ? 'style="stroke:var(--ok)"' : ''}/></svg><div class="c"><div><b>${c.total ? pct + '%' : '–'}</b><small>${c.taken}/${c.total}</small></div></div></div>
     <div class="nx">${nxHtml}<div class="stats">${chips.join('')}</div></div></div>`;
   // banners
-  const lateList = list.filter(d => ['late', 'due'].includes(status(d, now)) && !(SN[d.day + '|' + d.key] > now));
+  const lateList = list.filter(d => ['late', 'due'].includes(status(d, now)));
   const missList = list.filter(d => status(d, now) === 'missed');
   if (day === today && lateList.length > 1) h += `<div class="banner warn">${icon('clock')}<div class="tx">지금 드실 약이 ${lateList.length}개 있어요<small>${esc(lateList.map(d => d.m.name).join(', '))}</small></div><button class="btn sm primary" data-act="takeLate">모두 먹었어요</button></div>`;
   if (missList.length && day <= today) h += `<div class="banner">${icon('alert')}<div class="tx">기록이 없는 복용 ${missList.length}개<small>먹었는데 기록을 잊었다면 동그라미를 눌러 주세요. 안 먹었다면 그대로 두면 돼요.</small></div><button class="btn sm line" data-act="skipMissed">건너뜀으로</button></div>`;
@@ -1712,7 +1478,6 @@ function renderMeds() {
       else if (isEnded(m)) tags.push(`<span class="tag">끝남</span>`);
       else if (m.start && m.start > dk()) tags.push(`<span class="tag b">${fmtMD(m.start)} 시작</span>`);
       else if (m.end) { const left = diffDays(dk(), m.end); tags.push(`<span class="tag ${left <= 3 ? 'c' : ''}">${left === 0 ? '오늘까지' : left + '일 남음'}</span>`); }
-      if (m.alarm === false) tags.push(`<span class="tag">${icon('bellOff', 'sm')}알림 끔</span>`);
       let stock = '';
       if (si) {
         const full = Math.max(si.stock, (m.lastRefill || 0), 1), pct = clamp(si.stock / full * 100, 0, 100);
@@ -1839,7 +1604,7 @@ function renderHistory() {
   const slotMap = {};
   for (let day = addDays(today, -29); day <= today; day = addDays(day, 1)) for (const d of dosesFor(day)) { const st = status(d, now); if (!['taken', 'skipped', 'missed'].includes(st)) continue; const s = slotMap[d.t] ??= { n: 0, miss: 0 }; s.n++; if (st !== 'taken') s.miss++; }
   const slots = Object.entries(slotMap).filter(([, s]) => s.n).sort((a, b) => a[0].localeCompare(b[0]));
-  if (slots.length > 1) h += `<div class="card"><div class="ch"><h3>시간대별로 놓친 비율</h3><span class="cs">자주 놓치는 시간이면 알림 시간을 바꿔 보세요</span></div><div class="hbars">${slots.map(([t, s]) => `<div class="hbar"><span class="nm">${ampm(t)} ${slotLabel(t)}</span><span class="tr"><i style="width:${Math.round(s.miss / s.n * 100)}%;background:var(--clay)"></i></span><span class="v">${Math.round(s.miss / s.n * 100)}% · ${s.miss}/${s.n}</span></div>`).join('')}</div></div>`;
+  if (slots.length > 1) h += `<div class="card"><div class="ch"><h3>시간대별로 놓친 비율</h3><span class="cs">자주 놓치는 시간이면 복용 시간을 바꿔 보세요</span></div><div class="hbars">${slots.map(([t, s]) => `<div class="hbar"><span class="nm">${ampm(t)} ${slotLabel(t)}</span><span class="tr"><i style="width:${Math.round(s.miss / s.n * 100)}%;background:var(--clay)"></i></span><span class="v">${Math.round(s.miss / s.n * 100)}% · ${s.miss}/${s.n}</span></div>`).join('')}</div></div>`;
   // recent log
   let logH = '';
   for (let i = 0; i < 7; i++) {
@@ -1899,16 +1664,6 @@ function renderNext() {
 }
 function renderSide() {
   renderNext();
-  const ns = notifState(), st = [];
-  const row = (ok, ic, t, s, btn = '') => `<div class="nstat ${ok === true ? 'ok' : ok === false ? 'bad' : ''}"><span class="ic">${icon(ic, 'sm')}</span><div class="tx">${t}<small>${s}</small></div>${btn}</div>`;
-  if (ns === 'unsupported') st.push(row(false, 'bellOff', '시스템 알림 없음', '이 브라우저는 알림을 지원하지 않아요. 화면 배너와 소리로 알려요.'));
-  else if (ns === 'denied') st.push(row(false, 'bellOff', '시스템 알림이 막혀 있어요', '브라우저 설정 › 사이트 설정 › 알림에서 허용해 주세요.'));
-  else if (ns === 'default' || !S.notify) st.push(row(null, 'bell', '시스템 알림 꺼짐', '다른 앱을 보고 있을 때도 알려면 켜세요.', `<button class="btn sm primary" id="notifOn">켜기</button>`));
-  else st.push(row(true, 'bell', '시스템 알림 켜짐', swReg ? '알림에서 바로 "먹었어요"를 누를 수 있어요.' : (/Android/i.test(navigator.userAgent) ? '안드로이드는 이 페이지를 웹 주소(https)로 열어야 알림이 떠요.' : '다른 창을 보고 있어도 알려요.')));
-  st.push(audio.ready() || S.muted ? row(S.muted ? false : true, S.muted ? 'mute' : 'volume', S.muted ? '소리 꺼짐' : '소리 준비됨', S.muted ? '위쪽 스피커 버튼으로 다시 켜요.' : '알림 시간에 소리가 나요.') : row(null, 'volume', '소리를 쓰려면 화면을 한 번 눌러 주세요', '브라우저는 사용자가 누르기 전에는 소리를 막아요.', `<button class="btn sm line" id="soundOn">눌러서 켜기</button>`));
-  setHTML($('#nstats'), st.join(''));
-  const n = $('#notifOn'); if (n) n.onclick = enableNotify;
-  const so = $('#soundOn'); if (so) so.onclick = () => { audio.ensure(); playSound('soft'); setTimeout(renderSide, 300); };
   // per person
   const now = Date.now(), list = dosesFor(dk(now), false);
   const ppl = D.people.map(p => { const c = dayStats(list.filter(d => d.m.who === p.id), now); return { p, c }; }).filter(x => x.c.total);
@@ -1925,12 +1680,11 @@ function renderCounts() {
   setText($('#cToday'), String(list.filter(d => !getLog(d) && status(d, now) !== 'missed').length));
   setText($('#cMeds'), String(D.meds.filter(m => whoOk(m) && !isOff(m)).length));
   const low = lowMeds().length + endingMeds().length; const c = $('#cStock'); c.hidden = !low; setText(c, String(low));
-  document.title = (() => { const due = list.filter(d => ['due', 'late'].includes(status(d, now))).length; return (due ? `(${due}) ` : '') + 'Pillser · 아웃그리드 복약 알림'; })();
+  document.title = (() => { const due = list.filter(d => ['due', 'late'].includes(status(d, now))).length; return (due ? `(${due}) ` : '') + 'Pillser · 아웃그리드 복약 관리'; })();
 }
 function render() {
   lastRender = Date.now();
   document.body.classList.toggle('big-text', !!S.bigText);
-  $('#muteBtn').innerHTML = icon(S.muted ? 'mute' : 'volume'); $('#muteBtn').classList.toggle('off', S.muted);
   renderWho();
   const t = S.tab;
   if (t === 'today') renderToday(); else if (t === 'meds') renderMeds(); else if (t === 'stock') renderStock(); else if (t === 'history') renderHistory(); else if (t === 'people') renderPeople();
@@ -1940,7 +1694,7 @@ function render() {
 
 /* ---------- Standby screen ---------- */
 const big = { on: false };
-function openBig() { big.on = true; $('#big').classList.add('show'); $('#big').classList.toggle('dark', !!S.bigDark); renderBig(); ensureTicker(); syncWake(); audio.ensure(); try { document.documentElement.requestFullscreen?.().catch(() => {}); } catch {} }
+function openBig() { big.on = true; $('#big').classList.add('show'); $('#big').classList.toggle('dark', !!S.bigDark); renderBig(); ensureTicker(); syncWake(); try { document.documentElement.requestFullscreen?.().catch(() => {}); } catch {} }
 function closeBig() { big.on = false; $('#big').classList.remove('show'); ensureTicker(); syncWake(); try { document.fullscreenElement && document.exitFullscreen(); } catch {} }
 function renderBigClock() {
   const d = new Date(); setText($('#bigClk'), `${pad2(d.getHours())}:${pad2(d.getMinutes())}`);
@@ -1950,7 +1704,7 @@ function renderBig() {
   renderBigClock();
   const now = Date.now(), today = dk(now), nx = nextDoses(now);
   const list = dosesFor(today);
-  const due = list.filter(d => ['due', 'late'].includes(status(d, now)) && !(SN[d.day + '|' + d.key] > now));
+  const due = list.filter(d => ['due', 'late'].includes(status(d, now)));
   const nb = $('#bigNext');
   if (due.length) { nb.className = 'nx'; setHTML(nb, `지금 드실 약 <b>${due.length}개</b><br>${esc(due.map(d => (showWho() && !S.who ? person(d.m.who).name + ' ' : '') + d.m.name).join(', '))}`); }
   else if (nx) { nb.className = 'nx'; setHTML(nb, `다음 복용 <b>${nx.day === today ? '' : '내일 '}${ampm(nx.t)}</b> · ${relMin((nx.at - now) / 6e4)} 뒤<br>${esc(nx.list.map(d => (showWho() && !S.who ? person(d.m.who).name + ' ' : '') + d.m.name).join(', '))}`); }
@@ -1975,7 +1729,7 @@ function openMed(m, preset = {}) {
   const v = m ? JSON.parse(JSON.stringify(m)) : {
     who: S.who || D.people[0].id, name: '', kind: 'rx', purpose: '', shape: 'round', color: '#FFFFFF', photo: null,
     sched: { type: 'daily', days: [1, 3, 5], every: 2, on: 21, off: 7 }, times: [{ t: S.meals.morning, q: 1 }], meal: 'after30', unit: '정',
-    prn: { q: 1, gap: 4, max: 3 }, start: dk(), end: '', stock: null, low: 7, alarm: true, ...preset,
+    prn: { q: 1, gap: 4, max: 3 }, start: dk(), end: '', stock: null, low: 7, ...preset,
   };
   v.sched = { days: [1, 3, 5], every: 2, on: 21, off: 7, ...v.sched }; v.prn = { q: 1, gap: '', max: '', ...(v.prn || {}) };
   $('#medT').textContent = m ? '약 고치기' : '약 추가';
@@ -1993,7 +1747,7 @@ function openMed(m, preset = {}) {
   $('#mPrnQty').value = v.prn.q || 1; $('#mPrnGap').value = v.prn.gap || ''; $('#mPrnMax').value = v.prn.max || '';
   $('#mStart').value = v.start || dk();
   $('#mEndMode').value = v.end ? 'date' : ''; $('#mEnd').value = v.end || ''; $('#mEndDays').value = v.end && v.start ? diffDays(v.start, v.end) + 1 : 7;
-  $('#mStock').value = v.stock ?? ''; $('#mLow').value = v.low ?? 7; $('#mAlarm').checked = v.alarm !== false;
+  $('#mStock').value = v.stock ?? ''; $('#mLow').value = v.low ?? 7;
   $('#mHosp').value = v.hosp || ''; $('#mDoc').value = v.doc || ''; $('#mPharm').value = v.pharm || ''; $('#mRxDate').value = v.rxDate || ''; $('#mNote').value = v.note || '';
   $('#mMore').open = !!(v.hosp || v.doc || v.pharm || v.note);
   fillDatalists();
@@ -2042,7 +1796,7 @@ function saveMed() {
     sched: { type, days, every: numGet($('#mEvery')), on: numGet($('#mCycOn')), off: numGet($('#mCycOff')) },
     times, meal: $('#mMeal').value, unit: type === 'prn' ? $('#mUnit2').value : $('#mUnit').value,
     prn: { q: Math.max(0.25, parseFloat($('#mPrnQty').value) || 1), gap: parseFloat($('#mPrnGap').value) || 0, max: parseInt($('#mPrnMax').value) || 0 },
-    start, end, stock: stockV === '' ? null : Math.max(0, parseFloat(stockV) || 0), low: clamp(parseInt($('#mLow').value) || 0, 0, 60), alarm: $('#mAlarm').checked,
+    start, end, stock: stockV === '' ? null : Math.max(0, parseFloat(stockV) || 0), low: clamp(parseInt($('#mLow').value) || 0, 0, 60),
     hosp: $('#mHosp').value.trim(), doc: $('#mDoc').value.trim(), pharm: $('#mPharm').value.trim(), rxDate: $('#mRxDate').value, note: $('#mNote').value.trim(),
   });
   if (m.stock != null && (!m.lastRefill || m.stock > m.lastRefill)) m.lastRefill = m.stock;
@@ -2050,7 +1804,6 @@ function saveMed() {
   saveD(true); $('#medDlg').close();
   if (editMed && oldTimes && oldTimes !== m.times.map(t => t.t).join()) toast('저장했어요. 바뀐 시간은 오늘부터 적용돼요.');
   else toast(editMed ? '저장했어요' : `${m.name}${josa(m.name, '을', '를').slice(m.name.length)} 추가했어요`);
-  if (!editMed && S.notify && notifState() === 'default') setTimeout(enableNotify, 600);
   render();
 }
 async function deleteMed(m) {
@@ -2130,7 +1883,6 @@ function openDoseMenu(d) {
   const b = [];
   if (!log || log.s !== 't') b.push(`<button data-a="take">${icon('check')}먹었어요</button>`);
   if (!log) b.push(`<button data-a="skip">${icon('ban')}건너뛰기 (안 먹음)</button>`);
-  if (!log && d.day === dk() && st !== 'missed') b.push(`<div class="row"><button data-a="sn" data-m="10">10분 뒤</button><button data-a="sn" data-m="30">30분 뒤</button><button data-a="sn" data-m="60">1시간 뒤</button></div>`);
   if (log?.s === 't') b.push(`<button data-a="time">${icon('clock')}먹은 시각 고치기 <input type="time" value="${hm(log.at)}" style="margin-left:auto;height:32px;border:0;background:var(--hover);border-radius:999px;padding:0 10px;font:inherit"></button>`);
   if (log) b.push(`<button data-a="clear">${icon('undo')}기록 지우기</button>`);
   b.push(`<button data-a="edit">${icon('pen')}약 정보 고치기</button>`);
@@ -2140,7 +1892,7 @@ function openDoseMenu(d) {
     const a = btn.dataset.a;
     if (a === 'time') { if (e.target.tagName === 'INPUT') return; const v = $('input', btn).value; if (v) { const lg = getLog(d); lg.at = atTime(d.day, v); saveD(); render(); toast('먹은 시각을 고쳤어요'); } $('#doseDlg').close(); return; }
     $('#doseDlg').close();
-    if (a === 'take') take([d]); else if (a === 'skip') take([d], 's'); else if (a === 'sn') snoozeList([d], +btn.dataset.m);
+    if (a === 'take') take([d]); else if (a === 'skip') take([d], 's');
     else if (a === 'clear') { clearLog(d); render(); } else if (a === 'edit') openMed(m);
   });
   const ti = $('#dmList input[type=time]'); if (ti) ti.onchange = () => { const lg = getLog(d); if (lg && ti.value) { lg.at = atTime(d.day, ti.value); saveD(); render(); toast('먹은 시각을 고쳤어요'); } };
@@ -2186,24 +1938,10 @@ function doRefill(set = false) {
 /* ---------- Settings ---------- */
 function openSettings() {
   $$('[data-meal]').forEach(i => i.value = S.meals[i.dataset.meal]);
-  $('#setSound').value = S.sound; $('#setVol').value = S.volume; $('#setVolV').textContent = S.volume + '%';
-  segSet($('#setEarly'), S.early); segSet($('#setRepeat'), S.repeat); segSet($('#setRepMax'), S.repMax); segSet($('#setSnooze'), S.snooze); segSet($('#setMiss'), S.miss);
+  segSet($('#setMiss'), S.miss);
   $$('#setDlg [data-bool]').forEach(c => c.checked = !!getPath(S, c.dataset.bool));
-  updateNotifyHint();
   $('#setDlg').showModal();
 }
-function updateNotifyHint() {
-  const ns = notifState(), h = $('#notifyHint');
-  $('#setNotify').checked = S.notify && ns === 'granted';
-  h.textContent = ns === 'unsupported' ? '이 브라우저는 알림을 지원하지 않아요' : ns === 'denied' ? '브라우저 설정에서 이 사이트의 알림이 막혀 있어요' : '다른 앱을 보고 있어도 알려줘요 (페이지는 열려 있어야 해요)';
-}
-async function enableNotify() {
-  audio.ensure();
-  if (notifState() === 'unsupported') { toast('이 브라우저는 알림을 지원하지 않아요', { err: true }); return; }
-  try { const r = await Notification.requestPermission(); S.notify = r === 'granted'; saveS(); if (r === 'granted') { toast('알림을 켰어요'); sysNotify('Pillser 알림이 켜졌어요', '약 드실 시간에 이렇게 알려 드릴게요.', [], { quiet: true }); } else if (r === 'denied') toast('알림이 막혔어요. 브라우저 사이트 설정에서 허용해 주세요.', { err: true }); } catch {}
-  updateNotifyHint(); renderSide();
-}
-
 /* ---------- Print report ---------- */
 function printReport(whoId = S.who) {
   const today = dk(), now = Date.now(), from = addDays(today, -13);
@@ -2246,39 +1984,6 @@ function exportCsv() {
   }
   download(`pillser-복용기록-${today}.csv`, '\ufeff' + rows.map(r => r.map(csvCell).join(',')).join('\r\n'), 'text/csv;charset=utf-8');
   toast(`${rows.length - 1}줄을 CSV로 저장했어요`);
-}
-function icsEsc(s) { return String(s).replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\n/g, '\\n'); }
-function icsFold(line) { const out = []; let cur = ''; const enc = new TextEncoder(); for (const ch of line) { if (enc.encode(cur + ch).length > 73) { out.push(cur); cur = ' ' + ch; } else cur += ch; } out.push(cur); return out.join('\r\n'); }
-function exportIcs() {
-  const meds = D.meds.filter(m => whoOk(m) && !isOff(m) && m.sched.type !== 'prn' && m.alarm !== false);
-  if (!meds.length) { toast('내보낼 일정이 없어요'); return; }
-  const stamp = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d+/, '');
-  const L = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//outgrid//Pillser//KO', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH', 'X-WR-CALNAME:복약 알림 (Pillser)'];
-  const ymd = s => s.replace(/-/g, '');
-  let n = 0;
-  for (const m of meds) for (const t of m.times) {
-    const start = m.start && m.start > dk() ? m.start : dk();
-    let first = start; for (let i = 0; i < 400 && !activeOn(m, first); i++) first = addDays(first, 1);
-    if (!activeOn(m, first)) continue;
-    const who = showWho() ? person(m.who).name + ' · ' : '';
-    const base = ['SUMMARY:' + icsEsc(`💊 ${who}${m.name} ${qtyText(m, t.q)}`), 'DESCRIPTION:' + icsEsc([m.meal ? MEAL[m.meal] : '', m.purpose, m.note, 'Pillser에서 내보낸 복약 알림'].filter(Boolean).join('\n')), 'DURATION:PT10M', 'TRANSP:TRANSPARENT'];
-    const alarm = ['BEGIN:VALARM', 'ACTION:DISPLAY', 'DESCRIPTION:' + icsEsc(`${m.name} 드실 시간이에요`), 'TRIGGER:PT0M', 'END:VALARM'];
-    if (S.early) alarm.push('BEGIN:VALARM', 'ACTION:DISPLAY', 'DESCRIPTION:' + icsEsc(`${S.early}분 뒤 ${m.name}`), `TRIGGER:-PT${S.early}M`, 'END:VALARM');
-    const until = m.end ? `;UNTIL=${ymd(m.end)}T235959` : '';
-    const ev = (uidS, dtDay, rrule) => { L.push('BEGIN:VEVENT', `UID:${uidS}@pillser.outgrid`, `DTSTAMP:${stamp}`, `DTSTART:${ymd(dtDay)}T${t.t.replace(':', '')}00`, ...base, ...(rrule ? ['RRULE:' + rrule] : []), ...alarm, 'END:VEVENT'); n++; };
-    const id = `${m.id}-${t.t.replace(':', '')}`;
-    if (m.sched.type === 'daily') ev(id, first, 'FREQ=DAILY' + until);
-    else if (m.sched.type === 'days') ev(id, first, `FREQ=WEEKLY;BYDAY=${m.sched.days.map(d => WD_ICS[d]).join(',')}` + until);
-    else if (m.sched.type === 'every') ev(id, first, `FREQ=DAILY;INTERVAL=${m.sched.every}` + until);
-    else if (m.sched.type === 'cycle') {
-      // one block per cycle for about a year
-      const on = m.sched.on, off = m.sched.off; let d = first, k = 0;
-      while (k < 14) { if (m.end && d > m.end) break; let cnt = 0; while (cnt < on && activeOn(m, addDays(d, cnt))) cnt++; if (cnt) ev(`${id}-${k}`, d, `FREQ=DAILY;COUNT=${cnt}`); d = addDays(d, cnt + off); while (!activeOn(m, d) && (!m.end || d <= m.end) && k < 14) { d = addDays(d, 1); if (diffDays(first, d) > 800) break; } k++; if (diffDays(first, d) > 400) break; }
-    }
-  }
-  L.push('END:VCALENDAR');
-  download(`pillser-복약알림${S.who ? '-' + person(S.who).name : ''}.ics`, L.map(icsFold).join('\r\n') + '\r\n', 'text/calendar;charset=utf-8');
-  toast(`일정 ${n}개를 내보냈어요. 파일을 열어 휴대폰 캘린더에 추가하세요.`, { ms: 6000 });
 }
 function exportBackup() {
   const data = { app: 'pillser', ver: 1, exported: new Date().toISOString(), data: D, settings: { ...S, tab: undefined } };
@@ -2341,7 +2046,6 @@ function bindSeg(el, fn) { el.addEventListener('click', e => { const b = e.targe
 function wire() {
   $('#tabs').onclick = e => { const b = e.target.closest('.tab'); if (b) goTab(b.dataset.tab); };
   $('#whoFilter').onclick = e => { const b = e.target.closest('[data-w]'); if (!b) return; S.who = b.dataset.w; saveS(); render(); };
-  $('#muteBtn').onclick = () => { S.muted = !S.muted; saveS(); audio.ensure(); audio.vol(); render(); toast(S.muted ? '소리를 껐어요' : '소리를 켰어요'); };
   $('#helpBtn').onclick = () => $('#helpDlg').showModal();
   $('#setBtn').onclick = openSettings;
   $('#bigBtn').onclick = openBig;
@@ -2429,23 +2133,10 @@ function wire() {
     else if (act === 'print') printReport(p.id);
   };
   // side
-  $('#testAlarm').onclick = () => {
-    audio.ensure();
-    const d = dosesFor(dk(), false)[0] || null;
-    toast('알림 시험: 소리와 배너를 보여 드려요');
-    playSound(); if (S.vibrate && navigator.vibrate) try { navigator.vibrate([300, 120, 300]); } catch {}
-    sysNotify('Pillser 알림 시험', '약 드실 시간에 이렇게 알려 드려요.', [], { quiet: false });
-    say(d ? `${d.m.name} 드실 시간이에요.` : '약 드실 시간이에요.');
-  };
-  $('#icsBtn').onclick = exportIcs;
   $('#exportBtn').onclick = exportBackup;
   $('#importBtn').onclick = () => $('#fileIn').click();
   $('#fileIn').onchange = e => { const f = e.target.files[0]; e.target.value = ''; if (f) importBackup(f); };
 
-  // alarm banner
-  $('#alarmTake').onclick = () => take(ringDoses());
-  $('#alarmSnooze').onclick = () => snoozeList(ringDoses());
-  $('#alarmClose').onclick = () => stopRing();
 
   // standby
   $('#bigClose').onclick = closeBig;
@@ -2498,27 +2189,18 @@ function wire() {
   $('#refQty').addEventListener('keydown', e => { if (e.key === 'Enter') doRefill(false); });
   // settings
   $$('[data-meal]').forEach(i => i.onchange = () => { if (i.value) { S.meals[i.dataset.meal] = i.value; saveS(); render(); } });
-  $('#setNotify').onchange = async e => { if (e.target.checked) await enableNotify(); else { S.notify = false; saveS(); } updateNotifyHint(); renderSide(); };
-  $('#setSound').onchange = e => { S.sound = e.target.value; saveS(); playSound(); };
-  $('#setTry').onclick = () => playSound();
-  $('#setVol').oninput = e => { S.volume = +e.target.value; $('#setVolV').textContent = S.volume + '%'; saveS(); audio.vol(); };
-  $('#setVol').onchange = () => playSound();
-  bindSeg($('#setEarly'), v => { S.early = +v; saveS(); });
-  bindSeg($('#setRepeat'), v => { S.repeat = +v; saveS(); });
-  bindSeg($('#setRepMax'), v => { S.repMax = +v; saveS(); });
-  bindSeg($('#setSnooze'), v => { S.snooze = +v; saveS(); });
   bindSeg($('#setMiss'), v => { S.miss = +v; saveS(); render(); });
   $$('#setDlg [data-bool]').forEach(c => c.addEventListener('change', () => { setPath(S, c.dataset.bool, c.checked); saveS(); render(); if (c.dataset.bool === 'wake') syncWake(); }));
   $('#sampleBtn').onclick = () => { $('#setDlg').close(); loadSample(); };
   $('#resetBtn').onclick = async () => {
     if (!await confirmDlg('모두 지우기', '가족, 약, 복용 기록을 모두 지워요. 되돌릴 수 없으니 먼저 백업을 저장하세요.', '모두 지우기', true)) return;
-    D = EMPTY(); D.people.push({ id: uid(), name: '나', rel: '나', color: PERSON_COLORS[0] }); F = {}; SN = {}; S.who = '';
-    saveD(true); saveF(); saveSN(); saveS(); $('#setDlg').close(); stopRing(); render(); toast('모두 지웠어요');
+    D = EMPTY(); D.people.push({ id: uid(), name: '나', rel: '나', color: PERSON_COLORS[0] }); F = {}; S.who = '';
+    saveD(true); saveF(); saveS(); $('#setDlg').close(); render(); toast('모두 지웠어요');
   };
 
   // keyboard
   document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') { if (ring.active) { stopRing(); e.preventDefault(); return; } if (big.on && !$('dialog[open]')) { closeBig(); return; } }
+    if (e.key === 'Escape') { if (big.on && !$('dialog[open]')) { closeBig(); return; } }
     if (e.ctrlKey || e.metaKey || e.altKey || $('dialog[open]') || /INPUT|TEXTAREA|SELECT/.test(document.activeElement?.tagName)) return;
     const k = e.key.toLowerCase();
     if (k === 'arrowleft' && S.tab === 'today') { viewDay = addDays(viewDay, -1); render(); }
@@ -2526,13 +2208,8 @@ function wire() {
     else if (k === 't') { viewDay = dk(); goTab('today'); }
     else if (k === 'n') { e.preventDefault(); openMed(); }
     else if (k === 'f') big.on ? closeBig() : openBig();
-    else if (k === 'm') $('#muteBtn').click();
     else if (/^[1-5]$/.test(k)) goTab(['today', 'meds', 'stock', 'history', 'people'][+k - 1]);
   });
-  // audio unlock on first touch
-  const unlock = () => { audio.ensure(); setTimeout(renderSide, 200); };
-  document.addEventListener('pointerdown', unlock, { once: true });
-  document.addEventListener('keydown', unlock, { once: true });
   document.addEventListener('visibilitychange', () => { syncWake(); if (document.visibilityState === 'visible') { loop(); render(); } });
   window.addEventListener('focus', () => loop());
   window.addEventListener('storage', e => { if (e.key === 'pillser.data') { D = Object.assign(EMPTY(), store.get('data', {})); render(); } });
@@ -2542,12 +2219,7 @@ function wire() {
 /* ---------- Init ---------- */
 hydrateIcons();
 wire();
-initSW();
 pruneBook();
-(() => { // actions from a notification that opened this page
-  const q = new URLSearchParams(location.search), act = q.get('act'), items = q.get('items');
-  if (act && items) { setTimeout(() => handleAct(act, items.split(',')), 300); history.replaceState(null, '', location.pathname); }
-})();
 goTab(['today', 'meds', 'stock', 'history', 'people'].includes(S.tab) ? S.tab : 'today');
 ensureTicker();
 loop();
