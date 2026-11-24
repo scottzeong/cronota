@@ -1,0 +1,1941 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#F5F1E8" />
+<title>Inventorier · 아웃그리드 물건 관리</title>
+<meta name="description" content="브라우저 안에서만 동작하는 우리 집 물건 관리 도구. 어디에 두었는지, 언제 샀는지, 보증이 언제 끝나는지, 사진과 영수증까지 한곳에 모아 두고 바로 찾을 수 있어요. 기록은 내 기기에만 저장돼요." />
+<!-- Fonts: outgrid's own files first (fonts/ next to this page), public CDN as a fallback. -->
+<style>
+  @font-face { font-family: "wantedSans"; src: url("fonts/WantedSansVariable.woff2") format("woff2"); font-weight: 100 800; font-style: normal; font-display: swap; }
+  @font-face { font-family: "maruBuri"; src: url("fonts/MaruBuri-Regular.woff2") format("woff2"); font-weight: 400; font-style: normal; font-display: swap; }
+  @font-face { font-family: "maruBuri"; src: url("fonts/MaruBuri-SemiBold.woff2") format("woff2"); font-weight: 600; font-style: normal; font-display: swap; }
+</style>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/wanteddev/wanted-sans@v1.0.3/packages/wanted-sans/fonts/webfonts/variable/split/WantedSansVariable.min.css" />
+<link rel="stylesheet" href="https://hangeul.pstatic.net/hangeul_static/css/maru-buri.css" />
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23244D3A'/%3E%3Cpath d='M14 23 32 14l18 9v19L32 51 14 42z' fill='none' stroke='%23F5F1E8' stroke-width='3.5' stroke-linejoin='round'/%3E%3Cpath d='M14 23l18 9 18-9M32 32v19' fill='none' stroke='%23D9C8A9' stroke-width='3.5' stroke-linejoin='round'/%3E%3C/svg%3E" />
+<style>
+  :root {
+    --bg: #F5F1E8;
+    --surface: #FCFAF5;
+    --paper: #FFFDF8;
+    --ink: #1C2824;
+    --ink-2: #33403A;
+    --muted: #5E665F;
+    --faint: #9A9F95;
+    --hair: #E3DCCB;
+    --hover: #F0EADD;
+    --press: #E7DFCD;
+    --dark: #244D3A;
+    --dark-2: #1B3B2C;
+    --river: #3E6F73;
+    --clay: #8A5A3B;
+    --sand: #D9C8A9;
+    --focus: #8A5A3B;
+    --danger: #963F3B;
+    --rec: #B5443B;
+    --mint: #E8EFE8;
+    --shadow: 0 1px 0 rgba(28,40,36,.03), 0 18px 40px -30px rgba(28,40,36,.30);
+    --sans: "wantedSans", "Wanted Sans Variable", "Wanted Sans", -apple-system, BlinkMacSystemFont, "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+    --serif: "maruBuri", "MaruBuri", "Batang", "Noto Serif KR", serif;
+    --r-sm: 10px;
+    --r-md: 13px;
+    --r-lg: 20px;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    font-family: var(--sans); word-break: keep-all; background: var(--bg); color: var(--ink);
+    font-size: 14px; letter-spacing: -0.005em; -webkit-font-smoothing: antialiased;
+    min-height: 100dvh; display: flex; flex-direction: column;
+  }
+  [hidden] { display: none !important; }
+  button { font: inherit; color: inherit; cursor: pointer; border: 0; background: none; padding: 0; -webkit-tap-highlight-color: transparent; }
+  button:disabled { cursor: default; opacity: .35; }
+  input, select, textarea { font: inherit; color: inherit; }
+  :focus-visible { outline: 2.5px solid var(--focus); outline-offset: 3px; }
+  ::selection { background: rgba(36,77,58,.16); }
+  svg.i { width: 19px; height: 19px; stroke: currentColor; fill: none; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+  svg.i.sm { width: 16px; height: 16px; }
+  .muted { color: var(--faint); }
+  .tnum { font-variant-numeric: tabular-nums; }
+
+  /* ---------- Header ---------- */
+  .top { position: sticky; top: 0; z-index: 40; background: var(--bg); }
+  .top-inner { max-width: 1440px; margin: 0 auto; padding: 14px 24px 8px; display: flex; align-items: center; gap: 14px; }
+  .brand { display: flex; align-items: center; gap: 12px; flex: none; text-decoration: none; color: inherit; }
+  .logo { display: block; height: 34px; width: auto; flex: none; }
+  .app-name { font-family: var(--serif); font-weight: 600; font-size: 23px; letter-spacing: -.02em; color: var(--dark); line-height: 1; padding-left: 12px; border-left: 1.5px solid var(--hair); }
+  .app-name small { display: block; font-family: var(--sans); font-size: 11px; font-weight: 500; color: var(--faint); letter-spacing: 0; margin-top: 4px; }
+  .head-actions { margin-left: auto; display: flex; align-items: center; gap: 6px; min-width: 0; }
+  .icon-btn { width: 38px; height: 38px; border-radius: 999px; display: grid; place-items: center; color: var(--ink-2); transition: background .15s, color .15s; flex: none; }
+  .icon-btn:hover:not(:disabled) { background: var(--hover); color: var(--ink); }
+
+  /* ---------- Buttons ---------- */
+  .btn { height: 38px; padding: 0 16px; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; font-weight: 600; font-size: 13.5px; background: var(--hover); color: var(--ink-2); white-space: nowrap; transition: background .15s, box-shadow .15s; flex: none; }
+  .btn:hover:not(:disabled) { background: var(--press); }
+  .btn.primary { background: var(--dark); color: var(--surface); box-shadow: 0 8px 18px -10px rgba(36,77,58,.7); }
+  .btn.primary:hover:not(:disabled) { background: var(--dark-2); }
+  .btn.clay { background: var(--clay); color: var(--surface); }
+  .btn.clay:hover:not(:disabled) { background: #74492F; }
+  .btn.ghost { background: none; color: var(--muted); }
+  .btn.ghost:hover:not(:disabled) { background: var(--hover); color: var(--ink); }
+  .btn.line { background: var(--surface); box-shadow: inset 0 0 0 1px var(--hair); }
+  .btn.line:hover:not(:disabled) { background: var(--hover); }
+  .btn.sm { height: 32px; padding: 0 12px; font-size: 12.5px; gap: 5px; }
+  .btn.block { width: 100%; }
+  .btn.danger { color: var(--danger); }
+  .btn.rec { background: var(--rec); color: #fff; }
+
+  /* ---------- Tabs ---------- */
+  .tabs-wrap { max-width: 1440px; margin: 0 auto; padding: 4px 24px 10px; display: flex; align-items: center; gap: 12px; }
+  .tabs { display: flex; gap: 2px; padding: 4px; background: var(--press); border-radius: 999px; overflow-x: auto; scrollbar-width: none; flex: none; max-width: 100%; }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab { height: 34px; padding: 0 15px; border-radius: 999px; font-weight: 600; font-size: 13px; color: var(--muted); white-space: nowrap; display: inline-flex; align-items: center; gap: 6px; transition: background .15s, color .15s; flex: none; }
+  .tab svg.i { width: 16px; height: 16px; }
+  .tab:hover { color: var(--ink); }
+  .tab[aria-selected="true"] { background: var(--dark); color: var(--surface); box-shadow: 0 6px 14px -8px rgba(36,77,58,.6); }
+  .tab .n { font-size: 11px; font-weight: 700; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px; background: rgba(28,40,36,.08); display: inline-grid; place-items: center; font-variant-numeric: tabular-nums; }
+  .tab .n.warn { background: var(--rec); color: #fff; }
+  .tab[aria-selected="true"] .n:not(.warn) { background: rgba(255,255,255,.18); }
+  .applied { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; min-width: 0; align-items: center; }
+  .applied::-webkit-scrollbar { display: none; }
+  .achip { height: 28px; padding: 0 11px; border-radius: 999px; font-size: 12px; font-weight: 600; background: var(--mint); color: var(--dark); white-space: nowrap; display: inline-flex; align-items: center; gap: 5px; flex: none; font-variant-numeric: tabular-nums; }
+  .achip.warn { background: #F3E7DC; color: var(--clay); }
+  .achip.bad { background: #F6E1DC; color: var(--rec); }
+  .achip svg.i { width: 14px; height: 14px; }
+
+  /* ---------- Layout ---------- */
+  main { flex: 1; width: 100%; max-width: 1440px; margin: 0 auto; padding: 0 24px 24px; display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 16px; height: calc(100dvh - 122px); min-height: 520px; }
+  .panel { background: var(--surface); border-radius: var(--r-lg); display: flex; flex-direction: column; min-height: 0; overflow: hidden; box-shadow: 0 0 0 1px var(--hair), var(--shadow); }
+  .view { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+  .wbar { display: flex; align-items: center; gap: 6px; padding: 10px 12px; border-bottom: 1px solid var(--hair); flex-wrap: wrap; row-gap: 8px; min-height: 59px; }
+  .wbar .count { font-size: 13px; color: var(--muted); margin: 0 6px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .wbar .count b { color: var(--ink); font-weight: 600; }
+  .grow { flex: 1; }
+  .sep { width: 1px; height: 20px; background: var(--hair); margin: 0 4px; flex: none; }
+  .tool { height: 36px; min-width: 36px; padding: 0 9px; border-radius: var(--r-sm); display: inline-flex; align-items: center; justify-content: center; gap: 6px; color: var(--ink-2); font-size: 12.5px; font-weight: 600; transition: background .15s, color .15s; flex: none; white-space: nowrap; }
+  .tool:hover:not(:disabled) { background: var(--hover); color: var(--ink); }
+  .tool[aria-pressed="true"] { background: var(--dark); color: var(--surface); }
+  .tool.danger:hover:not(:disabled) { color: var(--danger); }
+  .tool.prim { background: var(--dark); color: var(--surface); padding: 0 13px; border-radius: 999px; }
+  .tool.prim:hover:not(:disabled) { background: var(--dark-2); color: var(--surface); }
+  .scroll { flex: 1; min-height: 0; overflow: auto; overscroll-behavior: contain; position: relative; }
+  .wk-nav { display: flex; align-items: center; gap: 2px; }
+  .wk-lbl { font-weight: 700; font-size: 14px; color: var(--ink); padding: 0 8px; white-space: nowrap; font-variant-numeric: tabular-nums; min-width: 0; }
+  .wk-lbl small { font-weight: 600; font-size: 11.5px; color: var(--clay); margin-left: 6px; }
+  .search { position: relative; flex: 1 1 180px; max-width: 280px; min-width: 140px; }
+  .search svg { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--faint); width: 16px; height: 16px; pointer-events: none; }
+  .search .inp { padding-left: 36px; height: 36px; }
+
+  /* ---------- Generic list rows / cards ---------- */
+  .pad { padding: 14px 18px 20px; }
+  .grp { margin-bottom: 16px; }
+  .grp-h { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 700; color: var(--clay); letter-spacing: .04em; margin: 4px 2px 8px; }
+  .grp-h .v { color: var(--faint); font-weight: 600; letter-spacing: 0; font-variant-numeric: tabular-nums; }
+  .grp-h .grow { flex: 1; height: 1px; background: var(--hair); }
+  .grp-h button { font-size: 12px; font-weight: 600; color: var(--muted); letter-spacing: 0; padding: 4px 8px; border-radius: 999px; }
+  .grp-h button:hover { background: var(--hover); color: var(--ink); }
+  .rows { border-radius: 16px; background: #fff; box-shadow: 0 0 0 1px var(--hair); overflow: hidden; }
+  .si { display: flex; align-items: center; gap: 10px; padding: 9px 10px 9px 12px; border-bottom: 1px solid var(--hover); cursor: pointer; min-height: 52px; }
+  .si:last-child { border-bottom: 0; }
+  .si:hover { background: var(--paper); }
+  .ck { width: 24px; height: 24px; border-radius: 999px; box-shadow: inset 0 0 0 1.6px var(--sand); display: grid; place-items: center; flex: none; color: transparent; }
+  .ck svg { width: 15px; height: 15px; stroke-width: 2.4; }
+  .si.done .ck { background: var(--dark); box-shadow: none; color: #fff; }
+  .si .tx { flex: 1; min-width: 0; }
+  .si .nm { font-weight: 600; font-size: 14px; display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+  .si .q { font-weight: 700; color: var(--dark); font-variant-numeric: tabular-nums; font-size: 13px; }
+  .si .mt { font-size: 11.5px; color: var(--faint); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .si.done .nm { text-decoration: line-through; color: var(--faint); }
+  .si.done .q { color: var(--faint); }
+  .si.dim { cursor: default; }
+  .si.dim .nm { color: var(--muted); }
+  .mini { width: 32px; height: 32px; border-radius: 999px; display: grid; place-items: center; color: var(--faint); flex: none; }
+  .mini:hover { background: var(--hover); color: var(--ink); }
+  .mini.danger:hover { color: var(--danger); }
+  .mini svg { width: 16px; height: 16px; }
+  .tagb { font-size: 10.5px; font-weight: 700; padding: 2px 7px; border-radius: 999px; background: var(--mint); color: var(--dark); white-space: nowrap; }
+  .tagb.warn { background: #F3E7DC; color: var(--clay); }
+  .tagb.bad { background: #F6E1DC; color: var(--rec); }
+  .tagb.gray { background: var(--hover); color: var(--muted); }
+  .addline { display: grid; grid-template-columns: minmax(0, 1fr) 96px auto; gap: 6px; margin-bottom: 14px; }
+  .progress { display: flex; align-items: center; gap: 10px; font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums; margin-bottom: 14px; }
+  .progress .bar { flex: 1; }
+  .progress b { color: var(--ink); }
+  .bar { height: 8px; border-radius: 8px; background: var(--press); overflow: hidden; }
+  .bar i { display: block; height: 100%; width: 0; background: var(--dark); border-radius: 8px; transition: width .2s; }
+  .linkbtn { font-size: 12px; font-weight: 600; color: var(--dark); padding: 6px 10px; border-radius: 999px; background: var(--mint); white-space: nowrap; flex: none; }
+  .linkbtn:hover { background: #DCE7DD; }
+
+  .empty { padding: 50px 24px; text-align: center; color: var(--faint); font-size: 13px; line-height: 1.7; }
+  .empty b { display: block; font-family: var(--serif); color: var(--dark); font-size: 18px; font-weight: 600; margin-bottom: 4px; }
+  .empty .btn { margin-top: 14px; }
+  .seg { display: flex; padding: 3px; gap: 2px; background: var(--press); border-radius: 999px; flex-wrap: wrap; }
+  .seg button { flex: 1; height: 30px; border-radius: 999px; font-size: 12.5px; font-weight: 600; color: var(--muted); padding: 0 10px; white-space: nowrap; }
+  .seg button[aria-pressed="true"] { background: var(--surface); color: var(--dark); box-shadow: 0 2px 6px -3px rgba(28,40,36,.3); }
+  .seg button .n { font-size: 11px; color: var(--faint); margin-left: 3px; font-variant-numeric: tabular-nums; }
+
+  /* ---------- Side panel ---------- */
+  #side .ph { padding: 16px 20px 12px; border-bottom: 1px solid var(--hair); display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  #side .ph h2 { margin: 0; font-family: var(--serif); font-size: 19px; font-weight: 600; color: var(--dark); letter-spacing: -.02em; }
+  #side .ph p { margin: 3px 0 0; font-size: 12px; color: var(--faint); }
+  #side .collapse { display: none; }
+  .pbody { flex: 1; min-height: 0; overflow-y: auto; padding: 6px 20px 20px; overscroll-behavior: contain; }
+  .sec { padding: 16px 0; border-bottom: 1px solid var(--hair); }
+  .sec:last-child { border-bottom: 0; }
+  .sec h3 { margin: 0 0 10px; font-size: 12px; font-weight: 700; color: var(--clay); letter-spacing: .04em; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .sec h3 .v { color: var(--faint); font-weight: 600; letter-spacing: 0; font-variant-numeric: tabular-nums; }
+  .sec p.hint { margin: 0 0 10px; font-size: 12.5px; color: var(--muted); line-height: 1.6; }
+  .btns { display: flex; flex-wrap: wrap; gap: 6px; }
+  .btns.g2 { display: grid; grid-template-columns: 1fr 1fr; }
+  .btns.g2 .btn { width: 100%; }
+  .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+  .field:last-child { margin-bottom: 0; }
+  .field > label, .field > .lbl { font-size: 12px; font-weight: 600; color: var(--ink-2); display: flex; justify-content: space-between; gap: 6px; }
+  .field > label .v, .field > .lbl .v { color: var(--faint); font-weight: 500; font-variant-numeric: tabular-nums; }
+  .inp, select.inp { width: 100%; height: 40px; border: 0; background: #fff; box-shadow: inset 0 0 0 1px var(--hair); border-radius: 999px; padding: 0 14px; font-size: 13.5px; outline: none; transition: box-shadow .15s; min-width: 0; }
+  textarea.inp { height: auto; border-radius: 16px; padding: 10px 14px; line-height: 1.6; resize: vertical; }
+  select.inp { appearance: none; -webkit-appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235E665F' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; background-size: 16px; padding-right: 34px; }
+  .inp:focus { box-shadow: inset 0 0 0 1.5px var(--dark), 0 0 0 4px rgba(36,77,58,.08); }
+  .inp.tc { text-align: center; font-variant-numeric: tabular-nums; padding: 0 6px; }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+  .num { display: grid; grid-template-columns: 34px 1fr 34px; align-items: center; background: #fff; box-shadow: inset 0 0 0 1px var(--hair); border-radius: 999px; height: 40px; }
+  .num button { height: 34px; width: 34px; border-radius: 999px; display: grid; place-items: center; color: var(--muted); margin: 3px; }
+  .num button:hover { background: var(--hover); color: var(--ink); }
+  .num input { border: 0; background: none; text-align: center; width: 100%; height: 100%; outline: none; font-weight: 600; font-variant-numeric: tabular-nums; min-width: 0; -moz-appearance: textfield; }
+  .num input::-webkit-inner-spin-button { -webkit-appearance: none; }
+  .num svg.i { width: 15px; height: 15px; }
+  .switch { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 13px; font-weight: 600; color: var(--ink-2); cursor: pointer; padding: 6px 0; }
+  .switch small { display: block; font-size: 11.5px; font-weight: 500; color: var(--faint); margin-top: 2px; line-height: 1.45; }
+  .switch input { appearance: none; -webkit-appearance: none; width: 40px; height: 24px; border-radius: 999px; background: var(--sand); position: relative; cursor: pointer; transition: background .15s; flex: none; margin: 0; }
+  .switch input::after { content: ''; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 999px; background: #fff; transition: transform .15s; box-shadow: 0 1px 3px rgba(0,0,0,.2); }
+  .switch input:checked { background: var(--dark); }
+  .switch input:checked::after { transform: translateX(16px); }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip { height: 32px; padding: 0 12px; border-radius: 999px; background: #fff; box-shadow: inset 0 0 0 1px var(--hair); font-size: 12.5px; font-weight: 600; color: var(--ink-2); display: inline-flex; align-items: center; gap: 6px; }
+  .chip:hover { background: var(--hover); }
+  .chip[aria-pressed="true"] { background: var(--dark); color: var(--surface); box-shadow: none; }
+  .chip small { color: var(--faint); font-weight: 500; font-variant-numeric: tabular-nums; }
+  .chip.warn { background: #FBF3EA; box-shadow: inset 0 0 0 1px #E5C9AE; color: var(--clay); }
+  .chip .x { width: 18px; height: 18px; border-radius: 999px; display: grid; place-items: center; color: var(--faint); margin-right: -6px; }
+  .chip .x:hover { background: var(--press); color: var(--danger); }
+  .chip .x svg { width: 12px; height: 12px; }
+  .note { font-size: 12px; padding: 10px 12px; border-radius: var(--r-md); background: var(--hover); color: var(--muted); line-height: 1.6; margin-top: 10px; }
+  .note.ok { background: #E8F0E9; color: var(--dark); }
+  .note.warn { background: #F3E7DC; color: #6E4429; }
+  .kpis { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  .kpi { border-radius: 14px; background: #fff; box-shadow: 0 0 0 1px var(--hair); padding: 10px 12px; min-width: 0; cursor: default; text-align: left; }
+  button.kpi { cursor: pointer; }
+  button.kpi:hover { background: var(--paper); }
+  .kpi .k { font-size: 11.5px; font-weight: 600; color: var(--muted); white-space: nowrap; }
+  .kpi .v { font-size: 22px; font-weight: 700; letter-spacing: -.03em; margin-top: 3px; font-variant-numeric: tabular-nums; color: var(--ink); white-space: nowrap; }
+  .kpi .v small { font-size: 12px; font-weight: 600; color: var(--muted); margin-left: 2px; letter-spacing: 0; }
+  .slist { display: flex; flex-direction: column; gap: 6px; }
+  .sitem { display: flex; align-items: center; gap: 8px; padding: 8px 8px 8px 12px; border-radius: var(--r-md); background: #fff; box-shadow: inset 0 0 0 1px var(--hair); font-size: 13px; text-align: left; width: 100%; }
+  button.sitem:hover { background: var(--paper); }
+  .sitem .tx { flex: 1; min-width: 0; }
+  .sitem .tx b { font-weight: 600; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .sitem .tx small { display: block; font-size: 11.5px; color: var(--faint); margin-top: 1px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .sitem .r { font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; font-size: 12.5px; color: var(--ink-2); }
+  .mbars { display: flex; align-items: flex-end; gap: 6px; height: 90px; margin: 6px 0 4px; }
+  .mbars div { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; height: 100%; justify-content: flex-end; font-size: 10.5px; color: var(--faint); font-variant-numeric: tabular-nums; }
+  .mbars i { width: 100%; max-width: 34px; background: var(--sand); border-radius: 5px 5px 2px 2px; min-height: 2px; }
+  .mbars div.cur i { background: var(--dark); }
+
+  /* ---------- Dialogs ---------- */
+  dialog { border: 0; border-radius: 22px; padding: 0; width: min(520px, calc(100vw - 32px)); background: var(--surface); box-shadow: 0 0 0 1px var(--hair), 0 30px 70px -30px rgba(28,40,36,.45); color: var(--ink); }
+  dialog.wide { width: min(640px, calc(100vw - 32px)); }
+  dialog::backdrop { background: rgba(28,40,36,.32); backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px); }
+  .dlg-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 20px 22px 8px; }
+  .dlg-head h2 { margin: 0; font-family: var(--serif); font-size: 20px; font-weight: 600; letter-spacing: -.02em; color: var(--dark); min-width: 0; }
+  .dlg-head h2 small { display: block; font-family: var(--sans); font-size: 12px; font-weight: 500; color: var(--faint); margin-top: 4px; letter-spacing: 0; }
+  .dlg-body { padding: 8px 22px 22px; display: flex; flex-direction: column; gap: 14px; max-height: 76vh; overflow-y: auto; }
+  .dlg-body p { margin: 0; font-size: 13px; color: var(--muted); line-height: 1.65; }
+  .dlg-body .sec { padding: 12px 0; }
+  .btn-row { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; align-items: center; }
+  .btn-row .grow { flex: 1; }
+  .help h4 { margin: 4px 0 6px; font-size: 12px; font-weight: 700; color: var(--clay); letter-spacing: .04em; }
+  .help ul { margin: 0; padding-left: 18px; font-size: 13px; color: var(--ink-2); line-height: 1.75; }
+  .keys { display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; font-size: 13px; align-items: center; }
+  kbd { font-family: var(--sans); font-size: 11.5px; font-weight: 700; padding: 3px 7px; border-radius: 6px; background: #fff; box-shadow: inset 0 0 0 1px var(--hair), 0 1px 0 var(--hair); color: var(--ink-2); white-space: nowrap; }
+  .plist { display: flex; flex-direction: column; border-radius: 16px; background: #fff; box-shadow: 0 0 0 1px var(--hair); overflow: hidden; max-height: 42vh; overflow-y: auto; }
+  .prow { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-bottom: 1px solid var(--hover); text-align: left; width: 100%; min-height: 50px; }
+  .prow:last-child { border-bottom: 0; }
+  .prow:hover { background: var(--paper); }
+  .prow .tx { flex: 1; min-width: 0; }
+  .prow .tx b { font-weight: 600; font-size: 14px; }
+  .prow .tx small { display: block; font-size: 11.5px; color: var(--faint); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .prow .add { width: 32px; height: 32px; border-radius: 999px; display: grid; place-items: center; background: var(--mint); color: var(--dark); flex: none; }
+  .prow.in .add { background: var(--dark); color: #fff; }
+  .cur-dishes { display: flex; flex-wrap: wrap; gap: 6px; min-height: 32px; align-items: center; }
+  .cur-dishes .empty-t { font-size: 12.5px; color: var(--faint); }
+  .ings { list-style: none; margin: 0; padding: 0; border-radius: 16px; background: #fff; box-shadow: 0 0 0 1px var(--hair); overflow: hidden; }
+  .ings li { display: flex; align-items: center; gap: 10px; padding: 9px 14px; border-bottom: 1px solid var(--hover); font-size: 13.5px; }
+  .ings li:last-child { border-bottom: 0; }
+  .ings li .nm { flex: 1; font-weight: 600; }
+  .ings li .q { font-weight: 700; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+  .ings li .st { width: 20px; height: 20px; border-radius: 999px; display: grid; place-items: center; flex: none; }
+  .ings li .st svg { width: 13px; height: 13px; stroke-width: 2.4; }
+  .ings li.have .st { background: var(--dark); color: #fff; }
+  .ings li.miss .st { box-shadow: inset 0 0 0 1.6px var(--sand); }
+  .ings li.pan .st { background: var(--hover); color: var(--faint); }
+  .steps { margin: 0; padding-left: 22px; font-size: 13.5px; line-height: 1.75; color: var(--ink-2); }
+  .steps li { padding-left: 4px; margin-bottom: 4px; }
+  .rmeta { display: flex; gap: 6px; flex-wrap: wrap; }
+  .inline-add { display: grid; grid-template-columns: 1fr 1fr auto; gap: 6px; align-items: center; }
+  .checks { display: flex; flex-direction: column; gap: 2px; }
+  .checks label { display: flex; align-items: center; gap: 10px; padding: 7px 4px; font-size: 13.5px; cursor: pointer; border-radius: 10px; }
+  .checks label:hover { background: var(--hover); }
+  .checks input { width: 18px; height: 18px; accent-color: var(--dark); }
+  .checks small { color: var(--faint); margin-left: auto; font-size: 12px; }
+
+  /* ---------- Toast ---------- */
+  #toast { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom)); transform: translateX(-50%); background: var(--dark); color: var(--surface); padding: 11px 18px; border-radius: 999px; box-shadow: 0 14px 30px -14px rgba(28,40,36,.55); font-size: 13px; font-weight: 600; z-index: 200; display: none; align-items: center; gap: 14px; max-width: calc(100vw - 32px); }
+  #toast.show { display: flex; }
+  #toast.err { background: var(--danger); }
+  #toast button { color: var(--sand); font-weight: 600; white-space: nowrap; text-decoration: underline; text-underline-offset: 3px; }
+
+  .foot { max-width: 1440px; margin: 0 auto; padding: 0 24px 16px; font-size: 11.5px; color: var(--faint); display: flex; gap: 6px; align-items: center; }
+  .foot svg { width: 13px; height: 13px; }
+  #printArea { display: none; }
+
+
+  /* ================= Inventorier ================= */
+  main { grid-template-columns: minmax(0, 1fr) 340px; }
+  .fchips { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; padding: 2px 2px 12px; margin: 0 -2px; }
+  .fchips::-webkit-scrollbar { display: none; }
+  .fchips .chip { flex: none; }
+  .fchips .chip svg.i { width: 15px; height: 15px; }
+
+  /* item cards */
+  .igrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(188px, 1fr)); gap: 12px; }
+  .ic { border-radius: 16px; background: #fff; box-shadow: 0 0 0 1px var(--hair); overflow: hidden; cursor: pointer; display: flex; flex-direction: column; text-align: left; position: relative; transition: box-shadow .15s, transform .15s; min-width: 0; }
+  .ic:hover { box-shadow: 0 0 0 1.5px var(--sand), 0 14px 30px -24px rgba(28,40,36,.5); }
+  .ic.on { box-shadow: 0 0 0 2.5px var(--dark); }
+  .ic.gone { opacity: .55; }
+  .pf { aspect-ratio: 4 / 3; background: var(--cb, var(--hover)); color: var(--cf, var(--muted)); display: grid; place-items: center; position: relative; overflow: hidden; }
+  .pf img { width: 100%; height: 100%; object-fit: cover; display: block; opacity: 0; transition: opacity .2s; }
+  .pf img.ld { opacity: 1; }
+  .pf > svg.i { width: 38px; height: 38px; stroke-width: 1.3; opacity: .85; }
+  .pf .pc { position: absolute; right: 8px; bottom: 8px; font-size: 11px; font-weight: 700; color: #fff; background: rgba(28,40,36,.55); border-radius: 999px; padding: 2px 8px; display: inline-flex; gap: 4px; align-items: center; }
+  .pf .pc svg { width: 12px; height: 12px; }
+  .pf .bdg { position: absolute; left: 8px; top: 8px; display: flex; gap: 4px; flex-wrap: wrap; }
+  .pf .bdg .tagb { box-shadow: 0 2px 6px -2px rgba(0,0,0,.2); }
+  .ic .bd { padding: 10px 12px 12px; display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+  .ic .nm { font-weight: 700; font-size: 14.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ic .nm .q { font-weight: 700; color: var(--clay); font-size: 12.5px; margin-left: 4px; font-variant-numeric: tabular-nums; }
+  .ic .lc { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 4px; min-width: 0; }
+  .ic .lc span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ic .lc svg { width: 13px; height: 13px; color: var(--faint); }
+  .ic .mt { font-size: 11.5px; color: var(--faint); font-variant-numeric: tabular-nums; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ic .ck { position: absolute; top: 8px; right: 8px; background: rgba(255,255,255,.92); z-index: 2; }
+  .ic.on .ck { background: var(--dark); box-shadow: none; color: #fff; }
+  .tagb.lent { background: #E3E9F3; color: #3D5A80; }
+  .tagb.store { background: #F4EDD9; color: #6A5524; }
+
+  /* list rows */
+  .th { width: 46px; height: 46px; border-radius: 11px; background: var(--cb, var(--hover)); color: var(--cf, var(--muted)); display: grid; place-items: center; overflow: hidden; flex: none; }
+  .th img { width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity .2s; }
+  .th img.ld { opacity: 1; }
+  .th svg.i { width: 20px; height: 20px; }
+  .th.sm { width: 34px; height: 34px; border-radius: 9px; }
+  .th.sm svg.i { width: 16px; height: 16px; }
+  .si .r { text-align: right; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; flex: none; display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
+  .si .r b { font-size: 13px; color: var(--ink-2); }
+  .si.on { background: #EEF4EF; }
+  .si.on .ck { background: var(--dark); box-shadow: none; color: #fff; }
+  .si.gone { opacity: .55; }
+
+  /* places */
+  .pgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; align-items: start; }
+  .room { border-radius: 18px; background: #fff; box-shadow: 0 0 0 1px var(--hair); overflow: hidden; }
+  .room-h { display: flex; align-items: center; gap: 8px; padding: 12px 10px 10px 14px; cursor: pointer; }
+  .room-h:hover { background: var(--paper); }
+  .room-h .ri { width: 34px; height: 34px; border-radius: 10px; background: var(--mint); color: var(--dark); display: grid; place-items: center; flex: none; }
+  .room-h .ri svg { width: 18px; height: 18px; }
+  .room-h b { flex: 1; min-width: 0; font-family: var(--serif); font-weight: 600; font-size: 17px; color: var(--dark); letter-spacing: -.02em; }
+  .room-h b small { display: block; font-family: var(--sans); font-size: 11.5px; font-weight: 600; color: var(--faint); letter-spacing: 0; margin-top: 2px; font-variant-numeric: tabular-nums; }
+  .strip { display: flex; gap: 4px; padding: 0 14px 10px; overflow: hidden; }
+  .strip .th { width: 40px; height: 40px; border-radius: 9px; }
+  .strip .th svg.i { width: 17px; height: 17px; }
+  .spot { display: flex; align-items: center; gap: 8px; padding: 9px 12px 9px 16px; border-top: 1px solid var(--hover); cursor: pointer; font-size: 13.5px; }
+  .spot:hover { background: var(--paper); }
+  .spot svg.i { width: 15px; height: 15px; color: var(--faint); }
+  .spot span { flex: 1; min-width: 0; font-weight: 600; color: var(--ink-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .spot small { font-weight: 700; color: var(--muted); font-variant-numeric: tabular-nums; font-size: 12px; }
+  .spot.none span { color: var(--faint); font-weight: 500; }
+  .room.add { display: grid; place-items: center; min-height: 120px; color: var(--muted); font-weight: 600; box-shadow: inset 0 0 0 1.5px var(--hair); background: transparent; cursor: pointer; border: 0; width: 100%; border-radius: 18px; gap: 6px; }
+  .room.add:hover { background: var(--hover); color: var(--ink); }
+
+  /* care */
+  .wbarline { height: 6px; border-radius: 6px; background: var(--press); overflow: hidden; margin-top: 5px; max-width: 220px; }
+  .wbarline i { display: block; height: 100%; background: var(--dark); border-radius: 6px; }
+  .si.warn .wbarline i { background: var(--clay); }
+  .si.bad .wbarline i { background: var(--rec); }
+  .dd { font-size: 12px; font-weight: 700; padding: 3px 9px; border-radius: 999px; background: var(--mint); color: var(--dark); white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .dd.warn { background: #F3E7DC; color: var(--clay); }
+  .dd.bad { background: var(--rec); color: #fff; }
+  .dd.gray { background: var(--hover); color: var(--muted); }
+
+  /* stats */
+  .hbars { display: flex; flex-direction: column; gap: 8px; }
+  .hb { display: grid; grid-template-columns: 84px minmax(0, 1fr) 96px; gap: 10px; align-items: center; font-size: 12.5px; }
+  .hb > span:first-child { font-weight: 600; color: var(--ink-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .hb .bar { height: 10px; }
+  .hb .bar i { background: var(--dark); }
+  .hb b { font-variant-numeric: tabular-nums; color: var(--ink-2); font-size: 12px; white-space: nowrap; min-width: 54px; text-align: right; }
+  .card { border-radius: 16px; background: #fff; box-shadow: 0 0 0 1px var(--hair); padding: 14px 16px; }
+  .card h3 { margin: 0 0 12px; font-size: 12px; font-weight: 700; color: var(--clay); letter-spacing: .04em; display: flex; justify-content: space-between; }
+  .card h3 .v { color: var(--faint); font-weight: 600; letter-spacing: 0; }
+  .sgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; }
+  .kpis.k4 { grid-template-columns: repeat(4, minmax(0, 1fr)); margin-bottom: 12px; }
+  .ybars { height: 120px; }
+
+  /* item view dialog */
+  .gal { border-radius: 16px; overflow: hidden; background: var(--cb, var(--hover)); color: var(--cf, var(--muted)); aspect-ratio: 16 / 10; display: grid; place-items: center; cursor: zoom-in; position: relative; }
+  .gal img { width: 100%; height: 100%; object-fit: contain; background: #F0EBE0; }
+  .gal > svg.i { width: 54px; height: 54px; stroke-width: 1.2; }
+  .gal.nophoto { cursor: default; aspect-ratio: auto; height: 120px; }
+  .gthumbs { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; }
+  .gthumbs button { width: 56px; height: 56px; border-radius: 10px; overflow: hidden; flex: none; background: var(--hover); position: relative; box-shadow: inset 0 0 0 1px var(--hair); }
+  .gthumbs button[aria-pressed="true"] { box-shadow: 0 0 0 2.5px var(--dark); }
+  .gthumbs img { width: 100%; height: 100%; object-fit: cover; }
+  .rcp { position: absolute; left: 3px; bottom: 3px; font-size: 9.5px; font-weight: 700; color: #fff; background: var(--clay); border-radius: 5px; padding: 1px 4px; }
+  .info { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 8px 12px; font-size: 13.5px; margin: 0; }
+  .info dt { color: var(--muted); font-size: 12.5px; font-weight: 600; padding-top: 1px; }
+  .info dd { margin: 0; color: var(--ink); min-width: 0; overflow-wrap: anywhere; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+  .info dd small { color: var(--faint); font-size: 12px; }
+  .info .cp { font-size: 11.5px; font-weight: 600; color: var(--dark); background: var(--mint); border-radius: 999px; padding: 2px 8px; }
+  .hist { list-style: none; margin: 0; padding: 0; font-size: 12.5px; color: var(--ink-2); }
+  .hist li { display: flex; gap: 10px; padding: 5px 0; border-bottom: 1px dashed var(--hair); }
+  .hist li:last-child { border-bottom: 0; }
+  .hist time { color: var(--faint); font-variant-numeric: tabular-nums; flex: none; width: 74px; }
+  .vtitle { display: flex; align-items: flex-start; gap: 10px; }
+  .vtitle h2 { flex: 1; }
+  .vstat { display: flex; gap: 6px; flex-wrap: wrap; }
+
+  /* edit dialog */
+  .pstrip { display: flex; gap: 8px; flex-wrap: wrap; }
+  .pth { width: 76px; height: 76px; border-radius: 12px; overflow: hidden; position: relative; background: var(--hover); box-shadow: inset 0 0 0 1px var(--hair); flex: none; }
+  .pth img { width: 100%; height: 100%; object-fit: cover; }
+  .pth .x { position: absolute; top: 4px; right: 4px; width: 22px; height: 22px; border-radius: 999px; background: rgba(28,40,36,.7); color: #fff; display: grid; place-items: center; }
+  .pth .x svg { width: 12px; height: 12px; stroke-width: 2.2; }
+  .pth .cv { position: absolute; left: 4px; bottom: 4px; font-size: 10px; font-weight: 700; color: #fff; background: rgba(28,40,36,.6); border-radius: 6px; padding: 2px 5px; }
+  .pth .cv.rc { background: var(--clay); }
+  .padd { width: 76px; height: 76px; border-radius: 12px; box-shadow: inset 0 0 0 1.5px var(--sand); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; font-size: 11px; font-weight: 600; color: var(--muted); flex: none; }
+  .padd:hover { background: var(--hover); color: var(--ink); }
+  .padd svg.i { width: 20px; height: 20px; }
+  .padd.busy { opacity: .5; pointer-events: none; }
+  .won { position: relative; }
+  .won .inp { padding-right: 34px; text-align: right; font-variant-numeric: tabular-nums; }
+  .won::after { content: '원'; position: absolute; right: 14px; top: 50%; transform: translateY(-50%); font-size: 13px; color: var(--faint); pointer-events: none; }
+  .subsec { border-radius: 16px; background: var(--paper); box-shadow: inset 0 0 0 1px var(--hair); padding: 12px 14px; }
+  .subsec > .lbl { font-size: 12px; font-weight: 700; color: var(--clay); letter-spacing: .04em; margin-bottom: 10px; display: flex; justify-content: space-between; gap: 8px; }
+  .subsec > .lbl .v { color: var(--faint); font-weight: 500; letter-spacing: 0; }
+  .wquick { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 6px; }
+  .wquick button { height: 28px; padding: 0 10px; border-radius: 999px; font-size: 12px; font-weight: 600; color: var(--muted); background: #fff; box-shadow: inset 0 0 0 1px var(--hair); }
+  .wquick button:hover { background: var(--hover); color: var(--ink); }
+  details.more > summary { list-style: none; cursor: pointer; font-size: 12.5px; font-weight: 600; color: var(--dark); display: inline-flex; align-items: center; gap: 4px; padding: 4px 0; }
+  details.more > summary::-webkit-details-marker { display: none; }
+  details.more > summary svg { width: 15px; height: 15px; transition: transform .15s; }
+  details.more[open] > summary svg { transform: rotate(180deg); }
+  details.more > div { display: flex; flex-direction: column; gap: 12px; margin-top: 10px; }
+  .spotrows { display: flex; flex-direction: column; gap: 6px; }
+  .spotrows > div { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px; align-items: center; }
+
+  /* selection bar */
+  .selbar { display: flex; align-items: center; gap: 6px; padding: 8px 12px; background: var(--dark); color: var(--surface); flex-wrap: wrap; }
+  .selbar b { font-size: 13px; margin: 0 8px 0 4px; font-variant-numeric: tabular-nums; }
+  .selbar .tool { color: var(--surface); }
+  .selbar .tool:hover:not(:disabled) { background: rgba(255,255,255,.12); color: #fff; }
+
+  /* photo viewer */
+  dialog.viewer { width: 100vw; height: 100dvh; max-width: none; max-height: none; border-radius: 0; background: rgba(14,20,18,.96); box-shadow: none; color: #fff; margin: 0; }
+  dialog.viewer::backdrop { background: rgba(14,20,18,.8); }
+  .vw { position: absolute; inset: 0; display: grid; place-items: center; touch-action: pan-y pinch-zoom; }
+  .vw img { max-width: 100%; max-height: 100%; object-fit: contain; user-select: none; -webkit-user-drag: none; }
+  .vbar { position: absolute; left: 0; right: 0; top: 0; display: flex; align-items: center; gap: 8px; padding: 12px 14px; background: linear-gradient(rgba(0,0,0,.45), transparent); z-index: 2; }
+  .vbar span { flex: 1; font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .vbar .icon-btn { color: #fff; }
+  .vbar .icon-btn:hover { background: rgba(255,255,255,.14); color: #fff; }
+  .vnav { position: absolute; top: 50%; transform: translateY(-50%); width: 46px; height: 46px; border-radius: 999px; background: rgba(255,255,255,.12); color: #fff; display: grid; place-items: center; z-index: 2; }
+  .vnav:hover { background: rgba(255,255,255,.22); }
+  .vnav.p { left: 14px; } .vnav.n { right: 14px; }
+
+  /* print */
+  @media print {
+    @page { size: A4; margin: 12mm; }
+    body { background: #fff; display: block; height: auto; }
+    body > *:not(#printArea) { display: none !important; }
+    #printArea { display: block; color: #000; font-size: 10pt; }
+    #printArea h1 { font-family: var(--serif); font-size: 17pt; margin: 0 0 2mm; }
+    #printArea .pm { color: #555; font-size: 9pt; margin-bottom: 4mm; }
+    #printArea h2 { font-size: 11pt; margin: 5mm 0 2mm; border-bottom: 1px solid #999; padding-bottom: 1mm; break-after: avoid; }
+    #printArea table { width: 100%; border-collapse: collapse; }
+    #printArea th, #printArea td { border: 1px solid #aaa; padding: 1.5mm 2mm; vertical-align: middle; font-size: 9pt; text-align: left; word-break: keep-all; }
+    #printArea th { background: #eee; }
+    #printArea tr { break-inside: avoid; }
+    #printArea td.n { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+    #printArea img { width: 16mm; height: 16mm; object-fit: cover; display: block; }
+  }
+
+  /* responsive */
+  @media (min-width: 1000px) {
+    body { height: 100dvh; min-height: 560px; }
+    main { flex: 1; height: auto; min-height: 0; }
+  }
+  @media (max-width: 1100px) { main { grid-template-columns: minmax(0, 1fr) 300px; } }
+  @media (max-width: 999px) {
+    main { display: flex; flex-direction: column; height: auto; min-height: 0; padding: 0 12px 16px; }
+    #side .collapse { display: grid; }
+    #side.closed .pbody { display: none; }
+    #side.closed .ph { border-bottom: 0; }
+    .pbody { overflow: visible; }
+    #work { min-height: 64vh; }
+    .scroll { overflow: visible; }
+    .tabs-wrap { padding: 2px 12px 10px; }
+    .top-inner { padding: 12px 12px 6px; gap: 8px; }
+    .foot { padding: 0 12px 12px; }
+    .pad { padding: 12px; }
+  }
+  @media (max-width: 760px) {
+    .logo { height: 27px; }
+    .app-name { font-size: 19px; padding-left: 10px; }
+    .app-name small { display: none; }
+    .tool .t { display: none; }
+    .tabs-wrap { flex-direction: column; align-items: stretch; gap: 8px; }
+    .search { max-width: none; }
+    .igrid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+    .kpis.k4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .row3 { grid-template-columns: 1fr 1fr; }
+    .info { grid-template-columns: 82px minmax(0, 1fr); }
+    .vnav { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="top-inner">
+    <a class="brand" href="./" aria-label="Inventorier">
+      <img class="logo" alt="OUTGRID" src="data:image/png;base64,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" />
+      <span class="app-name">Inventorier<small>우리 집 물건·보증·사진</small></span>
+    </a>
+    <div class="head-actions">
+      <button class="icon-btn" id="helpBtn" title="도움말·단축키"><i data-icon="help"></i></button>
+      <button class="icon-btn" id="setBtn" title="설정·백업"><i data-icon="gear"></i></button>
+    </div>
+  </div>
+  <div class="tabs-wrap">
+    <nav class="tabs" id="tabs" role="tablist">
+      <button class="tab" role="tab" data-tab="items" aria-selected="true"><i data-icon="box"></i>물건<span class="n" id="nItems">0</span></button>
+      <button class="tab" role="tab" data-tab="places"><i data-icon="home"></i>위치<span class="n" id="nPlaces">0</span></button>
+      <button class="tab" role="tab" data-tab="care"><i data-icon="shield"></i>보증·관리<span class="n" id="nCare">0</span></button>
+      <button class="tab" role="tab" data-tab="stats"><i data-icon="chart"></i>통계</button>
+    </nav>
+    <div class="applied" id="applied"></div>
+  </div>
+</header>
+
+<main>
+  <section class="panel" id="work">
+
+    <!-- ===== Items ===== -->
+    <div class="view" data-view="items">
+      <div class="wbar" id="itBar">
+        <label class="search"><i data-icon="search"></i><input class="inp" id="q" type="search" placeholder="물건 찾기 (초성도 돼요)" title="이름, 위치, 브랜드, 모델명, 태그, 메모에서 찾아요" autocomplete="off" /></label>
+        <select class="inp" id="sort" style="width:auto;height:36px" title="정렬">
+          <option value="recent">최근 넣은 순</option><option value="name">이름 순</option><option value="buy">최근 산 순</option><option value="old">오래된 순</option><option value="price">비싼 순</option><option value="warranty">보증 끝나는 순</option><option value="loc">위치 순</option>
+        </select>
+        <select class="inp" id="group" style="width:auto;height:36px" title="묶어 보기">
+          <option value="none">묶지 않기</option><option value="loc">공간별</option><option value="cat">분류별</option><option value="status">상태별</option>
+        </select>
+        <div class="seg" id="viewSeg" style="flex:0 0 auto"><button data-v="grid" title="사진 보기"><i data-icon="grid"></i></button><button data-v="list" title="목록 보기"><i data-icon="rows"></i></button></div>
+        <span class="grow"></span>
+        <button class="tool" id="selBtn" title="여러 개 골라서 옮기기·상태 바꾸기"><i data-icon="check"></i><span class="t">선택</span></button>
+        <button class="tool prim" id="addBtn"><i data-icon="plus"></i>넣기</button>
+      </div>
+      <div class="selbar" id="selBar" hidden>
+        <b id="selN">0개 선택</b>
+        <button class="tool" id="selAll">모두</button>
+        <span class="grow"></span>
+        <button class="tool" id="selMove"><i data-icon="pin"></i><span class="t">옮기기</span></button>
+        <button class="tool" id="selStatus"><i data-icon="tag"></i><span class="t">상태</span></button>
+        <button class="tool" id="selDel"><i data-icon="trash"></i><span class="t">지우기</span></button>
+        <button class="tool" id="selDone"><i data-icon="x"></i><span class="t">끝</span></button>
+      </div>
+      <div class="scroll" id="itScroll"><div class="pad"><div class="fchips" id="catChips"></div><div id="itBody"></div></div></div>
+    </div>
+
+    <!-- ===== Places ===== -->
+    <div class="view" data-view="places" hidden>
+      <div class="wbar">
+        <span class="count" id="plCount"></span>
+        <span class="grow"></span>
+        <button class="tool" id="plPrint" title="공간별 목록 인쇄"><i data-icon="print"></i><span class="t">공간별 인쇄</span></button>
+        <button class="tool prim" id="plAdd"><i data-icon="plus"></i>공간 추가</button>
+      </div>
+      <div class="scroll"><div class="pad"><div class="pgrid" id="plBody"></div></div></div>
+    </div>
+
+    <!-- ===== Care ===== -->
+    <div class="view" data-view="care" hidden>
+      <div class="wbar">
+        <div class="seg" id="careSeg" style="flex:0 0 auto"></div>
+        <span class="grow"></span>
+        <label class="switch" style="padding:0 6px;font-size:12.5px;gap:8px"><span>끝난 보증도 보기</span><input type="checkbox" id="careAll" /></label>
+      </div>
+      <div class="scroll"><div class="pad" id="careBody"></div></div>
+    </div>
+
+    <!-- ===== Stats ===== -->
+    <div class="view" data-view="stats" hidden>
+      <div class="wbar">
+        <span class="count">처분한 물건은 빼고 셈해요</span>
+        <span class="grow"></span>
+        <button class="tool" id="stCsv" title="엑셀에서 열 수 있는 CSV"><i data-icon="download"></i><span class="t">CSV</span></button>
+        <button class="tool" id="stPrint" title="보험·이사용 물건 목록 인쇄"><i data-icon="print"></i><span class="t">목록 인쇄</span></button>
+      </div>
+      <div class="scroll"><div class="pad" id="stBody"></div></div>
+    </div>
+  </section>
+
+  <aside class="panel" id="side">
+    <div class="ph">
+      <div><h2 id="sideT"></h2><p id="sideS"></p></div>
+      <button class="icon-btn collapse" id="sideToggle" title="접기·펼치기"><i data-icon="chevron"></i></button>
+    </div>
+    <div class="pbody" id="sideBody"></div>
+  </aside>
+</main>
+
+<div class="foot"><i data-icon="shield"></i>Inventorier는 브라우저 안에서만 동작합니다. 물건 기록과 사진은 이 기기에만 저장되고 어디에도 전송되지 않아요.</div>
+
+<datalist id="storeList"></datalist>
+<datalist id="brandList"></datalist>
+<datalist id="tagList"></datalist>
+<datalist id="roomList"></datalist>
+<input type="file" id="fileIn" accept=".json,application/json" hidden />
+<input type="file" id="camIn" accept="image/*" capture="environment" hidden />
+<input type="file" id="picIn" accept="image/*" multiple hidden />
+<div id="printArea"></div>
+
+<!-- Item view -->
+<dialog id="viewDlg" class="wide">
+  <div class="dlg-head vtitle"><h2 id="vwT"></h2><button class="icon-btn" id="vwFav" title="즐겨찾기"><i data-icon="star"></i></button><button class="icon-btn" data-close><i data-icon="x"></i></button></div>
+  <div class="dlg-body">
+    <div id="vwGal"></div>
+    <div class="vstat" id="vwStat"></div>
+    <dl class="info" id="vwInfo"></dl>
+    <div class="btns" id="vwActs"></div>
+    <div id="vwHist"></div>
+    <div class="btn-row"><button class="btn line danger" id="vwDel"><i data-icon="trash"></i>지우기</button><span class="grow"></span><button class="btn line" id="vwDup"><i data-icon="copy"></i>복제</button><button class="btn primary" id="vwEdit"><i data-icon="pen"></i>고치기</button></div>
+  </div>
+</dialog>
+
+<!-- Item edit -->
+<dialog id="editDlg" class="wide">
+  <div class="dlg-head"><h2 id="edT">물건 넣기</h2><button class="icon-btn" data-close><i data-icon="x"></i></button></div>
+  <div class="dlg-body">
+    <div class="field"><span class="lbl">사진 <span class="v">물건, 영수증, 보증서, 모델명 스티커</span></span>
+      <div class="pstrip" id="edPhotos"></div>
+    </div>
+    <div class="field"><label for="edName">이름</label><input class="inp" id="edName" maxlength="60" placeholder="예: 로봇청소기, 캠핑 의자, 여권" /></div>
+    <div class="row2">
+      <div class="field"><label for="edCat">분류</label><select class="inp" id="edCat"></select></div>
+      <div class="field"><label>수량</label><div class="num" id="edQty"><button data-d="-1"><i data-icon="minus"></i></button><input type="number" inputmode="numeric" min="1" max="9999" /><button data-d="1"><i data-icon="plus"></i></button></div></div>
+    </div>
+    <div class="field"><label for="edLoc">위치</label><select class="inp" id="edLoc"></select></div>
+    <div class="field"><span class="lbl">상태</span><div class="seg" id="edStatus"></div></div>
+    <div class="subsec" id="edLentBox" hidden>
+      <div class="lbl">빌려준 정보</div>
+      <div class="row3">
+        <div class="field"><label for="edLentTo">누구에게</label><input class="inp" id="edLentTo" maxlength="30" placeholder="예: 동생" /></div>
+        <div class="field"><label for="edLentAt">빌려준 날</label><input class="inp" id="edLentAt" type="date" /></div>
+        <div class="field"><label for="edLentDue">돌려받을 날</label><input class="inp" id="edLentDue" type="date" /></div>
+      </div>
+    </div>
+    <div class="subsec">
+      <div class="lbl">구매·보증</div>
+      <div class="row3">
+        <div class="field"><label for="edBuy">구매일</label><input class="inp" id="edBuy" type="date" /></div>
+        <div class="field"><label for="edPrice">가격 <span class="v">개당</span></label><div class="won"><input class="inp" id="edPrice" inputmode="numeric" placeholder="0" /></div></div>
+        <div class="field"><label for="edStore">구매처</label><input class="inp" id="edStore" list="storeList" maxlength="30" placeholder="예: 쿠팡" /></div>
+      </div>
+      <div class="field" style="margin-top:12px"><label for="edWend">보증 끝나는 날 <span class="v" id="edWhint"></span></label><input class="inp" id="edWend" type="date" />
+        <div class="wquick" id="edWquick"><button data-m="6">6개월</button><button data-m="12">1년</button><button data-m="24">2년</button><button data-m="36">3년</button><button data-m="60">5년</button><button data-m="0">보증 없음</button></div></div>
+    </div>
+    <details class="more" id="edMore">
+      <summary>모델명·관리 주기·태그·메모 <i data-icon="chevron"></i></summary>
+      <div>
+        <div class="row3">
+          <div class="field"><label for="edBrand">브랜드</label><input class="inp" id="edBrand" list="brandList" maxlength="30" /></div>
+          <div class="field"><label for="edModel">모델명</label><input class="inp" id="edModel" maxlength="40" /></div>
+          <div class="field"><label for="edSerial">일련번호</label><input class="inp" id="edSerial" maxlength="40" /></div>
+        </div>
+        <div class="subsec">
+          <div class="lbl">정기 관리 <span class="v">필터 교체, 청소, 점검처럼 주기적으로 하는 일</span></div>
+          <div class="row3">
+            <div class="field"><label for="edMname">할 일</label><input class="inp" id="edMname" maxlength="30" placeholder="예: 필터 교체" /></div>
+            <div class="field"><label for="edMcycle">주기 <span class="v">개월</span></label><input class="inp" id="edMcycle" type="number" inputmode="numeric" min="0" max="120" placeholder="0" /></div>
+            <div class="field"><label for="edMlast">마지막으로 한 날</label><input class="inp" id="edMlast" type="date" /></div>
+          </div>
+        </div>
+        <div class="field"><label for="edTags">태그 <span class="v">쉼표로 나눠요</span></label><input class="inp" id="edTags" list="tagList" maxlength="120" placeholder="예: 캠핑, 계절용품" /></div>
+        <div class="field"><label for="edMemo">메모</label><textarea class="inp" id="edMemo" rows="3" maxlength="2000" placeholder="AS 연락처, 부속품, 사이즈 같은 것"></textarea></div>
+      </div>
+    </details>
+    <div class="btn-row">
+      <label class="switch" id="edContWrap" style="padding:0;gap:8px;font-size:12.5px"><span>저장하고 이어서 넣기</span><input type="checkbox" id="edCont" /></label>
+      <span class="grow"></span>
+      <button class="btn ghost" data-close>취소</button><button class="btn primary" id="edSave"><i data-icon="check"></i>저장</button>
+    </div>
+  </div>
+</dialog>
+
+<!-- Room edit -->
+<dialog id="roomDlg">
+  <div class="dlg-head"><h2 id="rmT">공간</h2><button class="icon-btn" data-close><i data-icon="x"></i></button></div>
+  <div class="dlg-body">
+    <div class="field"><label for="rmName">공간 이름</label><input class="inp" id="rmName" maxlength="20" placeholder="예: 거실, 작은방, 창고" /></div>
+    <div class="field"><span class="lbl">자리 <span class="v">가구나 수납장처럼 공간 안의 자리</span></span>
+      <div class="spotrows" id="rmSpots"></div>
+      <button class="btn line sm" id="rmAddSpot" style="align-self:flex-start;margin-top:6px"><i data-icon="plus"></i>자리 추가</button>
+    </div>
+    <div class="btn-row"><button class="btn line danger" id="rmDel"><i data-icon="trash"></i>공간 지우기</button><span class="grow"></span><button class="btn ghost" data-close>취소</button><button class="btn primary" id="rmSave">저장</button></div>
+  </div>
+</dialog>
+
+<!-- Move / status (single + bulk) -->
+<dialog id="moveDlg">
+  <div class="dlg-head"><h2 id="mvT">옮기기</h2><button class="icon-btn" data-close><i data-icon="x"></i></button></div>
+  <div class="dlg-body">
+    <div class="field" id="mvLocF"><label for="mvLoc">어디로</label><select class="inp" id="mvLoc"></select></div>
+    <div class="field" id="mvStF"><span class="lbl">상태</span><div class="seg" id="mvSt"></div></div>
+    <div class="btn-row"><button class="btn ghost" data-close>취소</button><button class="btn primary" id="mvOk">확인</button></div>
+  </div>
+</dialog>
+
+<!-- Lend -->
+<dialog id="lendDlg">
+  <div class="dlg-head"><h2>빌려주기<small id="lnS"></small></h2><button class="icon-btn" data-close><i data-icon="x"></i></button></div>
+  <div class="dlg-body">
+    <div class="field"><label for="lnTo">누구에게</label><input class="inp" id="lnTo" maxlength="30" placeholder="예: 301호 이웃" /></div>
+    <div class="row2">
+      <div class="field"><label for="lnAt">빌려준 날</label><input class="inp" id="lnAt" type="date" /></div>
+      <div class="field"><label for="lnDue">돌려받을 날 <span class="v">비워 둬도 돼요</span></label><input class="inp" id="lnDue" type="date" /></div>
+    </div>
+    <div class="btn-row"><button class="btn ghost" data-close>취소</button><button class="btn primary" id="lnOk">빌려줬어요</button></div>
+  </div>
+</dialog>
+
+<!-- Photo viewer -->
+<dialog id="pvDlg" class="viewer">
+  <div class="vbar"><span id="pvN"></span><button class="icon-btn" id="pvSave" title="이미지로 받기"><i data-icon="download"></i></button><button class="icon-btn" data-close title="닫기"><i data-icon="x"></i></button></div>
+  <div class="vw" id="pvWrap"><img id="pvImg" alt="" /></div>
+  <button class="vnav p" id="pvPrev" title="이전"><i data-icon="left"></i></button>
+  <button class="vnav n" id="pvNext" title="다음"><i data-icon="right"></i></button>
+</dialog>
+
+<!-- Settings -->
+<dialog id="setDlg">
+  <div class="dlg-head"><h2>설정·백업</h2><button class="icon-btn" data-close><i data-icon="x"></i></button></div>
+  <div class="dlg-body">
+    <div class="sec" style="padding-top:0">
+      <div class="field"><label>보증 만료 알림 <span class="v">며칠 남았을 때부터</span></label><div class="seg" id="setWarn"><button data-w="14">2주</button><button data-w="30">한 달</button><button data-w="60">두 달</button><button data-w="90">석 달</button></div></div>
+      <div class="field"><label>분류 <span class="v">누르면 지워요</span></label><div class="chips" id="setCats"></div>
+        <div style="display:grid;grid-template-columns:1fr auto;gap:6px;margin-top:6px"><input class="inp" id="setCatNew" maxlength="12" placeholder="새 분류 이름" /><button class="btn line" id="setCatAdd"><i data-icon="plus"></i>추가</button></div></div>
+    </div>
+    <div class="sec">
+      <h3>백업 <span class="v" id="setUsage"></span></h3>
+      <p class="hint">기록과 사진은 이 브라우저에만 있어요. 기기를 바꾸거나 브라우저 데이터를 지우기 전에 파일로 받아 두세요.</p>
+      <label class="switch"><span>백업에 사진도 넣기<small>파일이 커지지만 사진까지 그대로 옮길 수 있어요</small></span><input type="checkbox" id="bkPhotos" checked /></label>
+      <div class="btns g2" style="margin-top:8px">
+        <button class="btn line" id="bkExport"><i data-icon="download"></i>백업 받기</button>
+        <button class="btn line" id="bkImport"><i data-icon="upload"></i>백업 불러오기</button>
+        <button class="btn line" id="bkSample"><i data-icon="sparkle"></i>예시 다시 보기</button>
+        <button class="btn line danger" id="wipeAll"><i data-icon="trash"></i>모두 지우기</button>
+      </div>
+    </div>
+  </div>
+</dialog>
+
+<!-- Help -->
+<dialog id="helpDlg">
+  <div class="dlg-head"><h2>Inventorier 도움말</h2><button class="icon-btn" data-close><i data-icon="x"></i></button></div>
+  <div class="dlg-body help">
+    <div><h4>이렇게 써요</h4><ul>
+      <li><b>물건</b>: 사진을 찍어 넣고 위치, 구매일, 가격, 보증 끝나는 날을 적어요. 영수증이나 보증서도 사진으로 같이 붙여 둘 수 있어요.</li>
+      <li><b>찾기</b>: 이름, 위치, 브랜드, 모델명, 태그, 메모를 한꺼번에 찾아요. <b>ㄹㅂㅊㅅㄱ</b>처럼 초성만 써도 돼요.</li>
+      <li><b>위치</b>: 공간(거실, 안방)과 그 안의 자리(TV장, 옷장)로 나눠요. 자리를 누르면 거기 있는 물건만 보여요.</li>
+      <li><b>보증·관리</b>: 보증이 곧 끝나는 물건, 필터 교체 같은 정기 관리, 빌려준 물건을 모아 봐요.</li>
+      <li><b>통계</b>: 분류·공간별 물건과 가치를 보고, 보험이나 이사용 목록을 인쇄하거나 CSV로 받아요.</li>
+      <li><b>선택</b>: 여러 물건을 골라 한꺼번에 옮기거나 상태를 바꿔요. 방 정리할 때 편해요.</li>
+    </ul></div>
+    <div><h4>단축키</h4><div class="keys">
+      <kbd>1</kbd><span>~ <kbd>4</kbd> 탭 이동</span>
+      <kbd>/</kbd><span>찾기</span>
+      <kbd>N</kbd><span>물건 넣기</span>
+      <kbd>V</kbd><span>사진 보기·목록 보기 바꾸기</span>
+      <kbd>Esc</kbd><span>찾기·필터 풀기</span>
+    </div></div>
+    <div><h4>알아 두면 좋아요</h4><ul>
+      <li>사진은 기기 안에서 적당한 크기로 줄여서 저장해요. 원본은 그대로 남아 있어요.</li>
+      <li>기록과 사진은 이 기기 브라우저에만 저장돼요. 설정에서 백업을 받아 두세요.</li>
+    </ul></div>
+  </div>
+</dialog>
+
+<!-- Confirm / prompt -->
+<dialog id="cfDlg">
+  <div class="dlg-head"><h2 id="cfT"></h2></div>
+  <div class="dlg-body"><div id="cfM" style="font-size:13px;color:var(--muted);line-height:1.65"></div><div class="btn-row"><button class="btn ghost" id="cfNo">취소</button><button class="btn primary" id="cfOk">확인</button></div></div>
+</dialog>
+
+<div id="toast" role="status" aria-live="polite"><span id="toastMsg"></span><button id="toastAct" hidden></button></div>
+<script>
+'use strict';
+/* =========================================================================
+   Inventorier · outgrid — browser-only household inventory
+   Items with location (room › spot), purchase date, price, warranty end,
+   maintenance cycle, lending, photos & receipts. Records live in
+   localStorage, photos in IndexedDB. Nothing leaves the device.
+   ========================================================================= */
+
+/* ---------- Icons ---------- */
+const ICONS = {
+  box: '<path d="M3.5 7.5 12 3.5l8.5 4v9L12 20.5l-8.5-4z"/><path d="M3.5 7.5 12 11.5l8.5-4M12 11.5v9"/>',
+  home: '<path d="M4 11 12 4l8 7"/><path d="M6 9.5V20h12V9.5"/><path d="M10 20v-5h4v5"/>',
+  shield: '<path d="M12 3.5 5 6.2v5.3c0 4.3 3 7.6 7 9 4-1.4 7-4.7 7-9V6.2z"/><path d="m9.2 12 2 2 3.8-4"/>',
+  chart: '<path d="M4 20h16"/><path d="M7 16.5V11M12 16.5V6.5M17 16.5v-8"/>',
+  plus: '<path d="M12 5v14M5 12h14"/>',
+  minus: '<path d="M5 12h14"/>',
+  left: '<path d="m14.5 6-6 6 6 6"/>',
+  right: '<path d="m9.5 6 6 6-6 6"/>',
+  copy: '<rect x="8.5" y="8.5" width="11" height="11" rx="2.2"/><path d="M15.5 8.5V6.2A1.7 1.7 0 0 0 13.8 4.5H6.2A1.7 1.7 0 0 0 4.5 6.2v7.6a1.7 1.7 0 0 0 1.7 1.7h2.3"/>',
+  print: '<path d="M7 9V3.5h10V9"/><rect x="3.5" y="9" width="17" height="8" rx="2"/><path d="M7 14h10v6.5H7z"/>',
+  trash: '<path d="M4.5 7h15"/><path d="M9.5 7V5.2a1.2 1.2 0 0 1 1.2-1.2h2.6a1.2 1.2 0 0 1 1.2 1.2V7"/><path d="m6.5 7 .9 11.3a2 2 0 0 0 2 1.7h5.2a2 2 0 0 0 2-1.7L17.5 7"/>',
+  check: '<path d="m5 12.5 4.5 4.5L19 7.5"/>',
+  x: '<path d="M6 6l12 12M18 6 6 18"/>',
+  search: '<circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4"/>',
+  star: '<path d="m12 3.8 2.5 5.1 5.6.8-4 4 1 5.6-5.1-2.7-5 2.7 1-5.6-4.1-4 5.6-.8z"/>',
+  help: '<circle cx="12" cy="12" r="8.5"/><path d="M9.6 9.5a2.5 2.5 0 0 1 4.8.9c0 1.7-2.4 2-2.4 3.6M12 16.8v.1"/>',
+  gear: '<circle cx="12" cy="12" r="3"/><path d="M19.4 13.5a7.6 7.6 0 0 0 0-3l2-1.5-2-3.4-2.3.9a7.5 7.5 0 0 0-2.6-1.5L14 2.5h-4l-.5 2.5A7.5 7.5 0 0 0 6.9 6.5l-2.3-.9-2 3.4 2 1.5a7.6 7.6 0 0 0 0 3l-2 1.5 2 3.4 2.3-.9a7.5 7.5 0 0 0 2.6 1.5l.5 2.5h4l.5-2.5a7.5 7.5 0 0 0 2.6-1.5l2.3.9 2-3.4z"/>',
+  download: '<path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/>',
+  upload: '<path d="M12 16V5"/><path d="m7 9.5 5-5 5 5"/><path d="M5 20h14"/>',
+  chevron: '<path d="m6 9 6 6 6-6"/>',
+  pen: '<path d="M14.5 5.5 18.5 9.5"/><path d="M4 20l1-4.5L15.8 4.7a2 2 0 0 1 2.8 0l.7.7a2 2 0 0 1 0 2.8L8.5 19 4 20z"/>',
+  clock: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
+  alert: '<path d="M12 4 2.8 19.5h18.4z"/><path d="M12 10v4.5M12 17v.1"/>',
+  sparkle: '<path d="M12 4v4M12 16v4M4 12h4M16 12h4M6.5 6.5l2.5 2.5M15 15l2.5 2.5M6.5 17.5 9 15M15 9l2.5-2.5"/>',
+  pin: '<path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/>',
+  camera: '<path d="M4 8.5A1.5 1.5 0 0 1 5.5 7h2.2l1.5-2h5.6l1.5 2h2.2A1.5 1.5 0 0 1 20 8.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 17.5z"/><circle cx="12" cy="12.8" r="3.4"/>',
+  image: '<rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><circle cx="9" cy="10" r="1.8"/><path d="m4 17.5 5-4.5 4 3.5 2.5-2 4.5 3.5"/>',
+  receipt: '<path d="M6 3.5h12v17l-2-1.3-2 1.3-2-1.3-2 1.3-2-1.3-2 1.3z"/><path d="M9 8h6M9 11.5h6M9 15h3.5"/>',
+  tag: '<path d="M3.5 12.3V4.5a1 1 0 0 1 1-1h7.8l8.2 8.2a1.4 1.4 0 0 1 0 2l-6.8 6.8a1.4 1.4 0 0 1-2 0z"/><circle cx="8" cy="8" r="1.4"/>',
+  grid: '<rect x="4" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.5"/>',
+  rows: '<rect x="4" y="5" width="16" height="4" rx="1.3"/><rect x="4" y="10" width="16" height="4" rx="1.3"/><rect x="4" y="15" width="16" height="4" rx="1.3"/>',
+  hand: '<path d="M4 14.5h3l4.5 1.5a1.6 1.6 0 0 0 1-3L9 12"/><path d="M7 19.5h6.5l6.3-3.6a1.6 1.6 0 0 0-1.6-2.8L14 15"/><path d="M4 12.5v8"/><path d="M14.5 4.5h5v5"/><path d="m19.5 4.5-6 6"/>',
+  back: '<path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/>',
+  wrench: '<path d="M15 4.5a4.5 4.5 0 0 0-4.2 6.1L4.5 16.9a1.9 1.9 0 0 0 2.6 2.6l6.3-6.3A4.5 4.5 0 0 0 19.5 9l-2.7 2.7-2.6-.5-.5-2.6z"/>',
+  tv: '<rect x="3" y="5" width="18" height="12" rx="2"/><path d="M8 20h8M12 17v3"/>',
+  phone: '<rect x="7" y="3" width="10" height="18" rx="2.2"/><path d="M11 18h2"/>',
+  sofa: '<path d="M5 11V8a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v3"/><path d="M3 13a2 2 0 0 1 4 0v2h10v-2a2 2 0 0 1 4 0v4a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"/><path d="M6 18v2M18 18v2"/>',
+  pot: '<path d="M4 10h16v5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5z"/><path d="M2 10h20M9 6.5c0-1.5 1-1.5 1-3M14 6.5c0-1.5 1-1.5 1-3"/>',
+  shirt: '<path d="M8 4 4 6.5 5.5 11 7.5 10v10h9V10l2 1L20 6.5 16 4c-.5 1.5-2 2.5-4 2.5S8.5 5.5 8 4z"/>',
+  ball: '<circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5c2.5 2.5 3.5 5.5 3.5 8.5s-1 6-3.5 8.5M12 3.5C9.5 6 8.5 9 8.5 12s1 6 3.5 8.5"/>',
+  doc: '<path d="M6.5 3.5h7l4 4v13h-11z"/><path d="M13.5 3.5v4h4M9 12h6M9 15.5h6"/>',
+  leaf: '<path d="M5 19c0-8 5-13 14-14-1 9-6 14-14 14z"/><path d="M5 19 13 11"/>',
+  dots: '<circle cx="6" cy="12" r="1.2" fill="currentColor"/><circle cx="12" cy="12" r="1.2" fill="currentColor"/><circle cx="18" cy="12" r="1.2" fill="currentColor"/>',
+};
+function icon(n, cls = '') { return `<svg class="i ${cls}" viewBox="0 0 24 24" aria-hidden="true">${ICONS[n] || ICONS.box}</svg>`; }
+function hydrateIcons(root = document) { root.querySelectorAll('i[data-icon]').forEach(el => { const t = document.createElement('template'); t.innerHTML = icon(el.dataset.icon, el.className); el.replaceWith(t.content.firstChild); }); }
+
+/* ---------- Helpers ---------- */
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const pad2 = n => String(n).padStart(2, '0');
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+const store = {
+  get(k, d) { try { const v = localStorage.getItem('inventorier.' + k); return v == null ? d : JSON.parse(v); } catch { return d; } },
+  set(k, v) { try { localStorage.setItem('inventorier.' + k, JSON.stringify(v)); return true; } catch { toast('저장 공간이 부족해서 저장하지 못했어요', { err: true }); return false; } },
+};
+const DAY = 864e5;
+const WD = ['일', '월', '화', '수', '목', '금', '토'];
+function dk(d) { return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`; }
+function parseDk(s) { const [y, m, d] = String(s).split('-').map(Number); return new Date(y, (m || 1) - 1, d || 1); }
+function addDays(d, n) { const x = new Date(d); x.setDate(x.getDate() + n); return x; }
+function addMonths(d, n) { const x = new Date(d); const day = x.getDate(); x.setDate(1); x.setMonth(x.getMonth() + n); const last = new Date(x.getFullYear(), x.getMonth() + 1, 0).getDate(); x.setDate(Math.min(day, last)); return x; }
+function today0() { const d = new Date(); d.setHours(0, 0, 0, 0); return d; }
+const todayKey = () => dk(today0());
+function ddays(key) { return Math.round((parseDk(key) - today0()) / DAY); }
+function fdate(key) { if (!key) return ''; const d = parseDk(key); return `${d.getFullYear()}.${pad2(d.getMonth() + 1)}.${pad2(d.getDate())}`; }
+function fdateShort(key) { if (!key) return ''; const d = parseDk(key); return `${String(d.getFullYear()).slice(2)}.${pad2(d.getMonth() + 1)}`; }
+function age(key) {
+  if (!key) return ''; const a = parseDk(key), b = today0(); if (a > b) return '산 예정';
+  let m = (b.getFullYear() - a.getFullYear()) * 12 + b.getMonth() - a.getMonth(); if (b.getDate() < a.getDate()) m--;
+  if (m < 1) { const d = Math.round((b - a) / DAY); return d === 0 ? '오늘' : `${d}일 전`; }
+  const y = Math.floor(m / 12), r = m % 12; return y ? (r ? `${y}년 ${r}개월` : `${y}년`) + ' 됐어요' : `${m}개월 됐어요`;
+}
+function won(n) { return (Math.round(n) || 0).toLocaleString('ko-KR') + '원'; }
+function wonShort(n) { n = Math.round(n) || 0; if (n >= 1e8) return (n / 1e8).toFixed(n >= 1e9 ? 0 : 1).replace(/\.0$/, '') + '억원'; if (n >= 1e4) return Math.round(n / 1e4).toLocaleString('ko-KR') + '만원'; return n.toLocaleString('ko-KR') + '원'; }
+function download(name, data, type) {
+  const blob = data instanceof Blob ? data : new Blob([data], { type });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name;
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+}
+let toastTimer;
+function toast(msg, { err = false, action, onAction, ms = 3200 } = {}) {
+  const t = $('#toast'); $('#toastMsg').textContent = msg; t.classList.toggle('err', err);
+  const b = $('#toastAct'); b.hidden = !action; b.textContent = action || ''; b.onclick = () => { t.classList.remove('show'); onAction && onAction(); };
+  t.classList.add('show'); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), action ? Math.max(ms, 6000) : ms);
+}
+function confirmDlg(title, msg, okLabel = '확인', danger = false, html = false) {
+  return new Promise(res => {
+    const d = $('#cfDlg'); $('#cfT').textContent = title; if (html) $('#cfM').innerHTML = msg; else $('#cfM').textContent = msg;
+    const ok = $('#cfOk'); ok.textContent = okLabel; ok.className = 'btn ' + (danger ? 'rec' : 'primary');
+    const done = v => { d.close(); res(v); };
+    ok.onclick = () => done(true); $('#cfNo').onclick = () => done(false); d.oncancel = e => { e.preventDefault(); done(false); };
+    d.showModal();
+  });
+}
+async function copyText(text) {
+  try { await navigator.clipboard.writeText(text); return true; } catch {}
+  const ta = document.createElement('textarea'); ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0'; document.body.appendChild(ta); ta.select();
+  let ok = false; try { ok = document.execCommand('copy'); } catch {} ta.remove(); return ok;
+}
+function numGet(el) { const i = $('input', el); return clamp(Math.round(+i.value || +i.min || 1), +i.min || 1, +i.max || 99); }
+function numSet(el, v) { $('input', el).value = v; }
+function numBind(el, onChange) {
+  el.addEventListener('click', e => { const b = e.target.closest('button[data-d]'); if (!b) return; numSet(el, clamp(numGet(el) + +b.dataset.d, +$('input', el).min || 1, +$('input', el).max || 99)); onChange && onChange(numGet(el)); });
+  $('input', el).addEventListener('change', () => { numSet(el, numGet(el)); onChange && onChange(numGet(el)); });
+}
+const priceVal = s => +String(s || '').replace(/[^\d]/g, '') || 0;
+function bindWon(inp) { inp.addEventListener('input', () => { const v = inp.value.replace(/[^\d]/g, ''); inp.value = v ? (+v).toLocaleString('ko-KR') : ''; }); }
+
+/* Hangul initial-consonant search: "ㄹㅂㅊㅅㄱ" finds 로봇청소기 */
+const CHO = 'ㄱㄲㄴㄷㄸㄹㅁㅂㅃㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎ';
+function chosung(s) { let o = ''; for (const ch of String(s)) { const c = ch.charCodeAt(0) - 0xAC00; o += c >= 0 && c <= 11171 ? CHO[Math.floor(c / 588)] : ch; } return o; }
+const isChoOnly = s => /^[ㄱ-ㅎ]+$/.test(s);
+const norm = s => String(s || '').toLowerCase().replace(/\s+/g, '');
+
+/* ---------- Photo store (IndexedDB) ---------- */
+const idb = {
+  p: null,
+  open() {
+    if (this.p) return this.p;
+    this.p = new Promise((res, rej) => {
+      if (!window.indexedDB) { rej(new Error('no idb')); return; }
+      const r = indexedDB.open('inventorier', 1);
+      r.onupgradeneeded = () => { if (!r.result.objectStoreNames.contains('photos')) r.result.createObjectStore('photos', { keyPath: 'id' }); };
+      r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); r.onblocked = () => rej(new Error('blocked'));
+    });
+    this.p.catch(() => { this.p = null; });
+    return this.p;
+  },
+  async run(mode, fn) {
+    const db = await this.open();
+    return new Promise((res, rej) => {
+      const t = db.transaction('photos', mode); const s = t.objectStore('photos'); let out; const r = fn(s);
+      if (r) r.onsuccess = () => { out = r.result; };
+      t.oncomplete = () => res(out); t.onerror = () => rej(t.error); t.onabort = () => rej(t.error);
+    });
+  },
+  get(id) { return this.run('readonly', s => s.get(id)); },
+  put(rec) { return this.run('readwrite', s => s.put(rec)); },
+  del(id) { return this.run('readwrite', s => s.delete(id)); },
+  keys() { return this.run('readonly', s => s.getAllKeys()); },
+  all() { return this.run('readonly', s => s.getAll()); },
+  clear() { return this.run('readwrite', s => s.clear()); },
+};
+const thumbURL = new Map(); // id -> objectURL (thumb)
+async function getThumb(id) {
+  if (thumbURL.has(id)) return thumbURL.get(id);
+  try { const r = await idb.get(id); if (!r) return null; const u = URL.createObjectURL(r.thumb || r.full); thumbURL.set(id, u); return u; } catch { return null; }
+}
+async function getFull(id) { try { const r = await idb.get(id); return r ? (r.full || r.thumb) : null; } catch { return null; } }
+function hydratePhotos(root = document) {
+  $$('img[data-ph]', root).forEach(async img => {
+    const id = img.dataset.ph; img.removeAttribute('data-ph');
+    const u = await getThumb(id);
+    if (u) { img.onload = () => img.classList.add('ld'); img.src = u; } else img.remove();
+  });
+}
+function loadImage(file) {
+  return new Promise((res, rej) => { const u = URL.createObjectURL(file); const img = new Image(); img.onload = () => res({ img, u }); img.onerror = () => { URL.revokeObjectURL(u); rej(new Error('decode')); }; img.src = u; });
+}
+function scaleTo(img, max, q) {
+  const w = img.naturalWidth, h = img.naturalHeight, k = Math.min(1, max / Math.max(w, h));
+  const c = document.createElement('canvas'); c.width = Math.max(1, Math.round(w * k)); c.height = Math.max(1, Math.round(h * k));
+  const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height); g.imageSmoothingQuality = 'high'; g.drawImage(img, 0, 0, c.width, c.height);
+  return new Promise(r => c.toBlob(b => r(b), 'image/jpeg', q));
+}
+async function makePhoto(file) {
+  const { img, u } = await loadImage(file);
+  try { const full = await scaleTo(img, 1600, .84), thumb = await scaleTo(img, 400, .78); return { id: uid(), full, thumb, t: Date.now() }; }
+  finally { URL.revokeObjectURL(u); }
+}
+let persistAsked = false;
+function askPersist() { if (persistAsked) return; persistAsked = true; try { navigator.storage && navigator.storage.persist && navigator.storage.persist(); } catch {} }
+
+/* ---------- Model ---------- */
+const CAT_DEF = [
+  { n: '가전', ic: 'tv', b: '#E4EEEE', f: '#2E5558' },
+  { n: '디지털', ic: 'phone', b: '#E3E9F3', f: '#3D5A80' },
+  { n: '가구', ic: 'sofa', b: '#F3E7DC', f: '#6E4429' },
+  { n: '주방', ic: 'pot', b: '#F4EDD9', f: '#6A5524' },
+  { n: '공구', ic: 'wrench', b: '#ECE7E0', f: '#5B4A3A' },
+  { n: '생활', ic: 'home', b: '#E8EFE8', f: '#244D3A' },
+  { n: '의류·잡화', ic: 'shirt', b: '#F6E9E6', f: '#8B3A33' },
+  { n: '취미·레저', ic: 'ball', b: '#EAF0E2', f: '#4D6B2E' },
+  { n: '서류·귀중품', ic: 'doc', b: '#EFE9F2', f: '#5D4470' },
+  { n: '기타', ic: 'box', b: '#F0EADD', f: '#5E665F' },
+];
+const EXTRA_COLORS = [['#E4EEEE', '#2E5558'], ['#F3E7DC', '#6E4429'], ['#E3E9F3', '#3D5A80'], ['#EAF0E2', '#4D6B2E'], ['#F6E9E6', '#8B3A33'], ['#EFE9F2', '#5D4470']];
+const STATUS = [
+  { k: 'use', n: '사용 중', ic: 'check' },
+  { k: 'store', n: '보관 중', ic: 'box' },
+  { k: 'lent', n: '빌려줌', ic: 'hand' },
+  { k: 'broken', n: '고장·수리', ic: 'alert' },
+  { k: 'gone', n: '처분함', ic: 'trash' },
+];
+const stName = k => (STATUS.find(s => s.k === k) || STATUS[0]).n;
+const DEF_S = { warn: 30, view: 'grid', sort: 'recent', group: 'none', bkPhotos: true };
+let D = store.get('data', null);
+let S = Object.assign({}, DEF_S, store.get('settings', {}));
+let tab = store.get('tab', 'items');
+const F = { q: '', cat: '', loc: '', status: '', tag: '', fav: false };
+let careSeg = 'all', careAll = false;
+let selecting = false; const sel = new Set();
+function save() { D.updated = Date.now(); store.set('data', D); }
+function saveS() { store.set('settings', S); }
+const catInfo = n => { const c = D.cats.find(x => x.n === n); if (c) return c; return { n: n || '기타', ic: 'box', b: '#F0EADD', f: '#5E665F' }; };
+const catStyle = n => { const c = catInfo(n); return `--cb:${c.b};--cf:${c.f}`; };
+const locById = id => D.locs.find(l => l.id === id);
+const rooms = () => D.locs.filter(l => !l.parent);
+const spotsOf = rid => D.locs.filter(l => l.parent === rid);
+function locPath(id, sepr = ' · ') { const l = locById(id); if (!l) return ''; if (!l.parent) return l.name; const r = locById(l.parent); return (r ? r.name + sepr : '') + l.name; }
+function roomOf(id) { const l = locById(id); if (!l) return null; return l.parent ? locById(l.parent) : l; }
+function inLoc(it, lid) { if (!lid) return true; if (lid === '__none') return !locById(it.loc); if (it.loc === lid) return true; const l = locById(it.loc); return !!l && l.parent === lid; }
+const live = () => D.items.filter(i => i.status !== 'gone');
+function wState(it) { if (!it.wend || it.status === 'gone') return ''; const n = ddays(it.wend); return n < 0 ? 'end' : n <= S.warn ? 'warn' : 'ok'; }
+function wLabel(it) { const n = ddays(it.wend); return n < 0 ? '보증 끝' : n === 0 ? '보증 오늘까지' : n <= 60 ? `보증 D-${n}` : `보증 ${fdateShort(it.wend)}까지`; }
+function mDue(it) { if (!(+it.mcycle > 0) || it.status === 'gone') return ''; const base = it.mlast || it.buy || dk(new Date(it.created || Date.now())); return dk(addMonths(parseDk(base), +it.mcycle)); }
+function mState(it) { const due = mDue(it); if (!due) return ''; const n = ddays(due); return n < 0 ? 'bad' : n <= 14 ? 'warn' : 'ok'; }
+function lentState(it) { if (it.status !== 'lent') return ''; if (it.lent && it.lent.due && ddays(it.lent.due) < 0) return 'bad'; return 'warn'; }
+function addHist(it, x) { (it.hist ||= []).unshift({ t: Date.now(), x }); if (it.hist.length > 60) it.hist.length = 60; }
+function value(it) { return (+it.price || 0) * (+it.qty || 1); }
+function haystack(it) {
+  if (it._h && it._hv === it.updated) return it._h;
+  const s = [it.name, it.brand, it.model, it.serial, it.store, it.memo, it.cat, (it.tags || []).join(' '), locPath(it.loc, ' '), stName(it.status), it.lent && it.lent.to, it.mname].filter(Boolean).join(' ');
+  const h = { t: norm(s), c: chosung(norm(s)) };
+  Object.defineProperty(it, '_h', { value: h, writable: true, configurable: true, enumerable: false });
+  Object.defineProperty(it, '_hv', { value: it.updated, writable: true, configurable: true, enumerable: false });
+  return h;
+}
+function matchQ(it, q) {
+  if (!q) return true; const h = haystack(it);
+  return q.split(/\s+/).filter(Boolean).every(tok => { const t = norm(tok); return isChoOnly(t) ? h.c.includes(t) : h.t.includes(t); });
+}
+function filtered(ignore = '') {
+  return D.items.filter(it => {
+    if (ignore !== 'cat' && F.cat && it.cat !== F.cat) return false;
+    if (ignore !== 'loc' && F.loc && !inLoc(it, F.loc)) return false;
+    if (ignore !== 'status') { if (F.status) { if (it.status !== F.status) return false; } else if (it.status === 'gone') return false; }
+    if (ignore !== 'tag' && F.tag && !(it.tags || []).includes(F.tag)) return false;
+    if (F.fav && !it.fav) return false;
+    return matchQ(it, F.q);
+  });
+}
+function sortItems(arr) {
+  const by = S.sort, nm = (a, b) => a.name.localeCompare(b.name, 'ko');
+  const f = {
+    recent: (a, b) => (b.created || 0) - (a.created || 0),
+    name: nm,
+    buy: (a, b) => (b.buy || '').localeCompare(a.buy || '') || nm(a, b),
+    old: (a, b) => (a.buy || '9999').localeCompare(b.buy || '9999') || nm(a, b),
+    price: (a, b) => value(b) - value(a) || nm(a, b),
+    warranty: (a, b) => { const x = a.wend && ddays(a.wend) >= 0 ? a.wend : '9999', y = b.wend && ddays(b.wend) >= 0 ? b.wend : '9999'; return x.localeCompare(y) || nm(a, b); },
+    loc: (a, b) => locOrder(a.loc) - locOrder(b.loc) || nm(a, b),
+  }[by] || ((a, b) => 0);
+  return arr.sort(f);
+}
+function locOrder(id) { const i = D.locs.findIndex(l => l.id === id); if (i < 0) return 1e6; const l = D.locs[i]; if (!l.parent) return D.locs.indexOf(l) * 1000; return D.locs.findIndex(x => x.id === l.parent) * 1000 + i + 1; }
+
+/* ---------- Undo ---------- */
+function snapshot() { return JSON.stringify(D); }
+function restore(s) { D = JSON.parse(s); save(); renderAll(); }
+function undoToast(msg, snap) { toast(msg, { action: '되돌리기', onAction: () => { restore(snap); toast('되돌렸어요'); } }); }
+
+/* ---------- Sample data ---------- */
+function sampleData() {
+  const locs = [];
+  const room = (name, spots) => { const r = { id: uid(), name, parent: '' }; locs.push(r); const o = { _: r.id }; spots.forEach(s => { const x = { id: uid(), name: s, parent: r.id }; locs.push(x); o[s] = x.id; }); return o; };
+  const lv = room('거실', ['TV장', '소파 옆 수납장', '책장']);
+  const kt = room('주방', ['상부장', '하부장', '팬트리']);
+  const bd = room('안방', ['옷장', '서랍장', '화장대']);
+  const sm = room('작은방', ['책상', '책장', '붙박이장']);
+  const vr = room('베란다', ['창고 선반', '세탁실']);
+  room('현관', ['신발장']);
+  const ago = n => dk(addDays(today0(), -n)), ahead = n => dk(addDays(today0(), n));
+  const wm = (buy, m) => dk(addMonths(parseDk(buy), m));
+  let c = 0;
+  const it = o => { const buy = o.buyAgo != null ? ago(o.buyAgo) : ''; const x = { id: uid(), qty: 1, status: 'use', tags: [], photos: [], hist: [], brand: '', model: '', serial: '', store: '', memo: '', price: 0, mname: '', mcycle: 0, mlast: '', wend: o.w ? wm(buy, o.w) : '', ...o, buy, created: Date.now() - (c++) * 3600e3, updated: Date.now() }; delete x.buyAgo; delete x.w; x.hist = [{ t: x.created, x: '처음 기록했어요' }]; return x; };
+  const items = [
+    it({ name: '로봇청소기', cat: '가전', loc: lv['소파 옆 수납장'], buyAgo: 270, w: 24, price: 1190000, store: '쿠팡', brand: '로보락', model: 'S8 MaxV Ultra', serial: 'RR8M2405K1192', mname: '먼지통 비우고 솔 청소', mcycle: 1, mlast: ago(40), tags: ['청소'] }),
+    it({ name: '노트북', cat: '디지털', loc: sm['책상'], buyAgo: 345, w: 12, price: 1890000, store: '삼성 디지털프라자', brand: '삼성', model: 'NT960XGK', serial: 'R9P2N0CW300218', tags: ['업무'], memo: '충전기는 책상 서랍. 무상 수리 끝나기 전에 배터리 점검 받기.' }),
+    it({ name: '65인치 TV', cat: '가전', loc: lv['TV장'], buyAgo: 400, w: 24, price: 1590000, store: '쿠팡', brand: '삼성', model: 'KQ65QD80AFXKR', serial: '0B9Q3HDX500774', tags: ['대형가전'] }),
+    it({ name: '양문형 냉장고', cat: '가전', loc: kt._, buyAgo: 980, w: 12, price: 2390000, store: 'LG 베스트샵', brand: 'LG', model: 'S834MEE30', serial: '305KRAH0441', tags: ['대형가전'], memo: '컴프레서는 10년 무상 보증. 보증서는 팬트리 서류함에.' }),
+    it({ name: '공기청정기', cat: '가전', loc: lv._, buyAgo: 500, w: 24, price: 459000, store: '이마트', brand: '코웨이', model: 'AP-1523E', mname: '필터 교체', mcycle: 6, mlast: ago(170), memo: '필터 품번 AP-1523E-F' }),
+    it({ name: '태블릿', cat: '디지털', loc: sm['책상'], buyAgo: 200, w: 12, price: 899000, store: '삼성닷컴', brand: '삼성', model: 'SM-X710', tags: ['업무'] }),
+    it({ name: '전동 드릴', cat: '공구', loc: vr['창고 선반'], buyAgo: 1100, price: 129000, brand: '보쉬', model: 'GSB 12V-30', status: 'lent', lent: { to: '301호 이웃', at: ago(5), due: ahead(2) } }),
+    it({ name: '공구함', cat: '공구', loc: vr['창고 선반'], buyAgo: 2000, price: 45000, memo: '드라이버 세트, 줄자, 육각렌치, 케이블 타이' }),
+    it({ name: '커피머신', cat: '주방', loc: kt._, buyAgo: 450, w: 12, price: 329000, store: '네이버 쇼핑', brand: '드롱기', model: 'ECAM22.110', mname: '석회 제거', mcycle: 3, mlast: ago(100) }),
+    it({ name: '캠핑 의자', cat: '취미·레저', loc: vr['창고 선반'], buyAgo: 600, price: 69000, qty: 4, status: 'store', tags: ['캠핑'] }),
+    it({ name: '4인용 텐트', cat: '취미·레저', loc: vr['창고 선반'], buyAgo: 620, price: 389000, status: 'store', tags: ['캠핑'], memo: '마지막으로 말린 날 9월. 팩 4개 모자람.' }),
+    it({ name: '겨울 이불', cat: '생활', loc: bd['옷장'], buyAgo: 900, price: 159000, status: 'store', tags: ['계절용품'] }),
+    it({ name: '겨울 패딩', cat: '의류·잡화', loc: bd['옷장'], buyAgo: 380, price: 299000, tags: ['계절용품'] }),
+    it({ name: '여권·중요 서류 파일', cat: '서류·귀중품', loc: bd['서랍장'], tags: ['중요'], memo: '여권 2개, 등기권리증, 보험 증권, 차량 등록증 사본', fav: true }),
+    it({ name: '블루투스 스피커', cat: '디지털', loc: lv['책장'], buyAgo: 700, price: 219000, brand: '마샬', model: 'Emberton II', status: 'broken', memo: '충전이 안 돼요. 서비스센터 문의 예정.' }),
+    it({ name: '크리스마스 장식', cat: '생활', loc: vr['창고 선반'], buyAgo: 1500, price: 85000, status: 'store', tags: ['계절용품'], memo: '트리, 전구 2줄, 오너먼트 상자' }),
+    it({ name: '무선 청소기', cat: '가전', loc: vr['세탁실'], buyAgo: 50, w: 24, price: 790000, store: 'LG 베스트샵', brand: 'LG', model: 'AO9571', tags: ['청소'] }),
+    it({ name: '스팀 다리미', cat: '가전', loc: sm['붙박이장'], buyAgo: 30, w: 12, price: 89000, store: '이마트', brand: '테팔' }),
+    it({ name: '원목 식탁', cat: '가구', loc: kt._, buyAgo: 1300, w: 12, price: 680000, memo: '의자 4개 포함. 가로 180cm.' }),
+    it({ name: '에어컨', cat: '가전', loc: bd._, buyAgo: 760, w: 12, price: 1750000, brand: '삼성', model: 'AR07D9150HZT', mname: '필터 청소', mcycle: 3, mlast: ago(60) }),
+  ];
+  return { v: 1, cats: CAT_DEF.map(c => ({ ...c })), locs, items, created: Date.now(), updated: Date.now() };
+}
+function ensureData() {
+  if (!D || !Array.isArray(D.items)) { D = sampleData(); save(); return true; }
+  D.cats ||= CAT_DEF.map(c => ({ ...c })); D.locs ||= []; return false;
+}
+
+/* ---------- Header ---------- */
+const SIDE_META = {
+  items: ['한눈에', '분류·상태·태그로 좁혀 보기'],
+  places: ['위치 정리', '어디에 무엇이 있는지'],
+  care: ['챙길 것', '보증, 정기 관리, 빌려준 물건'],
+  stats: ['내보내기', '보험·이사·중고 판매에'],
+};
+function setTab(t) {
+  tab = t; store.set('tab', t);
+  $$('.tab').forEach(b => b.setAttribute('aria-selected', b.dataset.tab === t));
+  $$('.view').forEach(v => v.hidden = v.dataset.view !== t);
+  $('#sideT').textContent = SIDE_META[t][0]; $('#sideS').textContent = SIDE_META[t][1];
+  if (t !== 'items') endSelect();
+  renderAll();
+}
+function careCounts() {
+  const L = live();
+  return { w: L.filter(i => wState(i) === 'warn').length, m: L.filter(i => mState(i) === 'bad' || mState(i) === 'warn').length, md: L.filter(i => mState(i) === 'bad').length, l: L.filter(i => i.status === 'lent').length, lbad: L.filter(i => lentState(i) === 'bad').length };
+}
+function renderHeader() {
+  $('#nItems').textContent = live().length;
+  $('#nPlaces').textContent = rooms().length;
+  const cc = careCounts(), n = cc.w + cc.m + cc.l; const nc = $('#nCare'); nc.textContent = n; nc.classList.toggle('warn', cc.md + cc.lbad > 0 || cc.w > 0);
+  let h = '';
+  const x = `<span class="x">${icon('x')}</span>`;
+  if (F.loc) h += `<button class="achip" data-clr="loc">${icon('pin')}${esc(F.loc === '__none' ? '위치 없음' : locPath(F.loc))}${icon('x')}</button>`;
+  if (F.cat) h += `<button class="achip" data-clr="cat">${icon(catInfo(F.cat).ic)}${esc(F.cat)}${icon('x')}</button>`;
+  if (F.status) h += `<button class="achip" data-clr="status">${esc(stName(F.status))}${icon('x')}</button>`;
+  if (F.tag) h += `<button class="achip" data-clr="tag">${icon('tag')}${esc(F.tag)}${icon('x')}</button>`;
+  if (F.fav) h += `<button class="achip" data-clr="fav">${icon('star')}즐겨찾기${icon('x')}</button>`;
+  if (!h) {
+    if (cc.w) h += `<button class="achip warn" data-go="care" data-seg="w">${icon('shield')}보증 곧 끝남 ${cc.w}</button>`;
+    if (cc.md) h += `<button class="achip bad" data-go="care" data-seg="m">${icon('wrench')}관리 지남 ${cc.md}</button>`;
+    else if (cc.m) h += `<button class="achip warn" data-go="care" data-seg="m">${icon('wrench')}곧 관리 ${cc.m}</button>`;
+    if (cc.l) h += `<button class="achip${cc.lbad ? ' bad' : ''}" data-go="care" data-seg="l">${icon('hand')}빌려준 물건 ${cc.l}</button>`;
+  }
+  $('#applied').innerHTML = h;
+}
+
+/* ---------- Items view ---------- */
+function thumbHTML(it, cls = 'th') {
+  const p = (it.photos || []).find(p => p.k !== 'r') || (it.photos || [])[0];
+  return `<div class="${cls}" style="${catStyle(it.cat)}">${p ? `<img data-ph="${p.id}" alt="" />` : icon(catInfo(it.cat).ic)}</div>`;
+}
+function badges(it) {
+  const b = [];
+  if (it.status === 'lent') b.push(`<span class="tagb lent${lentState(it) === 'bad' ? ' bad' : ''}">빌려줌${it.lent && it.lent.to ? ' · ' + esc(it.lent.to) : ''}</span>`);
+  else if (it.status === 'broken') b.push('<span class="tagb bad">고장·수리</span>');
+  else if (it.status === 'store') b.push('<span class="tagb store">보관 중</span>');
+  else if (it.status === 'gone') b.push('<span class="tagb gray">처분함</span>');
+  const w = wState(it); if (w === 'warn') b.push(`<span class="tagb warn">${wLabel(it)}</span>`);
+  const m = mState(it); if (m === 'bad') b.push(`<span class="tagb bad">${esc(it.mname || '관리')} 지남</span>`); else if (m === 'warn') b.push(`<span class="tagb warn">곧 ${esc(it.mname || '관리')}</span>`);
+  return b;
+}
+function metaLine(it) {
+  const m = [];
+  if (it.buy) m.push(fdateShort(it.buy) + ' 구매');
+  if (+it.price) m.push(wonShort(value(it)));
+  if (it.wend && wState(it) === 'ok') m.push(wLabel(it));
+  return m.join(' · ');
+}
+function cardHTML(it) {
+  const p = (it.photos || []).find(p => p.k !== 'r') || (it.photos || [])[0];
+  const np = (it.photos || []).length;
+  const loc = locPath(it.loc) || '위치 없음';
+  return `<div class="ic${it.status === 'gone' ? ' gone' : ''}${sel.has(it.id) ? ' on' : ''}" data-id="${it.id}" role="button" tabindex="0">
+    <div class="pf" style="${catStyle(it.cat)}">${p ? `<img data-ph="${p.id}" alt="" />` : icon(catInfo(it.cat).ic)}
+      <div class="bdg">${badges(it).join('')}</div>${np > 1 ? `<span class="pc">${icon('image')}${np}</span>` : ''}</div>
+    ${selecting ? `<span class="ck">${icon('check')}</span>` : ''}
+    <div class="bd"><div class="nm">${it.fav ? '★ ' : ''}${esc(it.name)}${+it.qty > 1 ? `<span class="q">×${it.qty}</span>` : ''}</div>
+      <div class="lc">${icon('pin')}<span>${esc(loc)}</span></div>
+      <div class="mt">${esc(metaLine(it)) || '&nbsp;'}</div></div>
+  </div>`;
+}
+function rowHTML(it) {
+  const loc = locPath(it.loc) || '위치 없음';
+  const b = badges(it);
+  return `<div class="si${it.status === 'gone' ? ' gone' : ''}${sel.has(it.id) ? ' on' : ''}" data-id="${it.id}" role="button" tabindex="0">
+    ${selecting ? `<span class="ck">${icon('check')}</span>` : ''}${thumbHTML(it)}
+    <div class="tx"><div class="nm">${it.fav ? '★ ' : ''}${esc(it.name)}${+it.qty > 1 ? `<span class="q">×${it.qty}</span>` : ''}${b.join('')}</div>
+      <div class="mt">${esc(loc)}${it.brand || it.model ? ' · ' + esc([it.brand, it.model].filter(Boolean).join(' ')) : ''}</div></div>
+    <div class="r">${+it.price ? `<b>${wonShort(value(it))}</b>` : ''}<span>${it.buy ? fdate(it.buy) : ''}</span></div>
+  </div>`;
+}
+function groupKey(it) {
+  if (S.group === 'loc') { const r = roomOf(it.loc); return r ? [r.id, r.name] : ['__none', '위치 없음']; }
+  if (S.group === 'cat') return [it.cat || '기타', it.cat || '기타'];
+  if (S.group === 'status') return [it.status, stName(it.status)];
+  return ['', ''];
+}
+function renderItems() {
+  // category chips (counted without the cat filter)
+  const base = filtered('cat'); const cnt = {}; base.forEach(i => cnt[i.cat] = (cnt[i.cat] || 0) + 1);
+  $('#catChips').innerHTML = `<button class="chip" data-cat="" aria-pressed="${!F.cat}">전체 <small>${base.length}</small></button>` +
+    D.cats.filter(c => cnt[c.n] || F.cat === c.n).map(c => `<button class="chip" data-cat="${esc(c.n)}" aria-pressed="${F.cat === c.n}">${icon(c.ic)}${esc(c.n)} <small>${cnt[c.n] || 0}</small></button>`).join('');
+  const list = sortItems(filtered());
+  $$('#viewSeg button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === S.view));
+  $('#sort').value = S.sort; $('#group').value = S.group;
+  const body = $('#itBody');
+  if (!D.items.length) { body.innerHTML = `<div class="empty"><b>아직 기록한 물건이 없어요</b>사진 한 장과 위치만 적어도 나중에 찾기 쉬워져요.<br/><button class="btn primary" data-act="add">${icon('plus')}첫 물건 넣기</button></div>`; return; }
+  if (!list.length) { body.innerHTML = `<div class="empty"><b>찾는 물건이 없어요</b>${F.q ? `'${esc(F.q)}'와 맞는 물건이 없어요. ` : ''}필터를 풀거나 새로 넣어 보세요.<br/><button class="btn line" data-act="clear">${icon('x')}필터 모두 풀기</button> <button class="btn primary" data-act="add">${icon('plus')}넣기</button></div>`; return; }
+  const one = S.view === 'grid' ? cardHTML : rowHTML;
+  const wrap = arr => S.view === 'grid' ? `<div class="igrid">${arr.map(one).join('')}</div>` : `<div class="rows">${arr.map(one).join('')}</div>`;
+  if (S.group === 'none') body.innerHTML = wrap(list);
+  else {
+    const g = new Map(); list.forEach(it => { const [k, n] = groupKey(it); if (!g.has(k)) g.set(k, { n, a: [] }); g.get(k).a.push(it); });
+    let keys = [...g.keys()];
+    if (S.group === 'loc') keys.sort((a, b) => (a === '__none') - (b === '__none') || locOrder(a) - locOrder(b));
+    if (S.group === 'cat') keys.sort((a, b) => D.cats.findIndex(c => c.n === a) - D.cats.findIndex(c => c.n === b));
+    if (S.group === 'status') keys.sort((a, b) => STATUS.findIndex(s => s.k === a) - STATUS.findIndex(s => s.k === b));
+    body.innerHTML = keys.map(k => { const x = g.get(k); const v = x.a.reduce((s, i) => s + value(i), 0); return `<div class="grp"><div class="grp-h">${esc(x.n)} <span class="v">${x.a.length}개${v ? ' · ' + wonShort(v) : ''}</span><span class="grow"></span></div>${wrap(x.a)}</div>`; }).join('');
+  }
+  hydratePhotos(body);
+}
+
+/* ---------- Selection ---------- */
+function startSelect() { selecting = true; sel.clear(); $('#selBar').hidden = false; $('#itBar').hidden = true; updSel(); renderItems(); }
+function endSelect() { if (!selecting) return; selecting = false; sel.clear(); $('#selBar').hidden = true; $('#itBar').hidden = false; if (tab === 'items') renderItems(); }
+function updSel() { $('#selN').textContent = `${sel.size}개 선택`; ['#selMove', '#selStatus', '#selDel'].forEach(s => $(s).disabled = !sel.size); }
+function toggleSel(id) { sel.has(id) ? sel.delete(id) : sel.add(id); updSel(); const el = $(`#itBody [data-id="${id}"]`); if (el) el.classList.toggle('on', sel.has(id)); }
+
+/* ---------- Location options ---------- */
+function locOptions(selId, { none = true, create = true } = {}) {
+  let h = none ? `<option value="">위치 없음</option>` : '';
+  rooms().forEach(r => {
+    h += `<optgroup label="${esc(r.name)}"><option value="${r.id}"${r.id === selId ? ' selected' : ''}>${esc(r.name)} (자리 안 정함)</option>`;
+    spotsOf(r.id).forEach(s => { h += `<option value="${s.id}"${s.id === selId ? ' selected' : ''}>${esc(r.name)} · ${esc(s.name)}</option>`; });
+    h += '</optgroup>';
+  });
+  if (create) h += `<option value="__new">＋ 새 공간·자리 만들기…</option>`;
+  return h;
+}
+async function promptNewLoc(defRoom) {
+  const rs = rooms();
+  $('#roomList').innerHTML = rs.map(r => `<option value="${esc(r.name)}">`).join('');
+  const html = `<div class="row2" style="margin-top:4px"><div class="field"><label>공간</label><input class="inp" id="nlRoom" list="roomList" maxlength="20" placeholder="예: 거실" value="${esc(defRoom || '')}" /></div><div class="field"><label>자리 <span class="v">없어도 돼요</span></label><input class="inp" id="nlSpot" maxlength="20" placeholder="예: TV장" /></div></div>`;
+  setTimeout(() => $('#nlRoom') && $('#nlRoom').focus(), 50);
+  if (!await confirmDlg('새 위치', html, '만들기', false, true)) return null;
+  const rn = $('#nlRoom').value.trim(), sn = $('#nlSpot').value.trim();
+  if (!rn) { toast('공간 이름을 써 주세요', { err: true }); return null; }
+  let r = rs.find(x => x.name === rn); if (!r) { r = { id: uid(), name: rn, parent: '' }; D.locs.push(r); }
+  if (!sn) { save(); return r.id; }
+  let s = spotsOf(r.id).find(x => x.name === sn); if (!s) { s = { id: uid(), name: sn, parent: r.id }; insertSpot(s); }
+  save(); return s.id;
+}
+function insertSpot(s) { const sp = spotsOf(s.parent); const after = sp.length ? sp[sp.length - 1] : locById(s.parent); D.locs.splice(D.locs.indexOf(after) + 1, 0, s); }
+function bindLocSelect(selEl) {
+  let prev = selEl.value;
+  selEl.addEventListener('focus', () => { prev = selEl.value; });
+  selEl.addEventListener('change', async () => {
+    if (selEl.value !== '__new') { prev = selEl.value; return; }
+    const r = roomOf(prev); const id = await promptNewLoc(r ? r.name : '');
+    selEl.innerHTML = locOptions(id || prev); selEl.value = id || prev; prev = selEl.value;
+  });
+}
+
+/* ---------- Item view ---------- */
+let viewId = null, viewPhoto = 0;
+function openView(id) {
+  const it = D.items.find(i => i.id === id); if (!it) return;
+  viewId = id; viewPhoto = 0; renderView(); if (!$('#viewDlg').open) $('#viewDlg').showModal();
+}
+function renderView() {
+  const it = D.items.find(i => i.id === viewId); if (!it) { $('#viewDlg').close(); return; }
+  const c = catInfo(it.cat);
+  $('#vwT').innerHTML = `${esc(it.name)}<small>${esc(c.n)} · ${esc(locPath(it.loc) || '위치 없음')}${+it.qty > 1 ? ` · ${it.qty}개` : ''}</small>`;
+  const fv = $('#vwFav'); fv.style.color = it.fav ? '#C9902E' : ''; $('svg', fv).style.fill = it.fav ? 'currentColor' : 'none';
+  const ph = it.photos || [];
+  if (ph.length) {
+    viewPhoto = clamp(viewPhoto, 0, ph.length - 1);
+    $('#vwGal').innerHTML = `<div class="gal" id="vwMain" style="${catStyle(it.cat)}"><img data-ph="${ph[viewPhoto].id}" alt="" /></div>` +
+      (ph.length > 1 ? `<div class="gthumbs" style="margin-top:8px">${ph.map((p, i) => `<button data-pi="${i}" aria-pressed="${i === viewPhoto}"><img data-ph="${p.id}" alt="" />${p.k === 'r' ? '<span class="rcp">영수증</span>' : ''}</button>`).join('')}</div>` : '');
+    // main uses the full image for sharpness
+    getFull(ph[viewPhoto].id).then(b => { const img = $('#vwMain img'); if (b && img) { const u = URL.createObjectURL(b); img.onload = () => { img.classList.add('ld'); setTimeout(() => URL.revokeObjectURL(u), 500); }; img.src = u; img.removeAttribute('data-ph'); } });
+    hydratePhotos($('#vwGal'));
+  } else $('#vwGal').innerHTML = `<div class="gal nophoto" style="${catStyle(it.cat)}">${icon(c.ic)}</div>`;
+  // status chips
+  const st = [];
+  st.push(`<span class="dd ${it.status === 'use' ? '' : it.status === 'broken' ? 'bad' : 'gray'}">${esc(stName(it.status))}</span>`);
+  const w = wState(it); if (it.wend) st.push(`<span class="dd ${w === 'end' ? 'gray' : w}">${w === 'end' ? '보증 끝남' : wLabel(it)}</span>`);
+  const m = mState(it); if (m) { const n = ddays(mDue(it)); st.push(`<span class="dd ${m === 'ok' ? '' : m}">${esc(it.mname || '관리')} ${n < 0 ? `${-n}일 지남` : n === 0 ? '오늘' : `D-${n}`}</span>`); }
+  (it.tags || []).forEach(t => st.push(`<button class="tagb gray" data-tagf="${esc(t)}">#${esc(t)}</button>`));
+  $('#vwStat').innerHTML = st.join('');
+  // info
+  const rows = [];
+  const add = (k, v) => { if (v) rows.push(`<dt>${k}</dt><dd>${v}</dd>`); };
+  add('위치', `${esc(locPath(it.loc) || '위치 없음')} <button class="cp" data-act="move">옮기기</button>`);
+  if (it.buy) add('구매일', `${fdate(it.buy)} <small>${age(it.buy)}</small>`);
+  if (+it.price) add('가격', `${won(it.price)}${+it.qty > 1 ? ` <small>× ${it.qty} = ${won(value(it))}</small>` : ''}`);
+  add('구매처', esc(it.store));
+  if (it.wend) {
+    const tot = it.buy ? (parseDk(it.wend) - parseDk(it.buy)) / DAY : 0, left = ddays(it.wend);
+    const pct = tot > 0 ? clamp(left / tot, 0, 1) * 100 : 0;
+    add('보증', `${fdate(it.wend)}까지 <small>${left < 0 ? `${-left}일 전에 끝났어요` : `${left}일 남았어요`}</small>${tot > 0 && left >= 0 ? `<div class="bar" style="width:100%;margin-top:2px"><i style="width:${pct}%;background:${w === 'warn' ? 'var(--clay)' : 'var(--dark)'}"></i></div>` : ''}`);
+  }
+  add('브랜드', esc(it.brand)); add('모델명', it.model ? `${esc(it.model)} <button class="cp" data-copy="${esc(it.model)}">복사</button>` : '');
+  add('일련번호', it.serial ? `${esc(it.serial)} <button class="cp" data-copy="${esc(it.serial)}">복사</button>` : '');
+  if (+it.mcycle > 0) add('정기 관리', `${esc(it.mname || '관리')} · ${it.mcycle}개월마다<br/><small>마지막 ${it.mlast ? fdate(it.mlast) : '기록 없음'} · 다음 ${fdate(mDue(it))}</small>`);
+  if (it.status === 'lent' && it.lent) add('빌려줌', `${esc(it.lent.to || '누군가')}에게 ${it.lent.at ? fdate(it.lent.at) : ''}${it.lent.due ? ` <small>${fdate(it.lent.due)}까지 돌려받기${ddays(it.lent.due) < 0 ? ` (${-ddays(it.lent.due)}일 지남)` : ''}</small>` : ''}`);
+  if (it.memo) add('메모', esc(it.memo).replace(/\n/g, '<br/>'));
+  $('#vwInfo').innerHTML = rows.join('');
+  // actions
+  const a = [];
+  if (it.status === 'lent') a.push(`<button class="btn line sm" data-act="return">${icon('back')}돌려받았어요</button>`);
+  else if (it.status !== 'gone') a.push(`<button class="btn line sm" data-act="lend">${icon('hand')}빌려주기</button>`);
+  if (+it.mcycle > 0 && it.status !== 'gone') a.push(`<button class="btn line sm" data-act="maint">${icon('wrench')}${esc(it.mname || '관리')} 했어요</button>`);
+  a.push(`<button class="btn line sm" data-act="status">${icon('tag')}상태 바꾸기</button>`);
+  if (it.status !== 'gone') a.push(`<button class="btn line sm" data-act="gone">${icon('box')}처분했어요</button>`);
+  a.push(`<label class="btn line sm" style="cursor:pointer">${icon('camera')}사진 더하기<input type="file" accept="image/*" multiple hidden data-addph /></label>`);
+  $('#vwActs').innerHTML = a.join('');
+  const hist = (it.hist || []).slice(0, 12);
+  $('#vwHist').innerHTML = hist.length ? `<div class="sec" style="padding-bottom:0"><h3>기록</h3><ul class="hist">${hist.map(h => { const d = new Date(h.t); return `<li><time>${dk(d).replace(/-/g, '.').slice(2)}</time><span>${esc(h.x)}</span></li>`; }).join('')}</ul></div>` : '';
+}
+function updItem(it, mut, msg, histText) {
+  const snap = snapshot(); mut(it); if (histText) addHist(it, histText); it.updated = Date.now(); save(); renderAll(); if ($('#viewDlg').open) renderView();
+  if (msg) undoToast(msg, snap);
+}
+
+/* ---------- Item edit ---------- */
+let editId = null, editPhotos = [];
+function openEdit(id, preset = {}) {
+  const it = id ? D.items.find(i => i.id === id) : null;
+  editId = it ? it.id : null;
+  const v = it || { name: '', cat: preset.cat || (F.cat || '기타'), qty: 1, loc: preset.loc ?? (F.loc && F.loc !== '__none' ? F.loc : ''), status: 'use', buy: '', price: 0, store: '', wend: '', brand: '', model: '', serial: '', mname: '', mcycle: 0, mlast: '', tags: F.tag ? [F.tag] : [], memo: '', photos: [], ...preset };
+  $('#edT').textContent = it ? '물건 고치기' : '물건 넣기';
+  $('#edName').value = v.name || '';
+  $('#edCat').innerHTML = D.cats.map(c => `<option${c.n === v.cat ? ' selected' : ''}>${esc(c.n)}</option>`).join('') + (D.cats.some(c => c.n === v.cat) ? '' : `<option selected>${esc(v.cat || '기타')}</option>`);
+  numSet($('#edQty'), v.qty || 1);
+  $('#edLoc').innerHTML = locOptions(v.loc); $('#edLoc').value = locById(v.loc) ? v.loc : '';
+  setEdStatus(v.status || 'use');
+  $('#edLentTo').value = v.lent?.to || ''; $('#edLentAt').value = v.lent?.at || todayKey(); $('#edLentDue').value = v.lent?.due || '';
+  $('#edBuy').value = v.buy || ''; $('#edPrice').value = +v.price ? (+v.price).toLocaleString('ko-KR') : ''; $('#edStore').value = v.store || '';
+  $('#edWend').value = v.wend || ''; updWhint();
+  $('#edBrand').value = v.brand || ''; $('#edModel').value = v.model || ''; $('#edSerial').value = v.serial || '';
+  $('#edMname').value = v.mname || ''; $('#edMcycle').value = +v.mcycle || ''; $('#edMlast').value = v.mlast || '';
+  $('#edTags').value = (v.tags || []).join(', '); $('#edMemo').value = v.memo || '';
+  $('#edMore').open = !!(v.brand || v.model || v.serial || +v.mcycle || (v.tags || []).length || v.memo);
+  editPhotos = (v.photos || []).map(p => ({ ...p }));
+  renderEdPhotos();
+  $('#edContWrap').hidden = !!it;
+  renderDatalists();
+  if (!$('#editDlg').open) $('#editDlg').showModal();
+  if (!it) setTimeout(() => $('#edName').focus(), 60);
+}
+function setEdStatus(k) { $$('#edStatus button').forEach(b => b.setAttribute('aria-pressed', b.dataset.s === k)); $('#edLentBox').hidden = k !== 'lent'; }
+const edStatus = () => ($('#edStatus [aria-pressed="true"]') || {}).dataset?.s || 'use';
+function updWhint() {
+  const w = $('#edWend').value; const h = $('#edWhint');
+  if (!w) { h.textContent = '없으면 비워 두세요'; return; }
+  const n = ddays(w); h.textContent = n < 0 ? `${-n}일 전에 끝났어요` : `${n}일 남았어요`;
+}
+function renderEdPhotos() {
+  const box = $('#edPhotos');
+  box.innerHTML = editPhotos.map((p, i) => `<div class="pth" data-i="${i}"><img data-ph="${p.id}" alt="" /><button class="cv${p.k === 'r' ? ' rc' : ''}" data-kind="${i}" title="물건 사진·영수증 바꾸기">${p.k === 'r' ? '영수증' : i === editPhotos.findIndex(x => x.k !== 'r') ? '대표' : '사진'}</button><button class="x" data-rm="${i}" title="빼기">${icon('x')}</button></div>`).join('') +
+    `<button class="padd" data-pick="cam">${icon('camera')}찍기</button><button class="padd" data-pick="pic">${icon('image')}앨범</button><button class="padd" data-pick="rc">${icon('receipt')}영수증</button>`;
+  hydratePhotos(box);
+}
+let pickKind = 'p';
+async function addPhotos(files, kind, target) {
+  files = [...files].filter(f => /^image\//.test(f.type) || /\.(jpe?g|png|webp|heic|heif|gif|bmp|avif)$/i.test(f.name));
+  if (!files.length) return [];
+  const out = [];
+  $$('.padd').forEach(b => b.classList.add('busy'));
+  try {
+    for (const f of files) {
+      try { const rec = await makePhoto(f); await idb.put(rec); out.push({ id: rec.id, k: kind }); }
+      catch (e) { toast(e && e.message === 'decode' ? `'${f.name}'은 이 브라우저에서 열 수 없는 형식이에요` : '사진을 저장하지 못했어요. 저장 공간을 확인해 주세요', { err: true }); }
+    }
+  } finally { $$('.padd').forEach(b => b.classList.remove('busy')); }
+  if (out.length) askPersist();
+  return out;
+}
+function readEdit() {
+  const name = $('#edName').value.trim();
+  const st = edStatus();
+  const tags = [...new Set($('#edTags').value.split(/[,，#]/).map(s => s.trim()).filter(Boolean))].slice(0, 12);
+  return {
+    name, cat: $('#edCat').value, qty: numGet($('#edQty')), loc: $('#edLoc').value === '__new' ? '' : $('#edLoc').value, status: st,
+    lent: st === 'lent' ? { to: $('#edLentTo').value.trim(), at: $('#edLentAt').value || todayKey(), due: $('#edLentDue').value } : null,
+    buy: $('#edBuy').value, price: priceVal($('#edPrice').value), store: $('#edStore').value.trim(), wend: $('#edWend').value,
+    brand: $('#edBrand').value.trim(), model: $('#edModel').value.trim(), serial: $('#edSerial').value.trim(),
+    mname: $('#edMname').value.trim(), mcycle: clamp(+$('#edMcycle').value || 0, 0, 120), mlast: $('#edMlast').value,
+    tags, memo: $('#edMemo').value.trim(), photos: editPhotos.slice(),
+  };
+}
+function saveEdit() {
+  const v = readEdit();
+  if (!v.name) { toast('이름을 써 주세요', { err: true }); $('#edName').focus(); return; }
+  const snap = snapshot();
+  if (editId) {
+    const it = D.items.find(i => i.id === editId); if (!it) return;
+    if (it.loc !== v.loc) addHist(it, `옮김: ${locPath(it.loc) || '위치 없음'} → ${locPath(v.loc) || '위치 없음'}`);
+    if (it.status !== v.status) addHist(it, `상태: ${stName(it.status)} → ${stName(v.status)}${v.status === 'lent' && v.lent.to ? ` (${v.lent.to})` : ''}`);
+    if (it.mlast !== v.mlast && v.mlast) addHist(it, `${v.mname || '관리'}: ${fdate(v.mlast)}`);
+    Object.assign(it, v, { updated: Date.now() });
+    if (v.status !== 'lent') delete it.lent;
+    save(); $('#editDlg').close(); renderAll(); if ($('#viewDlg').open) renderView();
+    toast('고쳤어요');
+  } else {
+    const it = { id: uid(), ...v, fav: false, hist: [], created: Date.now(), updated: Date.now() };
+    if (!it.lent) delete it.lent;
+    addHist(it, '처음 기록했어요');
+    D.items.push(it); save();
+    const cont = $('#edCont').checked;
+    renderAll();
+    if (cont) { openEdit(null, { loc: v.loc, cat: v.cat, store: v.store, buy: v.buy }); undoToast(`'${v.name}' 넣었어요. 이어서 넣어요`, snap); }
+    else { $('#editDlg').close(); undoToast(`'${v.name}' 넣었어요`, snap); }
+  }
+}
+
+/* ---------- Move / status / lend ---------- */
+let mvTarget = [], mvMode = 'loc';
+function openMove(ids, mode) {
+  mvTarget = ids; mvMode = mode;
+  $('#mvT').textContent = (mode === 'loc' ? '옮기기' : '상태 바꾸기') + (ids.length > 1 ? ` · ${ids.length}개` : '');
+  $('#mvLocF').hidden = mode !== 'loc'; $('#mvStF').hidden = mode !== 'status';
+  const first = D.items.find(i => i.id === ids[0]);
+  $('#mvLoc').innerHTML = locOptions(ids.length === 1 && first ? first.loc : ''); if (ids.length === 1 && first) $('#mvLoc').value = locById(first.loc) ? first.loc : '';
+  const cur = ids.length === 1 && first ? first.status : '';
+  $('#mvSt').innerHTML = STATUS.filter(s => s.k !== 'lent').map(s => `<button data-s="${s.k}" aria-pressed="${s.k === cur}">${s.n}</button>`).join('');
+  $('#moveDlg').showModal();
+}
+function doMove() {
+  const snap = snapshot(); const items = D.items.filter(i => mvTarget.includes(i.id));
+  if (mvMode === 'loc') {
+    const to = $('#mvLoc').value; if (to === '__new') return;
+    items.forEach(it => { if (it.loc !== to) { addHist(it, `옮김: ${locPath(it.loc) || '위치 없음'} → ${locPath(to) || '위치 없음'}`); it.loc = to; it.updated = Date.now(); } });
+    save(); $('#moveDlg').close(); endSelect(); renderAll(); if ($('#viewDlg').open) renderView();
+    undoToast(`${items.length > 1 ? items.length + '개를 ' : ''}${locPath(to) || '위치 없음'}(으)로 옮겼어요`, snap);
+  } else {
+    const b = $('#mvSt [aria-pressed="true"]'); if (!b) { toast('상태를 골라 주세요', { err: true }); return; }
+    const k = b.dataset.s;
+    items.forEach(it => { if (it.status !== k) { addHist(it, `상태: ${stName(it.status)} → ${stName(k)}`); it.status = k; delete it.lent; it.updated = Date.now(); } });
+    save(); $('#moveDlg').close(); endSelect(); renderAll(); if ($('#viewDlg').open) renderView();
+    undoToast(`${items.length > 1 ? items.length + '개를 ' : ''}'${stName(k)}'(으)로 바꿨어요`, snap);
+  }
+}
+function openLend(id) {
+  const it = D.items.find(i => i.id === id); if (!it) return; viewId = id;
+  $('#lnS').textContent = it.name; $('#lnTo').value = ''; $('#lnAt').value = todayKey(); $('#lnDue').value = '';
+  $('#lendDlg').showModal(); setTimeout(() => $('#lnTo').focus(), 60);
+}
+
+/* ---------- Photo viewer ---------- */
+let pvList = [], pvI = 0, pvURL = null;
+function openViewer(list, i) { pvList = list; pvI = i; $('#pvDlg').showModal(); showPv(); }
+async function showPv() {
+  const p = pvList[pvI]; if (!p) return;
+  $('#pvN').textContent = `${pvI + 1} / ${pvList.length}${p.k === 'r' ? ' · 영수증·보증서' : ''}`;
+  $('#pvPrev').hidden = $('#pvNext').hidden = pvList.length < 2;
+  const b = await getFull(p.id); if (!b) return;
+  if (pvURL) URL.revokeObjectURL(pvURL); pvURL = URL.createObjectURL(b); $('#pvImg').src = pvURL;
+}
+function pvStep(d) { if (pvList.length < 2) return; pvI = (pvI + d + pvList.length) % pvList.length; showPv(); }
+
+/* ---------- Places ---------- */
+function renderPlaces() {
+  const L = live(); const rs = rooms();
+  const cntLoc = id => L.filter(i => i.loc === id).length;
+  $('#plCount').innerHTML = `공간 <b>${rs.length}</b> · 자리 <b>${D.locs.length - rs.length}</b>`;
+  const noLoc = L.filter(i => !locById(i.loc));
+  let h = rs.map(r => {
+    const all = L.filter(i => inLoc(i, r.id)); const v = all.reduce((s, i) => s + value(i), 0);
+    const withPh = all.filter(i => (i.photos || []).length).slice(0, 6);
+    const own = cntLoc(r.id);
+    return `<div class="room">
+      <div class="room-h" data-loc="${r.id}"><span class="ri">${icon('home')}</span><b>${esc(r.name)}<small>물건 ${all.length}개${v ? ' · ' + wonShort(v) : ''}</small></b>
+        <button class="mini" data-room="${r.id}" title="공간 고치기">${icon('pen')}</button></div>
+      ${withPh.length ? `<div class="strip">${withPh.map(i => thumbHTML(i)).join('')}</div>` : ''}
+      ${spotsOf(r.id).map(s => `<div class="spot" data-loc="${s.id}">${icon('pin')}<span>${esc(s.name)}</span><small>${cntLoc(s.id)}</small></div>`).join('')}
+      ${own ? `<div class="spot none" data-loc="${r.id}" data-only="1">${icon('dots')}<span>자리 안 정한 물건</span><small>${own}</small></div>` : ''}
+      <div class="spot none" data-addspot="${r.id}">${icon('plus')}<span>자리 추가</span></div>
+    </div>`;
+  }).join('');
+  if (noLoc.length) h += `<div class="room"><div class="room-h" data-loc="__none"><span class="ri" style="background:var(--hover);color:var(--muted)">${icon('alert')}</span><b>위치 없음<small>물건 ${noLoc.length}개 · 위치를 정해 주세요</small></b></div><div class="strip">${noLoc.slice(0, 6).map(i => thumbHTML(i)).join('')}</div></div>`;
+  h += `<button class="room add" id="plAdd2">${icon('plus')}공간 추가</button>`;
+  $('#plBody').innerHTML = h; hydratePhotos($('#plBody'));
+}
+let roomId = null;
+function openRoom(id) {
+  roomId = id || null; const r = id ? locById(id) : null;
+  $('#rmT').textContent = r ? '공간 고치기' : '공간 추가';
+  $('#rmName').value = r ? r.name : '';
+  $('#rmSpots').innerHTML = (r ? spotsOf(r.id) : []).map(s => spotRow(s.id, s.name)).join('') || (r ? '' : spotRow('', '') );
+  $('#rmDel').hidden = !r;
+  $('#roomDlg').showModal(); if (!r) setTimeout(() => $('#rmName').focus(), 60);
+}
+function spotRow(id, name) { return `<div data-sid="${id}"><input class="inp" maxlength="20" value="${esc(name)}" placeholder="예: 옷장, 서랍장" /><button class="mini danger" data-rmspot title="자리 빼기">${icon('x')}</button></div>`; }
+function saveRoom() {
+  const name = $('#rmName').value.trim(); if (!name) { toast('공간 이름을 써 주세요', { err: true }); return; }
+  const snap = snapshot();
+  let r = roomId ? locById(roomId) : null;
+  if (!r) { r = { id: uid(), name, parent: '' }; D.locs.push(r); } else r.name = name;
+  const rows = $$('#rmSpots > div').map(d => ({ id: d.dataset.sid, name: $('input', d).value.trim() })).filter(x => x.name);
+  const keep = new Set(rows.map(x => x.id).filter(Boolean));
+  // removed spots: items fall back to the room itself
+  spotsOf(r.id).filter(s => !keep.has(s.id)).forEach(s => { D.items.forEach(i => { if (i.loc === s.id) { i.loc = r.id; i.updated = Date.now(); } }); D.locs = D.locs.filter(l => l.id !== s.id); });
+  // rebuild order: room followed by its spots in dialog order
+  const others = D.locs.filter(l => l.parent === r.id);
+  const newSpots = rows.map(x => { const s = x.id && others.find(o => o.id === x.id); if (s) { s.name = x.name; return s; } return { id: uid(), name: x.name, parent: r.id }; });
+  D.locs = D.locs.filter(l => l.parent !== r.id); D.locs.splice(D.locs.indexOf(r) + 1, 0, ...newSpots);
+  save(); $('#roomDlg').close(); renderAll(); undoToast(roomId ? `'${name}' 고쳤어요` : `'${name}' 공간을 만들었어요`, snap);
+}
+async function delRoom() {
+  const r = locById(roomId); if (!r) return;
+  const n = D.items.filter(i => inLoc(i, r.id)).length;
+  if (!await confirmDlg('공간 지우기', `'${r.name}'과 그 안의 자리를 지워요.${n ? ` 여기 있던 물건 ${n}개는 '위치 없음'이 돼요.` : ''}`, '지우기', true)) return;
+  const snap = snapshot(); const ids = new Set([r.id, ...spotsOf(r.id).map(s => s.id)]);
+  D.items.forEach(i => { if (ids.has(i.loc)) { i.loc = ''; i.updated = Date.now(); } });
+  D.locs = D.locs.filter(l => !ids.has(l.id)); if (ids.has(F.loc)) F.loc = '';
+  save(); $('#roomDlg').close(); renderAll(); undoToast(`'${r.name}'을 지웠어요`, snap);
+}
+
+/* ---------- Care ---------- */
+function renderCare() {
+  const L = live(); const cc = careCounts();
+  const wl = L.filter(i => i.wend && (careAll || ddays(i.wend) >= 0)).sort((a, b) => a.wend.localeCompare(b.wend));
+  const ml = L.filter(i => mDue(i)).sort((a, b) => mDue(a).localeCompare(mDue(b)));
+  const ll = L.filter(i => i.status === 'lent').sort((a, b) => (a.lent?.due || '9').localeCompare(b.lent?.due || '9'));
+  const br = L.filter(i => i.status === 'broken');
+  const segs = [['all', '모두', 0], ['w', '보증', wl.filter(i => ddays(i.wend) >= 0).length], ['m', '정기 관리', ml.length], ['l', '빌려준 물건', ll.length], ['b', '고장·수리', br.length]];
+  $('#careSeg').innerHTML = segs.map(([k, n, c]) => `<button data-c="${k}" aria-pressed="${careSeg === k}">${n}${k !== 'all' ? `<span class="n">${c}</span>` : ''}</button>`).join('');
+  $('#careAll').checked = careAll;
+  const secs = [];
+  const show = k => careSeg === 'all' || careSeg === k;
+  if (show('w')) secs.push(`<div class="grp"><div class="grp-h">보증 <span class="v">${wl.length}개${cc.w ? ` · ${S.warn}일 안에 끝나는 것 ${cc.w}` : ''}</span><span class="grow"></span></div>${wl.length ? `<div class="rows">${wl.map(it => {
+    const left = ddays(it.wend), tot = it.buy ? (parseDk(it.wend) - parseDk(it.buy)) / DAY : 0, pct = tot > 0 ? clamp(left / tot, 0, 1) * 100 : 0;
+    const s = left < 0 ? 'bad' : left <= S.warn ? 'warn' : '';
+    return `<div class="si ${s}" data-id="${it.id}" role="button">${thumbHTML(it)}<div class="tx"><div class="nm">${esc(it.name)}</div><div class="mt">${esc(locPath(it.loc) || '위치 없음')} · ${fdate(it.wend)}까지${it.store ? ' · ' + esc(it.store) : ''}</div>${tot > 0 && left >= 0 ? `<div class="wbarline"><i style="width:${pct}%"></i></div>` : ''}</div>
+      <span class="dd ${left < 0 ? 'gray' : s}">${left < 0 ? '끝남' : left === 0 ? '오늘까지' : `D-${left}`}</span></div>`;
+  }).join('')}</div>` : `<div class="note">보증 끝나는 날을 적어 둔 물건이 없어요. 물건을 고칠 때 '보증 끝나는 날'에 1년, 2년 버튼을 누르면 구매일에서 바로 계산돼요.</div>`}</div>`);
+  if (show('m')) secs.push(`<div class="grp"><div class="grp-h">정기 관리 <span class="v">${ml.length}개</span><span class="grow"></span></div>${ml.length ? `<div class="rows">${ml.map(it => {
+    const n = ddays(mDue(it)), s = mState(it);
+    return `<div class="si ${s}" data-id="${it.id}" role="button">${thumbHTML(it)}<div class="tx"><div class="nm">${esc(it.name)} <span class="tagb gray">${esc(it.mname || '관리')}</span></div><div class="mt">${it.mcycle}개월마다 · 마지막 ${it.mlast ? fdate(it.mlast) : '기록 없음'} · 다음 ${fdate(mDue(it))}</div></div>
+      <span class="dd ${s === 'ok' ? '' : s}">${n < 0 ? `${-n}일 지남` : n === 0 ? '오늘' : `D-${n}`}</span><button class="btn sm ${s === 'ok' ? 'line' : 'primary'}" data-maint="${it.id}">${icon('check')}했어요</button></div>`;
+  }).join('')}</div>` : `<div class="note">필터 교체, 청소처럼 주기적으로 할 일이 있는 물건은 '정기 관리'에 주기를 적어 두세요. 때가 되면 여기에 떠요.</div>`}</div>`);
+  if (show('l')) secs.push(`<div class="grp"><div class="grp-h">빌려준 물건 <span class="v">${ll.length}개</span><span class="grow"></span></div>${ll.length ? `<div class="rows">${ll.map(it => {
+    const due = it.lent?.due, n = due ? ddays(due) : null;
+    return `<div class="si ${lentState(it)}" data-id="${it.id}" role="button">${thumbHTML(it)}<div class="tx"><div class="nm">${esc(it.name)}</div><div class="mt">${esc(it.lent?.to || '누군가')}에게 · ${it.lent?.at ? fdate(it.lent.at) + '부터' : ''}${it.lent?.at ? ` (${Math.max(0, -ddays(it.lent.at))}일째)` : ''}</div></div>
+      ${due ? `<span class="dd ${n < 0 ? 'bad' : n <= 3 ? 'warn' : ''}">${n < 0 ? `${-n}일 지남` : n === 0 ? '오늘 반납' : `반납 D-${n}`}</span>` : ''}<button class="btn sm line" data-return="${it.id}">${icon('back')}돌려받음</button></div>`;
+  }).join('')}</div>` : `<div class="note">빌려준 물건이 없어요. 물건을 열고 '빌려주기'를 누르면 누구에게 언제 빌려줬는지 남아요.</div>`}</div>`);
+  if (show('b') && (br.length || careSeg === 'b')) secs.push(`<div class="grp"><div class="grp-h">고장·수리 <span class="v">${br.length}개</span><span class="grow"></span></div>${br.length ? `<div class="rows">${br.map(it => `<div class="si" data-id="${it.id}" role="button">${thumbHTML(it)}<div class="tx"><div class="nm">${esc(it.name)}${it.wend && ddays(it.wend) >= 0 ? ' <span class="tagb">보증 중</span>' : ''}</div><div class="mt">${esc(it.memo || locPath(it.loc) || '')}</div></div><button class="btn sm line" data-fixed="${it.id}">${icon('check')}고쳤어요</button></div>`).join('')}</div>` : '<div class="note">고장 난 물건이 없어요.</div>'}</div>`);
+  $('#careBody').innerHTML = secs.join(''); hydratePhotos($('#careBody'));
+}
+function doMaint(id) { const it = D.items.find(i => i.id === id); if (!it) return; updItem(it, x => { x.mlast = todayKey(); }, `${it.name}: ${it.mname || '관리'} 했어요. 다음은 ${fdate(dk(addMonths(today0(), +it.mcycle)))}`, `${it.mname || '관리'} 했어요`); }
+function doReturn(id) { const it = D.items.find(i => i.id === id); if (!it) return; const who = it.lent?.to; updItem(it, x => { x.status = 'use'; delete x.lent; }, `${it.name} 돌려받았어요`, `돌려받았어요${who ? ` (${who})` : ''}`); }
+
+/* ---------- Stats ---------- */
+function renderStats() {
+  const L = live(); const tot = L.reduce((s, i) => s + value(i), 0);
+  const inW = L.filter(i => i.wend && ddays(i.wend) >= 0).length;
+  const withPh = L.filter(i => (i.photos || []).length).length;
+  const kpi = (k, v, sm, go) => `<${go ? `button data-st="${go}"` : 'div'} class="kpi"><div class="k">${k}</div><div class="v">${v}${sm ? `<small>${sm}</small>` : ''}</div></${go ? 'button' : 'div'}>`;
+  let h = `<div class="kpis k4">${kpi('물건', L.length, '개')}${kpi('산 값 합계', wonShort(tot).replace(/원$/, ''), '원')}${kpi('보증 중', inW, '개', 'w')}${kpi('사진 있음', L.length ? Math.round(withPh / L.length * 100) : 0, '%')}</div>`;
+  const barList = (rows, fmt) => { const mx = Math.max(1, ...rows.map(r => r[1])); return `<div class="hbars">${rows.map(([n, v, extra, key]) => `<div class="hb"${key ? ` data-f="${esc(key)}" style="cursor:pointer"` : ''}><span>${esc(n)}</span><div class="bar"><i style="width:${v / mx * 100}%"></i></div><b>${fmt(v, extra)}</b></div>`).join('')}</div>`; };
+  const byCat = D.cats.map(c => { const a = L.filter(i => i.cat === c.n); return [c.n, a.reduce((s, i) => s + value(i), 0), a.length, 'cat:' + c.n]; }).filter(r => r[2]).sort((a, b) => b[1] - a[1]);
+  const byRoom = rooms().map(r => { const a = L.filter(i => inLoc(i, r.id)); return [r.name, a.length, a.reduce((s, i) => s + value(i), 0), 'loc:' + r.id]; }).filter(r => r[1]).sort((a, b) => b[1] - a[1]);
+  const nl = L.filter(i => !locById(i.loc)).length; if (nl) byRoom.push(['위치 없음', nl, 0, 'loc:__none']);
+  const years = {}; L.forEach(i => { if (i.buy) { const y = i.buy.slice(0, 4); years[y] = (years[y] || 0) + value(i); } });
+  const ys = Object.keys(years).sort(); const cy = String(new Date().getFullYear());
+  const yr = ys.length ? (() => { const first = Math.max(+ys[0], +cy - 9); const arr = []; for (let y = first; y <= +cy; y++) arr.push([String(y), years[y] || 0]); const mx = Math.max(1, ...arr.map(a => a[1])); return `<div class="mbars ybars">${arr.map(([y, v]) => `<div class="${y === cy ? 'cur' : ''}" title="${y}년 ${won(v)}"><span style="font-weight:700;color:var(--muted)">${v ? wonShort(v).replace('만원', '만') : ''}</span><i style="height:${v / mx * 80}%"></i>${y.slice(2)}</div>`).join('')}</div>`; })() : '<div class="note">구매일을 적은 물건이 없어요.</div>';
+  const top = [...L].filter(i => +i.price).sort((a, b) => value(b) - value(a)).slice(0, 5);
+  const old = [...L].filter(i => i.buy).sort((a, b) => a.buy.localeCompare(b.buy)).slice(0, 5);
+  const mini = (arr, r) => arr.length ? `<div class="slist">${arr.map(i => `<button class="sitem" data-id="${i.id}">${thumbHTML(i, 'th sm')}<span class="tx"><b>${esc(i.name)}</b><small>${esc(locPath(i.loc) || '위치 없음')}</small></span><span class="r">${r(i)}</span></button>`).join('')}</div>` : '<div class="note">아직 없어요.</div>';
+  h += `<div class="sgrid">
+    <div class="card"><h3>분류별 산 값 <span class="v">누르면 그 분류만</span></h3>${byCat.length ? barList(byCat, (v, n) => `${wonShort(v)} · ${n}개`) : '<div class="note">아직 없어요.</div>'}</div>
+    <div class="card"><h3>공간별 물건 <span class="v">누르면 그 공간만</span></h3>${byRoom.length ? barList(byRoom, (v) => `${v}개`) : '<div class="note">아직 없어요.</div>'}</div>
+    <div class="card"><h3>해마다 산 값</h3>${yr}</div>
+    <div class="card"><h3>비싼 물건</h3>${mini(top, i => wonShort(value(i)))}</div>
+    <div class="card"><h3>오래된 물건</h3>${mini(old, i => age(i.buy).replace(' 됐어요', ''))}</div>
+    <div class="card"><h3>상태</h3>${barList(STATUS.map(s => [s.n, D.items.filter(i => i.status === s.k).length, 0, 'status:' + s.k]).filter(r => r[1]), v => `${v}개`)}</div>
+  </div>`;
+  $('#stBody').innerHTML = h; hydratePhotos($('#stBody'));
+}
+
+/* ---------- Side panel ---------- */
+function renderSide() {
+  const b = $('#sideBody'); const L = live(); let h = '';
+  if (tab === 'items') {
+    const tot = L.reduce((s, i) => s + value(i), 0), cc = careCounts();
+    h += `<div class="sec"><div class="kpis"><button class="kpi" data-clrall><div class="k">물건</div><div class="v">${L.length}<small>개</small></div></button><div class="kpi"><div class="k">산 값</div><div class="v" style="font-size:18px">${wonShort(tot)}</div></div><button class="kpi" data-go="care" data-seg="w"><div class="k">보증 임박</div><div class="v">${cc.w}<small>개</small></div></button></div></div>`;
+    const base = filtered('loc'); const lc = id => base.filter(i => inLoc(i, id)).length;
+    h += `<div class="sec"><h3>위치 <span class="v">${F.loc ? `<button class="linkbtn" data-clr="loc">모두</button>` : ''}</span></h3><div class="chips">${rooms().filter(r => lc(r.id) || F.loc === r.id).map(r => `<button class="chip" data-locf="${r.id}" aria-pressed="${F.loc === r.id}">${esc(r.name)} <small>${lc(r.id)}</small></button>`).join('')}${base.some(i => !locById(i.loc)) ? `<button class="chip" data-locf="__none" aria-pressed="${F.loc === '__none'}">위치 없음 <small>${lc('__none')}</small></button>` : ''}</div>
+      ${F.loc && locById(F.loc) && !locById(F.loc).parent && spotsOf(F.loc).length ? `<div class="chips" style="margin-top:8px">${spotsOf(F.loc).map(s => `<button class="chip" data-locf="${s.id}">${esc(s.name)} <small>${base.filter(i => i.loc === s.id).length}</small></button>`).join('')}</div>` : ''}
+      ${F.loc && locById(F.loc)?.parent ? `<div class="chips" style="margin-top:8px"><button class="chip" data-locf="${locById(F.loc).parent}">${icon('left')}${esc(locById(locById(F.loc).parent).name)} 전체</button></div>` : ''}</div>`;
+    const sb = filtered('status');
+    h += `<div class="sec"><h3>상태</h3><div class="chips">${STATUS.map(s => { const n = s.k === 'gone' ? D.items.filter(i => i.status === 'gone' && matchQ(i, F.q)).length : sb.filter(i => i.status === s.k).length; return n || F.status === s.k ? `<button class="chip" data-stf="${s.k}" aria-pressed="${F.status === s.k}">${s.n} <small>${n}</small></button>` : ''; }).join('')}<button class="chip" data-fav aria-pressed="${F.fav}">${icon('star')}즐겨찾기</button></div></div>`;
+    const tc = {}; filtered('tag').forEach(i => (i.tags || []).forEach(t => tc[t] = (tc[t] || 0) + 1));
+    const tags = Object.entries(tc).sort((a, b) => b[1] - a[1]).slice(0, 24);
+    if (tags.length || F.tag) h += `<div class="sec"><h3>태그</h3><div class="chips">${tags.map(([t, n]) => `<button class="chip" data-tagf="${esc(t)}" aria-pressed="${F.tag === t}">#${esc(t)} <small>${n}</small></button>`).join('')}</div></div>`;
+    const recent = [...L].sort((a, b) => (b.updated || 0) - (a.updated || 0)).slice(0, 5);
+    if (recent.length) h += `<div class="sec"><h3>최근 손본 물건</h3><div class="slist">${recent.map(i => `<button class="sitem" data-id="${i.id}">${thumbHTML(i, 'th sm')}<span class="tx"><b>${esc(i.name)}</b><small>${esc(locPath(i.loc) || '위치 없음')}</small></span></button>`).join('')}</div></div>`;
+  } else if (tab === 'places') {
+    const noLoc = L.filter(i => !locById(i.loc)).length;
+    h += `<div class="sec"><p class="hint">공간(방)과 그 안의 자리(가구, 수납장)로 나눠 두면 '어디 뒀더라?'가 줄어요. 공간이나 자리를 누르면 그곳의 물건만 보여요.</p>
+      <div class="btns g2"><button class="btn line" id="sdAddRoom">${icon('plus')}공간 추가</button><button class="btn line" data-go="items" data-grp="loc">${icon('rows')}공간별로 보기</button></div></div>`;
+    if (noLoc) h += `<div class="sec"><div class="note warn">위치를 정하지 않은 물건이 ${noLoc}개 있어요. <button class="linkbtn" data-locf="__none">보기</button></div></div>`;
+    h += `<div class="sec"><h3>방 정리 팁</h3><p class="hint">물건 탭에서 <b>선택</b>을 누르고 여러 개를 골라 한꺼번에 옮길 수 있어요. 새로 넣을 때 '저장하고 이어서 넣기'를 켜면 같은 위치로 계속 넣을 수 있어요.</p></div>`;
+  } else if (tab === 'care') {
+    const cc = careCounts();
+    h += `<div class="sec"><div class="kpis"><button class="kpi" data-seg2="w"><div class="k">보증 임박</div><div class="v">${cc.w}</div></button><button class="kpi" data-seg2="m"><div class="k">관리할 때</div><div class="v">${cc.m}</div></button><button class="kpi" data-seg2="l"><div class="k">빌려줌</div><div class="v">${cc.l}</div></button></div></div>`;
+    const soon = live().filter(i => i.wend && ddays(i.wend) >= 0 && ddays(i.wend) <= S.warn);
+    h += `<div class="sec"><h3>보증 끝나기 전에</h3><p class="hint">${soon.length ? `${soon.map(i => esc(i.name)).join(', ')}의 보증이 ${S.warn}일 안에 끝나요. 고장이나 소음이 있으면 지금 무상 수리를 받아 두세요.` : `${S.warn}일 안에 보증이 끝나는 물건은 없어요.`}</p><p class="hint" style="margin:0">알림 기준은 설정에서 바꿀 수 있어요.</p></div>`;
+  } else {
+    h += `<div class="sec"><h3>목록 내보내기</h3><p class="hint">화재·도난 보험 청구, 이사, 중고 판매 때 물건 목록과 구매 기록이 있으면 편해요.</p>
+      <div class="btns g2"><button class="btn line" data-exp="print">${icon('print')}목록 인쇄</button><button class="btn line" data-exp="csv">${icon('download')}CSV 받기</button><button class="btn line" data-exp="room">${icon('home')}공간별 인쇄</button><button class="btn line" data-exp="backup">${icon('shield')}전체 백업</button></div></div>`;
+    h += `<div class="sec"><h3>저장 공간</h3><p class="hint" id="sdUsage">계산 중…</p></div>`;
+  }
+  b.innerHTML = h; hydratePhotos(b);
+  if (tab === 'stats') usageText().then(t => { const el = $('#sdUsage'); if (el) el.textContent = t; });
+}
+async function usageText() {
+  let n = 0; try { n = (await idb.keys()).length; } catch {}
+  let s = `사진 ${n}장`;
+  try { if (navigator.storage && navigator.storage.estimate) { const e = await navigator.storage.estimate(); s += ` · 사용 ${(e.usage / 1048576).toFixed(1)}MB`; } } catch {}
+  return s;
+}
+
+/* ---------- Datalists ---------- */
+function renderDatalists() {
+  const uniq = a => [...new Set(a.filter(Boolean))].sort((x, y) => x.localeCompare(y, 'ko'));
+  $('#storeList').innerHTML = uniq(['쿠팡', '네이버 쇼핑', '이마트', '홈플러스', '코스트코', '다이소', '11번가', 'G마켓', '오늘의집', '이케아', '하이마트', ...D.items.map(i => i.store)]).map(s => `<option value="${esc(s)}">`).join('');
+  $('#brandList').innerHTML = uniq(D.items.map(i => i.brand)).map(s => `<option value="${esc(s)}">`).join('');
+  $('#tagList').innerHTML = uniq(D.items.flatMap(i => i.tags || [])).map(s => `<option value="${esc(s)}">`).join('');
+}
+
+function renderAll() {
+  renderHeader();
+  if (tab === 'items') renderItems(); else if (tab === 'places') renderPlaces(); else if (tab === 'care') renderCare(); else renderStats();
+  renderSide();
+}
+
+/* ---------- Export / print ---------- */
+function csvCell(v) { v = String(v ?? ''); return /[",\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v; }
+function exportCSV() {
+  const rows = [['이름', '분류', '공간', '자리', '수량', '상태', '구매일', '가격', '합계', '구매처', '보증 끝', '브랜드', '모델명', '일련번호', '관리', '관리 주기(개월)', '마지막 관리', '태그', '메모', '사진 수']];
+  sortItems([...D.items]).forEach(i => { const l = locById(i.loc), r = roomOf(i.loc); rows.push([i.name, i.cat, r ? r.name : '', l && l.parent ? l.name : '', i.qty, stName(i.status), i.buy, i.price || '', value(i) || '', i.store, i.wend, i.brand, i.model, i.serial, i.mname, i.mcycle || '', i.mlast, (i.tags || []).join(', '), i.memo, (i.photos || []).length]); });
+  download(`inventorier-${todayKey()}.csv`, '﻿' + rows.map(r => r.map(csvCell).join(',')).join('\r\n'), 'text/csv;charset=utf-8');
+  toast('CSV를 받았어요');
+}
+async function printList(byRoom = false) {
+  const L = sortItems(live().slice()); const pa = $('#printArea');
+  const urls = {}; await Promise.all(L.map(async i => { const p = (i.photos || []).find(p => p.k !== 'r') || (i.photos || [])[0]; if (p) urls[i.id] = await getThumb(p.id); }));
+  const table = arr => `<table><thead><tr><th style="width:18mm">사진</th><th>물건</th><th style="width:30mm">위치</th><th style="width:20mm">구매일</th><th style="width:24mm">가격</th><th style="width:22mm">보증 끝</th><th style="width:32mm">모델·일련번호</th></tr></thead><tbody>${arr.map(i => `<tr><td>${urls[i.id] ? `<img src="${urls[i.id]}" alt="" />` : ''}</td><td><b>${esc(i.name)}</b>${+i.qty > 1 ? ` ×${i.qty}` : ''}<br/><span class="pm">${esc(i.cat)}${i.brand ? ' · ' + esc(i.brand) : ''}${i.store ? ' · ' + esc(i.store) : ''}</span></td><td>${esc(locPath(i.loc) || '-')}</td><td class="n">${fdate(i.buy)}</td><td class="n">${+i.price ? won(value(i)) : ''}</td><td class="n">${fdate(i.wend)}</td><td style="font-size:8pt">${esc(i.model)}${i.serial ? '<br/>' + esc(i.serial) : ''}</td></tr>`).join('')}</tbody></table>`;
+  const tot = L.reduce((s, i) => s + value(i), 0);
+  let h = `<h1>우리 집 물건 목록</h1><div class="pm">${fdate(todayKey())} 기준 · 물건 ${L.length}개 · 산 값 합계 ${won(tot)} · Inventorier</div>`;
+  if (byRoom) {
+    const groups = new Map(); L.forEach(i => { const r = roomOf(i.loc); const k = r ? r.id : '__none'; if (!groups.has(k)) groups.set(k, { n: r ? r.name : '위치 없음', a: [] }); groups.get(k).a.push(i); });
+    [...groups.keys()].sort((a, b) => (a === '__none') - (b === '__none') || locOrder(a) - locOrder(b)).forEach(k => { const g = groups.get(k); g.a.sort((x, y) => locOrder(x.loc) - locOrder(y.loc) || x.name.localeCompare(y.name, 'ko')); h += `<h2>${esc(g.n)} · ${g.a.length}개</h2>${table(g.a)}`; });
+  } else h += table(L);
+  pa.innerHTML = h;
+  await Promise.all($$('img', pa).map(img => img.complete ? 0 : new Promise(r => { img.onload = img.onerror = r; })));
+  window.print();
+}
+const blobToDataURL = b => new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(b); });
+async function exportBackup() {
+  const out = { app: 'inventorier', v: 1, at: new Date().toISOString(), data: D, settings: S, photos: [] };
+  if (S.bkPhotos) {
+    toast('사진을 묶는 중이에요…');
+    const used = new Set(D.items.flatMap(i => (i.photos || []).map(p => p.id)));
+    try { for (const r of await idb.all()) if (used.has(r.id)) out.photos.push({ id: r.id, full: r.full ? await blobToDataURL(r.full) : '', thumb: r.thumb ? await blobToDataURL(r.thumb) : '' }); } catch {}
+  }
+  download(`inventorier-backup-${todayKey()}.json`, JSON.stringify(out), 'application/json');
+  toast(`백업을 받았어요${out.photos.length ? ` (사진 ${out.photos.length}장 포함)` : ''}`);
+}
+async function importBackup(file) {
+  let j; try { j = JSON.parse(await file.text()); } catch { toast('백업 파일을 읽지 못했어요', { err: true }); return; }
+  if (!j || j.app !== 'inventorier' || !j.data || !Array.isArray(j.data.items)) { toast('Inventorier 백업 파일이 아니에요', { err: true }); return; }
+  const merge = await confirmDlg('백업 불러오기', `물건 ${j.data.items.length}개${j.photos?.length ? `, 사진 ${j.photos.length}장` : ''}이 들어 있어요. 지금 기록을 백업 내용으로 바꿀까요? '취소'를 누르면 아무것도 바꾸지 않아요.`, '바꾸기', true);
+  if (!merge) return;
+  const snap = snapshot();
+  for (const p of j.photos || []) { try { const full = p.full ? await (await fetch(p.full)).blob() : null; const thumb = p.thumb ? await (await fetch(p.thumb)).blob() : full; await idb.put({ id: p.id, full: full || thumb, thumb, t: Date.now() }); } catch {} }
+  D = j.data; ensureData(); if (j.settings) S = Object.assign({}, DEF_S, j.settings);
+  save(); saveS(); Object.keys(F).forEach(k => F[k] = k === 'fav' ? false : ''); $('#q').value = '';
+  $('#setDlg').close(); renderAll(); undoToast('백업을 불러왔어요', snap);
+}
+async function gcPhotos() {
+  try { const used = new Set(D.items.flatMap(i => (i.photos || []).map(p => p.id))); for (const k of await idb.keys()) if (!used.has(k)) await idb.del(k); } catch {}
+}
+
+/* ---------- Settings ---------- */
+function openSettings() {
+  $$('#setWarn button').forEach(b => b.setAttribute('aria-pressed', +b.dataset.w === S.warn));
+  renderSetCats(); $('#bkPhotos').checked = !!S.bkPhotos; $('#setUsage').textContent = '';
+  usageText().then(t => $('#setUsage').textContent = t);
+  $('#setDlg').showModal();
+}
+function renderSetCats() { $('#setCats').innerHTML = D.cats.map(c => `<button class="chip" data-delcat="${esc(c.n)}" title="지우기">${icon(c.ic)}${esc(c.n)} <small>${D.items.filter(i => i.cat === c.n).length}</small></button>`).join(''); }
+
+/* ---------- Init ---------- */
+function init() {
+  hydrateIcons();
+  const first = ensureData();
+  $('#edStatus').innerHTML = STATUS.map(s => `<button data-s="${s.k}">${s.n}</button>`).join('');
+  $$('.tab').forEach(b => b.onclick = () => setTab(b.dataset.tab));
+  bindWon($('#edPrice'));
+  numBind($('#edQty'));
+  bindLocSelect($('#edLoc')); bindLocSelect($('#mvLoc'));
+
+  // global clicks
+  document.addEventListener('click', e => {
+    const c = e.target.closest('[data-close]'); if (c) { c.closest('dialog').close(); return; }
+    const clr = e.target.closest('[data-clr]'); if (clr) { const k = clr.dataset.clr; F[k] = k === 'fav' ? false : ''; renderAll(); return; }
+    if (e.target.closest('[data-clrall]')) { clearFilters(); return; }
+    const g = e.target.closest('[data-go]'); if (g) { $$('dialog[open]').forEach(d => d.close()); if (g.dataset.seg) careSeg = g.dataset.seg; if (g.dataset.grp) { S.group = g.dataset.grp; saveS(); } setTab(g.dataset.go); return; }
+    const lf = e.target.closest('[data-locf]'); if (lf) { F.loc = F.loc === lf.dataset.locf && tab === 'items' ? '' : lf.dataset.locf; $$('dialog[open]').forEach(d => d.close()); if (tab !== 'items') setTab('items'); else renderAll(); return; }
+    const tf = e.target.closest('[data-tagf]'); if (tf) { F.tag = F.tag === tf.dataset.tagf && tab === 'items' ? '' : tf.dataset.tagf; $$('dialog[open]').forEach(d => d.close()); if (tab !== 'items') setTab('items'); else renderAll(); return; }
+    const sf = e.target.closest('[data-stf]'); if (sf) { F.status = F.status === sf.dataset.stf ? '' : sf.dataset.stf; renderAll(); return; }
+    if (e.target.closest('[data-fav]')) { F.fav = !F.fav; renderAll(); return; }
+    const cp = e.target.closest('[data-copy]'); if (cp) { copyText(cp.dataset.copy).then(ok => toast(ok ? '복사했어요' : '복사하지 못했어요', { err: !ok })); return; }
+    const act = e.target.closest('[data-act]');
+    if (act && act.dataset.act === 'add') { openEdit(); return; }
+    if (act && act.dataset.act === 'clear') { clearFilters(); return; }
+  });
+  $('#applied').addEventListener('click', () => {});
+  $('#helpBtn').onclick = () => $('#helpDlg').showModal();
+  $('#setBtn').onclick = openSettings;
+  $('#sideToggle').onclick = () => { $('#side').classList.toggle('closed'); store.set('sideClosed', $('#side').classList.contains('closed')); };
+
+  /* items toolbar */
+  let qT; $('#q').addEventListener('input', e => { clearTimeout(qT); qT = setTimeout(() => { F.q = e.target.value.trim(); renderAll(); }, 120); });
+  $('#sort').onchange = e => { S.sort = e.target.value; saveS(); renderItems(); };
+  $('#group').onchange = e => { S.group = e.target.value; saveS(); renderItems(); };
+  $('#viewSeg').onclick = e => { const b = e.target.closest('[data-v]'); if (b) { S.view = b.dataset.v; saveS(); renderItems(); } };
+  $('#addBtn').onclick = () => openEdit();
+  $('#catChips').onclick = e => { const b = e.target.closest('[data-cat]'); if (b) { F.cat = b.dataset.cat; renderAll(); } };
+  const itemClick = e => {
+    const el = e.target.closest('[data-id]'); if (!el) return;
+    if (selecting && el.closest('#itBody')) { toggleSel(el.dataset.id); return; }
+    openView(el.dataset.id);
+  };
+  $('#itBody').addEventListener('click', itemClick);
+  $('#itBody').addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { const el = e.target.closest('[data-id]'); if (el) { e.preventDefault(); itemClick(e); } } });
+  // long-press to start selection (touch)
+  let lpT = null;
+  $('#itBody').addEventListener('pointerdown', e => { const el = e.target.closest('[data-id]'); if (!el || selecting || e.pointerType === 'mouse') return; lpT = setTimeout(() => { lpT = null; startSelect(); toggleSel(el.dataset.id); el.dataset.lp = '1'; }, 550); });
+  ['pointerup', 'pointercancel', 'pointermove'].forEach(t => $('#itBody').addEventListener(t, e => { if (t === 'pointermove' && (Math.abs(e.movementX) + Math.abs(e.movementY) < 4)) return; clearTimeout(lpT); lpT = null; }));
+  $('#itBody').addEventListener('click', e => { const el = e.target.closest('[data-lp]'); if (el) { delete el.dataset.lp; e.stopImmediatePropagation(); } }, true);
+  $('#selBtn').onclick = startSelect;
+  $('#selDone').onclick = endSelect;
+  $('#selAll').onclick = () => { const ids = filtered().map(i => i.id); const all = ids.every(id => sel.has(id)); ids.forEach(id => all ? sel.delete(id) : sel.add(id)); updSel(); renderItems(); };
+  $('#selMove').onclick = () => openMove([...sel], 'loc');
+  $('#selStatus').onclick = () => openMove([...sel], 'status');
+  $('#selDel').onclick = async () => {
+    const n = sel.size; if (!n || !await confirmDlg('지우기', `고른 물건 ${n}개를 지워요. 처분한 물건이라면 '상태 → 처분함'으로 바꾸면 기록이 남아요.`, `${n}개 지우기`, true)) return;
+    const snap = snapshot(); D.items = D.items.filter(i => !sel.has(i.id)); save(); endSelect(); renderAll(); undoToast(`${n}개를 지웠어요`, snap);
+  };
+
+  /* view dialog */
+  $('#vwGal').addEventListener('click', e => {
+    const t = e.target.closest('[data-pi]'); if (t) { viewPhoto = +t.dataset.pi; renderView(); return; }
+    if (e.target.closest('#vwMain')) { const it = D.items.find(i => i.id === viewId); if (it && (it.photos || []).length) openViewer(it.photos, viewPhoto); }
+  });
+  $('#vwFav').onclick = () => { const it = D.items.find(i => i.id === viewId); if (it) updItem(it, x => { x.fav = !x.fav; }); };
+  $('#vwEdit').onclick = () => { const id = viewId; $('#viewDlg').close(); openEdit(id); };
+  $('#vwDup').onclick = () => {
+    const it = D.items.find(i => i.id === viewId); if (!it) return;
+    const snap = snapshot(); const c = JSON.parse(JSON.stringify(it)); Object.assign(c, { id: uid(), name: it.name + ' (복사)', serial: '', photos: [], fav: false, hist: [], created: Date.now(), updated: Date.now() }); addHist(c, `'${it.name}'에서 복제했어요`);
+    D.items.push(c); save(); renderAll(); $('#viewDlg').close(); openEdit(c.id); undoToast('복제했어요. 다른 점만 고치세요', snap);
+  };
+  $('#vwDel').onclick = async () => {
+    const it = D.items.find(i => i.id === viewId); if (!it) return;
+    if (!await confirmDlg('지우기', `'${it.name}'을 지워요. 처분한 물건이면 '처분했어요'를 누르면 기록이 남아요.`, '지우기', true)) return;
+    const snap = snapshot(); D.items = D.items.filter(i => i.id !== it.id); save(); $('#viewDlg').close(); renderAll(); undoToast(`'${it.name}'을 지웠어요`, snap);
+  };
+  $('#vwActs').addEventListener('click', e => {
+    const a = e.target.closest('[data-act]'); if (!a) return; const it = D.items.find(i => i.id === viewId); if (!it) return;
+    const k = a.dataset.act;
+    if (k === 'lend') openLend(it.id);
+    else if (k === 'return') doReturn(it.id);
+    else if (k === 'maint') doMaint(it.id);
+    else if (k === 'status') openMove([it.id], 'status');
+    else if (k === 'gone') updItem(it, x => { x.status = 'gone'; delete x.lent; }, `'${it.name}' 처분함으로 옮겼어요`, '처분했어요');
+  });
+  $('#vwInfo').addEventListener('click', e => { const a = e.target.closest('[data-act="move"]'); if (a) openMove([viewId], 'loc'); });
+  $('#vwActs').addEventListener('change', async e => {
+    const inp = e.target.closest('[data-addph]'); if (!inp) return; const it = D.items.find(i => i.id === viewId); if (!it) return;
+    const ph = await addPhotos(inp.files, 'p'); inp.value = '';
+    if (ph.length) updItem(it, x => { x.photos = [...(x.photos || []), ...ph]; }, null, `사진 ${ph.length}장 더했어요`);
+  });
+
+  /* edit dialog */
+  $('#edStatus').onclick = e => { const b = e.target.closest('[data-s]'); if (b) setEdStatus(b.dataset.s); };
+  $('#edWend').addEventListener('input', updWhint);
+  $('#edWquick').onclick = e => {
+    const b = e.target.closest('[data-m]'); if (!b) return; const m = +b.dataset.m;
+    if (!m) { $('#edWend').value = ''; updWhint(); return; }
+    const base = $('#edBuy').value || todayKey(); if (!$('#edBuy').value) $('#edBuy').value = base;
+    $('#edWend').value = dk(addDays(addMonths(parseDk(base), m), -1)); updWhint();
+  };
+  $('#edBuy').addEventListener('change', () => { /* keep warranty length when the purchase date moves */ });
+  $('#edSave').onclick = saveEdit;
+  $('#editDlg').addEventListener('keydown', e => { if (e.key === 'Enter' && !e.isComposing && e.target.tagName === 'INPUT' && e.target.type !== 'file') { e.preventDefault(); saveEdit(); } });
+  $('#edPhotos').addEventListener('click', e => {
+    const rm = e.target.closest('[data-rm]'); if (rm) { editPhotos.splice(+rm.dataset.rm, 1); renderEdPhotos(); return; }
+    const kd = e.target.closest('[data-kind]'); if (kd) { const p = editPhotos[+kd.dataset.kind]; if (p.k === 'r') p.k = 'p'; else { const i = +kd.dataset.kind; if (i === editPhotos.findIndex(x => x.k !== 'r')) p.k = 'r'; else { editPhotos.splice(i, 1); editPhotos.unshift(p); } } renderEdPhotos(); return; }
+    const pk = e.target.closest('[data-pick]'); if (pk) { pickKind = pk.dataset.pick === 'rc' ? 'r' : 'p'; (pk.dataset.pick === 'cam' ? $('#camIn') : $('#picIn')).click(); return; }
+    const th = e.target.closest('.pth'); if (th) openViewer(editPhotos, +th.dataset.i);
+  });
+  const onPick = async e => { const ph = await addPhotos(e.target.files, pickKind); e.target.value = ''; if (ph.length) { editPhotos.push(...ph); renderEdPhotos(); } };
+  $('#camIn').onchange = onPick; $('#picIn').onchange = onPick;
+  // drag & drop / paste photos into the edit dialog
+  $('#editDlg').addEventListener('dragover', e => { if ([...(e.dataTransfer?.types || [])].includes('Files')) e.preventDefault(); });
+  $('#editDlg').addEventListener('drop', async e => { if (!e.dataTransfer?.files?.length) return; e.preventDefault(); const ph = await addPhotos(e.dataTransfer.files, 'p'); if (ph.length) { editPhotos.push(...ph); renderEdPhotos(); } });
+  document.addEventListener('paste', async e => { if (!$('#editDlg').open) return; const files = [...(e.clipboardData?.files || [])]; if (!files.length) return; e.preventDefault(); const ph = await addPhotos(files, 'p'); if (ph.length) { editPhotos.push(...ph); renderEdPhotos(); } });
+
+  /* move / lend */
+  $('#mvSt').onclick = e => { const b = e.target.closest('[data-s]'); if (b) $$('#mvSt button').forEach(x => x.setAttribute('aria-pressed', x === b)); };
+  $('#mvOk').onclick = doMove;
+  $('#lnOk').onclick = () => {
+    const it = D.items.find(i => i.id === viewId); if (!it) return; const to = $('#lnTo').value.trim();
+    if (!to) { toast('누구에게 빌려줬는지 써 주세요', { err: true }); $('#lnTo').focus(); return; }
+    $('#lendDlg').close();
+    updItem(it, x => { x.status = 'lent'; x.lent = { to, at: $('#lnAt').value || todayKey(), due: $('#lnDue').value }; }, `${to}에게 빌려줬어요`, `빌려줌: ${to}`);
+  };
+  $('#lnTo').addEventListener('keydown', e => { if (e.key === 'Enter' && !e.isComposing) $('#lnOk').click(); });
+
+  /* viewer */
+  $('#pvPrev').onclick = () => pvStep(-1); $('#pvNext').onclick = () => pvStep(1);
+  $('#pvDlg').addEventListener('close', () => { if (pvURL) { URL.revokeObjectURL(pvURL); pvURL = null; } $('#pvImg').removeAttribute('src'); });
+  $('#pvDlg').addEventListener('keydown', e => { if (e.key === 'ArrowLeft') pvStep(-1); else if (e.key === 'ArrowRight') pvStep(1); });
+  $('#pvWrap').addEventListener('click', e => { if (e.target === $('#pvWrap')) $('#pvDlg').close(); });
+  let sx = null; $('#pvWrap').addEventListener('pointerdown', e => { sx = e.clientX; });
+  $('#pvWrap').addEventListener('pointerup', e => { if (sx == null) return; const dx = e.clientX - sx; sx = null; if (Math.abs(dx) > 50) pvStep(dx < 0 ? 1 : -1); });
+  $('#pvSave').onclick = async () => { const p = pvList[pvI]; const b = p && await getFull(p.id); if (b) download(`inventorier-${p.id}.jpg`, b); };
+
+  /* places */
+  $('#plAdd').onclick = () => openRoom();
+  $('#plPrint').onclick = () => printList(true);
+  $('#plBody').addEventListener('click', e => {
+    if (e.target.closest('#plAdd2')) { openRoom(); return; }
+    const rm = e.target.closest('[data-room]'); if (rm) { e.stopPropagation(); openRoom(rm.dataset.room); return; }
+    const as = e.target.closest('[data-addspot]'); if (as) { openRoom(as.dataset.addspot); setTimeout(() => $('#rmAddSpot').click(), 30); return; }
+    const l = e.target.closest('[data-loc]'); if (l) { F.loc = l.dataset.loc; setTab('items'); }
+  });
+  $('#rmAddSpot').onclick = () => { $('#rmSpots').insertAdjacentHTML('beforeend', spotRow('', '')); const ins = $$('#rmSpots input'); ins[ins.length - 1].focus(); };
+  $('#rmSpots').addEventListener('click', e => { const b = e.target.closest('[data-rmspot]'); if (b) b.parentElement.remove(); });
+  $('#rmSpots').addEventListener('keydown', e => { if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); $('#rmAddSpot').click(); } });
+  $('#rmSave').onclick = saveRoom; $('#rmDel').onclick = delRoom;
+
+  /* care */
+  $('#careSeg').onclick = e => { const b = e.target.closest('[data-c]'); if (b) { careSeg = b.dataset.c; renderCare(); } };
+  $('#careAll').onchange = e => { careAll = e.target.checked; renderCare(); };
+  $('#careBody').addEventListener('click', e => {
+    const m = e.target.closest('[data-maint]'); if (m) { doMaint(m.dataset.maint); return; }
+    const r = e.target.closest('[data-return]'); if (r) { doReturn(r.dataset.return); return; }
+    const f = e.target.closest('[data-fixed]'); if (f) { const it = D.items.find(i => i.id === f.dataset.fixed); if (it) updItem(it, x => { x.status = 'use'; }, `${it.name} 고쳤어요`, '고쳤어요'); return; }
+    const el = e.target.closest('[data-id]'); if (el) openView(el.dataset.id);
+  });
+
+  /* stats */
+  $('#stCsv').onclick = exportCSV; $('#stPrint').onclick = () => printList(false);
+  $('#stBody').addEventListener('click', e => {
+    const k = e.target.closest('[data-st]'); if (k) { careSeg = k.dataset.st; setTab('care'); return; }
+    const f = e.target.closest('[data-f]'); if (f) { const [t, v] = f.dataset.f.split(/:(.*)/s); clearFilters(true); F[t] = v; setTab('items'); return; }
+    const el = e.target.closest('[data-id]'); if (el) openView(el.dataset.id);
+  });
+
+  /* side */
+  $('#sideBody').addEventListener('click', e => {
+    if (e.target.closest('#sdAddRoom')) { openRoom(); return; }
+    const s2 = e.target.closest('[data-seg2]'); if (s2) { careSeg = s2.dataset.seg2; renderCare(); return; }
+    const x = e.target.closest('[data-exp]'); if (x) { const k = x.dataset.exp; if (k === 'print') printList(false); else if (k === 'room') printList(true); else if (k === 'csv') exportCSV(); else exportBackup(); return; }
+    const el = e.target.closest('[data-id]'); if (el) openView(el.dataset.id);
+  });
+
+  /* settings */
+  $('#setWarn').onclick = e => { const b = e.target.closest('[data-w]'); if (!b) return; S.warn = +b.dataset.w; saveS(); $$('#setWarn button').forEach(x => x.setAttribute('aria-pressed', x === b)); renderAll(); };
+  $('#bkPhotos').onchange = e => { S.bkPhotos = e.target.checked; saveS(); };
+  $('#setCats').onclick = async e => {
+    const b = e.target.closest('[data-delcat]'); if (!b) return; const n = b.dataset.delcat; const used = D.items.filter(i => i.cat === n).length;
+    if (D.cats.length <= 1) return;
+    if (!await confirmDlg('분류 지우기', `'${n}' 분류를 지워요.${used ? ` 이 분류의 물건 ${used}개는 '기타'로 옮겨요.` : ''}`, '지우기', true)) return;
+    D.cats = D.cats.filter(c => c.n !== n); if (!D.cats.some(c => c.n === '기타')) D.cats.push({ ...CAT_DEF[CAT_DEF.length - 1] });
+    D.items.forEach(i => { if (i.cat === n) i.cat = '기타'; }); if (F.cat === n) F.cat = '';
+    save(); renderSetCats(); renderAll();
+  };
+  const addCat = () => { const n = $('#setCatNew').value.trim(); if (!n) return; if (D.cats.some(c => c.n === n)) { toast('이미 있는 분류예요', { err: true }); return; } const col = EXTRA_COLORS[D.cats.length % EXTRA_COLORS.length]; D.cats.splice(Math.max(0, D.cats.findIndex(c => c.n === '기타')), 0, { n, ic: 'tag', b: col[0], f: col[1] }); if (D.cats.findIndex(c => c.n === '기타') < 0) D.cats.push({ ...CAT_DEF[CAT_DEF.length - 1] }); $('#setCatNew').value = ''; save(); renderSetCats(); renderAll(); };
+  $('#setCatAdd').onclick = addCat; $('#setCatNew').addEventListener('keydown', e => { if (e.key === 'Enter' && !e.isComposing) addCat(); });
+  $('#bkExport').onclick = exportBackup;
+  $('#bkImport').onclick = () => $('#fileIn').click();
+  $('#fileIn').onchange = e => { const f = e.target.files[0]; e.target.value = ''; if (f) importBackup(f); };
+  $('#bkSample').onclick = async () => {
+    if (!await confirmDlg('예시 다시 보기', '지금 기록을 예시 물건 20개로 바꿔요. 바꾼 뒤에도 바로 되돌릴 수 있어요.', '예시로 바꾸기', true)) return;
+    const snap = snapshot(); D = sampleData(); save(); clearFilters(true); renderAll(); undoToast('예시 물건을 넣었어요', snap);
+  };
+  $('#wipeAll').onclick = async () => {
+    if (!await confirmDlg('모두 지우기', '물건, 위치, 사진을 모두 지우고 빈 상태로 시작해요. 되돌릴 수 없어요.', '모두 지우기', true)) return;
+    try { await idb.clear(); } catch {}
+    const cats = D.cats; D = { v: 1, cats, locs: [], items: [], created: Date.now() }; save(); clearFilters(true); renderAll(); toast('모두 지웠어요');
+  };
+
+  /* keyboard */
+  document.addEventListener('keydown', e => {
+    if (e.ctrlKey || e.metaKey || e.altKey || e.isComposing) return;
+    if (document.querySelector('dialog[open]')) return;
+    if (/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)) { if (e.key === 'Escape') { if (e.target.id === 'q' && e.target.value) { e.target.value = ''; F.q = ''; renderAll(); } e.target.blur(); } return; }
+    const k = e.key;
+    if (['1', '2', '3', '4'].includes(k)) { setTab(['items', 'places', 'care', 'stats'][+k - 1]); e.preventDefault(); }
+    else if (k === '/') { e.preventDefault(); if (tab !== 'items') setTab('items'); $('#q').focus(); }
+    else if (k === 'n' || k === 'N') { e.preventDefault(); if (tab === 'places') openRoom(); else openEdit(); }
+    else if (k === 'v' || k === 'V') { S.view = S.view === 'grid' ? 'list' : 'grid'; saveS(); if (tab === 'items') renderItems(); }
+    else if (k === 'Escape') { if (selecting) endSelect(); else clearFilters(); }
+  });
+
+  // day rollover / other tabs
+  let lastDay = todayKey();
+  document.addEventListener('visibilitychange', () => { if (!document.hidden && todayKey() !== lastDay) { lastDay = todayKey(); renderAll(); } });
+  setInterval(() => { if (todayKey() !== lastDay) { lastDay = todayKey(); renderAll(); } }, 60000);
+  window.addEventListener('storage', e => { if (e.key === 'inventorier.data') { D = store.get('data', D); ensureData(); renderAll(); } });
+  window.addEventListener('afterprint', () => { $('#printArea').innerHTML = ''; });
+
+  if (matchMedia('(max-width: 999px)').matches && store.get('sideClosed', false)) $('#side').classList.add('closed');
+  setTab(['items', 'places', 'care', 'stats'].includes(tab) ? tab : 'items');
+  gcPhotos();
+  if (first) toast('예시 물건 20개를 넣어 뒀어요. 설정에서 모두 지우고 시작할 수 있어요', { ms: 6000 });
+  else { const cc = careCounts(); if (cc.md || cc.lbad) toast(cc.md ? `정기 관리가 지난 물건이 ${cc.md}개 있어요` : `돌려받을 날이 지난 물건이 ${cc.lbad}개 있어요`, { action: '보기', onAction: () => { careSeg = cc.md ? 'm' : 'l'; setTab('care'); } }); }
+}
+function clearFilters(silent) { F.q = ''; F.cat = ''; F.loc = ''; F.status = ''; F.tag = ''; F.fav = false; $('#q').value = ''; if (!silent) renderAll(); }
+init();
+
+</script>
+</body>
+</html>
