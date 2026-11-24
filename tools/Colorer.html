@@ -1,0 +1,1940 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#F5F1E8" />
+<title>Colorer · 아웃그리드 색상 도구</title>
+<meta name="description" content="브라우저 안에서만 동작하는 색상 도구. 팔레트 만들기, 50–950 스케일, 이미지에서 색 추출, WCAG·APCA 대비 검사, 색각 이상 시뮬레이션, 그라디언트, CSS·Tailwind·ASE 내보내기." />
+<!-- Fonts: outgrid's own files first (fonts/ next to this page), public CDN as a fallback. -->
+<style>
+  @font-face { font-family: "wantedSans"; src: url("fonts/WantedSansVariable.woff2") format("woff2"); font-weight: 100 800; font-style: normal; font-display: swap; }
+  @font-face { font-family: "maruBuri"; src: url("fonts/MaruBuri-Regular.woff2") format("woff2"); font-weight: 400; font-style: normal; font-display: swap; }
+  @font-face { font-family: "maruBuri"; src: url("fonts/MaruBuri-SemiBold.woff2") format("woff2"); font-weight: 600; font-style: normal; font-display: swap; }
+</style>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/wanteddev/wanted-sans@v1.0.3/packages/wanted-sans/fonts/webfonts/variable/split/WantedSansVariable.min.css" />
+<link rel="stylesheet" href="https://hangeul.pstatic.net/hangeul_static/css/maru-buri.css" />
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23244D3A'/%3E%3Ccircle cx='25' cy='26' r='11' fill='%23D9C8A9'/%3E%3Ccircle cx='39' cy='26' r='11' fill='%238A5A3B' fill-opacity='.85'/%3E%3Ccircle cx='32' cy='38' r='11' fill='%23F5F1E8' fill-opacity='.85'/%3E%3C/svg%3E" />
+<style>
+  :root {
+    --bg: #F5F1E8;
+    --surface: #FCFAF5;
+    --paper: #FFFDF8;
+    --ink: #1C2824;
+    --ink-2: #33403A;
+    --muted: #5E665F;
+    --faint: #9A9F95;
+    --hair: #E3DCCB;
+    --hover: #F0EADD;
+    --press: #E7DFCD;
+    --dark: #244D3A;
+    --dark-2: #1B3B2C;
+    --river: #3E6F73;
+    --clay: #8A5A3B;
+    --sand: #D9C8A9;
+    --focus: #8A5A3B;
+    --danger: #963F3B;
+    --rec: #B5443B;
+    --shadow: 0 1px 0 rgba(28,40,36,.03), 0 18px 40px -30px rgba(28,40,36,.30);
+    --sans: "wantedSans", "Wanted Sans Variable", "Wanted Sans", -apple-system, BlinkMacSystemFont, "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+    --serif: "maruBuri", "MaruBuri", "Batang", "Noto Serif KR", serif;
+    --r-sm: 10px;
+    --r-md: 13px;
+    --r-lg: 20px;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    font-family: var(--sans); word-break: keep-all; background: var(--bg); color: var(--ink);
+    font-size: 14px; letter-spacing: -0.005em; -webkit-font-smoothing: antialiased;
+    min-height: 100dvh; display: flex; flex-direction: column;
+  }
+  [hidden] { display: none !important; }
+  button { font: inherit; color: inherit; cursor: pointer; border: 0; background: none; padding: 0; -webkit-tap-highlight-color: transparent; }
+  button:disabled { cursor: default; opacity: .35; }
+  input, select, textarea { font: inherit; color: inherit; }
+  :focus-visible { outline: 2.5px solid var(--focus); outline-offset: 3px; }
+  ::selection { background: rgba(36,77,58,.16); }
+  svg.i { width: 19px; height: 19px; stroke: currentColor; fill: none; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+  svg.i.sm { width: 16px; height: 16px; }
+  .muted { color: var(--faint); }
+  .tnum { font-variant-numeric: tabular-nums; }
+
+  /* ---------- Header ---------- */
+  .top { position: sticky; top: 0; z-index: 40; background: var(--bg); }
+  .top-inner { max-width: 1440px; margin: 0 auto; padding: 14px 24px 8px; display: flex; align-items: center; gap: 14px; }
+  .brand { display: flex; align-items: center; gap: 12px; flex: none; text-decoration: none; color: inherit; }
+  .logo { display: block; height: 34px; width: auto; flex: none; }
+  .app-name { font-family: var(--serif); font-weight: 600; font-size: 23px; letter-spacing: -.02em; color: var(--dark); line-height: 1; padding-left: 12px; border-left: 1.5px solid var(--hair); }
+  .app-name small { display: block; font-family: var(--sans); font-size: 11px; font-weight: 500; color: var(--faint); letter-spacing: 0; margin-top: 4px; }
+  .head-actions { margin-left: auto; display: flex; align-items: center; gap: 6px; min-width: 0; }
+  .icon-btn { width: 38px; height: 38px; border-radius: 999px; display: grid; place-items: center; color: var(--ink-2); transition: background .15s, color .15s; flex: none; }
+  .icon-btn:hover:not(:disabled) { background: var(--hover); color: var(--ink); }
+  .icon-btn[aria-pressed="true"] { background: var(--dark); color: var(--surface); }
+  .icon-btn.off { color: var(--faint); }
+  .run-pill { height: 34px; padding: 0 14px 0 12px; border-radius: 999px; background: #E8EFE8; color: var(--dark); font-weight: 700; font-size: 13px; display: inline-flex; align-items: center; gap: 8px; font-variant-numeric: tabular-nums; max-width: 46vw; overflow: hidden; white-space: nowrap; cursor: pointer; }
+  .dot { width: 9px; height: 9px; border-radius: 999px; background: currentColor; flex: none; }
+  .run-pill .dot { animation: blink 1.6s ease-in-out infinite; }
+  @keyframes blink { 50% { opacity: .25; } }
+
+  /* ---------- Buttons ---------- */
+  .btn { height: 38px; padding: 0 16px; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; font-weight: 600; font-size: 13.5px; background: var(--hover); color: var(--ink-2); white-space: nowrap; transition: background .15s, box-shadow .15s; flex: none; }
+  .btn:hover:not(:disabled) { background: var(--press); }
+  .btn.primary { background: var(--dark); color: var(--surface); box-shadow: 0 8px 18px -10px rgba(36,77,58,.7); }
+  .btn.primary:hover:not(:disabled) { background: var(--dark-2); }
+  .btn.clay { background: var(--clay); color: var(--surface); }
+  .btn.clay:hover:not(:disabled) { background: #74492F; }
+  .btn.ghost { background: none; color: var(--muted); }
+  .btn.ghost:hover:not(:disabled) { background: var(--hover); color: var(--ink); }
+  .btn.line { background: var(--surface); box-shadow: inset 0 0 0 1px var(--hair); }
+  .btn.line:hover:not(:disabled) { background: var(--hover); }
+  .btn.sm { height: 32px; padding: 0 12px; font-size: 12.5px; gap: 5px; }
+  .btn.lg { height: 46px; padding: 0 22px; font-size: 14.5px; }
+  .btn.block { width: 100%; }
+  .btn.danger { color: var(--danger); }
+  .btn.rec { background: var(--rec); color: #fff; }
+
+  /* ---------- Tabs ---------- */
+  .tabs-wrap { max-width: 1440px; margin: 0 auto; padding: 4px 24px 10px; display: flex; align-items: center; gap: 12px; }
+  .tabs { display: flex; gap: 2px; padding: 4px; background: var(--press); border-radius: 999px; overflow-x: auto; scrollbar-width: none; flex: none; max-width: 100%; }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab { height: 34px; padding: 0 15px; border-radius: 999px; font-weight: 600; font-size: 13px; color: var(--muted); white-space: nowrap; display: inline-flex; align-items: center; gap: 6px; transition: background .15s, color .15s; flex: none; }
+  .tab svg.i { width: 16px; height: 16px; }
+  .tab:hover { color: var(--ink); }
+  .tab[aria-selected="true"] { background: var(--dark); color: var(--surface); box-shadow: 0 6px 14px -8px rgba(36,77,58,.6); }
+  .tab .n { font-size: 11px; font-weight: 700; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px; background: rgba(28,40,36,.08); display: inline-grid; place-items: center; font-variant-numeric: tabular-nums; }
+  .tab[aria-selected="true"] .n { background: rgba(255,255,255,.18); }
+  .tab .live { width: 7px; height: 7px; border-radius: 999px; background: #6FBF8B; }
+  .applied { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; min-width: 0; align-items: center; }
+  .applied::-webkit-scrollbar { display: none; }
+  .achip { height: 28px; padding: 0 11px; border-radius: 999px; font-size: 12px; font-weight: 600; background: #E8EFE8; color: var(--dark); white-space: nowrap; display: inline-flex; align-items: center; gap: 5px; flex: none; font-variant-numeric: tabular-nums; }
+  .achip.warn { background: #F3E7DC; color: var(--clay); }
+
+  /* ---------- Layout ---------- */
+  main { flex: 1; width: 100%; max-width: 1440px; margin: 0 auto; padding: 0 24px 24px; display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 16px; height: calc(100dvh - 122px); min-height: 520px; }
+  .panel { background: var(--surface); border-radius: var(--r-lg); display: flex; flex-direction: column; min-height: 0; overflow: hidden; box-shadow: 0 0 0 1px var(--hair), var(--shadow); }
+  .view { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+  .wbar { display: flex; align-items: center; gap: 6px; padding: 10px 12px; border-bottom: 1px solid var(--hair); flex-wrap: wrap; row-gap: 8px; min-height: 59px; }
+  .wbar .count { font-size: 13px; color: var(--muted); margin: 0 6px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .wbar .count b { color: var(--ink); font-weight: 600; }
+  .grow { flex: 1; }
+  .sep { width: 1px; height: 20px; background: var(--hair); margin: 0 4px; flex: none; }
+  .tool { height: 36px; min-width: 36px; padding: 0 9px; border-radius: var(--r-sm); display: inline-flex; align-items: center; justify-content: center; gap: 6px; color: var(--ink-2); font-size: 12.5px; font-weight: 600; transition: background .15s, color .15s; flex: none; white-space: nowrap; }
+  .tool:hover:not(:disabled) { background: var(--hover); color: var(--ink); }
+  .tool[aria-pressed="true"] { background: var(--dark); color: var(--surface); }
+  .tool.danger:hover:not(:disabled) { color: var(--danger); }
+  .scroll { flex: 1; min-height: 0; overflow: auto; overscroll-behavior: contain; position: relative; }
+  /* ---------- Stats ---------- */
+  .kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; padding: 18px 18px 6px; }
+  .kpi { border-radius: 16px; background: #fff; box-shadow: 0 0 0 1px var(--hair); padding: 14px 16px; min-width: 0; }
+  .kpi .k { font-size: 12px; font-weight: 600; color: var(--muted); }
+  .kpi .v { font-size: 26px; font-weight: 700; letter-spacing: -.03em; margin-top: 6px; font-variant-numeric: tabular-nums; color: var(--ink); white-space: nowrap; }
+  .kpi .v small { font-size: 13px; font-weight: 600; color: var(--muted); margin-left: 2px; letter-spacing: 0; }
+  .kpi .s { font-size: 11.5px; color: var(--faint); margin-top: 3px; font-variant-numeric: tabular-nums; }
+  .card { border-radius: 16px; background: #fff; box-shadow: 0 0 0 1px var(--hair); padding: 14px 16px 12px; margin: 12px 18px 0; position: relative; }
+  .card h3 { margin: 0; font-family: var(--serif); font-size: 16px; font-weight: 600; color: var(--dark); letter-spacing: -.02em; }
+  .card .ch { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+  .card .cs { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .chart { width: 100%; display: block; overflow: visible; }
+  .chart text { font-family: var(--sans); font-size: 11px; fill: var(--faint); font-variant-numeric: tabular-nums; }
+  .chart .grid { stroke: var(--hover); stroke-width: 1; }
+  .chart .base { stroke: var(--hair); stroke-width: 1; }
+  .chart .goal { stroke: var(--clay); stroke-width: 1.2; stroke-dasharray: 4 4; }
+  .chart .b { fill: var(--dark); }
+  .chart .b.today { fill: var(--clay); }
+  .chart .hit { fill: transparent; }
+  .chart .hit:hover + .b, .chart g:hover .b { fill: var(--dark-2); }
+  .chart g:hover .b.today { fill: #74492F; }
+  .tip { position: absolute; pointer-events: none; background: var(--ink); color: var(--surface); padding: 7px 10px; border-radius: 9px; font-size: 12px; line-height: 1.45; white-space: nowrap; z-index: 5; transform: translate(-50%, calc(-100% - 10px)); font-variant-numeric: tabular-nums; box-shadow: 0 10px 24px -12px rgba(0,0,0,.5); }
+  .tip b { font-weight: 700; }
+  .heat { display: grid; grid-auto-flow: column; grid-template-rows: repeat(7, 1fr); gap: 3px; overflow-x: auto; padding-bottom: 2px; }
+  .heat i { width: 13px; height: 13px; border-radius: 3px; background: var(--hover); display: block; }
+  .heat i.l1 { background: #CFDFD2; } .heat i.l2 { background: #9DBFA6; } .heat i.l3 { background: #5E8F6E; } .heat i.l4 { background: #244D3A; }
+  .heat i.fut { background: transparent; }
+  .legend { display: flex; gap: 4px; align-items: center; font-size: 11px; color: var(--faint); margin-top: 8px; }
+  .legend i { width: 11px; height: 11px; border-radius: 3px; display: inline-block; }
+  .empty { padding: 50px 24px; text-align: center; color: var(--faint); font-size: 13px; line-height: 1.7; }
+  .empty b { display: block; font-family: var(--serif); color: var(--dark); font-size: 18px; font-weight: 600; margin-bottom: 4px; }
+  .seg { display: flex; padding: 3px; gap: 2px; background: var(--press); border-radius: 999px; flex-wrap: wrap; }
+  .seg button { flex: 1; height: 30px; border-radius: 999px; font-size: 12.5px; font-weight: 600; color: var(--muted); padding: 0 10px; white-space: nowrap; }
+  .seg button[aria-pressed="true"] { background: var(--surface); color: var(--dark); box-shadow: 0 2px 6px -3px rgba(28,40,36,.3); }
+
+  /* ---------- Side panel ---------- */
+  #side .ph { padding: 16px 20px 12px; border-bottom: 1px solid var(--hair); display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  #side .ph h2 { margin: 0; font-family: var(--serif); font-size: 19px; font-weight: 600; color: var(--dark); letter-spacing: -.02em; }
+  #side .ph p { margin: 3px 0 0; font-size: 12px; color: var(--faint); }
+  #side .collapse { display: none; }
+  .pbody { flex: 1; min-height: 0; overflow-y: auto; padding: 6px 20px 20px; overscroll-behavior: contain; }
+  .sec { padding: 16px 0; border-bottom: 1px solid var(--hair); }
+  .sec:last-child { border-bottom: 0; }
+  .sec h3 { margin: 0 0 10px; font-size: 12px; font-weight: 700; color: var(--clay); letter-spacing: .04em; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .sec h3 .v { color: var(--faint); font-weight: 600; letter-spacing: 0; font-variant-numeric: tabular-nums; }
+  .sec p.hint { margin: 0 0 10px; font-size: 12.5px; color: var(--muted); line-height: 1.6; }
+  .btns { display: flex; flex-wrap: wrap; gap: 6px; }
+  .btns.g2 { display: grid; grid-template-columns: 1fr 1fr; }
+  .btns.g2 .btn { width: 100%; }
+  .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+  .field:last-child { margin-bottom: 0; }
+  .field > label, .field > .lbl { font-size: 12px; font-weight: 600; color: var(--ink-2); display: flex; justify-content: space-between; gap: 6px; }
+  .field > label .v, .field > .lbl .v { color: var(--faint); font-weight: 500; font-variant-numeric: tabular-nums; }
+  .inp, select.inp { width: 100%; height: 40px; border: 0; background: #fff; box-shadow: inset 0 0 0 1px var(--hair); border-radius: 999px; padding: 0 14px; font-size: 13.5px; outline: none; transition: box-shadow .15s; min-width: 0; }
+  select.inp { appearance: none; -webkit-appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235E665F' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; background-size: 16px; padding-right: 34px; }
+  .inp:focus { box-shadow: inset 0 0 0 1.5px var(--dark), 0 0 0 4px rgba(36,77,58,.08); }
+  .inp.tc { text-align: center; font-variant-numeric: tabular-nums; padding: 0 6px; }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+  .hms { display: grid; grid-template-columns: 1fr auto 1fr auto 1fr; gap: 6px; align-items: center; }
+  .hms span { font-size: 12px; color: var(--faint); font-weight: 600; }
+  .num { display: grid; grid-template-columns: 34px 1fr 34px; align-items: center; background: #fff; box-shadow: inset 0 0 0 1px var(--hair); border-radius: 999px; height: 40px; }
+  .num button { height: 34px; width: 34px; border-radius: 999px; display: grid; place-items: center; color: var(--muted); margin: 3px; }
+  .num button:hover { background: var(--hover); color: var(--ink); }
+  .num input { border: 0; background: none; text-align: center; width: 100%; height: 100%; outline: none; font-weight: 600; font-variant-numeric: tabular-nums; min-width: 0; -moz-appearance: textfield; }
+  .num input::-webkit-inner-spin-button { -webkit-appearance: none; }
+  .num svg.i { width: 15px; height: 15px; }
+  .range { width: 100%; accent-color: var(--dark); margin: 4px 0 0; }
+  .switch { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 13px; font-weight: 600; color: var(--ink-2); cursor: pointer; padding: 6px 0; }
+  .switch small { display: block; font-size: 11.5px; font-weight: 500; color: var(--faint); margin-top: 2px; line-height: 1.45; }
+  .switch input { appearance: none; -webkit-appearance: none; width: 40px; height: 24px; border-radius: 999px; background: var(--sand); position: relative; cursor: pointer; transition: background .15s; flex: none; margin: 0; }
+  .switch input::after { content: ''; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 999px; background: #fff; transition: transform .15s; box-shadow: 0 1px 3px rgba(0,0,0,.2); }
+  .switch input:checked { background: var(--dark); }
+  .switch input:checked::after { transform: translateX(16px); }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip { height: 32px; padding: 0 12px; border-radius: 999px; background: #fff; box-shadow: inset 0 0 0 1px var(--hair); font-size: 12.5px; font-weight: 600; color: var(--ink-2); display: inline-flex; align-items: center; gap: 6px; }
+  .chip:hover { background: var(--hover); }
+  .chip small { color: var(--faint); font-weight: 500; font-variant-numeric: tabular-nums; }
+  .chip .x { width: 18px; height: 18px; border-radius: 999px; display: grid; place-items: center; color: var(--faint); margin-right: -6px; }
+  .chip .x:hover { background: var(--press); color: var(--danger); }
+  .chip .x svg { width: 12px; height: 12px; }
+  .note { font-size: 12px; padding: 10px 12px; border-radius: var(--r-md); background: var(--hover); color: var(--muted); line-height: 1.6; margin-top: 10px; }
+  .note.ok { background: #E8F0E9; color: var(--dark); }
+  .note.warn { background: #F3E7DC; color: #6E4429; }
+  .goalbar { display: flex; align-items: center; gap: 10px; font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .goalbar .bar { flex: 1; height: 8px; }
+  .goalbar b { color: var(--ink); }
+  /* ---------- Dialogs ---------- */
+  dialog { border: 0; border-radius: 22px; padding: 0; width: min(520px, calc(100vw - 32px)); background: var(--surface); box-shadow: 0 0 0 1px var(--hair), 0 30px 70px -30px rgba(28,40,36,.45); color: var(--ink); }
+  dialog::backdrop { background: rgba(28,40,36,.32); backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px); }
+  .dlg-head { display: flex; align-items: center; justify-content: space-between; padding: 20px 22px 8px; }
+  .dlg-head h2 { margin: 0; font-family: var(--serif); font-size: 20px; font-weight: 600; letter-spacing: -.02em; color: var(--dark); }
+  .dlg-body { padding: 8px 22px 22px; display: flex; flex-direction: column; gap: 14px; max-height: 76vh; overflow-y: auto; }
+  .dlg-body p { margin: 0; font-size: 13px; color: var(--muted); line-height: 1.65; }
+  .dlg-body .sec { padding: 12px 0; }
+  .btn-row { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+  .help h4 { margin: 4px 0 6px; font-size: 12px; font-weight: 700; color: var(--clay); letter-spacing: .04em; }
+  .help ul { margin: 0; padding-left: 18px; font-size: 13px; color: var(--ink-2); line-height: 1.75; }
+  .keys { display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; font-size: 13px; align-items: center; }
+  kbd { font-family: var(--sans); font-size: 11.5px; font-weight: 700; padding: 3px 7px; border-radius: 6px; background: #fff; box-shadow: inset 0 0 0 1px var(--hair), 0 1px 0 var(--hair); color: var(--ink-2); white-space: nowrap; }
+
+  /* ---------- Toast ---------- */
+  #toast { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom)); transform: translateX(-50%); background: var(--dark); color: var(--surface); padding: 11px 18px; border-radius: 999px; box-shadow: 0 14px 30px -14px rgba(28,40,36,.55); font-size: 13px; font-weight: 600; z-index: 200; display: none; align-items: center; gap: 14px; max-width: calc(100vw - 32px); }
+  #toast.show { display: flex; }
+  #toast.err { background: var(--danger); }
+  #toast button { color: var(--sand); font-weight: 600; white-space: nowrap; text-decoration: underline; text-underline-offset: 3px; }
+
+  .foot { max-width: 1440px; margin: 0 auto; padding: 0 24px 16px; font-size: 11.5px; color: var(--faint); display: flex; gap: 6px; align-items: center; }
+  .foot svg { width: 13px; height: 13px; }
+  /* ---------- Colorer ---------- */
+  .fab { display: none; }
+  .scroll { padding-bottom: 18px; }
+  .hex { font-variant-numeric: tabular-nums; letter-spacing: .02em; }
+  .mono { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 12.5px; }
+  .chk { display: inline-flex; align-items: center; gap: 7px; font-size: 12.5px; font-weight: 600; color: var(--ink-2); cursor: pointer; white-space: nowrap; height: 36px; padding: 0 6px; }
+  .chk input { width: 17px; height: 17px; accent-color: var(--dark); margin: 0; }
+  .wbar .lbl2 { font-size: 12px; font-weight: 600; color: var(--muted); white-space: nowrap; }
+  .wbar .num { width: 118px; height: 36px; }
+  .wbar .num button { width: 30px; height: 30px; }
+  .wbar select.inp { width: auto; height: 36px; padding-right: 34px; font-size: 13px; font-weight: 600; }
+  .wbar .seg button { height: 28px; flex: none; }
+  .wbar .rng { display: inline-flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; color: var(--muted); white-space: nowrap; }
+  .wbar .rng input { width: 110px; accent-color: var(--dark); }
+  .wbar .rng b { color: var(--ink); font-variant-numeric: tabular-nums; min-width: 34px; display: inline-block; }
+  kbd.k { margin-left: 2px; background: rgba(255,255,255,.16); color: inherit; box-shadow: none; font-size: 10.5px; padding: 2px 6px; }
+
+  /* swatch basics */
+  .sw-chip { width: 28px; height: 28px; border-radius: 8px; box-shadow: inset 0 0 0 1px rgba(28,40,36,.12); flex: none; display: inline-block; cursor: pointer; }
+  .checker { background-image: linear-gradient(45deg, #ddd 25%, transparent 25%), linear-gradient(-45deg, #ddd 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #ddd 75%), linear-gradient(-45deg, transparent 75%, #ddd 75%); background-size: 12px 12px; background-position: 0 0, 0 6px, 6px -6px, -6px 0; }
+
+  /* palette */
+  .pal { display: flex; height: 380px; margin: 16px 18px 0; border-radius: 18px; overflow: hidden; box-shadow: 0 0 0 1px var(--hair); }
+  .slot { flex: 1; min-width: 0; position: relative; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; padding: 14px 6px 16px; gap: 4px; cursor: pointer; transition: flex .25s; }
+  .slot:hover { flex: 1.25; }
+  .slot .hx { font-size: 19px; font-weight: 700; letter-spacing: .02em; font-variant-numeric: tabular-nums; }
+  .slot .nm { font-size: 11.5px; opacity: .78; text-align: center; line-height: 1.35; min-height: 16px; }
+  .slot .ops { display: flex; flex-direction: column; gap: 2px; margin-bottom: auto; opacity: 0; transition: opacity .15s; }
+  .slot:hover .ops, .slot.locked .ops, .slot:focus-within .ops { opacity: 1; }
+  .slot.locked .ops button:not(.lk) { opacity: 0; }
+  .slot:hover.locked .ops button { opacity: 1; }
+  .slot .ops button { width: 36px; height: 36px; border-radius: 999px; display: grid; place-items: center; color: inherit; }
+  .slot .ops button:hover { background: rgba(127,127,127,.2); }
+  .slot.sel::after { content: ''; position: absolute; left: 50%; bottom: 6px; width: 22px; height: 3px; border-radius: 3px; background: currentColor; transform: translateX(-50%); opacity: .7; }
+  @media (hover: none) { .slot .ops { opacity: 1; } .slot.locked .ops button:not(.lk) { opacity: 1; } }
+  .pal-tools { display: flex; flex-wrap: wrap; gap: 6px; padding: 12px 18px 0; align-items: center; }
+  .mock { border-radius: 14px; overflow: hidden; box-shadow: 0 0 0 1px var(--hair); }
+  .mock .mh { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; font-weight: 700; font-size: 14px; }
+  .mock .mh nav { display: flex; gap: 14px; font-size: 12.5px; font-weight: 600; opacity: .85; }
+  .mock .mb { padding: 22px 18px; display: grid; grid-template-columns: 1.3fr 1fr; gap: 16px; align-items: center; }
+  .mock h4 { margin: 0 0 6px; font-family: var(--serif); font-size: 24px; letter-spacing: -.02em; line-height: 1.25; }
+  .mock p { margin: 0 0 14px; font-size: 13px; line-height: 1.6; opacity: .85; }
+  .mock .mbtn { display: inline-flex; height: 36px; align-items: center; padding: 0 16px; border-radius: 999px; font-weight: 700; font-size: 13px; margin-right: 6px; }
+  .mock .mcard2 { border-radius: 14px; padding: 14px; font-size: 12.5px; line-height: 1.55; }
+  .mock .mcard2 b { display: block; font-size: 22px; margin-bottom: 2px; }
+  .mock .mtag { display: inline-block; padding: 3px 9px; border-radius: 999px; font-size: 11px; font-weight: 700; margin-bottom: 8px; }
+
+  /* side inspector */
+  .sv { position: relative; border-radius: 14px; overflow: hidden; touch-action: none; cursor: crosshair; box-shadow: inset 0 0 0 1px rgba(0,0,0,.08); aspect-ratio: 5 / 3; }
+  .sv canvas { width: 100%; height: 100%; display: block; }
+  .knob { position: absolute; width: 22px; height: 22px; border-radius: 999px; border: 3px solid #fff; box-shadow: 0 0 0 1px rgba(0,0,0,.35), 0 2px 6px rgba(0,0,0,.35); transform: translate(-50%, -50%); pointer-events: none; }
+  input.hue { -webkit-appearance: none; appearance: none; width: 100%; height: 18px; border-radius: 999px; margin: 12px 0 0; background: linear-gradient(90deg, #f00, #ff0 17%, #0f0 33%, #0ff 50%, #00f 67%, #f0f 83%, #f00); box-shadow: inset 0 0 0 1px rgba(0,0,0,.08); outline: none; touch-action: none; }
+  input.hue::-webkit-slider-thumb { -webkit-appearance: none; width: 24px; height: 24px; border-radius: 999px; background: transparent; border: 3px solid #fff; box-shadow: 0 0 0 1px rgba(0,0,0,.35), 0 2px 6px rgba(0,0,0,.3); }
+  input.hue::-moz-range-thumb { width: 18px; height: 18px; border-radius: 999px; background: transparent; border: 3px solid #fff; box-shadow: 0 0 0 1px rgba(0,0,0,.35); }
+  .pickrow { display: flex; gap: 6px; align-items: center; margin-top: 12px; }
+  .pickrow .inp { flex: 1; min-width: 0; font-weight: 600; }
+  .nat { position: relative; width: 40px; height: 40px; flex: none; border-radius: 999px; overflow: hidden; box-shadow: inset 0 0 0 1px rgba(0,0,0,.12); cursor: pointer; }
+  .nat input { position: absolute; inset: 0; opacity: 0; width: 100%; height: 100%; cursor: pointer; border: 0; padding: 0; }
+  .nat span { position: absolute; inset: 0; pointer-events: none; }
+  .bigsw { height: 74px; border-radius: 14px; margin-top: 12px; display: flex; align-items: flex-end; justify-content: space-between; padding: 10px 14px; font-weight: 700; box-shadow: inset 0 0 0 1px rgba(0,0,0,.06); }
+  .bigsw .hx { font-size: 22px; letter-spacing: .02em; font-variant-numeric: tabular-nums; }
+  .bigsw small { font-size: 11.5px; font-weight: 600; opacity: .8; text-align: right; }
+  .fmts { display: grid; gap: 2px; }
+  .fmt { display: grid; grid-template-columns: 62px 1fr 28px; align-items: center; gap: 8px; height: 34px; padding: 0 4px 0 10px; border-radius: 10px; text-align: left; width: 100%; }
+  .fmt:hover { background: var(--hover); }
+  .fmt .fk { font-size: 11px; font-weight: 700; color: var(--faint); letter-spacing: .04em; }
+  .fmt .fv { font-size: 12.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-variant-numeric: tabular-nums; }
+  .fmt svg.i { width: 15px; height: 15px; color: var(--faint); }
+  .fmt.done svg.i { color: var(--dark); }
+  .steps { display: grid; grid-template-columns: repeat(9, 1fr); gap: 4px; }
+  .steps button { height: 34px; border-radius: 8px; box-shadow: inset 0 0 0 1px rgba(0,0,0,.06); position: relative; }
+  .steps button.cur::after { content: ''; position: absolute; inset: -3px; border-radius: 10px; box-shadow: 0 0 0 2px var(--ink); }
+  .conrow { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .conbox { border-radius: 12px; padding: 10px 12px; font-size: 12px; box-shadow: inset 0 0 0 1px rgba(0,0,0,.06); }
+  .conbox b { display: block; font-size: 18px; font-variant-numeric: tabular-nums; margin-bottom: 2px; }
+  .recent { display: flex; flex-wrap: wrap; gap: 5px; }
+  .recent .sw-chip { width: 26px; height: 26px; }
+  .tinyname { font-size: 12px; color: var(--muted); margin-top: 8px; display: flex; justify-content: space-between; gap: 8px; }
+
+  /* badges */
+  .badge { display: inline-flex; align-items: center; gap: 4px; height: 22px; padding: 0 9px; border-radius: 999px; font-size: 11.5px; font-weight: 700; white-space: nowrap; }
+  .badge.ok { background: #E4F0E6; color: #2F7D4F; }
+  .badge.no { background: #F7E3E0; color: #A63A33; }
+  .badge.mid { background: #F6EBD6; color: #8A5A1B; }
+
+  /* scale */
+  .scl { margin: 14px 18px 0; }
+  .scl .sh { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; flex-wrap: wrap; }
+  .scl .sh h3 { margin: 0; font-family: var(--serif); font-size: 16px; font-weight: 600; color: var(--dark); }
+  .scl .sh input { height: 32px; width: 140px; }
+  .srow { display: grid; grid-template-columns: repeat(11, minmax(0, 1fr)); border-radius: 14px; overflow: hidden; box-shadow: 0 0 0 1px var(--hair); }
+  .scell { height: 104px; padding: 8px 6px; display: flex; flex-direction: column; justify-content: space-between; cursor: pointer; font-size: 11px; font-weight: 700; position: relative; min-width: 0; }
+  .scell .st { font-size: 13px; }
+  .scell .sx { font-size: 10.5px; font-weight: 600; opacity: .85; font-variant-numeric: tabular-nums; overflow: hidden; text-overflow: ellipsis; }
+  .scell .aa { display: flex; gap: 3px; font-size: 9.5px; }
+  .scell .aa span { padding: 1px 4px; border-radius: 4px; }
+  .scell.base::before { content: '기준'; position: absolute; right: 5px; top: 7px; font-size: 9.5px; padding: 1px 5px; border-radius: 4px; background: rgba(127,127,127,.25); }
+
+  /* extract */
+  .drop { margin: 16px 18px 0; border-radius: 18px; border: 2px dashed var(--sand); padding: 46px 20px; text-align: center; color: var(--muted); font-size: 13px; line-height: 1.7; background: #fff; }
+  .drop.over { border-color: var(--dark); background: #EEF3EE; }
+  .drop b { display: block; font-family: var(--serif); color: var(--dark); font-size: 19px; font-weight: 600; margin-bottom: 4px; }
+  .drop .btns { justify-content: center; margin-top: 14px; }
+  .imgwrap { margin: 16px 18px 0; position: relative; display: flex; justify-content: center; background: #fff; border-radius: 18px; box-shadow: 0 0 0 1px var(--hair); padding: 10px; }
+  .imgwrap canvas { max-width: 100%; max-height: 440px; display: block; border-radius: 8px; touch-action: none; cursor: crosshair; }
+  .loupe { position: absolute; width: 112px; height: 112px; border-radius: 999px; overflow: hidden; pointer-events: none; box-shadow: 0 0 0 3px #fff, 0 0 0 4px rgba(0,0,0,.3), 0 10px 24px -8px rgba(0,0,0,.5); display: none; z-index: 3; }
+  .loupe canvas { width: 100%; height: 100%; image-rendering: pixelated; border-radius: 0; max-height: none; }
+  .loupe span { position: absolute; left: 50%; bottom: 10px; transform: translateX(-50%); background: rgba(28,40,36,.85); color: #fff; font-size: 10.5px; font-weight: 700; padding: 2px 7px; border-radius: 999px; }
+  .loupe::after { content: ''; position: absolute; left: 50%; top: 50%; width: 10px; height: 10px; transform: translate(-50%, -50%); box-shadow: 0 0 0 1.5px #fff, 0 0 0 2.5px rgba(0,0,0,.5); }
+  .ebar { display: flex; height: 40px; border-radius: 10px; overflow: hidden; box-shadow: 0 0 0 1px var(--hair); }
+  .ebar span { min-width: 3px; cursor: pointer; }
+  .elist { display: grid; grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); gap: 8px; margin-top: 12px; }
+  .eitem { display: flex; align-items: center; gap: 9px; padding: 6px; border-radius: 12px; box-shadow: inset 0 0 0 1px var(--hair); background: #fff; text-align: left; }
+  .eitem:hover { background: var(--hover); }
+  .eitem .sw-chip { width: 36px; height: 36px; border-radius: 9px; }
+  .eitem b { display: block; font-size: 12.5px; font-variant-numeric: tabular-nums; }
+  .eitem small { font-size: 11px; color: var(--faint); font-variant-numeric: tabular-nums; }
+  .roles { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; }
+  .role { border-radius: 12px; padding: 12px; min-height: 76px; display: flex; flex-direction: column; justify-content: space-between; font-size: 12px; font-weight: 700; text-align: left; }
+  .role small { font-weight: 600; opacity: .8; font-variant-numeric: tabular-nums; }
+
+  /* contrast */
+  .cgrid { display: grid; grid-template-columns: 1fr auto 1fr; gap: 10px; align-items: end; padding: 16px 18px 0; }
+  .cfield .lbl { font-size: 12px; font-weight: 700; color: var(--clay); letter-spacing: .04em; margin-bottom: 6px; display: block; }
+  .cfield .pickrow { margin-top: 0; }
+  .cprev { margin: 14px 18px 0; border-radius: 18px; padding: 26px 26px 22px; box-shadow: 0 0 0 1px var(--hair); }
+  .cprev .t1 { font-family: var(--serif); font-size: 30px; font-weight: 600; letter-spacing: -.02em; margin: 0 0 6px; line-height: 1.25; }
+  .cprev .t2 { font-size: 16px; line-height: 1.65; margin: 0 0 10px; }
+  .cprev .t3 { font-size: 12.5px; line-height: 1.6; margin: 0 0 16px; opacity: 1; }
+  .cprev .ui { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .cprev .ub { height: 38px; padding: 0 16px; border-radius: 999px; display: inline-flex; align-items: center; font-weight: 700; font-size: 13.5px; border: 2px solid currentColor; }
+  .cprev .ui svg.i { width: 26px; height: 26px; stroke-width: 2; }
+  .cres { display: grid; grid-template-columns: 220px 1fr; gap: 12px; margin: 12px 18px 0; }
+  .ratio { border-radius: 16px; background: #fff; box-shadow: 0 0 0 1px var(--hair); padding: 14px 16px; }
+  .ratio .k { font-size: 12px; font-weight: 600; color: var(--muted); }
+  .ratio .v { font-size: 40px; font-weight: 800; letter-spacing: -.03em; font-variant-numeric: tabular-nums; line-height: 1.15; margin: 4px 0; }
+  .ratio .v small { font-size: 18px; color: var(--muted); font-weight: 700; }
+  .ratio .s { font-size: 12px; color: var(--muted); line-height: 1.55; }
+  .wc { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+  .wci { border-radius: 14px; background: #fff; box-shadow: 0 0 0 1px var(--hair); padding: 11px 13px; display: flex; flex-direction: column; gap: 6px; }
+  .wci .k { font-size: 12px; font-weight: 700; color: var(--ink-2); }
+  .wci .s { font-size: 11px; color: var(--faint); }
+  .sugg { display: flex; flex-wrap: wrap; gap: 8px; }
+  .sg { display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 12px 0 6px; border-radius: 999px; background: #fff; box-shadow: inset 0 0 0 1px var(--hair); font-size: 12.5px; font-weight: 600; }
+  .sg:hover { background: var(--hover); }
+  .sg .sw-chip { width: 28px; height: 28px; border-radius: 999px; }
+  .sg small { color: var(--faint); font-variant-numeric: tabular-nums; }
+  .mtx { overflow-x: auto; }
+  .mtx table { border-collapse: separate; border-spacing: 3px; font-size: 11px; font-variant-numeric: tabular-nums; }
+  .mtx th { font-weight: 600; color: var(--faint); padding: 2px; }
+  .mtx th .sw-chip { width: 22px; height: 22px; border-radius: 6px; cursor: default; }
+  .mtx td { width: 64px; min-width: 64px; height: 46px; border-radius: 8px; text-align: center; font-weight: 700; cursor: pointer; line-height: 1.2; }
+  .mtx td small { display: block; font-size: 9.5px; font-weight: 700; opacity: .9; }
+  .mtx td.fail { opacity: .32; }
+  .mtx td.self { opacity: .1; cursor: default; }
+
+  /* vision */
+  .vrows { display: grid; gap: 10px; }
+  .vrow { display: grid; grid-template-columns: 120px 1fr; gap: 10px; align-items: center; }
+  .vrow .k { font-size: 12.5px; font-weight: 700; color: var(--ink-2); }
+  .vrow .k small { display: block; font-size: 11px; font-weight: 500; color: var(--faint); margin-top: 2px; }
+  .vstrip { display: flex; height: 50px; border-radius: 10px; overflow: hidden; box-shadow: 0 0 0 1px var(--hair); }
+  .vstrip span { flex: 1; }
+  .vimgs { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; }
+  .vimgs figure { margin: 0; }
+  .vimgs canvas { width: 100%; height: auto; border-radius: 10px; display: block; box-shadow: 0 0 0 1px var(--hair); }
+  .vimgs figcaption { font-size: 12px; font-weight: 600; color: var(--muted); margin-top: 5px; }
+  .warnlist { display: flex; flex-direction: column; gap: 6px; }
+  .wl { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--ink-2); flex-wrap: wrap; }
+  .wl .pair { display: inline-flex; border-radius: 8px; overflow: hidden; box-shadow: 0 0 0 1px var(--hair); }
+  .wl .pair span { width: 26px; height: 24px; }
+
+  /* gradient */
+  .gprev { margin: 16px 18px 0; height: 260px; border-radius: 18px; box-shadow: 0 0 0 1px var(--hair); position: relative; }
+  .gbar { position: relative; height: 34px; border-radius: 10px; margin: 6px 12px 30px; box-shadow: 0 0 0 1px var(--hair); cursor: copy; touch-action: none; }
+  .gh { position: absolute; top: 100%; width: 26px; height: 30px; transform: translateX(-50%); cursor: grab; touch-action: none; }
+  .gh::before { content: ''; position: absolute; left: 50%; top: -38px; width: 2px; height: 38px; transform: translateX(-50%); background: rgba(0,0,0,.35); }
+  .gh i { position: absolute; left: 0; top: 4px; width: 26px; height: 26px; border-radius: 8px; border: 3px solid #fff; box-shadow: 0 0 0 1px rgba(0,0,0,.35), 0 3px 8px -2px rgba(0,0,0,.4); }
+  .gh.on i { box-shadow: 0 0 0 2.5px var(--ink), 0 3px 8px -2px rgba(0,0,0,.4); }
+  .gstop { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .gstop .inp { width: 130px; }
+  .gstop .rng { flex: 1; min-width: 160px; display: flex; gap: 8px; align-items: center; font-size: 12px; font-weight: 600; color: var(--muted); }
+  .gstop .rng input { flex: 1; accent-color: var(--dark); }
+  .code { position: relative; background: #FBF8F1; border-radius: 12px; box-shadow: inset 0 0 0 1px var(--hair); padding: 12px 44px 12px 14px; font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 12px; line-height: 1.6; color: var(--ink-2); word-break: break-all; white-space: pre-wrap; margin-top: 8px; max-height: 160px; overflow: auto; }
+  .code .cp { position: absolute; right: 6px; top: 6px; }
+  .code .cp { width: 32px; height: 32px; }
+  .presets { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 8px; }
+  .presets button { height: 54px; border-radius: 12px; box-shadow: inset 0 0 0 1px rgba(0,0,0,.06); font-size: 11px; font-weight: 700; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.35); display: flex; align-items: flex-end; padding: 6px 8px; }
+  .gsteps { display: flex; height: 36px; border-radius: 10px; overflow: hidden; margin-top: 10px; box-shadow: 0 0 0 1px var(--hair); }
+  .gsteps span { flex: 1; cursor: pointer; }
+
+  /* library */
+  .lgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; padding: 16px 18px 0; }
+  .lp { border-radius: 16px; background: #fff; box-shadow: 0 0 0 1px var(--hair); overflow: hidden; display: flex; flex-direction: column; }
+  .lp .strip { display: flex; height: 76px; cursor: pointer; }
+  .lp .strip span { flex: 1; }
+  .lp .lb { padding: 10px 8px 8px 14px; display: flex; align-items: center; gap: 4px; }
+  .lp .lb .t { flex: 1; min-width: 0; }
+  .lp .lb b { display: block; font-size: 13.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .lp .lb small { font-size: 11px; color: var(--faint); }
+  .lp .lb .tool { width: 34px; height: 34px; padding: 0; }
+  .lcols { display: flex; flex-wrap: wrap; gap: 8px; }
+  .lcol { display: flex; flex-direction: column; align-items: center; gap: 4px; width: 66px; font-size: 10.5px; font-weight: 600; color: var(--muted); font-variant-numeric: tabular-nums; position: relative; }
+  .lcol .sw-chip { width: 56px; height: 56px; border-radius: 12px; }
+  .lcol .x { position: absolute; right: 0; top: -4px; width: 20px; height: 20px; border-radius: 999px; background: #fff; box-shadow: 0 0 0 1px var(--hair); display: grid; place-items: center; color: var(--faint); }
+  .lcol .x svg { width: 11px; height: 11px; }
+  .lcol .x:hover { color: var(--danger); }
+  textarea.inp { height: 150px; border-radius: 14px; padding: 10px 14px; resize: vertical; line-height: 1.55; }
+  .exout { height: 200px !important; font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 12px !important; }
+  .fmtseg { display: flex; flex-wrap: wrap; gap: 4px; }
+  .fmtseg button { height: 30px; padding: 0 11px; border-radius: 999px; font-size: 12px; font-weight: 600; color: var(--muted); background: var(--hover); }
+  .fmtseg button[aria-pressed="true"] { background: var(--dark); color: var(--surface); }
+  .expal { display: flex; height: 34px; border-radius: 10px; overflow: hidden; box-shadow: 0 0 0 1px var(--hair); }
+  .expal span { flex: 1; }
+
+  /* ---------- Responsive ---------- */
+  @media (min-width: 1000px) {
+    body { height: 100dvh; min-height: 560px; }
+    main { flex: 1; height: auto; min-height: 0; }
+  }
+  @media (max-width: 1100px) { main { grid-template-columns: minmax(0, 1fr) 330px; } }
+  @media (max-width: 999px) {
+    main { display: flex; flex-direction: column; height: auto; min-height: 0; padding: 0 12px 16px; }
+    #side .collapse { display: grid; }
+    #side.closed .pbody { display: none; }
+    #side.closed .ph { border-bottom: 0; }
+    .pbody { overflow: visible; }
+    #work { min-height: 60vh; }
+    .scroll { overflow: visible; }
+    .tabs-wrap { padding: 2px 12px 10px; }
+    .top-inner { padding: 12px 12px 6px; gap: 8px; }
+    .foot { padding: 0 12px 12px; }
+    .sv { aspect-ratio: 2 / 1; }
+  }
+  @media (max-width: 760px) {
+    .logo { height: 27px; }
+    .app-name { font-size: 19px; padding-left: 10px; }
+    .app-name small { display: none; }
+    .head-actions .btn .lbl { display: none; }
+    .head-actions .btn { width: 38px; padding: 0; }
+    .tool .t { display: none; }
+    .pal { flex-direction: column; height: auto; margin: 12px 12px 0; }
+    .slot { flex-direction: row; justify-content: flex-start; height: 72px; padding: 0 10px 0 16px; gap: 10px; }
+    .slot:hover { flex: 1; }
+    .slot .ops { flex-direction: row; margin: 0 0 0 auto; order: 3; opacity: 1; }
+    .slot .nm { text-align: left; }
+    .slot.sel::after { left: 6px; top: 50%; bottom: auto; width: 3px; height: 26px; transform: translateY(-50%); }
+    .card, .scl, .drop, .imgwrap, .cprev, .gprev { margin-left: 12px; margin-right: 12px; }
+    .pal-tools, .cgrid, .lgrid { padding-left: 12px; padding-right: 12px; }
+    .cres { grid-template-columns: 1fr; margin-left: 12px; margin-right: 12px; }
+    .cgrid { grid-template-columns: 1fr; }
+    .cgrid #swapBtn { justify-self: center; transform: rotate(90deg); }
+    .mock .mb { grid-template-columns: 1fr; }
+    .srow { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+    .scell { height: 84px; }
+    .vrow { grid-template-columns: 1fr; gap: 4px; }
+    .gprev { height: 180px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="top-inner">
+    <a class="brand" href="./" aria-label="Colorer">
+      <img class="logo" alt="OUTGRID" src="data:image/png;base64,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" />
+      <span class="app-name">Colorer<small>색상 도구</small></span>
+    </a>
+    <div class="head-actions">
+      <button class="icon-btn" id="helpBtn" title="도움말"><i data-icon="help"></i></button>
+      <button class="btn line" id="shareBtn" title="지금 팔레트를 링크로 복사"><i data-icon="link"></i><span class="lbl">팔레트 링크</span></button>
+      <button class="btn primary" id="saveBtn" title="지금 팔레트를 보관함에 저장"><i data-icon="bookmark"></i><span class="lbl">보관함에 저장</span></button>
+    </div>
+  </div>
+  <div class="tabs-wrap">
+    <nav class="tabs" id="tabs" role="tablist">
+      <button class="tab" role="tab" data-tab="palette" aria-selected="true"><i data-icon="palette"></i>팔레트</button>
+      <button class="tab" role="tab" data-tab="scale"><i data-icon="layers"></i>스케일</button>
+      <button class="tab" role="tab" data-tab="extract"><i data-icon="image"></i>이미지 추출</button>
+      <button class="tab" role="tab" data-tab="contrast"><i data-icon="contrast"></i>대비 검사</button>
+      <button class="tab" role="tab" data-tab="vision"><i data-icon="eye"></i>색각 시뮬레이션</button>
+      <button class="tab" role="tab" data-tab="gradient"><i data-icon="gradient"></i>그라디언트</button>
+      <button class="tab" role="tab" data-tab="library"><i data-icon="bookmark"></i>보관함 <span class="n" id="libN">0</span></button>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <section class="panel" id="work">
+
+    <!-- ===== Palette ===== -->
+    <div class="view" data-view="palette">
+      <div class="wbar">
+        <select class="inp" id="palMode" title="조화 규칙">
+          <option value="random">자유 조합</option>
+          <option value="analog">유사색</option>
+          <option value="mono">단색조</option>
+          <option value="comp">보색</option>
+          <option value="split">분할 보색</option>
+          <option value="triad">삼각 배색</option>
+          <option value="tetrad">사각 배색</option>
+          <option value="shades">명암 단계</option>
+          <option value="pastel">파스텔</option>
+          <option value="earth">자연·흙빛</option>
+        </select>
+        <div class="num" title="색 개수"><button id="palMinus" aria-label="줄이기"><i data-icon="minus"></i></button><input id="palN" inputmode="numeric" value="5" aria-label="색 개수" /><button id="palPlus" aria-label="늘리기"><i data-icon="plus"></i></button></div>
+        <label class="chk" title="선택한 색을 첫 번째 색으로 두고 조화 규칙을 적용해요"><input type="checkbox" id="palBase" />선택한 색 기준</label>
+        <span class="grow"></span>
+        <button class="tool" id="palUndo" title="되돌리기 (Ctrl+Z)"><i data-icon="undo"></i></button>
+        <button class="tool" id="palRedo" title="다시 하기 (Ctrl+Y)"><i data-icon="redo"></i></button>
+        <button class="btn primary" id="palGen"><i data-icon="dice"></i>새로 만들기<kbd class="k" id="spaceKbd">Space</kbd></button>
+      </div>
+      <div class="scroll">
+        <div class="pal" id="pal"></div>
+        <div class="pal-tools">
+          <button class="btn line sm" id="palSortL"><i data-icon="sun"></i>밝기순</button>
+          <button class="btn line sm" id="palSortH"><i data-icon="palette"></i>색상순</button>
+          <button class="btn line sm" id="palRev"><i data-icon="swap"></i>뒤집기</button>
+          <button class="btn line sm" id="palAdd"><i data-icon="plus"></i>선택한 색 추가</button>
+          <span class="grow"></span>
+          <button class="btn line sm" id="palText"><i data-icon="text"></i>텍스트로 입력</button>
+          <button class="btn sm" id="palExport"><i data-icon="download"></i>내보내기</button>
+        </div>
+        <div class="card">
+          <div class="ch"><h3>화면에 써 보기</h3><span class="cs">밝은 색은 배경, 어두운 색은 글자, 가장 선명한 색은 강조로 자동 배정해요</span></div>
+          <div id="mock"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== Scale ===== -->
+    <div class="view" data-view="scale" hidden>
+      <div class="wbar">
+        <label class="rng" title="밝은 쪽과 어두운 쪽의 색상을 반대로 돌려요">색상 이동 <input type="range" id="sHue" min="-40" max="40" step="1" value="0" /><b id="sHueV">0°</b></label>
+        <label class="rng" title="전체 채도">채도 <input type="range" id="sChroma" min="20" max="150" step="5" value="100" /><b id="sChromaV">100%</b></label>
+        <label class="chk"><input type="checkbox" id="sKeep" checked />기준 색 그대로</label>
+        <label class="chk"><input type="checkbox" id="sAll" />팔레트 전체</label>
+        <span class="grow"></span>
+        <button class="btn sm" id="sExport"><i data-icon="download"></i>내보내기</button>
+      </div>
+      <div class="scroll" id="scales"></div>
+    </div>
+
+    <!-- ===== Extract ===== -->
+    <div class="view" data-view="extract" hidden>
+      <div class="wbar">
+        <button class="btn line sm" id="imgOpen"><i data-icon="image"></i>이미지 열기</button>
+        <span class="sep"></span>
+        <span class="lbl2">색 개수</span>
+        <div class="num"><button id="kMinus" aria-label="줄이기"><i data-icon="minus"></i></button><input id="kN" inputmode="numeric" value="6" aria-label="색 개수" /><button id="kPlus" aria-label="늘리기"><i data-icon="plus"></i></button></div>
+        <select class="inp" id="algo" title="추출 방식"><option value="kmeans">K-평균 (지각 균일)</option><option value="median">메디안 컷</option></select>
+        <select class="inp" id="eSort" title="정렬"><option value="pop">비율순</option><option value="light">밝기순</option><option value="hue">색상순</option></select>
+        <span class="grow"></span>
+        <button class="btn primary sm" id="extToPal" disabled><i data-icon="palette"></i>팔레트로 보내기</button>
+      </div>
+      <div class="scroll">
+        <div class="drop" id="drop">
+          <b>이미지에서 색을 뽑아요</b>
+          사진을 끌어다 놓거나, 복사한 이미지를 붙여넣거나(Ctrl+V), 아래 버튼으로 여세요.<br />이미지는 이 기기 밖으로 나가지 않아요.
+          <div class="btns"><button class="btn primary" id="imgOpen2"><i data-icon="image"></i>이미지 열기</button><button class="btn line" id="imgSample"><i data-icon="sparkle"></i>예시 이미지</button></div>
+        </div>
+        <div class="imgwrap" id="imgWrap" hidden><canvas id="imgCan"></canvas><div class="loupe" id="loupe"><canvas id="loupeCan" width="11" height="11"></canvas><span id="loupeTxt"></span></div></div>
+        <div id="extOut" hidden>
+          <div class="card">
+            <div class="ch"><h3>추출한 색</h3><span class="cs" id="extInfo"></span></div>
+            <div class="ebar" id="extBar"></div>
+            <div class="elist" id="extList"></div>
+          </div>
+          <div class="card">
+            <div class="ch"><h3>쓰임새별 대표 색</h3><span class="cs">비율, 선명도, 밝기로 골랐어요</span></div>
+            <div class="roles" id="extRoles"></div>
+          </div>
+          <div class="card">
+            <div class="ch"><h3>직접 찍은 색</h3>
+              <div class="seg" id="sampSeg"><button data-s="1">1px</button><button data-s="3">3×3 평균</button><button data-s="5">5×5 평균</button></div></div>
+            <p class="hint" style="margin:0 0 10px;font-size:12.5px;color:var(--muted)">이미지를 누르거나 끌면 확대경이 나오고, 손을 떼면 그 지점의 색을 찍어요.</p>
+            <div class="lcols" id="picks"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== Contrast ===== -->
+    <div class="view" data-view="contrast" hidden>
+      <div class="scroll">
+        <div class="cgrid">
+          <div class="cfield"><span class="lbl">글자색</span>
+            <div class="pickrow"><label class="nat"><input type="color" id="fgNat" /><span id="fgSw"></span></label><input class="inp" id="fgIn" spellcheck="false" autocomplete="off" /><button class="btn sm line" id="fgCur" title="선택한 색 넣기">선택 색</button></div>
+          </div>
+          <button class="icon-btn" id="swapBtn" title="글자색과 배경색 바꾸기"><i data-icon="swap"></i></button>
+          <div class="cfield"><span class="lbl">배경색</span>
+            <div class="pickrow"><label class="nat"><input type="color" id="bgNat" /><span id="bgSw"></span></label><input class="inp" id="bgIn" spellcheck="false" autocomplete="off" /><button class="btn sm line" id="bgCur" title="선택한 색 넣기">선택 색</button></div>
+          </div>
+        </div>
+        <div class="cprev" id="cprev">
+          <p class="t1">다람쥐 헌 쳇바퀴에 타고파</p>
+          <p class="t2">본문 크기(16px)의 글자예요. 이 색 조합으로 긴 글을 편하게 읽을 수 있는지 확인해 보세요. The quick brown fox jumps over the lazy dog. 0123456789</p>
+          <p class="t3">작은 글자(12.5px)는 대비가 낮으면 가장 먼저 읽기 어려워져요.</p>
+          <div class="ui"><span class="ub">버튼 테두리</span><i data-icon="heart"></i><i data-icon="bookmark"></i><i data-icon="eye"></i></div>
+        </div>
+        <div class="cres">
+          <div class="ratio"><div class="k">WCAG 2 대비</div><div class="v" id="cRatio">–</div><div class="s" id="cApca"></div></div>
+          <div class="wc" id="cChecks"></div>
+        </div>
+        <div class="card">
+          <div class="ch"><h3>기준을 넘는 비슷한 색</h3><span class="cs">색상은 그대로 두고 밝기만 바꿔 찾았어요. 누르면 적용돼요</span></div>
+          <div class="sugg" id="sugg"></div>
+        </div>
+        <div class="card">
+          <div class="ch"><h3>팔레트 대비 표</h3><div class="seg" id="mtxLvl"><button data-l="3">3:1</button><button data-l="4.5">4.5:1</button><button data-l="7">7:1</button></div></div>
+          <p style="margin:0 0 8px;font-size:12px;color:var(--muted)">세로줄이 글자색, 가로줄이 배경색이에요. 기준에 못 미치는 칸은 흐리게 보여요. 칸을 누르면 위 검사로 불러와요.</p>
+          <div class="mtx" id="mtx"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== Vision ===== -->
+    <div class="view" data-view="vision" hidden>
+      <div class="wbar">
+        <div class="seg" id="visSrc"><button data-s="palette">팔레트</button><button data-s="scale">스케일</button><button data-s="contrast">대비 검사 색</button></div>
+        <label class="rng" title="색각 이상의 정도 (100% = 완전 색맹)">정도 <input type="range" id="visSev" min="10" max="100" step="10" value="100" /><b id="visSevV">100%</b></label>
+        <span class="grow"></span>
+      </div>
+      <div class="scroll">
+        <div class="card"><div class="ch"><h3>색각 유형별로 보기</h3><span class="cs">Machado(2009) 모델로 계산한 근사치예요</span></div><div class="vrows" id="visRows"></div></div>
+        <div class="card"><div class="ch"><h3>구분하기 어려운 색 쌍</h3><span class="cs">지각 색차(OKLab ΔE)가 작은 쌍</span></div><div class="warnlist" id="visWarn"></div></div>
+        <div class="card"><div class="ch"><h3>이미지로 보기</h3><div class="btns"><button class="btn line sm" id="visImgOpen"><i data-icon="image"></i>이미지 열기</button><button class="btn line sm" id="visUseExt"><i data-icon="image"></i>추출 탭 이미지</button></div></div><div class="vimgs" id="visImgs"><p style="margin:0;font-size:12.5px;color:var(--faint)">이미지를 열면 유형별로 어떻게 보이는지 나란히 보여 드려요.</p></div></div>
+      </div>
+    </div>
+
+    <!-- ===== Gradient ===== -->
+    <div class="view" data-view="gradient" hidden>
+      <div class="wbar">
+        <div class="seg" id="gType"><button data-t="linear">선형</button><button data-t="radial">원형</button><button data-t="conic">원뿔</button></div>
+        <div class="seg" id="gSpace" title="중간색을 섞는 방식"><button data-s="srgb">sRGB</button><button data-s="oklab">OKLab</button><button data-s="oklch">OKLCH</button></div>
+        <span class="grow"></span>
+        <button class="tool" id="gRev" title="뒤집기"><i data-icon="swap"></i><span class="t">뒤집기</span></button>
+        <button class="tool" id="gRnd" title="무작위"><i data-icon="dice"></i><span class="t">무작위</span></button>
+        <button class="btn sm" id="gPng"><i data-icon="download"></i>PNG 저장</button>
+      </div>
+      <div class="scroll">
+        <div class="gprev" id="gprev"></div>
+        <div class="card">
+          <div class="ch"><h3>색 지점</h3><span class="cs">막대를 누르면 지점이 생기고, 끌어서 옮겨요</span></div>
+          <div class="gbar" id="gbar"></div>
+          <div class="gstop" id="gstop"></div>
+          <div class="gstop" style="margin-top:12px">
+            <label class="rng" id="gAngW">각도 <input type="range" id="gAng" min="0" max="360" step="1" /><b id="gAngV"></b></label>
+            <label class="rng" id="gCxW">가로 중심 <input type="range" id="gCx" min="0" max="100" step="1" /><b id="gCxV"></b></label>
+            <label class="rng" id="gCyW">세로 중심 <input type="range" id="gCy" min="0" max="100" step="1" /><b id="gCyV"></b></label>
+          </div>
+        </div>
+        <div class="card">
+          <div class="ch"><h3>CSS</h3><span class="cs" id="gNote"></span></div>
+          <div class="code" id="gCss"></div>
+          <div class="code" id="gCss2"></div>
+        </div>
+        <div class="card">
+          <div class="ch"><h3>단계 색 뽑기</h3>
+            <div class="num" style="width:118px;height:36px"><button id="gsMinus"><i data-icon="minus"></i></button><input id="gsN" inputmode="numeric" value="7" /><button id="gsPlus"><i data-icon="plus"></i></button></div></div>
+          <div class="gsteps" id="gSteps"></div>
+          <div class="btns" style="margin-top:10px"><button class="btn line sm" id="gToPal"><i data-icon="palette"></i>팔레트로 보내기</button><button class="btn line sm" id="gFromPal"><i data-icon="gradient"></i>팔레트로 그라디언트 만들기</button></div>
+        </div>
+        <div class="card"><div class="ch"><h3>프리셋</h3></div><div class="presets" id="gPresets"></div></div>
+      </div>
+    </div>
+
+    <!-- ===== Library ===== -->
+    <div class="view" data-view="library" hidden>
+      <div class="wbar">
+        <button class="btn primary sm" id="libSave"><i data-icon="bookmark"></i>지금 팔레트 저장</button>
+        <button class="btn line sm" id="libImport"><i data-icon="upload"></i>파일 가져오기</button>
+        <button class="btn line sm" id="libText"><i data-icon="text"></i>텍스트에서 찾기</button>
+        <span class="grow"></span>
+        <button class="btn sm" id="libBackup"><i data-icon="download"></i>전체 백업</button>
+      </div>
+      <div class="scroll">
+        <div class="lgrid" id="libPal"></div>
+        <div class="card"><div class="ch"><h3>저장한 색</h3><span class="cs">오른쪽 패널의 "색 저장"으로 모아요</span></div><div class="lcols" id="libCol"></div></div>
+      </div>
+    </div>
+  </section>
+
+  <aside class="panel" id="side">
+    <div class="ph">
+      <div><h2>선택한 색</h2><p id="curName"></p></div>
+      <button class="icon-btn collapse" id="sideToggle" title="접기·펼치기"><i data-icon="chevron"></i></button>
+    </div>
+    <div class="pbody">
+      <div class="sec">
+        <div class="sv" id="sv"><canvas id="svCan" width="320" height="192"></canvas><span class="knob" id="svKnob"></span></div>
+        <input type="range" class="hue" id="hue" min="0" max="360" step="0.5" aria-label="색상" />
+        <div class="pickrow">
+          <label class="nat" title="기기의 색 선택 창"><input type="color" id="natColor" /><span id="natSw"></span></label>
+          <input class="inp" id="hexIn" spellcheck="false" autocomplete="off" placeholder="#244D3A, rgb(), 색 이름…" aria-label="색 값 입력" />
+          <button class="icon-btn" id="dropBtn" title="화면에서 색 찍기" hidden><i data-icon="pipette"></i></button>
+          <button class="icon-btn" id="rndBtn" title="무작위 색"><i data-icon="dice"></i></button>
+        </div>
+        <div class="bigsw" id="bigsw"><span class="hx" id="bigHex"></span><small id="bigKo"></small></div>
+      </div>
+      <div class="sec"><h3>값 <span class="v">누르면 복사</span></h3><div class="fmts" id="fmts"></div></div>
+      <div class="sec"><h3>밝기 단계 <span class="v">누르면 선택</span></h3><div class="steps" id="steps"></div></div>
+      <div class="sec"><h3>흰색·검정 위 대비</h3><div class="conrow" id="curCon"></div></div>
+      <div class="sec"><h3>보내기</h3>
+        <div class="btns g2">
+          <button class="btn line sm" id="toPal"><i data-icon="palette"></i>팔레트에 추가</button>
+          <button class="btn line sm" id="toGrad"><i data-icon="gradient"></i>그라디언트에</button>
+          <button class="btn line sm" id="toFg"><i data-icon="text"></i>글자색으로</button>
+          <button class="btn line sm" id="toBg"><i data-icon="contrast"></i>배경색으로</button>
+        </div>
+        <button class="btn primary sm block" id="saveCol" style="margin-top:6px"><i data-icon="bookmark"></i>색 저장</button>
+      </div>
+      <div class="sec"><h3>최근 색 <button class="btn ghost sm" id="recClear" style="height:24px;padding:0 8px">지우기</button></h3><div class="recent" id="recent"></div></div>
+    </div>
+  </aside>
+</main>
+
+<div class="foot"><i data-icon="shield"></i>Colorer는 브라우저 안에서만 동작합니다. 이미지와 색은 이 기기에만 저장되고 어디에도 전송되지 않아요.</div>
+
+<!-- Confirm -->
+<dialog id="cfDlg">
+  <div class="dlg-head"><h2 id="cfT"></h2></div>
+  <div class="dlg-body"><p id="cfM"></p><div class="btn-row"><button class="btn ghost" id="cfNo">취소</button><button class="btn primary" id="cfOk">확인</button></div></div>
+</dialog>
+
+<!-- Prompt -->
+<dialog id="prDlg">
+  <div class="dlg-head"><h2 id="prT"></h2><button class="icon-btn" data-close><i data-icon="x"></i></button></div>
+  <div class="dlg-body"><p id="prM"></p><input class="inp" id="prIn" /><textarea class="inp" id="prTa" hidden></textarea><div class="btn-row"><button class="btn ghost" data-close>취소</button><button class="btn primary" id="prOk">확인</button></div></div>
+</dialog>
+
+<!-- Export -->
+<dialog id="exDlg">
+  <div class="dlg-head"><h2>내보내기</h2><button class="icon-btn" data-close><i data-icon="x"></i></button></div>
+  <div class="dlg-body">
+    <div class="expal" id="exPal"></div>
+    <div class="field"><label>이름</label><input class="inp" id="exName" /></div>
+    <div class="fmtseg" id="exFmt"></div>
+    <textarea class="inp exout" id="exOut" readonly></textarea>
+    <div class="btn-row"><button class="btn line" id="exCopy"><i data-icon="copy"></i>복사</button><button class="btn primary" id="exDl"><i data-icon="download"></i>파일 저장</button></div>
+  </div>
+</dialog>
+
+<!-- Help -->
+<dialog id="helpDlg">
+  <div class="dlg-head"><h2>Colorer 사용법</h2><button class="icon-btn" data-close><i data-icon="x"></i></button></div>
+  <div class="dlg-body help">
+    <div><h4>선택한 색 (오른쪽 패널)</h4><ul>
+      <li>어느 탭에서든 색을 누르면 오른쪽 패널의 "선택한 색"이 돼요.</li>
+      <li>HEX, RGB, HSL, HSV, HWB, CMYK, Lab, LCH, OKLCH, 안드로이드 값을 한 번에 보여 주고, 누르면 복사돼요.</li>
+      <li>입력칸에는 <b>#244D3A</b>, <b>rgb(36,77,58)</b>, <b>hsl(…)</b>, <b>oklch(…)</b>, <b>tomato</b> 같은 CSS 색 이름을 넣을 수 있어요.</li>
+      <li>스포이트 버튼은 PC 크롬·엣지에서 화면 아무 곳의 색이나 찍어요. 태블릿에서는 이미지 추출 탭에서 사진을 눌러 찍으세요.</li></ul></div>
+    <div><h4>팔레트</h4><ul>
+      <li><kbd>Space</kbd> 또는 "새로 만들기"로 새 조합을 만들어요. 자물쇠로 잠근 색은 그대로 남아요.</li>
+      <li>조화 규칙은 OKLCH(사람 눈에 고르게 보이는 색 공간)에서 계산해요.</li>
+      <li>"선택한 색 기준"을 켜면 선택한 색을 첫 색으로 두고 규칙을 적용해요.</li>
+      <li>CSS 변수, SCSS, Tailwind, JSON, GIMP(GPL), Adobe(ASE), PNG, SVG로 내보낼 수 있어요.</li></ul></div>
+    <div><h4>대비 검사</h4><ul>
+      <li>WCAG 2.1 기준: 일반 글자 AA 4.5:1, AAA 7:1, 큰 글자(24px 또는 굵은 18.7px 이상) AA 3:1, AAA 4.5:1, 아이콘·테두리 같은 UI 3:1.</li>
+      <li>APCA Lc 값도 함께 보여 줘요. 본문은 |Lc| 75 이상, 큰 제목은 60 이상을 권장해요.</li></ul></div>
+    <div><h4>단축키</h4><div class="keys">
+      <kbd>Space</kbd><span>팔레트 새로 만들기</span>
+      <kbd>Ctrl Z</kbd><span>팔레트 되돌리기</span>
+      <kbd>Ctrl Y</kbd><span>팔레트 다시 하기</span>
+      <kbd>Ctrl V</kbd><span>이미지 붙여넣기 (이미지 추출)</span>
+      <kbd>1 – 7</kbd><span>탭 이동</span></div></div>
+  </div>
+</dialog>
+
+<div id="toast" role="status" aria-live="polite"><span id="toastMsg"></span><button id="toastAct" hidden></button></div>
+<input type="file" id="imgFile" accept="image/*" hidden />
+<input type="file" id="visFile" accept="image/*" hidden />
+<input type="file" id="libFile" accept=".json,.gpl,.txt,.css,.ase,application/json,text/plain" hidden />
+<script>
+'use strict';
+/* =========================================================================
+   Colorer · outgrid — browser-only color tool
+   Palettes, scales, image color extraction, contrast (WCAG 2 + APCA),
+   color-vision simulation, gradients and a saved library.
+   Everything stays in localStorage on this device.
+   ========================================================================= */
+
+/* ---------- Icons ---------- */
+const ICONS = {
+  palette: '<path d="M12 3.5a8.5 8.5 0 0 0 0 17c1.3 0 1.9-.9 1.9-1.8 0-1.2-1-1.6-1-2.6 0-.9.7-1.6 1.6-1.6h2.1a3.9 3.9 0 0 0 3.9-3.9c0-4-3.8-7.1-8.5-7.1z"/><circle cx="7.6" cy="11" r="1.1"/><circle cx="10" cy="7.3" r="1.1"/><circle cx="14.6" cy="7.6" r="1.1"/>',
+  layers: '<rect x="4" y="4" width="16" height="4" rx="1.2"/><rect x="4" y="10" width="16" height="4" rx="1.2"/><rect x="4" y="16" width="16" height="4" rx="1.2"/>',
+  image: '<rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><circle cx="9" cy="10" r="1.8"/><path d="m4 17.5 5-4.5 4 3.5 2.5-2 4.5 3.5"/>',
+  contrast: '<circle cx="12" cy="12" r="8.5"/><path d="M12 3.5v17a8.5 8.5 0 0 0 0-17z" fill="currentColor"/>',
+  eye: '<path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3"/>',
+  gradient: '<rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><path d="M7 4.5v15M10.5 4.5v15M13.5 4.5v15" stroke-dasharray="1.5 2"/>',
+  bookmark: '<path d="M6.5 3.5h11v17l-5.5-4-5.5 4z"/>',
+  help: '<circle cx="12" cy="12" r="8.5"/><path d="M9.6 9.5a2.5 2.5 0 0 1 4.8.9c0 1.7-2.4 2-2.4 3.6M12 16.8v.1"/>',
+  link: '<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>',
+  pipette: '<path d="m14.5 6.5 3 3"/><path d="M16.5 3.8a2.3 2.3 0 0 1 3.3 3.3l-2.3 2.3-3.3-3.3z"/><path d="M14.2 6.1 5.5 14.8 4.5 19.5l4.7-1 8.7-8.7"/>',
+  dice: '<rect x="4" y="4" width="16" height="16" rx="4"/><circle cx="8.8" cy="8.8" r="1.1" fill="currentColor"/><circle cx="15.2" cy="15.2" r="1.1" fill="currentColor"/><circle cx="12" cy="12" r="1.1" fill="currentColor"/><circle cx="15.2" cy="8.8" r="1.1" fill="currentColor"/><circle cx="8.8" cy="15.2" r="1.1" fill="currentColor"/>',
+  lock: '<rect x="5" y="10.5" width="14" height="10" rx="2.5"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/>',
+  unlock: '<rect x="5" y="10.5" width="14" height="10" rx="2.5"/><path d="M8 10.5V8a4 4 0 0 1 7.6-1.7"/>',
+  copy: '<rect x="8.5" y="8.5" width="11" height="11" rx="2.5"/><path d="M15.5 8.5V6a1.5 1.5 0 0 0-1.5-1.5H6A1.5 1.5 0 0 0 4.5 6v8A1.5 1.5 0 0 0 6 15.5h2.5"/>',
+  trash: '<path d="M4.5 7h15"/><path d="M9.5 7V5.2a1.2 1.2 0 0 1 1.2-1.2h2.6a1.2 1.2 0 0 1 1.2 1.2V7"/><path d="m6.5 7 .9 11.3a2 2 0 0 0 2 1.7h5.2a2 2 0 0 0 2-1.7L17.5 7"/>',
+  plus: '<path d="M12 5v14M5 12h14"/>',
+  minus: '<path d="M5 12h14"/>',
+  x: '<path d="M6 6l12 12M18 6 6 18"/>',
+  check: '<path d="m5 12.5 4.5 4.5L19 7.5"/>',
+  undo: '<path d="M9 14 4.5 9.5 9 5"/><path d="M4.5 9.5H15a4.5 4.5 0 0 1 0 9h-3"/>',
+  redo: '<path d="m15 14 4.5-4.5L15 5"/><path d="M19.5 9.5H9a4.5 4.5 0 0 0 0 9h3"/>',
+  download: '<path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/>',
+  upload: '<path d="M12 16V5"/><path d="m7 9.5 5-5 5 5"/><path d="M5 20h14"/>',
+  swap: '<path d="M7 4.5 3.5 8 7 11.5"/><path d="M3.5 8h13"/><path d="m17 12.5 3.5 3.5-3.5 3.5"/><path d="M20.5 16h-13"/>',
+  chevron: '<path d="m6 9 6 6 6-6"/>',
+  shield: '<path d="M12 3.5 5 6.2v5.3c0 4.3 3 7.6 7 9 4-1.4 7-4.7 7-9V6.2z"/><path d="m9.2 12 2 2 3.8-4"/>',
+  text: '<path d="M5 6.5V5h14v1.5"/><path d="M12 5v14"/><path d="M9 19h6"/>',
+  sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2.8v2M12 19.2v2M2.8 12h2M19.2 12h2M5.5 5.5l1.4 1.4M17.1 17.1l1.4 1.4M5.5 18.5l1.4-1.4M17.1 6.9l1.4-1.4"/>',
+  sparkle: '<path d="M12 3.5 13.8 10 20.5 12l-6.7 2L12 20.5 10.2 14 3.5 12l6.7-2z"/>',
+  heart: '<path d="M12 19.5s-7.5-4.4-7.5-10a4.2 4.2 0 0 1 7.5-2.6 4.2 4.2 0 0 1 7.5 2.6c0 5.6-7.5 10-7.5 10z"/>',
+  pen: '<path d="M14.5 5.5 18.5 9.5"/><path d="M4 20l1-4.5L15.8 4.7a2 2 0 0 1 2.8 0l.7.7a2 2 0 0 1 0 2.8L8.5 19 4 20z"/>',
+  open: '<path d="M4 7.5V18a1.5 1.5 0 0 0 1.5 1.5h13A1.5 1.5 0 0 0 20 18v-8a1.5 1.5 0 0 0-1.5-1.5H12l-2-2.5H5.5A1.5 1.5 0 0 0 4 7.5z"/>',
+};
+function icon(n, cls = '') { return `<svg class="i ${cls}" viewBox="0 0 24 24" aria-hidden="true">${ICONS[n] || ''}</svg>`; }
+function hydrateIcons(root = document) { root.querySelectorAll('i[data-icon]').forEach(el => { const t = document.createElement('template'); t.innerHTML = icon(el.dataset.icon, el.className); el.replaceWith(t.content.firstChild); }); }
+
+/* ---------- Helpers ---------- */
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const pad2 = n => String(n).padStart(2, '0');
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+const store = {
+  get(k, d) { try { const v = localStorage.getItem('colorer.' + k); return v == null ? d : JSON.parse(v); } catch { return d; } },
+  set(k, v) { try { localStorage.setItem('colorer.' + k, JSON.stringify(v)); return true; } catch { toast('저장 공간이 부족해요. 보관함을 백업하고 정리해 주세요.', { err: true }); return false; } },
+};
+function fmtYMD(t) { const d = new Date(t); return `${d.getFullYear()}.${pad2(d.getMonth() + 1)}.${pad2(d.getDate())}`; }
+function download(name, data, type) {
+  const blob = data instanceof Blob ? data : new Blob([data], { type });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name;
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+}
+function safeName(s) { return String(s || 'colorer').replace(/[\\/:*?"<>|]+/g, '_').trim().slice(0, 60) || 'colorer'; }
+async function copyText(s, label) {
+  let ok = false;
+  try { await navigator.clipboard.writeText(s); ok = true; } catch {
+    const ta = document.createElement('textarea'); ta.value = s; ta.style.cssText = 'position:fixed;opacity:0;top:0'; document.body.appendChild(ta); ta.select();
+    try { ok = document.execCommand('copy'); } catch {} ta.remove();
+  }
+  toast(ok ? `${label || s} 복사했어요` : '복사하지 못했어요. 길게 눌러 직접 복사해 주세요.', { err: !ok });
+  return ok;
+}
+let toastTimer;
+function toast(msg, { err = false, action, onAction, ms = 2600 } = {}) {
+  const t = $('#toast'); $('#toastMsg').textContent = msg; t.classList.toggle('err', err);
+  const b = $('#toastAct'); b.hidden = !action; b.textContent = action || ''; b.onclick = () => { t.classList.remove('show'); onAction && onAction(); };
+  t.classList.add('show'); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), action ? Math.max(ms, 6000) : ms);
+}
+function confirmDlg(title, msg, okLabel = '확인', danger = false) {
+  return new Promise(res => {
+    const d = $('#cfDlg'); $('#cfT').textContent = title; $('#cfM').textContent = msg;
+    const ok = $('#cfOk'); ok.textContent = okLabel; ok.className = 'btn ' + (danger ? 'rec' : 'primary');
+    const done = v => { d.close(); res(v); };
+    ok.onclick = () => done(true); $('#cfNo').onclick = () => done(false); d.oncancel = e => { e.preventDefault(); done(false); };
+    d.showModal();
+  });
+}
+function promptDlg(title, msg, value = '', { multi = false, placeholder = '', okLabel = '확인' } = {}) {
+  return new Promise(res => {
+    const d = $('#prDlg'); $('#prT').textContent = title; $('#prM').textContent = msg; $('#prM').hidden = !msg;
+    const inp = multi ? $('#prTa') : $('#prIn'); $('#prTa').hidden = !multi; $('#prIn').hidden = multi;
+    inp.value = value; inp.placeholder = placeholder; $('#prOk').textContent = okLabel;
+    let done = false; const fin = v => { if (done) return; done = true; d.close(); res(v); };
+    $('#prOk').onclick = () => fin(inp.value);
+    d.querySelectorAll('[data-close]').forEach(b => b.onclick = () => fin(null));
+    d.oncancel = e => { e.preventDefault(); fin(null); };
+    $('#prIn').onkeydown = e => { if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); fin(inp.value); } };
+    d.showModal(); setTimeout(() => { inp.focus(); if (!multi) inp.select(); }, 30);
+  });
+}
+document.addEventListener('click', e => { const c = e.target.closest('dialog:not(#prDlg) [data-close]'); if (c) c.closest('dialog').close(); });
+function mulberry32(a) { return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+
+/* =========================================================================
+   Color math
+   ========================================================================= */
+function hexToRgb(h) { h = String(h).replace('#', ''); if (h.length === 3 || h.length === 4) h = h.split('').map(c => c + c).join(''); return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)]; }
+function rgbToHex(rgb) { return '#' + rgb.slice(0, 3).map(v => clamp(Math.round(v), 0, 255).toString(16).padStart(2, '0')).join(''); }
+const LIN = new Float32Array(256); for (let i = 0; i < 256; i++) { const c = i / 255; LIN[i] = c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4; }
+const toLin = c => { c = c / 255; return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4; };
+const fromLin = c => { c = clamp(c, 0, 1); return 255 * (c <= 0.0031308 ? 12.92 * c : 1.055 * Math.pow(c, 1 / 2.4) - 0.055); };
+function linToOklab(r, g, b) {
+  const l = Math.cbrt(0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b);
+  const m = Math.cbrt(0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b);
+  const s = Math.cbrt(0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b);
+  return [0.2104542553 * l + 0.7936177850 * m - 0.0040720468 * s, 1.9779984951 * l - 2.4285922050 * m + 0.4505937099 * s, 0.0259040371 * l + 0.7827717662 * m - 0.8086757660 * s];
+}
+function oklabToLin(L, a, b) {
+  const l = (L + 0.3963377774 * a + 0.2158037573 * b) ** 3, m = (L - 0.1055613458 * a - 0.0638541728 * b) ** 3, s = (L - 0.0894841775 * a - 1.2914855480 * b) ** 3;
+  return [4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s, -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s, -0.0041960863 * l - 0.7034186147 * m + 1.7076147010 * s];
+}
+const rgbToOklab = rgb => linToOklab(toLin(rgb[0]), toLin(rgb[1]), toLin(rgb[2]));
+const hexToOklab = hex => rgbToOklab(hexToRgb(hex));
+const inGamut = l => l[0] >= -1e-4 && l[0] <= 1.0001 && l[1] >= -1e-4 && l[1] <= 1.0001 && l[2] >= -1e-4 && l[2] <= 1.0001;
+const linToHex = l => rgbToHex(l.map(fromLin));
+function oklabToHex(L, a, b) { return linToHex(oklabToLin(L, a, b)); }
+function hexToOklch(hex) { const [L, a, b] = hexToOklab(hex); const C = Math.hypot(a, b); let H = Math.atan2(b, a) * 180 / Math.PI; if (H < 0) H += 360; return [L, C, H]; }
+function oklchToHex(L, C, H) {
+  L = clamp(L, 0, 1); C = Math.max(0, C); const hr = H * Math.PI / 180, ca = Math.cos(hr), sa = Math.sin(hr);
+  let lin = oklabToLin(L, C * ca, C * sa); if (inGamut(lin)) return linToHex(lin);
+  let lo = 0, hi = C; for (let i = 0; i < 22; i++) { const mid = (lo + hi) / 2; if (inGamut(oklabToLin(L, mid * ca, mid * sa))) lo = mid; else hi = mid; }
+  return linToHex(oklabToLin(L, lo * ca, lo * sa));
+}
+function rgbToHsl([r, g, b]) {
+  r /= 255; g /= 255; b /= 255; const mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn; let h = 0; const l = (mx + mn) / 2;
+  const s = d === 0 ? 0 : d / (1 - Math.abs(2 * l - 1));
+  if (d) { if (mx === r) h = ((g - b) / d) % 6; else if (mx === g) h = (b - r) / d + 2; else h = (r - g) / d + 4; h *= 60; if (h < 0) h += 360; }
+  return [h, s, l];
+}
+function hslToRgb(h, s, l) { const k = n => (n + h / 30) % 12, a = s * Math.min(l, 1 - l), f = n => l - a * Math.max(-1, Math.min(k(n) - 3, 9 - k(n), 1)); return [f(0) * 255, f(8) * 255, f(4) * 255]; }
+function rgbToHsv([r, g, b]) { r /= 255; g /= 255; b /= 255; const mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn; let h = 0; if (d) { if (mx === r) h = ((g - b) / d) % 6; else if (mx === g) h = (b - r) / d + 2; else h = (r - g) / d + 4; h *= 60; if (h < 0) h += 360; } return [h, mx ? d / mx : 0, mx]; }
+function hsvToRgb(h, s, v) { const f = n => { const k = (n + h / 60) % 6; return v - v * s * Math.max(0, Math.min(k, 4 - k, 1)); }; return [f(5) * 255, f(3) * 255, f(1) * 255]; }
+function rgbToCmyk([r, g, b]) { r /= 255; g /= 255; b /= 255; const k = 1 - Math.max(r, g, b); if (k >= 1) return [0, 0, 0, 1]; return [(1 - r - k) / (1 - k), (1 - g - k) / (1 - k), (1 - b - k) / (1 - k), k]; }
+function rgbToLab(rgb) {
+  const [r, g, b] = rgb.map(toLin);
+  const X = 0.4124564 * r + 0.3575761 * g + 0.1804375 * b, Y = 0.2126729 * r + 0.7151522 * g + 0.0721750 * b, Z = 0.0193339 * r + 0.1191920 * g + 0.9503041 * b;
+  const X5 = 1.0478112 * X + 0.0228866 * Y - 0.0501270 * Z, Y5 = 0.0295424 * X + 0.9904844 * Y - 0.0170491 * Z, Z5 = -0.0092345 * X + 0.0150436 * Y + 0.7521316 * Z;
+  const f = t => t > 216 / 24389 ? Math.cbrt(t) : (24389 / 27 * t + 16) / 116;
+  const fx = f(X5 / 0.96422), fy = f(Y5), fz = f(Z5 / 0.82521);
+  return [116 * fy - 16, 500 * (fx - fy), 200 * (fy - fz)];
+}
+function relLum(hex) { const [r, g, b] = hexToRgb(hex).map(toLin); return 0.2126 * r + 0.7152 * g + 0.0722 * b; }
+function contrast(a, b) { const x = relLum(a), y = relLum(b); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); }
+/* APCA 0.0.98G-4g (W3C Silver draft constants) */
+function apca(txt, bg) {
+  const Y = hex => { const [r, g, b] = hexToRgb(hex).map(c => (c / 255) ** 2.4); let y = 0.2126729 * r + 0.7151522 * g + 0.0721750 * b; return y > 0.022 ? y : y + (0.022 - y) ** 1.414; };
+  const yt = Y(txt), yb = Y(bg); if (Math.abs(yb - yt) < 0.0005) return 0;
+  let out;
+  if (yb > yt) { const s = (yb ** 0.56 - yt ** 0.57) * 1.14; out = s < 0.1 ? 0 : s - 0.027; }
+  else { const s = (yb ** 0.65 - yt ** 0.62) * 1.14; out = s > -0.1 ? 0 : s + 0.027; }
+  return out * 100;
+}
+const ink = hex => contrast(hex, '#ffffff') >= contrast(hex, '#1c2824') ? '#ffffff' : '#1c2824';
+const dE = (a, b) => { const x = hexToOklab(a), y = hexToOklab(b); return Math.hypot(x[0] - y[0], x[1] - y[1], x[2] - y[2]); };
+
+/* parse any color string */
+const _pc = document.createElement('canvas'); _pc.width = _pc.height = 1; const _px = _pc.getContext('2d', { willReadFrequently: true });
+function parseColor(s) {
+  s = String(s ?? '').trim(); if (!s) return null;
+  let m = s.match(/^#?([0-9a-f]{3}|[0-9a-f]{4}|[0-9a-f]{6}|[0-9a-f]{8})$/i); if (m) return rgbToHex(hexToRgb(m[1]));
+  m = s.match(/^0x([0-9a-f]{6}|[0-9a-f]{8})$/i); if (m) return rgbToHex(hexToRgb(m[1].length === 8 ? m[1].slice(2) : m[1]));
+  m = s.match(/^\(?\s*(\d{1,3})\s*[,\s]\s*(\d{1,3})\s*[,\s]\s*(\d{1,3})\s*\)?$/); if (m) return rgbToHex([+m[1], +m[2], +m[3]]);
+  m = s.match(/^hsv\(\s*([\d.]+)(?:deg)?[\s,]+([\d.]+)%?[\s,]+([\d.]+)%?\s*\)$/i); if (m) return rgbToHex(hsvToRgb(+m[1] % 360, clamp(+m[2] / 100, 0, 1), clamp(+m[3] / 100, 0, 1)));
+  m = s.match(/^cmyk\(\s*([\d.]+)%?[\s,]+([\d.]+)%?[\s,]+([\d.]+)%?[\s,]+([\d.]+)%?\s*\)$/i);
+  if (m) { const [c, mm, y, k] = [m[1], m[2], m[3], m[4]].map(v => clamp(+v / (+v > 1 ? 100 : 1), 0, 1)); return rgbToHex([255 * (1 - c) * (1 - k), 255 * (1 - mm) * (1 - k), 255 * (1 - y) * (1 - k)]); }
+  const kor = KO_INPUT[s.replace(/\s+/g, '')]; if (kor) return kor;
+  if (window.CSS && CSS.supports && !CSS.supports('color', s)) return null;
+  _px.clearRect(0, 0, 1, 1); _px.fillStyle = '#000'; _px.fillStyle = s; _px.fillRect(0, 0, 1, 1);
+  const d = _px.getImageData(0, 0, 1, 1).data; if (!d[3]) return null; return rgbToHex([d[0], d[1], d[2]]);
+}
+const KO_INPUT = { 빨강: '#e5322d', 빨간색: '#e5322d', 주황: '#f08a24', 주황색: '#f08a24', 노랑: '#f5c518', 노란색: '#f5c518', 연두: '#8cc63f', 연두색: '#8cc63f', 초록: '#2e9e4f', 초록색: '#2e9e4f', 녹색: '#2e9e4f', 청록: '#139a9a', 청록색: '#139a9a', 하늘: '#5ab4e5', 하늘색: '#5ab4e5', 파랑: '#2563d8', 파란색: '#2563d8', 남색: '#23306b', 보라: '#7c4bc8', 보라색: '#7c4bc8', 자주: '#a5306f', 자주색: '#a5306f', 분홍: '#f28cb0', 분홍색: '#f28cb0', 갈색: '#8a5a3b', 흰색: '#ffffff', 하양: '#ffffff', 검정: '#000000', 검은색: '#000000', 회색: '#888888' };
+
+/* CSS named colors (hex resolved by the browser at start) */
+const CSS_NAMES = 'aliceblue antiquewhite aqua aquamarine azure beige bisque black blanchedalmond blue blueviolet brown burlywood cadetblue chartreuse chocolate coral cornflowerblue cornsilk crimson darkblue darkcyan darkgoldenrod darkgray darkgreen darkkhaki darkmagenta darkolivegreen darkorange darkorchid darkred darksalmon darkseagreen darkslateblue darkslategray darkturquoise darkviolet deeppink deepskyblue dimgray dodgerblue firebrick floralwhite forestgreen fuchsia gainsboro ghostwhite gold goldenrod gray green greenyellow honeydew hotpink indianred indigo ivory khaki lavender lavenderblush lawngreen lemonchiffon lightblue lightcoral lightcyan lightgoldenrodyellow lightgray lightgreen lightpink lightsalmon lightseagreen lightskyblue lightslategray lightsteelblue lightyellow lime limegreen linen maroon mediumaquamarine mediumblue mediumorchid mediumpurple mediumseagreen mediumslateblue mediumspringgreen mediumturquoise mediumvioletred midnightblue mintcream mistyrose moccasin navajowhite navy oldlace olive olivedrab orange orangered orchid palegoldenrod palegreen paleturquoise palevioletred papayawhip peachpuff peru pink plum powderblue purple rebeccapurple red rosybrown royalblue saddlebrown salmon sandybrown seagreen seashell sienna silver skyblue slateblue slategray snow springgreen steelblue tan teal thistle tomato turquoise violet wheat white whitesmoke yellow yellowgreen'.split(' ');
+let NAMED = null;
+function nearestName(hex) {
+  if (!NAMED) NAMED = CSS_NAMES.map(n => { const h = parseColor(n); return h ? { n, h, lab: hexToOklab(h) } : null; }).filter(Boolean);
+  const l = hexToOklab(hex); let best = null, bd = 1e9;
+  for (const c of NAMED) { const d = Math.hypot(l[0] - c.lab[0], l[1] - c.lab[1], l[2] - c.lab[2]); if (d < bd) { bd = d; best = c; } }
+  return { name: best.n, hex: best.h, exact: bd < 0.002, d: bd };
+}
+/* short Korean description from OKLCH */
+function koName(hex) {
+  const [L, C, H] = hexToOklch(hex);
+  if (C < 0.03) { if (L > 0.97) return '흰색'; if (L < 0.2) return '검정'; return (L > 0.82 ? '밝은 ' : L < 0.42 ? '어두운 ' : '') + '회색'; }
+  let h;
+  if (H < 45 || H >= 350) h = '빨강'; else if (H < 78) h = '주황'; else if (H < 116) h = '노랑'; else if (H < 136) h = '연두'; else if (H < 168) h = '초록';
+  else if (H < 210) h = '청록'; else if (H < 240) h = '하늘'; else if (H < 278) h = '파랑'; else if (H < 308) h = '보라'; else h = '자주';
+  if ((h === '주황' || h === '노랑' || h === '빨강') && L < 0.58 && H > 30 && H < 100 && C < 0.16) h = '갈색';
+  else if ((h === '빨강' || h === '자주') && L > 0.72 && C < 0.16) h = '분홍';
+  else if (h === '파랑' && L < 0.38) h = '남색';
+  else if (h === '하늘' && L < 0.5) h = '파랑';
+  else if (h === '노랑' && L < 0.62) h = '올리브';
+  const lp = L > 0.9 ? '아주 밝은 ' : L > 0.76 ? '밝은 ' : L < 0.3 ? '아주 어두운 ' : L < 0.45 ? '어두운 ' : '';
+  const cp = C < 0.06 ? '탁한 ' : C > 0.2 ? '선명한 ' : '';
+  return (lp + cp + h).trim();
+}
+/* formats */
+const r1 = (v, d = 0) => { const p = 10 ** d; return Math.round(v * p) / p; };
+function formats(hex) {
+  const rgb = hexToRgb(hex); const [h, s, l] = rgbToHsl(rgb); const [hh, sv, vv] = rgbToHsv(rgb);
+  const [c, m, y, k] = rgbToCmyk(rgb); const [La, aa, ba] = rgbToLab(rgb); const lc = Math.hypot(aa, ba); let lh = Math.atan2(ba, aa) * 180 / Math.PI; if (lh < 0) lh += 360;
+  const [oL, oC, oH] = hexToOklch(hex); const w = Math.min(...rgb) / 255, bl = 1 - Math.max(...rgb) / 255;
+  const H = hex.toUpperCase();
+  return [
+    ['HEX', H],
+    ['RGB', `rgb(${rgb.join(', ')})`],
+    ['HSL', `hsl(${r1(h)}, ${r1(s * 100)}%, ${r1(l * 100)}%)`],
+    ['HSV', `hsv(${r1(hh)}, ${r1(sv * 100)}%, ${r1(vv * 100)}%)`],
+    ['HWB', `hwb(${r1(hh)} ${r1(w * 100)}% ${r1(bl * 100)}%)`],
+    ['CMYK', `cmyk(${r1(c * 100)}%, ${r1(m * 100)}%, ${r1(y * 100)}%, ${r1(k * 100)}%)`],
+    ['LAB', `lab(${r1(La, 1)} ${r1(aa, 1)} ${r1(ba, 1)})`],
+    ['LCH', `lch(${r1(La, 1)} ${r1(lc, 1)} ${r1(oC < 0.002 ? 0 : lh, 1)})`],
+    ['OKLCH', `oklch(${r1(oL * 100, 1)}% ${r1(oC, 3)} ${r1(oC < 0.002 ? 0 : oH, 1)})`],
+    ['ANDROID', `0xFF${H.slice(1)}`],
+  ];
+}
+
+/* color-vision deficiency (Machado et al. 2009, severity 1.0, linear RGB) */
+const CVD = {
+  protan: [0.152286, 1.052583, -0.204868, 0.114503, 0.786281, 0.099216, -0.003882, -0.048116, 1.051998],
+  deutan: [0.367322, 0.860646, -0.227968, 0.280085, 0.672501, 0.047413, -0.011820, 0.042940, 0.968881],
+  tritan: [1.255528, -0.076749, -0.178779, -0.078411, 0.930809, 0.147602, 0.004733, 0.691367, 0.303900],
+};
+const VTYPES = [
+  ['normal', '일반 색각', '비교 기준'],
+  ['protan', '적색맹', '1형, 남성 약 1%'],
+  ['deutan', '녹색맹', '2형, 남성 약 1–5%'],
+  ['tritan', '청색맹', '3형, 매우 드묾'],
+  ['achro', '전색맹', '색을 밝기로만 봄'],
+];
+function cvdMatrix(type, sev) {
+  if (type === 'normal') return null;
+  const I = [1, 0, 0, 0, 1, 0, 0, 0, 1];
+  const M = type === 'achro' ? [0.2126, 0.7152, 0.0722, 0.2126, 0.7152, 0.0722, 0.2126, 0.7152, 0.0722] : CVD[type];
+  return M.map((v, i) => I[i] + (v - I[i]) * sev);
+}
+function simHex(hex, type, sev = 1) {
+  const M = cvdMatrix(type, sev); if (!M) return hex;
+  const [r, g, b] = hexToRgb(hex).map(toLin);
+  return linToHex([M[0] * r + M[1] * g + M[2] * b, M[3] * r + M[4] * g + M[5] * b, M[6] * r + M[7] * g + M[8] * b]);
+}
+
+/* =========================================================================
+   State
+   ========================================================================= */
+function merge(d, s) { const o = Array.isArray(d) ? [...d] : { ...d }; if (s && typeof s === 'object' && !Array.isArray(s)) for (const k in s) o[k] = (d[k] && typeof d[k] === 'object' && !Array.isArray(d[k])) ? merge(d[k], s[k]) : s[k]; return o; }
+const DEF = {
+  cur: '#244d3a', pick: { h: 152, s: 0.53, v: 0.3 }, tab: 'palette', recent: [],
+  pal: { colors: ['#1c2824', '#244d3a', '#3e6f73', '#d9c8a9', '#f5f1e8'], locks: [false, false, false, false, false], mode: 'random', base: false, sel: -1 },
+  scale: { hue: 0, chroma: 100, keep: true, all: false, names: ['primary', 'secondary', 'tertiary', 'accent', 'neutral', 'extra'] },
+  ext: { k: 6, algo: 'kmeans', sort: 'pop', samp: 3, picks: [] },
+  con: { fg: '#1c2824', bg: '#f5f1e8', lvl: 4.5 },
+  vis: { src: 'palette', sev: 100 },
+  grad: { type: 'linear', space: 'oklab', angle: 90, cx: 50, cy: 50, stops: [{ c: '#244d3a', p: 0 }, { c: '#d9c8a9', p: 100 }], sel: 0, n: 7 },
+};
+let S = merge(DEF, store.get('state', {}));
+const validHex = h => typeof h === 'string' && /^#[0-9a-f]{6}$/i.test(h);
+if (!validHex(S.cur)) S.cur = DEF.cur;
+S.pal.colors = (S.pal.colors || []).filter(validHex); if (S.pal.colors.length < 2) S.pal.colors = [...DEF.pal.colors];
+S.pal.locks = S.pal.colors.map((_, i) => !!(S.pal.locks || [])[i]);
+if (!Array.isArray(S.grad.stops) || S.grad.stops.length < 2 || !S.grad.stops.every(s => validHex(s.c))) S.grad.stops = DEF.grad.stops.map(s => ({ ...s }));
+let LIB = store.get('lib', null) || { palettes: [], colors: [] };
+LIB.palettes = Array.isArray(LIB.palettes) ? LIB.palettes : []; LIB.colors = Array.isArray(LIB.colors) ? LIB.colors : [];
+let saveT;
+function save() { clearTimeout(saveT); saveT = setTimeout(() => store.set('state', S), 250); }
+function saveLib() { store.set('lib', LIB); $('#libN').textContent = LIB.palettes.length; }
+window.addEventListener('pagehide', () => { clearTimeout(saveT); store.set('state', S); });
+
+/* =========================================================================
+   Tabs
+   ========================================================================= */
+const TABS = ['palette', 'scale', 'extract', 'contrast', 'vision', 'gradient', 'library'];
+function setTab(t) {
+  if (!TABS.includes(t)) t = 'palette';
+  S.tab = t; $$('.tab').forEach(b => b.setAttribute('aria-selected', String(b.dataset.tab === t)));
+  $$('#work > .view').forEach(v => v.hidden = v.dataset.view !== t);
+  renderTab(); save();
+}
+function renderTab() { ({ palette: renderPalette, scale: renderScale, extract: renderExtract, contrast: renderContrast, vision: renderVision, gradient: renderGradient, library: renderLibrary })[S.tab](); }
+$('#tabs').addEventListener('click', e => { const b = e.target.closest('.tab'); if (b) setTab(b.dataset.tab); });
+
+/* =========================================================================
+   Selected color (side panel)
+   ========================================================================= */
+function setCur(hex, { recent = false, keepPick = false } = {}) {
+  hex = String(hex).toLowerCase(); if (!validHex(hex)) return;
+  S.cur = hex;
+  if (!keepPick) { const [h, s, v] = rgbToHsv(hexToRgb(hex)); S.pick = { h: (s < 0.002 || v < 0.002) ? S.pick.h : h, s, v }; }
+  if (recent) addRecent(hex);
+  renderSide();
+  if (S.tab === 'scale') renderScale();
+  save();
+}
+function addRecent(hex) { S.recent = [hex, ...S.recent.filter(x => x !== hex)].slice(0, 24); }
+let svHue = -1;
+function drawSV() {
+  const c = $('#svCan'), x = c.getContext('2d'), w = c.width, h = c.height;
+  x.fillStyle = rgbToHex(hsvToRgb(S.pick.h, 1, 1)); x.fillRect(0, 0, w, h);
+  let g = x.createLinearGradient(0, 0, w, 0); g.addColorStop(0, '#fff'); g.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = g; x.fillRect(0, 0, w, h);
+  g = x.createLinearGradient(0, 0, 0, h); g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, '#000'); x.fillStyle = g; x.fillRect(0, 0, w, h);
+  svHue = S.pick.h;
+}
+function badgeFor(r) { return r >= 7 ? '<span class="badge ok">AAA</span>' : r >= 4.5 ? '<span class="badge ok">AA</span>' : r >= 3 ? '<span class="badge mid">큰 글자만</span>' : '<span class="badge no">부족</span>'; }
+function renderSide() {
+  const hex = S.cur, H = hex.toUpperCase(), fg = ink(hex);
+  if (svHue !== S.pick.h) drawSV();
+  const k = $('#svKnob'); k.style.left = (S.pick.s * 100) + '%'; k.style.top = ((1 - S.pick.v) * 100) + '%'; k.style.background = hex;
+  const hue = $('#hue'); if (document.activeElement !== hue) hue.value = S.pick.h;
+  $('#natColor').value = hex; $('#natSw').style.background = hex;
+  if (document.activeElement !== $('#hexIn')) $('#hexIn').value = H;
+  const big = $('#bigsw'); big.style.background = hex; big.style.color = fg;
+  const ko = koName(hex), nn = nearestName(hex);
+  $('#bigHex').textContent = H; $('#bigKo').innerHTML = `${esc(ko)}<br>${nn.exact ? '' : '≈ '}${esc(nn.name)}`;
+  $('#curName').textContent = `${ko} · ${nn.exact ? 'CSS ' : '가장 가까운 CSS 이름 '}${nn.name}`;
+  $('#fmts').innerHTML = formats(hex).map(([k, v]) => `<button class="fmt" data-v="${esc(v)}" title="${esc(v)} 복사"><span class="fk">${k}</span><span class="fv">${esc(v)}</span>${icon('copy')}</button>`).join('')
+    + `<button class="fmt" data-v="${esc(nn.name)}"><span class="fk">CSS 이름</span><span class="fv">${esc(nn.name)}${nn.exact ? '' : ` <span class="muted">(근사 ${nn.hex.toUpperCase()})</span>`}</span>${icon('copy')}</button>`;
+  const [L, C, Hh] = hexToOklch(hex);
+  const offs = [0.32, 0.24, 0.16, 0.08, 0, -0.08, -0.16, -0.24, -0.32];
+  $('#steps').innerHTML = offs.map(o => { const c = o === 0 ? hex : oklchToHex(clamp(L + o, 0.02, 0.995), C, Hh); return `<button data-c="${c}" class="${o === 0 ? 'cur' : ''}" style="background:${c}" title="${c.toUpperCase()}"></button>`; }).join('');
+  const cw = contrast(hex, '#ffffff'), cb = contrast(hex, '#000000');
+  $('#curCon').innerHTML = `<div class="conbox" style="background:#fff;color:${hex}"><b>${cw.toFixed(2)}:1</b>흰 배경 위 글자<div style="margin-top:6px">${badgeFor(cw)}</div></div>`
+    + `<div class="conbox" style="background:#000;color:${hex}"><b>${cb.toFixed(2)}:1</b>검정 배경 위 글자<div style="margin-top:6px">${badgeFor(cb)}</div></div>`;
+  $('#recent').innerHTML = S.recent.length ? S.recent.map(c => `<button class="sw-chip" data-c="${c}" style="background:${c}" title="${c.toUpperCase()}"></button>`).join('') : '<span class="muted" style="font-size:12px">색을 복사하거나 찍으면 여기에 모여요</span>';
+}
+$('#fmts').addEventListener('click', e => { const b = e.target.closest('.fmt'); if (!b) return; copyText(b.dataset.v); addRecent(S.cur); renderSide(); save(); });
+$('#steps').addEventListener('click', e => { const b = e.target.closest('button[data-c]'); if (b) setCur(b.dataset.c, { recent: true }); });
+$('#recent').addEventListener('click', e => { const b = e.target.closest('[data-c]'); if (b) setCur(b.dataset.c); });
+$('#recClear').onclick = () => { S.recent = []; renderSide(); save(); };
+/* SV + hue picker */
+(() => {
+  const sv = $('#sv'); let drag = false;
+  const at = e => { const r = sv.getBoundingClientRect(); S.pick.s = clamp((e.clientX - r.left) / r.width, 0, 1); S.pick.v = clamp(1 - (e.clientY - r.top) / r.height, 0, 1); setCur(rgbToHex(hsvToRgb(S.pick.h, S.pick.s, S.pick.v)), { keepPick: true }); };
+  sv.addEventListener('pointerdown', e => { drag = true; sv.setPointerCapture(e.pointerId); at(e); });
+  sv.addEventListener('pointermove', e => { if (drag) at(e); });
+  const end = () => { if (drag) { drag = false; addRecent(S.cur); renderSide(); } };
+  sv.addEventListener('pointerup', end); sv.addEventListener('pointercancel', end);
+  $('#hue').addEventListener('input', e => { S.pick.h = +e.target.value; setCur(rgbToHex(hsvToRgb(S.pick.h, S.pick.s, S.pick.v)), { keepPick: true }); });
+  $('#natColor').addEventListener('input', e => setCur(e.target.value));
+  $('#natColor').addEventListener('change', e => setCur(e.target.value, { recent: true }));
+  const hi = $('#hexIn');
+  const apply = () => { const c = parseColor(hi.value); if (c) { setCur(c, { recent: true }); hi.value = c.toUpperCase(); } else toast('알 수 없는 색 값이에요', { err: true }); };
+  hi.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); apply(); hi.blur(); } });
+  hi.addEventListener('input', () => { const v = hi.value.trim(); if (/^#?([0-9a-f]{6})$/i.test(v)) setCur(parseColor(v)); });
+  hi.addEventListener('change', () => { const c = parseColor(hi.value); if (c) setCur(c, { recent: true }); });
+  if ('EyeDropper' in window) {
+    $('#dropBtn').hidden = false;
+    $('#dropBtn').onclick = async () => { try { const r = await new window.EyeDropper().open(); const c = parseColor(r.sRGBHex); if (c) setCur(c, { recent: true }); } catch {} };
+  }
+  $('#rndBtn').onclick = () => setCur(oklchToHex(0.35 + Math.random() * 0.55, 0.05 + Math.random() * 0.17, Math.random() * 360), { recent: true });
+  $('#sideToggle').onclick = () => $('#side').classList.toggle('closed');
+})();
+$('#toPal').onclick = () => { if (S.pal.colors.length >= 12) return toast('팔레트에는 12색까지 담을 수 있어요', { err: true }); pushHist(); S.pal.colors.push(S.cur); S.pal.locks.push(false); renderPalette(); save(); toast('팔레트에 추가했어요', { action: '팔레트 보기', onAction: () => setTab('palette') }); };
+$('#toGrad').onclick = () => { S.grad.stops.push({ c: S.cur, p: 100 }); const st = S.grad.stops; st.sort((a, b) => a.p - b.p); st.forEach((s, i) => s.p = r1(i / (st.length - 1) * 100, 1)); S.grad.sel = st.length - 1; if (S.tab === 'gradient') renderGradient(); save(); toast('그라디언트 끝에 추가했어요', { action: '보기', onAction: () => setTab('gradient') }); };
+$('#toFg').onclick = () => { S.con.fg = S.cur; save(); if (S.tab === 'contrast') renderContrast(); else toast('글자색으로 넣었어요', { action: '대비 검사', onAction: () => setTab('contrast') }); };
+$('#toBg').onclick = () => { S.con.bg = S.cur; save(); if (S.tab === 'contrast') renderContrast(); else toast('배경색으로 넣었어요', { action: '대비 검사', onAction: () => setTab('contrast') }); };
+$('#saveCol').onclick = () => { LIB.colors = [{ c: S.cur, t: Date.now() }, ...LIB.colors.filter(x => x.c !== S.cur)].slice(0, 300); saveLib(); if (S.tab === 'library') renderLibrary(); toast(`${S.cur.toUpperCase()} 저장했어요`); };
+
+/* =========================================================================
+   Palette
+   ========================================================================= */
+const hist = [], fut = [];
+const snap = () => JSON.stringify({ c: S.pal.colors, l: S.pal.locks });
+function pushHist() { hist.push(snap()); if (hist.length > 80) hist.shift(); fut.length = 0; }
+function restore(s) { const o = JSON.parse(s); S.pal.colors = o.c; S.pal.locks = o.l; renderPalette(); save(); }
+function undo() { if (!hist.length) return; fut.push(snap()); restore(hist.pop()); }
+function redo() { if (!fut.length) return; hist.push(snap()); restore(fut.pop()); }
+const wrapH = h => ((h % 360) + 360) % 360;
+function reflectL(l) { if (l > 0.96) return 0.96 - (l - 0.96) * 1.5; if (l < 0.16) return 0.16 + (0.16 - l) * 1.5; return l; }
+function makeHarmony(mode, n, base) {
+  const R = Math.random, J = a => (R() * 2 - 1) * a;
+  let [L, C, H] = base ? hexToOklch(base) : [0.45 + R() * 0.35, 0.08 + R() * 0.1, R() * 360];
+  if (base && C < 0.02) H = R() * 360;
+  const Cb = Math.max(C, 0.06);
+  const out = base ? [base] : [];
+  const add = (l, c, h) => out.push(oklchToHex(clamp(reflectL(l), 0.1, 0.98), Math.max(0, c), wrapH(h)));
+  const start = out.length;
+  const OFF = { comp: [0, 180], split: [0, 150, 210], triad: [0, 120, 240], tetrad: [0, 90, 180, 270] }[mode];
+  for (let i = start; i < n; i++) {
+    switch (mode) {
+      case 'analog': { const step = n <= 5 ? 26 : 20; const k = Math.ceil(i / 2) * (i % 2 ? 1 : -1); add(L + (i % 2 ? 0.1 : -0.1) * Math.ceil(i / 2) * 0.7 + J(0.06), Cb * (0.85 + R() * 0.3), H + k * step + J(4)); break; }
+      case 'mono': { const t = n === 1 ? 0.5 : i / (n - 1); add(0.22 + t * 0.72 + J(0.03), Cb * (0.35 + R() * 0.75), H + J(5)); break; }
+      case 'shades': { const t = n === 1 ? 0.5 : i / (n - 1); const l = 0.95 - t * 0.74; add(l, Cb * clamp(1.15 - Math.abs(l - 0.58) * 1.6, 0.18, 1.1), H); break; }
+      case 'pastel': add(0.86 + R() * 0.08, 0.04 + R() * 0.05, (base ? H : out.length ? hexToOklch(out[0])[2] : R() * 360) + i * (360 / n) + J(14)); break;
+      case 'earth': { const hs = [40, 55, 70, 85, 100, 140, 155]; add(0.28 + R() * 0.55, 0.03 + R() * 0.08, hs[Math.floor(R() * hs.length)] + J(10)); break; }
+      case 'random': { const l = 0.22 + ((i * 0.618 + R() * 0.35) % 1) * 0.72; add(l, 0.03 + R() * 0.16, H + i * 137.508 + J(25)); break; }
+      default: { const k = OFF.length, off = OFF[i % k], cyc = Math.floor(i / k); const l = cyc === 0 ? L + (i ? J(0.1) : 0) : L + (cyc % 2 ? 0.26 : -0.24) + J(0.05); add(l, Cb * (cyc ? 0.6 : 1) * (0.9 + R() * 0.2), H + off + J(6)); }
+    }
+  }
+  return out.slice(0, n);
+}
+function generate() {
+  const P = S.pal, n = P.colors.length, locked = P.locks.map((l, i) => l ? i : -1).filter(i => i >= 0);
+  if (locked.length === n) return toast('모든 색이 잠겨 있어요. 자물쇠를 풀어 주세요.');
+  let base = null, includeBase = false;
+  if (P.base) { base = S.cur; includeBase = !locked.some(i => P.colors[i] === S.cur); }
+  else if (locked.length) base = P.colors[locked[0]];
+  const gen = makeHarmony(P.mode, n + 1, base);
+  const pool = base && !includeBase ? gen.slice(1) : gen;
+  pushHist();
+  P.colors = P.colors.map((c, i) => P.locks[i] ? c : (pool.shift() || c));
+  renderPalette(); save();
+}
+function setPalette(colors, msg) {
+  colors = colors.filter(validHex).slice(0, 12); if (colors.length < 1) return;
+  pushHist(); S.pal.colors = colors.map(c => c.toLowerCase()); S.pal.locks = colors.map(() => false); S.pal.sel = -1; save();
+  if (S.tab === 'palette') renderPalette(); if (msg) toast(msg, S.tab === 'palette' ? {} : { action: '팔레트 보기', onAction: () => setTab('palette') });
+}
+function renderPalette() {
+  const P = S.pal;
+  $('#palMode').value = P.mode; $('#palBase').checked = P.base; $('#palN').value = P.colors.length;
+  $('#palUndo').disabled = !hist.length; $('#palRedo').disabled = !fut.length;
+  $('#pal').innerHTML = P.colors.map((c, i) => {
+    const f = ink(c), lk = P.locks[i];
+    return `<div class="slot${lk ? ' locked' : ''}${P.sel === i && c === S.cur ? ' sel' : ''}" data-i="${i}" style="background:${c};color:${f}" tabindex="0">
+      <div class="ops">
+        <button class="lk" data-a="lock" title="${lk ? '잠금 풀기' : '잠그기'}" aria-pressed="${lk}">${icon(lk ? 'lock' : 'unlock')}</button>
+        <button data-a="copy" title="HEX 복사">${icon('copy')}</button>
+        <button data-a="put" title="선택한 색으로 바꾸기">${icon('pipette')}</button>
+        ${P.colors.length > 2 ? `<button data-a="del" title="빼기">${icon('x')}</button>` : ''}
+      </div>
+      <div class="hx">${c.toUpperCase().slice(1)}</div><div class="nm">${esc(koName(c))}</div></div>`;
+  }).join('');
+  renderMock();
+}
+function renderMock() {
+  const cs = [...new Set(S.pal.colors)]; const byL = [...cs].sort((a, b) => hexToOklch(b)[0] - hexToOklch(a)[0]);
+  const bg = byL[0], text0 = byL[byL.length - 1];
+  const mids = byL.length > 2 ? byL.slice(1, -1) : byL;
+  const accent = [...mids].sort((a, b) => hexToOklch(b)[1] - hexToOklch(a)[1])[0];
+  const surface = byL.length > 3 ? byL[1] : bg;
+  const accent2 = mids.find(c => c !== accent && c !== surface) || accent;
+  const text = contrast(text0, bg) >= 4.5 ? text0 : ink(bg);
+  const head = text0, headInk = contrast(bg, head) >= 4.5 ? bg : ink(head);
+  $('#mock').innerHTML = `<div class="mock" style="background:${bg};color:${text}">
+    <div class="mh" style="background:${head};color:${headInk}"><span>브랜드</span><nav><span>소개</span><span>기능</span><span>가격</span></nav></div>
+    <div class="mb"><div><span class="mtag" style="background:${accent2};color:${ink(accent2)}">새 소식</span><h4 style="color:${contrast(accent, bg) >= 3 && hexToOklch(accent)[1] > 0.08 ? accent : text}">색이 어울리는지<br>바로 확인하세요</h4><p>배경 ${bg.toUpperCase()} 위 글자 ${text.toUpperCase()}의 대비는 ${contrast(text, bg).toFixed(1)}:1 이에요.</p>
+      <span class="mbtn" style="background:${accent};color:${ink(accent)}">시작하기</span><span class="mbtn" style="box-shadow:inset 0 0 0 1.5px ${text};color:${text}">더 보기</span></div>
+      <div class="mcard2" style="background:${surface === bg ? accent2 : surface};color:${ink(surface === bg ? accent2 : surface)}"><b>${cs.length}색</b>팔레트로 만든 카드예요. 강조색 ${accent.toUpperCase()}</div></div></div>`;
+}
+$('#pal').addEventListener('click', e => {
+  const slot = e.target.closest('.slot'); if (!slot) return; const i = +slot.dataset.i, c = S.pal.colors[i];
+  const a = e.target.closest('button')?.dataset.a;
+  if (a === 'lock') { S.pal.locks[i] = !S.pal.locks[i]; renderPalette(); save(); return; }
+  if (a === 'copy') { copyText(c.toUpperCase()); addRecent(c); renderSide(); return; }
+  if (a === 'put') { pushHist(); S.pal.colors[i] = S.cur; renderPalette(); save(); return; }
+  if (a === 'del') { pushHist(); S.pal.colors.splice(i, 1); S.pal.locks.splice(i, 1); renderPalette(); save(); return; }
+  S.pal.sel = i; setCur(c, { recent: true }); renderPalette();
+});
+$('#pal').addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.classList.contains('slot')) e.target.click(); });
+$('#palGen').onclick = generate;
+$('#palUndo').onclick = undo; $('#palRedo').onclick = redo;
+$('#palMode').onchange = e => { S.pal.mode = e.target.value; generate(); };
+$('#palBase').onchange = e => { S.pal.base = e.target.checked; save(); if (S.pal.base) generate(); };
+function setPalN(n) {
+  n = clamp(Math.round(n) || 5, 2, 12); const P = S.pal; if (n === P.colors.length) { $('#palN').value = n; return; }
+  pushHist();
+  while (P.colors.length < n) { const more = makeHarmony(P.mode, P.colors.length + 1, P.colors[0]); P.colors.push(more[more.length - 1]); P.locks.push(false); }
+  while (P.colors.length > n) { let j = P.locks.lastIndexOf(false); if (j < 0) j = P.colors.length - 1; P.colors.splice(j, 1); P.locks.splice(j, 1); }
+  renderPalette(); save();
+}
+$('#palMinus').onclick = () => setPalN(S.pal.colors.length - 1);
+$('#palPlus').onclick = () => setPalN(S.pal.colors.length + 1);
+$('#palN').onchange = e => setPalN(+e.target.value);
+function sortPal(fn) { pushHist(); const z = S.pal.colors.map((c, i) => ({ c, l: S.pal.locks[i] })); fn(z); S.pal.colors = z.map(x => x.c); S.pal.locks = z.map(x => x.l); renderPalette(); save(); }
+$('#palSortL').onclick = () => sortPal(z => z.sort((a, b) => hexToOklch(b.c)[0] - hexToOklch(a.c)[0]));
+$('#palSortH').onclick = () => sortPal(z => z.sort((a, b) => { const x = hexToOklch(a.c), y = hexToOklch(b.c); const gx = x[1] < 0.03, gy = y[1] < 0.03; if (gx !== gy) return gx ? 1 : -1; if (gx) return y[0] - x[0]; return x[2] - y[2]; }));
+$('#palRev').onclick = () => sortPal(z => z.reverse());
+$('#palAdd').onclick = () => $('#toPal').click();
+$('#palExport').onclick = () => openExport({ name: 'palette', groups: [{ name: 'palette', colors: S.pal.colors, keys: S.pal.colors.map((_, i) => String(i + 1)) }] });
+function extractColors(text) {
+  const out = []; const re = /(#(?:[0-9a-f]{8}|[0-9a-f]{6}|[0-9a-f]{3})\b|(?:rgba?|hsla?|hwb|lab|lch|oklab|oklch)\([^)]*\)|\b[0-9a-f]{6}\b)/gi;
+  for (const m of String(text).matchAll(re)) { const c = parseColor(m[1]); if (c && !out.includes(c)) out.push(c); }
+  return out;
+}
+$('#palText').onclick = async () => {
+  const v = await promptDlg('텍스트로 팔레트 입력', 'HEX 코드, rgb(), hsl(), oklch() 등을 붙여넣으세요. CSS 파일이나 다른 사이트에서 복사한 글도 괜찮아요.', S.pal.colors.map(c => c.toUpperCase()).join(' '), { multi: true, okLabel: '팔레트로' });
+  if (v == null) return; const cs = extractColors(v); if (!cs.length) return toast('색을 찾지 못했어요', { err: true });
+  setPalette(cs, `${Math.min(cs.length, 12)}색을 불러왔어요`);
+};
+
+/* =========================================================================
+   Scale
+   ========================================================================= */
+const STEPS = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950];
+const SL = [0.975, 0.94, 0.885, 0.81, 0.715, 0.625, 0.54, 0.46, 0.385, 0.31, 0.235];
+function makeScale(base, o = S.scale) {
+  const [L, C, H] = hexToOklch(base); const ch = C * o.chroma / 100;
+  const arr = SL.map((l, i) => { const t = (i - 5) / 5; const cf = t < 0 ? 1 - 0.82 * Math.pow(-t, 1.6) : 1 - 0.38 * Math.pow(t, 1.4); return oklchToHex(l, ch * cf, H + o.hue * t); });
+  let bi = -1;
+  if (o.keep) { let bd = 9; SL.forEach((l, i) => { const d = Math.abs(l - L); if (d < bd) { bd = d; bi = i; } }); arr[bi] = base; }
+  return { arr, bi };
+}
+function slug(s, d = 'color') { s = String(s || '').trim().toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9_\-가-힣]/g, ''); return s || d; }
+function scaleBases() { const b = [S.cur]; if (S.scale.all) for (const c of S.pal.colors) if (!b.includes(c)) b.push(c); return b; }
+function renderScale() {
+  const o = S.scale; $('#sHue').value = o.hue; $('#sHueV').textContent = o.hue + '°'; $('#sChroma').value = o.chroma; $('#sChromaV').textContent = o.chroma + '%'; $('#sKeep').checked = o.keep; $('#sAll').checked = o.all;
+  $('#scales').innerHTML = scaleBases().map((base, gi) => {
+    const { arr, bi } = makeScale(base);
+    const nm = o.names[gi] || `color${gi + 1}`;
+    return `<div class="scl"><div class="sh"><span class="sw-chip" style="background:${base}"></span><input class="inp" data-gi="${gi}" value="${esc(nm)}" aria-label="이름" /><span class="cs muted" style="font-size:12px">${base.toUpperCase()} · ${esc(koName(base))}${gi === 0 ? ' · 오른쪽 패널에서 색을 바꾸면 바로 따라가요' : ''}</span></div>
+      <div class="srow">${arr.map((c, i) => { const w = contrast(c, '#ffffff'), b = contrast(c, '#000000'); return `<div class="scell${i === bi ? ' base' : ''}" data-c="${c}" style="background:${c};color:${ink(c)}" title="${c.toUpperCase()} 복사"><span class="st">${STEPS[i]}</span><span><span class="sx">${c.toUpperCase()}</span><span class="aa"><span style="background:#fff;color:${c};opacity:${w >= 4.5 ? 1 : .35}">${w.toFixed(1)}</span><span style="background:#000;color:${c};opacity:${b >= 4.5 ? 1 : .35}">${b.toFixed(1)}</span></span></span></div>`; }).join('')}</div></div>`;
+  }).join('') + `<div class="card"><p style="margin:0;font-size:12.5px;color:var(--muted);line-height:1.65">OKLCH에서 밝기를 고르게 나눠 50–950 단계(Tailwind와 같은 이름)를 만들어요. 칸 아래 숫자는 흰 배경·검정 배경 위에 그 색 글자를 올렸을 때의 대비예요(4.5 미만은 흐리게). 칸을 누르면 HEX가 복사돼요.</p></div>`;
+}
+$('#scales').addEventListener('click', e => { const c = e.target.closest('.scell'); if (c) { copyText(c.dataset.c.toUpperCase()); addRecent(c.dataset.c); renderSide(); save(); } });
+$('#scales').addEventListener('change', e => { const i = e.target.closest('input[data-gi]'); if (i) { S.scale.names[+i.dataset.gi] = slug(i.value); i.value = S.scale.names[+i.dataset.gi]; save(); } });
+$('#sHue').oninput = e => { S.scale.hue = +e.target.value; renderScale(); save(); };
+$('#sChroma').oninput = e => { S.scale.chroma = +e.target.value; renderScale(); save(); };
+$('#sKeep').onchange = e => { S.scale.keep = e.target.checked; renderScale(); save(); };
+$('#sAll').onchange = e => { S.scale.all = e.target.checked; renderScale(); save(); };
+$('#sExport').onclick = () => openExport({ name: 'scale', groups: scaleBases().map((b, gi) => ({ name: S.scale.names[gi] || `color${gi + 1}`, colors: makeScale(b).arr, keys: STEPS.map(String) })) });
+
+/* =========================================================================
+   Extract colors from an image
+   ========================================================================= */
+let srcCan = null;            // full image (max 1600px) — kept in memory only
+let extRes = [];              // [{hex, pct}]
+function samplePixels(src, max = 200) {
+  const sc = Math.min(1, max / Math.max(src.width, src.height));
+  const w = Math.max(1, Math.round(src.width * sc)), h = Math.max(1, Math.round(src.height * sc));
+  const c = document.createElement('canvas'); c.width = w; c.height = h; const x = c.getContext('2d', { willReadFrequently: true });
+  x.drawImage(src, 0, 0, w, h); const d = x.getImageData(0, 0, w, h).data;
+  const lab = new Float32Array(w * h * 3), rgb = new Uint8Array(w * h * 3); let n = 0;
+  for (let i = 0; i < d.length; i += 4) {
+    if (d[i + 3] < 128) continue;
+    const o = linToOklab(LIN[d[i]], LIN[d[i + 1]], LIN[d[i + 2]]);
+    lab[n * 3] = o[0]; lab[n * 3 + 1] = o[1]; lab[n * 3 + 2] = o[2];
+    rgb[n * 3] = d[i]; rgb[n * 3 + 1] = d[i + 1]; rgb[n * 3 + 2] = d[i + 2]; n++;
+  }
+  return { lab: lab.subarray(0, n * 3), rgb: rgb.subarray(0, n * 3), n };
+}
+function kmeans(lab, n, k, seed = 7) {
+  const rnd = mulberry32(seed); k = Math.min(k, n); if (!k) return [];
+  const cent = new Float64Array(k * 3);
+  const sIdx = []; const stp = Math.max(1, Math.floor(n / 4000)); for (let i = 0; i < n; i += stp) sIdx.push(i);
+  const f = sIdx[Math.floor(rnd() * sIdx.length)]; cent[0] = lab[f * 3]; cent[1] = lab[f * 3 + 1]; cent[2] = lab[f * 3 + 2];
+  const dist = new Float64Array(sIdx.length).fill(1e9);
+  for (let c = 1; c < k; c++) {
+    let sum = 0; const q = (c - 1) * 3;
+    for (let j = 0; j < sIdx.length; j++) { const p = sIdx[j] * 3; const d = (lab[p] - cent[q]) ** 2 + (lab[p + 1] - cent[q + 1]) ** 2 + (lab[p + 2] - cent[q + 2]) ** 2; if (d < dist[j]) dist[j] = d; sum += dist[j]; }
+    let r = rnd() * sum, pick = sIdx[sIdx.length - 1];
+    for (let j = 0; j < sIdx.length; j++) { r -= dist[j]; if (r <= 0) { pick = sIdx[j]; break; } }
+    cent[c * 3] = lab[pick * 3]; cent[c * 3 + 1] = lab[pick * 3 + 1]; cent[c * 3 + 2] = lab[pick * 3 + 2];
+  }
+  const asg = new Int16Array(n).fill(-1), cnt = new Float64Array(k), sum = new Float64Array(k * 3);
+  for (let it = 0; it < 20; it++) {
+    cnt.fill(0); sum.fill(0); let moved = 0;
+    for (let i = 0; i < n; i++) {
+      const p = i * 3; let bi = 0, bd = 1e9;
+      for (let c = 0; c < k; c++) { const q = c * 3; const d = (lab[p] - cent[q]) ** 2 + (lab[p + 1] - cent[q + 1]) ** 2 + (lab[p + 2] - cent[q + 2]) ** 2; if (d < bd) { bd = d; bi = c; } }
+      if (asg[i] !== bi) { asg[i] = bi; moved++; }
+      cnt[bi]++; sum[bi * 3] += lab[p]; sum[bi * 3 + 1] += lab[p + 1]; sum[bi * 3 + 2] += lab[p + 2];
+    }
+    for (let c = 0; c < k; c++) if (cnt[c]) { cent[c * 3] = sum[c * 3] / cnt[c]; cent[c * 3 + 1] = sum[c * 3 + 1] / cnt[c]; cent[c * 3 + 2] = sum[c * 3 + 2] / cnt[c]; }
+    if (moved <= n * 0.002) break;
+  }
+  const out = []; for (let c = 0; c < k; c++) if (cnt[c]) out.push({ hex: oklabToHex(cent[c * 3], cent[c * 3 + 1], cent[c * 3 + 2]), pct: cnt[c] / n });
+  return out;
+}
+function medianCut(rgb, n, k) {
+  let boxes = [Array.from({ length: n }, (_, i) => i)];
+  const range = b => { const mn = [255, 255, 255], mx = [0, 0, 0]; for (const i of b) for (let c = 0; c < 3; c++) { const v = rgb[i * 3 + c]; if (v < mn[c]) mn[c] = v; if (v > mx[c]) mx[c] = v; } return [mx[0] - mn[0], mx[1] - mn[1], mx[2] - mn[2]]; };
+  while (boxes.length < k) {
+    let best = -1, bs = -1, ch = 0;
+    boxes.forEach((b, bi) => { if (b.length < 2) return; const r = range(b); const m = Math.max(...r); const sc = m * Math.sqrt(b.length); if (sc > bs) { bs = sc; best = bi; ch = r.indexOf(m); } });
+    if (best < 0 || bs <= 0) break;
+    const b = boxes[best].sort((x, y) => rgb[x * 3 + ch] - rgb[y * 3 + ch]); const mid = b.length >> 1;
+    boxes.splice(best, 1, b.slice(0, mid), b.slice(mid));
+  }
+  return boxes.filter(b => b.length).map(b => { const s = [0, 0, 0]; for (const i of b) { s[0] += LIN[rgb[i * 3]]; s[1] += LIN[rgb[i * 3 + 1]]; s[2] += LIN[rgb[i * 3 + 2]]; } return { hex: linToHex(s.map(v => v / b.length)), pct: b.length / n }; });
+}
+function runExtract() {
+  if (!srcCan) return;
+  const { lab, rgb, n } = samplePixels(srcCan);
+  if (!n) { extRes = []; renderExtract(); return toast('투명한 이미지라 색을 찾지 못했어요', { err: true }); }
+  const k = clamp(S.ext.k, 2, 16);
+  extRes = S.ext.algo === 'median' ? medianCut(rgb, n, k) : kmeans(lab, n, k);
+  renderExtract();
+}
+function sortedExt() {
+  const a = [...extRes];
+  if (S.ext.sort === 'light') a.sort((x, y) => hexToOklch(y.hex)[0] - hexToOklch(x.hex)[0]);
+  else if (S.ext.sort === 'hue') a.sort((x, y) => { const p = hexToOklch(x.hex), q = hexToOklch(y.hex); const gp = p[1] < 0.03, gq = q[1] < 0.03; if (gp !== gq) return gp ? 1 : -1; return gp ? q[0] - p[0] : p[2] - q[2]; });
+  else a.sort((x, y) => y.pct - x.pct);
+  return a;
+}
+function renderExtract() {
+  $('#kN').value = S.ext.k; $('#algo').value = S.ext.algo; $('#eSort').value = S.ext.sort;
+  $$('#sampSeg button').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.s === S.ext.samp)));
+  $('#drop').hidden = !!srcCan; $('#imgWrap').hidden = !srcCan; $('#extOut').hidden = !srcCan; $('#extToPal').disabled = !extRes.length;
+  $('#picks').innerHTML = S.ext.picks.length ? S.ext.picks.map((c, i) => `<div class="lcol"><button class="sw-chip" data-c="${c}" style="background:${c}"></button>${c.toUpperCase()}<button class="x" data-del="${i}" title="빼기">${icon('x')}</button></div>`).join('') : '<span class="muted" style="font-size:12px">아직 찍은 색이 없어요</span>';
+  if (!srcCan) return;
+  const a = sortedExt();
+  $('#extInfo').textContent = `${a.length}색 · ${S.ext.algo === 'median' ? '메디안 컷' : 'K-평균'} · ${srcCan.width}×${srcCan.height}`;
+  $('#extBar').innerHTML = a.map(x => `<span data-c="${x.hex}" style="flex:${Math.max(x.pct, 0.004)};background:${x.hex}" title="${x.hex.toUpperCase()} ${(x.pct * 100).toFixed(1)}%"></span>`).join('');
+  $('#extList').innerHTML = a.map(x => `<button class="eitem" data-c="${x.hex}"><span class="sw-chip" style="background:${x.hex}"></span><span><b>${x.hex.toUpperCase()}</b><small>${(x.pct * 100).toFixed(1)}% · ${esc(koName(x.hex))}</small></span></button>`).join('');
+  const withL = a.map(x => ({ ...x, o: hexToOklch(x.hex) }));
+  const pick = (f, filt = () => true) => { const c = withL.filter(filt); return c.length ? c.reduce((p, q) => f(q) > f(p) ? q : p) : null; };
+  const roles = [
+    ['주요 색', pick(x => x.pct)],
+    ['선명한 색', pick(x => x.o[1], x => x.pct >= 0.015)],
+    ['차분한 색', pick(x => x.pct, x => x.o[1] >= 0.02 && x.o[1] < 0.08 && x.o[0] > 0.25 && x.o[0] < 0.85)],
+    ['가장 밝은 색', pick(x => x.o[0])],
+    ['가장 어두운 색', pick(x => -x.o[0])],
+  ];
+  $('#extRoles').innerHTML = roles.filter(r => r[1]).map(([k, x]) => `<button class="role" data-c="${x.hex}" style="background:${x.hex};color:${ink(x.hex)}">${k}<small>${x.hex.toUpperCase()} · ${(x.pct * 100).toFixed(1)}%</small></button>`).join('');
+}
+['#extBar', '#extList', '#extRoles', '#picks'].forEach(s => $(s).addEventListener('click', e => {
+  const d = e.target.closest('[data-del]'); if (d) { S.ext.picks.splice(+d.dataset.del, 1); renderExtract(); save(); return; }
+  const b = e.target.closest('[data-c]'); if (b) setCur(b.dataset.c, { recent: true });
+}));
+function loadImage(file) {
+  return new Promise((res, rej) => {
+    if (!file || !/^image\//.test(file.type || 'image/')) return rej(new Error('type'));
+    const url = URL.createObjectURL(file); const im = new Image();
+    im.onload = () => { URL.revokeObjectURL(url); res(im); }; im.onerror = () => { URL.revokeObjectURL(url); rej(new Error('decode')); }; im.src = url;
+  });
+}
+function toCanvas(im, max = 1600) {
+  const w0 = im.naturalWidth || im.width, h0 = im.naturalHeight || im.height; const sc = Math.min(1, max / Math.max(w0, h0));
+  const c = document.createElement('canvas'); c.width = Math.max(1, Math.round(w0 * sc)); c.height = Math.max(1, Math.round(h0 * sc));
+  c.getContext('2d').drawImage(im, 0, 0, c.width, c.height); return c;
+}
+function setSource(c) {
+  srcCan = c; const v = $('#imgCan'); v.width = c.width; v.height = c.height; v.getContext('2d').drawImage(c, 0, 0);
+  runExtract(); if (S.tab !== 'extract') setTab('extract');
+}
+async function openImageFile(file) {
+  try { setSource(toCanvas(await loadImage(file))); }
+  catch { toast('이미지를 열지 못했어요. JPG, PNG, WebP 파일인지 확인해 주세요.', { err: true }); }
+}
+function sampleImage() {
+  const c = document.createElement('canvas'); c.width = 960; c.height = 600; const x = c.getContext('2d');
+  let g = x.createLinearGradient(0, 0, 0, 380); g.addColorStop(0, '#2b3f6b'); g.addColorStop(.45, '#c8677a'); g.addColorStop(.8, '#f3a65a'); g.addColorStop(1, '#f8d79a'); x.fillStyle = g; x.fillRect(0, 0, 960, 380);
+  x.fillStyle = '#ffe6a8'; x.beginPath(); x.arc(640, 330, 70, 0, Math.PI * 2); x.fill();
+  const hill = (col, base, amp, f, ph) => { x.fillStyle = col; x.beginPath(); x.moveTo(0, 600); for (let i = 0; i <= 960; i += 8) x.lineTo(i, base - Math.sin(i * f + ph) * amp - Math.sin(i * f * 2.7 + ph) * amp * .35); x.lineTo(960, 600); x.fill(); };
+  hill('#6b4f73', 340, 40, .006, 1); hill('#3e4a6b', 380, 30, .009, 3);
+  g = x.createLinearGradient(0, 380, 0, 600); g.addColorStop(0, '#e9a06b'); g.addColorStop(1, '#244d5a'); x.fillStyle = g; x.fillRect(0, 380, 960, 220);
+  hill('#1f3a33', 470, 26, .012, 2); hill('#244d3a', 520, 20, .02, 5);
+  x.fillStyle = '#d9c8a9'; x.fillRect(0, 560, 960, 40);
+  return c;
+}
+/* picking with loupe */
+(() => {
+  const cv = $('#imgCan'), lp = $('#loupe'), lc = $('#loupeCan'), lx = lc.getContext('2d', { willReadFrequently: true }); let down = false, last = null;
+  const pos = e => { const r = cv.getBoundingClientRect(); return { x: clamp(Math.floor((e.clientX - r.left) / r.width * cv.width), 0, cv.width - 1), y: clamp(Math.floor((e.clientY - r.top) / r.height * cv.height), 0, cv.height - 1), r }; };
+  const colorAt = (x, y) => { const s = S.ext.samp, h = s >> 1; const x0 = clamp(x - h, 0, cv.width - 1), y0 = clamp(y - h, 0, cv.height - 1); const w = Math.min(s, cv.width - x0), hh = Math.min(s, cv.height - y0); const d = srcCan.getContext('2d').getImageData(x0, y0, w, hh).data; const a = [0, 0, 0]; let n = 0; for (let i = 0; i < d.length; i += 4) { a[0] += LIN[d[i]]; a[1] += LIN[d[i + 1]]; a[2] += LIN[d[i + 2]]; n++; } return linToHex(a.map(v => v / n)); };
+  const show = e => {
+    if (!srcCan) return; const p = pos(e); last = p; const c = colorAt(p.x, p.y);
+    lx.imageSmoothingEnabled = false; lx.clearRect(0, 0, 11, 11); lx.drawImage(srcCan, p.x - 5, p.y - 5, 11, 11, 0, 0, 11, 11);
+    const wr = $('#imgWrap').getBoundingClientRect(); let lxp = e.clientX - wr.left - 56, lyp = e.clientY - wr.top - 140; if (lyp < 0) lyp = e.clientY - wr.top + 30;
+    lp.style.left = lxp + 'px'; lp.style.top = lyp + 'px'; lp.style.display = 'block'; $('#loupeTxt').textContent = c.toUpperCase();
+    lp.style.boxShadow = `0 0 0 3px ${c}, 0 0 0 4px rgba(0,0,0,.3), 0 10px 24px -8px rgba(0,0,0,.5)`;
+    return c;
+  };
+  cv.addEventListener('pointerdown', e => { if (!srcCan) return; down = true; cv.setPointerCapture(e.pointerId); show(e); e.preventDefault(); });
+  cv.addEventListener('pointermove', e => { if (down || e.pointerType === 'mouse') show(e); });
+  cv.addEventListener('pointerleave', () => { if (!down) lp.style.display = 'none'; });
+  const up = e => { if (!down) return; down = false; const c = show(e); if (e.pointerType !== 'mouse') lp.style.display = 'none'; if (!c) return; S.ext.picks = [c, ...S.ext.picks.filter(x => x !== c)].slice(0, 30); setCur(c, { recent: true }); renderExtract(); };
+  cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', () => { down = false; lp.style.display = 'none'; });
+})();
+$('#imgOpen').onclick = $('#imgOpen2').onclick = () => $('#imgFile').click();
+$('#imgFile').onchange = e => { const f = e.target.files[0]; e.target.value = ''; if (f) openImageFile(f); };
+$('#imgSample').onclick = () => setSource(sampleImage());
+$('#kMinus').onclick = () => { S.ext.k = clamp(S.ext.k - 1, 2, 16); save(); runExtract(); renderExtract(); };
+$('#kPlus').onclick = () => { S.ext.k = clamp(S.ext.k + 1, 2, 16); save(); runExtract(); renderExtract(); };
+$('#kN').onchange = e => { S.ext.k = clamp(Math.round(+e.target.value) || 6, 2, 16); save(); runExtract(); renderExtract(); };
+$('#algo').onchange = e => { S.ext.algo = e.target.value; save(); runExtract(); };
+$('#eSort').onchange = e => { S.ext.sort = e.target.value; save(); renderExtract(); };
+$('#sampSeg').onclick = e => { const b = e.target.closest('button'); if (b) { S.ext.samp = +b.dataset.s; save(); renderExtract(); } };
+$('#extToPal').onclick = () => setPalette(sortedExt().map(x => x.hex), '추출한 색을 팔레트로 보냈어요');
+(() => {
+  const dz = $('#drop'); const over = on => dz.classList.toggle('over', on);
+  ['dragenter', 'dragover'].forEach(t => document.addEventListener(t, e => { if ([...(e.dataTransfer?.types || [])].includes('Files')) { e.preventDefault(); over(true); } }));
+  ['dragleave', 'drop'].forEach(t => document.addEventListener(t, () => over(false)));
+  document.addEventListener('drop', e => {
+    const f = [...(e.dataTransfer?.files || [])].find(f => /^image\//.test(f.type)); if (!f) return; e.preventDefault();
+    if (S.tab === 'vision') openVisFile(f); else openImageFile(f);
+  });
+  document.addEventListener('paste', e => {
+    const it = [...(e.clipboardData?.items || [])].find(i => i.type.startsWith('image/'));
+    if (it) { e.preventDefault(); const f = it.getAsFile(); if (S.tab === 'vision') openVisFile(f); else openImageFile(f); return; }
+    if (e.target.closest('input, textarea')) return;
+    const t = e.clipboardData?.getData('text') || ''; const cs = extractColors(t);
+    if (cs.length === 1) { setCur(cs[0], { recent: true }); toast(`${cs[0].toUpperCase()} 붙여넣었어요`); }
+    else if (cs.length > 1) setPalette(cs, `${Math.min(cs.length, 12)}색을 팔레트로 붙여넣었어요`);
+  });
+})();
+
+/* =========================================================================
+   Contrast
+   ========================================================================= */
+function wcagChecks(r) {
+  return [
+    ['AA 일반 글자', 4.5, '본문 크기 글자'],
+    ['AA 큰 글자', 3, '24px 이상 또는 굵은 18.7px 이상'],
+    ['AAA 일반 글자', 7, '가장 엄격한 본문 기준'],
+    ['AAA 큰 글자', 4.5, '큰 글자의 엄격한 기준'],
+    ['UI·아이콘', 3, '테두리, 아이콘, 입력칸 (1.4.11)'],
+  ].map(([k, t, s]) => `<div class="wci"><span class="k">${k}</span><span>${r >= t ? '<span class="badge ok">통과</span>' : '<span class="badge no">미달</span>'} <span class="muted" style="font-size:11.5px">${t}:1 이상</span></span><span class="s">${s}</span></div>`).join('');
+}
+function apcaNote(lc) {
+  const a = Math.abs(lc);
+  const t = a >= 90 ? '본문에 아주 좋아요' : a >= 75 ? '본문에 쓸 수 있어요' : a >= 60 ? '본문은 부족, 제목·큰 글자에 적당해요' : a >= 45 ? '큰 제목(36px 이상)에만 적당해요' : a >= 30 ? '아주 큰 글자나 보조 정보에만 써요' : a >= 15 ? '글자에는 부족, 장식용 테두리 정도예요' : '거의 보이지 않아요';
+  return `APCA Lc <b>${lc.toFixed(1)}</b> · ${t}`;
+}
+function findPass(moving, fixed, target) {
+  const [L, C, H] = hexToOklch(moving); const res = [];
+  for (const dir of [-1, 1]) {
+    for (let l = L; l >= 0 && l <= 1; l += dir * 0.004) {
+      const c = oklchToHex(l, C, H); if (contrast(c, fixed) >= target) { res.push({ c, d: Math.abs(l - L) }); break; }
+    }
+  }
+  return res.sort((a, b) => a.d - b.d)[0]?.c || null;
+}
+function renderContrast() {
+  const { fg, bg } = S.con;
+  for (const k of ['fg', 'bg']) { const v = S.con[k]; $(`#${k}Nat`).value = v; $(`#${k}Sw`).style.background = v; if (document.activeElement !== $(`#${k}In`)) $(`#${k}In`).value = v.toUpperCase(); }
+  const pv = $('#cprev'); pv.style.background = bg; pv.style.color = fg;
+  const r = contrast(fg, bg), lc = apca(fg, bg);
+  $('#cRatio').innerHTML = `${(Math.floor(r * 100) / 100).toFixed(2)}<small>:1</small>`;
+  $('#cApca').innerHTML = `${r >= 7 ? '아주 잘 읽혀요.' : r >= 4.5 ? '본문에 써도 돼요.' : r >= 3 ? '큰 글자와 아이콘에만 써요.' : '글자로 쓰기엔 대비가 부족해요.'}<br>${apcaNote(lc)}`;
+  $('#cChecks').innerHTML = wcagChecks(r);
+  const out = [];
+  for (const t of [4.5, 7]) {
+    const lbl = t === 7 ? 'AAA' : 'AA';
+    if (r >= t) continue;
+    const f = findPass(fg, bg, t); if (f && !out.some(o => o.c === f && o.k === 'fg')) out.push({ k: 'fg', c: f, lbl });
+    const b = findPass(bg, fg, t); if (b && !out.some(o => o.c === b && o.k === 'bg')) out.push({ k: 'bg', c: b, lbl });
+  }
+  $('#sugg').innerHTML = r >= 7 ? '<div class="note ok" style="margin:0">이미 가장 엄격한 AAA 기준(7:1)을 넘었어요.</div>'
+    : out.length ? out.map(o => `<button class="sg" data-k="${o.k}" data-c="${o.c}"><span class="sw-chip" style="background:${o.c}"></span>${o.k === 'fg' ? '글자색' : '배경색'} ${o.c.toUpperCase()} <small>${contrast(o.k === 'fg' ? o.c : fg, o.k === 'fg' ? bg : o.c).toFixed(2)}:1 · ${o.lbl}</small></button>`).join('')
+    : '<span class="muted" style="font-size:12.5px">밝기만으로는 기준을 넘는 색을 찾지 못했어요. 둘 중 하나를 더 밝거나 어둡게 바꿔 보세요.</span>';
+  $$('#mtxLvl button').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.l === S.con.lvl)));
+  const cs = [...new Set([...S.pal.colors, '#ffffff', '#000000'])];
+  $('#mtx').innerHTML = `<table><tr><th></th>${cs.map(c => `<th><span class="sw-chip" style="background:${c}" title="배경 ${c.toUpperCase()}"></span></th>`).join('')}</tr>`
+    + cs.map(t => `<tr><th><span class="sw-chip" style="background:${t}" title="글자 ${t.toUpperCase()}"></span></th>${cs.map(b => { if (t === b) return `<td class="self" style="background:${b}"></td>`; const x = contrast(t, b); return `<td class="${x < S.con.lvl ? 'fail' : ''}" data-fg="${t}" data-bg="${b}" style="background:${b};color:${t}">Aa<small>${x.toFixed(1)}</small></td>`; }).join('')}</tr>`).join('') + '</table>';
+}
+for (const k of ['fg', 'bg']) {
+  $(`#${k}Nat`).addEventListener('input', e => { S.con[k] = e.target.value; renderContrast(); save(); });
+  const inp = $(`#${k}In`);
+  inp.addEventListener('input', () => { const v = inp.value.trim(); if (/^#?([0-9a-f]{6})$/i.test(v)) { S.con[k] = parseColor(v); renderContrast(); save(); } });
+  inp.addEventListener('change', () => { const c = parseColor(inp.value); if (c) { S.con[k] = c; inp.value = c.toUpperCase(); renderContrast(); save(); } else toast('알 수 없는 색 값이에요', { err: true }); });
+  inp.addEventListener('keydown', e => { if (e.key === 'Enter') inp.blur(); });
+  $(`#${k}Cur`).onclick = () => { S.con[k] = S.cur; renderContrast(); save(); };
+}
+$('#swapBtn').onclick = () => { [S.con.fg, S.con.bg] = [S.con.bg, S.con.fg]; renderContrast(); save(); };
+$('#sugg').onclick = e => { const b = e.target.closest('.sg'); if (b) { S.con[b.dataset.k] = b.dataset.c; renderContrast(); save(); } };
+$('#mtxLvl').onclick = e => { const b = e.target.closest('button'); if (b) { S.con.lvl = +b.dataset.l; renderContrast(); save(); } };
+$('#mtx').onclick = e => { const td = e.target.closest('td[data-fg]'); if (td) { S.con.fg = td.dataset.fg; S.con.bg = td.dataset.bg; renderContrast(); save(); $('#work .view[data-view="contrast"] .scroll').scrollTo({ top: 0, behavior: 'smooth' }); if (window.innerWidth < 1000) $('#cprev').scrollIntoView({ behavior: 'smooth', block: 'center' }); } };
+
+/* =========================================================================
+   Color-vision simulation
+   ========================================================================= */
+let visCan = null;
+function visColors() { if (S.vis.src === 'scale') return makeScale(S.cur).arr; if (S.vis.src === 'contrast') return [S.con.fg, S.con.bg]; return S.pal.colors; }
+function renderVision() {
+  const sev = S.vis.sev / 100, cs = visColors();
+  $$('#visSrc button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.s === S.vis.src)));
+  $('#visSev').value = S.vis.sev; $('#visSevV').textContent = S.vis.sev + '%';
+  $('#visRows').innerHTML = VTYPES.map(([t, k, s]) => {
+    const sim = cs.map(c => simHex(c, t, sev));
+    const extra = S.vis.src === 'contrast' ? ` · 대비 ${contrast(sim[0], sim[1]).toFixed(2)}:1` : '';
+    const strip = S.vis.src === 'contrast'
+      ? `<div class="vstrip" style="background:${sim[1]};color:${sim[0]};align-items:center;padding:0 14px;font-weight:700;font-size:15px">글자 미리보기 Aa 가나다 123</div>`
+      : `<div class="vstrip">${sim.map((c, i) => `<span data-c="${c}" title="${cs[i].toUpperCase()} → ${c.toUpperCase()}" style="background:${c}"></span>`).join('')}</div>`;
+    return `<div class="vrow"><div class="k">${k}<small>${s}${extra}</small></div>${strip}</div>`;
+  }).join('');
+  const warns = [];
+  if (S.vis.src !== 'contrast') {
+    for (const [t, k] of VTYPES.slice(1)) {
+      const sim = cs.map(c => simHex(c, t, sev));
+      for (let i = 0; i < cs.length; i++) for (let j = i + 1; j < cs.length; j++) {
+        if (cs[i] === cs[j]) continue;
+        const d0 = dE(cs[i], cs[j]), d1 = dE(sim[i], sim[j]);
+        if (d1 < 0.06 && d0 >= 0.06) warns.push({ k, a: cs[i], b: cs[j], sa: sim[i], sb: sim[j], d1 });
+      }
+    }
+  } else {
+    for (const [t, k] of VTYPES.slice(1)) { const a = simHex(S.con.fg, t, sev), b = simHex(S.con.bg, t, sev); const r = contrast(a, b); if (r < 4.5 && contrast(S.con.fg, S.con.bg) >= 4.5) warns.push({ k, a: S.con.fg, b: S.con.bg, sa: a, sb: b, r }); }
+  }
+  $('#visWarn').innerHTML = warns.length ? warns.map(w => `<div class="wl"><b style="min-width:62px">${w.k}</b><span class="pair"><span style="background:${w.a}"></span><span style="background:${w.b}"></span></span>→<span class="pair"><span style="background:${w.sa}"></span><span style="background:${w.sb}"></span></span><span class="muted">${w.r ? `대비 ${w.r.toFixed(2)}:1로 떨어져요` : `${w.a.toUpperCase()} · ${w.b.toUpperCase()} (ΔE ${(w.d1 * 100).toFixed(1)})`}</span></div>`).join('')
+    + '<div class="note warn">이 쌍을 색만으로 구분하게 하지 말고, 밝기 차이를 키우거나 글자·무늬·아이콘을 함께 쓰세요.</div>'
+    : `<div class="note ok" style="margin:0">${S.vis.src === 'contrast' ? '모든 유형에서 대비가 크게 떨어지지 않아요.' : '모든 유형에서 색끼리 구분이 돼요.'}</div>`;
+  renderVisImgs();
+}
+const SRGB8 = new Uint8ClampedArray(4096); for (let i = 0; i < 4096; i++) SRGB8[i] = Math.round(fromLin(i / 4095));
+function renderVisImgs() {
+  const box = $('#visImgs'); if (!visCan) return;
+  const sev = S.vis.sev / 100; const sc = Math.min(1, 520 / Math.max(visCan.width, visCan.height));
+  const w = Math.max(1, Math.round(visCan.width * sc)), h = Math.max(1, Math.round(visCan.height * sc));
+  const b = document.createElement('canvas'); b.width = w; b.height = h; const bx = b.getContext('2d', { willReadFrequently: true }); bx.drawImage(visCan, 0, 0, w, h);
+  const src = bx.getImageData(0, 0, w, h);
+  box.innerHTML = '';
+  for (const [t, k] of VTYPES) {
+    const c = document.createElement('canvas'); c.width = w; c.height = h; const x = c.getContext('2d');
+    const M = cvdMatrix(t, sev);
+    if (!M) x.putImageData(src, 0, 0);
+    else {
+      const out = new ImageData(w, h), s = src.data, d = out.data;
+      for (let i = 0; i < s.length; i += 4) {
+        const r = LIN[s[i]], g = LIN[s[i + 1]], bb = LIN[s[i + 2]];
+        d[i] = SRGB8[clamp((M[0] * r + M[1] * g + M[2] * bb) * 4095, 0, 4095) | 0];
+        d[i + 1] = SRGB8[clamp((M[3] * r + M[4] * g + M[5] * bb) * 4095, 0, 4095) | 0];
+        d[i + 2] = SRGB8[clamp((M[6] * r + M[7] * g + M[8] * bb) * 4095, 0, 4095) | 0];
+        d[i + 3] = s[i + 3];
+      }
+      x.putImageData(out, 0, 0);
+    }
+    const f = document.createElement('figure'); f.appendChild(c); const cap = document.createElement('figcaption'); cap.textContent = k; f.appendChild(cap); box.appendChild(f);
+  }
+}
+async function openVisFile(file) { try { visCan = toCanvas(await loadImage(file), 1200); if (S.tab !== 'vision') setTab('vision'); else renderVisImgs(); } catch { toast('이미지를 열지 못했어요', { err: true }); } }
+$('#visSrc').onclick = e => { const b = e.target.closest('button'); if (b) { S.vis.src = b.dataset.s; renderVision(); save(); } };
+$('#visSev').oninput = e => { S.vis.sev = +e.target.value; renderVision(); save(); };
+$('#visRows').onclick = e => { const s = e.target.closest('[data-c]'); if (s) setCur(s.dataset.c, { recent: true }); };
+$('#visImgOpen').onclick = () => $('#visFile').click();
+$('#visFile').onchange = e => { const f = e.target.files[0]; e.target.value = ''; if (f) openVisFile(f); };
+$('#visUseExt').onclick = () => { if (!srcCan) return toast('이미지 추출 탭에서 먼저 이미지를 열어 주세요'); visCan = srcCan; renderVisImgs(); };
+
+/* =========================================================================
+   Gradient
+   ========================================================================= */
+const sortedStops = () => [...S.grad.stops].sort((a, b) => a.p - b.p);
+function mixHex(a, b, u, space) {
+  if (space === 'srgb') { const x = hexToRgb(a), y = hexToRgb(b); return rgbToHex(x.map((v, i) => v + (y[i] - v) * u)); }
+  if (space === 'oklab') { const x = hexToOklab(a), y = hexToOklab(b); return oklabToHex(x[0] + (y[0] - x[0]) * u, x[1] + (y[1] - x[1]) * u, x[2] + (y[2] - x[2]) * u); }
+  const x = hexToOklch(a), y = hexToOklch(b); let h1 = x[2], h2 = y[2]; if (x[1] < 0.01) h1 = h2; if (y[1] < 0.01) h2 = h1;
+  let dh = h2 - h1; if (dh > 180) dh -= 360; if (dh < -180) dh += 360;
+  return oklchToHex(x[0] + (y[0] - x[0]) * u, x[1] + (y[1] - x[1]) * u, h1 + dh * u);
+}
+function gradAt(t, st = sortedStops(), space = S.grad.space) {
+  t *= 100; if (t <= st[0].p) return st[0].c; if (t >= st[st.length - 1].p) return st[st.length - 1].c;
+  for (let i = 0; i < st.length - 1; i++) if (t <= st[i + 1].p) { const u = (t - st[i].p) / ((st[i + 1].p - st[i].p) || 1); return mixHex(st[i].c, st[i + 1].c, u, space); }
+  return st[st.length - 1].c;
+}
+function stopList(modern) {
+  const g = S.grad, st = sortedStops();
+  if (modern || g.space === 'srgb') return st.map(s => `${s.c.toUpperCase()} ${r1(s.p, 1)}%`);
+  const out = [];
+  st.forEach((s, i) => { out.push(`${s.c.toUpperCase()} ${r1(s.p, 1)}%`); const nx = st[i + 1]; if (nx && nx.p > s.p) for (let k = 1; k < 8; k++) { const u = k / 8; out.push(`${mixHex(s.c, nx.c, u, g.space).toUpperCase()} ${r1(s.p + (nx.p - s.p) * u, 1)}%`); } });
+  return out;
+}
+function gradCss(modern = false, typeOverride) {
+  const g = S.grad, type = typeOverride || g.type, stops = stopList(modern).join(', '), inS = modern && g.space !== 'srgb' ? `in ${g.space} ` : '';
+  if (type === 'linear') return `linear-gradient(${inS}${typeOverride ? 90 : g.angle}deg, ${stops})`;
+  if (type === 'radial') return `radial-gradient(${inS}circle at ${g.cx}% ${g.cy}%, ${stops})`;
+  return `conic-gradient(${inS}from ${g.angle}deg at ${g.cx}% ${g.cy}%, ${stops})`;
+}
+const PRESETS = [
+  ['숲', ['#1f3a33', '#244d3a', '#8fb08c']], ['노을', ['#2b3f6b', '#c8677a', '#f3a65a']], ['바다', ['#0b3d5c', '#139a9a', '#bde7e0']],
+  ['복숭아', ['#ffd3b6', '#ff9a8b', '#e86a92']], ['라벤더', ['#e8e1ff', '#b39ddb', '#6a4c93']], ['모래', ['#f5f1e8', '#d9c8a9', '#8a5a3b']],
+  ['오로라', ['#1b2a49', '#1baf7a', '#9be15d']], ['불꽃', ['#ff512f', '#f09819', '#ffe259']], ['새벽', ['#0f2027', '#203a43', '#2c5364']],
+  ['솜사탕', ['#a1c4fd', '#c2e9fb', '#fbc2eb']], ['무지개', ['#ff0000', '#ffa500', '#ffff00', '#00c853', '#2962ff', '#8e24aa']], ['흑백', ['#000000', '#ffffff']],
+];
+function renderGradient(light = false) {
+  const g = S.grad; if (g.sel >= g.stops.length) g.sel = 0;
+  $$('#gType button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.t === g.type)));
+  $$('#gSpace button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.s === g.space)));
+  $('#gprev').style.background = gradCss(false);
+  $('#gbar').style.background = gradCss(false, 'linear');
+  $('#gbar').innerHTML = g.stops.map((s, i) => `<div class="gh${i === g.sel ? ' on' : ''}" data-i="${i}" style="left:${s.p}%"><i style="background:${s.c}"></i></div>`).join('');
+  const s = g.stops[g.sel];
+  if (light && $('#gsPos')) { $('#gstop .rng b').textContent = r1(s.p, 1) + '%'; $('#gstop .nat span').style.background = s.c; if (document.activeElement !== $('#gsHex')) $('#gsHex').value = s.c.toUpperCase(); }
+  else $('#gstop').innerHTML = `<label class="nat"><input type="color" id="gsNat" value="${s.c}" /><span style="background:${s.c}"></span></label>
+    <input class="inp" id="gsHex" value="${s.c.toUpperCase()}" spellcheck="false" />
+    <label class="rng">위치 <input type="range" id="gsPos" min="0" max="100" step="0.5" value="${s.p}" /><b>${r1(s.p, 1)}%</b></label>
+    <button class="btn line sm" id="gsCur">선택 색 넣기</button>
+    <button class="btn line sm" id="gsPick">${icon('pipette', 'sm')}이 색 선택</button>
+    <button class="tool danger" id="gsDel" title="지점 빼기" ${g.stops.length <= 2 ? 'disabled' : ''}>${icon('trash')}</button>`;
+  $('#gAng').value = g.angle; $('#gAngV').textContent = g.angle + '°'; $('#gCx').value = g.cx; $('#gCxV').textContent = g.cx + '%'; $('#gCy').value = g.cy; $('#gCyV').textContent = g.cy + '%';
+  $('#gAngW').hidden = g.type === 'radial'; $('#gCxW').hidden = $('#gCyW').hidden = g.type === 'linear';
+  const css = `background: ${gradCss(false)};`;
+  $('#gCss').innerHTML = `<button class="icon-btn cp" data-copy="1" title="복사">${icon('copy')}</button>${esc(css)}`;
+  $('#gCss2').hidden = g.space === 'srgb';
+  $('#gCss2').innerHTML = `<button class="icon-btn cp" data-copy="2" title="복사">${icon('copy')}</button>${esc(`background: ${gradCss(true)};`)}`;
+  $('#gNote').textContent = g.space === 'srgb' ? '모든 브라우저에서 같은 결과' : `위: ${g.space.toUpperCase()} 중간색을 미리 계산해 어디서나 같게 · 아래: 최신 브라우저용 짧은 버전`;
+  const n = clamp(g.n, 2, 16); $('#gsN').value = n;
+  $('#gSteps').innerHTML = Array.from({ length: n }, (_, i) => { const c = gradAt(i / (n - 1)); return `<span data-c="${c}" style="background:${c}" title="${c.toUpperCase()}"></span>`; }).join('');
+  if (!$('#gPresets').children.length) $('#gPresets').innerHTML = PRESETS.map(([k, cs], i) => `<button data-p="${i}" style="background:linear-gradient(90deg, ${cs.join(', ')})">${k}</button>`).join('');
+}
+function gSet(fn) { fn(S.grad); renderGradient(); save(); }
+$('#gType').onclick = e => { const b = e.target.closest('button'); if (b) gSet(g => g.type = b.dataset.t); };
+$('#gSpace').onclick = e => { const b = e.target.closest('button'); if (b) gSet(g => g.space = b.dataset.s); };
+$('#gAng').oninput = e => gSet(g => g.angle = +e.target.value);
+$('#gCx').oninput = e => gSet(g => g.cx = +e.target.value);
+$('#gCy').oninput = e => gSet(g => g.cy = +e.target.value);
+$('#gRev').onclick = () => gSet(g => { g.stops.forEach(s => s.p = r1(100 - s.p, 1)); });
+$('#gRnd').onclick = () => gSet(g => { const h = Math.random() * 360, n = 2 + Math.floor(Math.random() * 2); g.stops = Array.from({ length: n }, (_, i) => ({ c: oklchToHex(0.45 + Math.random() * 0.45, 0.08 + Math.random() * 0.12, h + i * (40 + Math.random() * 80)), p: r1(i / (n - 1) * 100, 1) })); g.sel = 0; });
+$('#gPresets').onclick = e => { const b = e.target.closest('[data-p]'); if (b) gSet(g => { const cs = PRESETS[+b.dataset.p][1]; g.stops = cs.map((c, i) => ({ c, p: r1(i / (cs.length - 1) * 100, 1) })); g.sel = 0; }); };
+$('#gsMinus').onclick = () => gSet(g => g.n = clamp(g.n - 1, 2, 16));
+$('#gsPlus').onclick = () => gSet(g => g.n = clamp(g.n + 1, 2, 16));
+$('#gsN').onchange = e => gSet(g => g.n = clamp(Math.round(+e.target.value) || 7, 2, 16));
+$('#gSteps').onclick = e => { const s = e.target.closest('[data-c]'); if (s) setCur(s.dataset.c, { recent: true }); };
+$('#gToPal').onclick = () => setPalette($$('#gSteps [data-c]').map(s => s.dataset.c).slice(0, 12), '단계 색을 팔레트로 보냈어요');
+$('#gFromPal').onclick = () => gSet(g => { const cs = S.pal.colors; g.stops = cs.map((c, i) => ({ c, p: r1(i / (cs.length - 1) * 100, 1) })); g.sel = 0; });
+$('#gCss').parentElement.addEventListener('click', e => { const b = e.target.closest('[data-copy]'); if (b) copyText(`background: ${gradCss(b.dataset.copy === '2')};`, 'CSS를'); });
+$('#gstop').addEventListener('input', e => {
+  const s = S.grad.stops[S.grad.sel]; if (!s) return;
+  if (e.target.id === 'gsNat') { s.c = e.target.value; renderGradient(true); save(); }
+  else if (e.target.id === 'gsPos') { s.p = +e.target.value; renderGradient(true); save(); }
+});
+$('#gstop').addEventListener('change', e => { if (e.target.id === 'gsHex') { const c = parseColor(e.target.value); if (c) gSet(g => g.stops[g.sel].c = c); else toast('알 수 없는 색 값이에요', { err: true }); } });
+$('#gstop').addEventListener('click', e => {
+  const id = e.target.closest('button')?.id; const g = S.grad;
+  if (id === 'gsCur') gSet(g => g.stops[g.sel].c = S.cur);
+  else if (id === 'gsPick') setCur(g.stops[g.sel].c, { recent: true });
+  else if (id === 'gsDel' && g.stops.length > 2) gSet(g => { g.stops.splice(g.sel, 1); g.sel = 0; });
+});
+(() => {
+  const bar = $('#gbar'); let drag = -1;
+  const pct = e => { const r = bar.getBoundingClientRect(); return r1(clamp((e.clientX - r.left) / r.width * 100, 0, 100), 1); };
+  bar.addEventListener('pointerdown', e => {
+    const h = e.target.closest('.gh');
+    if (h) { drag = +h.dataset.i; S.grad.sel = drag; }
+    else { const p = pct(e); S.grad.stops.push({ c: gradAt(p / 100), p }); drag = S.grad.sel = S.grad.stops.length - 1; }
+    bar.setPointerCapture(e.pointerId); renderGradient(); save(); e.preventDefault();
+  });
+  bar.addEventListener('pointermove', e => { if (drag < 0) return; S.grad.stops[drag].p = pct(e); renderGradient(true); });
+  const end = () => { if (drag >= 0) { drag = -1; save(); } };
+  bar.addEventListener('pointerup', end); bar.addEventListener('pointercancel', end);
+})();
+async function gradPng() {
+  const v = await promptDlg('PNG로 저장', '크기를 "가로x세로"로 적어 주세요. 예: 1920x1080, 1080x1080, 1080x1920, 3840x2160', '1920x1080', { okLabel: '저장' });
+  if (v == null) return; const m = v.match(/(\d+)\s*[x×*,]\s*(\d+)/i); if (!m) return toast('크기를 알아보지 못했어요', { err: true });
+  const W = clamp(+m[1], 16, 8192), H = clamp(+m[2], 16, 8192), g = S.grad, st = sortedStops();
+  const N = 1024, lut = new Uint8ClampedArray(N * 3);
+  for (let i = 0; i < N; i++) { const c = hexToRgb(gradAt(i / (N - 1), st)); lut[i * 3] = c[0]; lut[i * 3 + 1] = c[1]; lut[i * 3 + 2] = c[2]; }
+  const cv = document.createElement('canvas'); cv.width = W; cv.height = H; const x = cv.getContext('2d'); const img = x.createImageData(W, H), d = img.data;
+  const a = g.angle * Math.PI / 180, dx = Math.sin(a), dy = -Math.cos(a), len = Math.abs(W * dx) + Math.abs(H * dy);
+  const cx = W * g.cx / 100, cy = H * g.cy / 100, R = Math.max(Math.hypot(cx, cy), Math.hypot(W - cx, cy), Math.hypot(cx, H - cy), Math.hypot(W - cx, H - cy));
+  for (let y = 0; y < H; y++) for (let xx = 0; xx < W; xx++) {
+    let t;
+    if (g.type === 'linear') t = ((xx + .5 - W / 2) * dx + (y + .5 - H / 2) * dy) / len + 0.5;
+    else if (g.type === 'radial') t = Math.hypot(xx + .5 - cx, y + .5 - cy) / R;
+    else { let ang = Math.atan2(xx + .5 - cx, -(y + .5 - cy)) * 180 / Math.PI - g.angle; ang = ((ang % 360) + 360) % 360; t = ang / 360; }
+    const k = clamp(Math.round(t * (N - 1)), 0, N - 1) * 3, o = (y * W + xx) * 4;
+    d[o] = lut[k]; d[o + 1] = lut[k + 1]; d[o + 2] = lut[k + 2]; d[o + 3] = 255;
+  }
+  x.putImageData(img, 0, 0);
+  cv.toBlob(b => { download(`gradient-${W}x${H}.png`, b); toast('PNG를 저장했어요'); }, 'image/png');
+}
+$('#gPng').onclick = gradPng;
+
+/* =========================================================================
+   Export
+   ========================================================================= */
+let EX = null;
+const EXF = [['hex', 'HEX'], ['css', 'CSS 변수'], ['scss', 'SCSS'], ['tw', 'Tailwind'], ['json', 'JSON'], ['gpl', 'GIMP·Inkscape'], ['ase', 'Adobe ASE'], ['svg', 'SVG'], ['png', 'PNG']];
+function openExport(data) {
+  EX = { ...data, fmt: store.get('exFmt', 'css') };
+  $('#exName').value = data.name; $('#exPal').innerHTML = data.groups.flatMap(g => g.colors).map(c => `<span style="background:${c}"></span>`).join('');
+  renderExport(); $('#exDlg').showModal();
+}
+function exGroups() { const base = slug($('#exName').value, 'palette'); return EX.groups.map((g, i) => ({ ...g, name: EX.groups.length === 1 ? base : slug(g.name, base + (i + 1)) })); }
+function exText(fmt) {
+  const gs = exGroups(), all = gs.flatMap(g => g.colors.map((c, i) => ({ g: g.name, k: g.keys[i], c })));
+  switch (fmt) {
+    case 'hex': return gs.map(g => g.colors.map(c => c.toUpperCase()).join('\n')).join('\n\n');
+    case 'css': return `:root {\n${all.map(x => `  --${x.g}-${x.k}: ${x.c.toUpperCase()};`).join('\n')}\n}`;
+    case 'scss': return all.map(x => `$${x.g}-${x.k}: ${x.c.toUpperCase()};`).join('\n') + `\n\n$${gs[0].name}: (\n${gs[0].colors.map((c, i) => `  "${gs[0].keys[i]}": ${c.toUpperCase()},`).join('\n')}\n);`;
+    case 'tw': return `// tailwind.config.js › theme.extend.colors\ncolors: {\n${gs.map(g => `  '${g.name}': {\n${g.colors.map((c, i) => `    ${/^\d+$/.test(g.keys[i]) ? g.keys[i] : `'${g.keys[i]}'`}: '${c.toUpperCase()}',`).join('\n')}\n  },`).join('\n')}\n},`;
+    case 'json': return JSON.stringify(Object.fromEntries(gs.map(g => [g.name, Object.fromEntries(g.colors.map((c, i) => [g.keys[i], c.toUpperCase()]))])), null, 2);
+    case 'gpl': return `GIMP Palette\nName: ${$('#exName').value || 'Colorer'}\nColumns: ${Math.min(all.length, 16)}\n#\n` + all.map(x => { const [r, g, b] = hexToRgb(x.c); return `${String(r).padStart(3)} ${String(g).padStart(3)} ${String(b).padStart(3)}\t${x.g}-${x.k}`; }).join('\n');
+    case 'svg': { const n = all.length, w = 120; return `<svg xmlns="http://www.w3.org/2000/svg" width="${n * w}" height="160" viewBox="0 0 ${n * w} 160">\n` + all.map((x, i) => `  <rect x="${i * w}" y="0" width="${w}" height="120" fill="${x.c.toUpperCase()}"/>\n  <text x="${i * w + w / 2}" y="145" font-family="sans-serif" font-size="14" text-anchor="middle" fill="#1C2824">${x.c.toUpperCase()}</text>`).join('\n') + '\n</svg>'; }
+    case 'ase': return `Adobe Swatch Exchange(.ase) 파일로 저장돼요.\n포토샵, 일러스트레이터, 인디자인의 견본 패널에서 불러올 수 있어요.\n\n${all.length}색: ${all.map(x => x.c.toUpperCase()).join(' ')}`;
+    case 'png': return `팔레트 카드 이미지(.png)로 저장돼요.\n\n${all.length}색: ${all.map(x => x.c.toUpperCase()).join(' ')}`;
+  }
+}
+function aseBlob() {
+  const gs = exGroups(), all = gs.flatMap(g => g.colors.map((c, i) => ({ n: `${g.name}-${g.keys[i]}`, c })));
+  const parts = []; const u16 = v => { const b = new DataView(new ArrayBuffer(2)); b.setUint16(0, v); parts.push(b.buffer); }; const u32 = v => { const b = new DataView(new ArrayBuffer(4)); b.setUint32(0, v); parts.push(b.buffer); };
+  parts.push(new TextEncoder().encode('ASEF')); u16(1); u16(0); u32(all.length);
+  for (const { n, c } of all) {
+    const nm = n.slice(0, 60); const nl = nm.length + 1; u16(0x0001); u32(2 + nl * 2 + 4 + 12 + 2); u16(nl);
+    const nb = new DataView(new ArrayBuffer(nl * 2)); for (let i = 0; i < nm.length; i++) nb.setUint16(i * 2, nm.charCodeAt(i)); parts.push(nb.buffer);
+    parts.push(new TextEncoder().encode('RGB ')); const f = new DataView(new ArrayBuffer(12)); hexToRgb(c).forEach((v, i) => f.setFloat32(i * 4, v / 255)); parts.push(f.buffer); u16(2);
+  }
+  return new Blob(parts, { type: 'application/octet-stream' });
+}
+function pngCard(cb) {
+  const gs = exGroups(); const rows = gs.length, maxN = Math.max(...gs.map(g => g.colors.length)), W = Math.max(1200, maxN * 110), rowH = 260, H = rows * rowH + 90;
+  const cv = document.createElement('canvas'); cv.width = W; cv.height = H; const x = cv.getContext('2d');
+  x.fillStyle = '#FCFAF5'; x.fillRect(0, 0, W, H);
+  x.fillStyle = '#244D3A'; x.font = '600 30px maruBuri, "Noto Serif KR", serif'; x.fillText($('#exName').value || 'Colorer', 40, 56);
+  gs.forEach((g, r) => {
+    const n = g.colors.length, cw = (W - 80) / n, y0 = 80 + r * rowH;
+    g.colors.forEach((c, i) => { x.fillStyle = c; x.fillRect(40 + i * cw, y0, Math.ceil(cw), 180); x.fillStyle = '#1C2824'; x.font = '700 17px wantedSans, "Wanted Sans", sans-serif'; x.fillText(c.toUpperCase(), 40 + i * cw + 6, y0 + 210); x.fillStyle = '#9A9F95'; x.font = '500 14px wantedSans, sans-serif'; x.fillText(gs.length > 1 || /^\d+$/.test(g.keys[i]) === false ? g.keys[i] : koName(c), 40 + i * cw + 6, y0 + 232); });
+  });
+  cv.toBlob(cb, 'image/png');
+}
+function renderExport() {
+  $('#exFmt').innerHTML = EXF.map(([k, l]) => `<button data-f="${k}" aria-pressed="${k === EX.fmt}">${l}</button>`).join('');
+  $('#exOut').value = exText(EX.fmt); $('#exCopy').disabled = EX.fmt === 'ase' || EX.fmt === 'png';
+}
+$('#exFmt').onclick = e => { const b = e.target.closest('button'); if (b) { EX.fmt = b.dataset.f; store.set('exFmt', EX.fmt); renderExport(); } };
+$('#exName').oninput = () => { $('#exOut').value = exText(EX.fmt); };
+$('#exCopy').onclick = () => copyText($('#exOut').value, '내용을');
+$('#exDl').onclick = () => {
+  const nm = safeName($('#exName').value), f = EX.fmt;
+  if (f === 'ase') return download(nm + '.ase', aseBlob());
+  if (f === 'png') return pngCard(b => download(nm + '.png', b));
+  const ext = { hex: 'txt', css: 'css', scss: 'scss', tw: 'js', json: 'json', gpl: 'gpl', svg: 'svg' }[f];
+  download(`${nm}.${ext}`, $('#exOut').value, f === 'svg' ? 'image/svg+xml' : f === 'json' ? 'application/json' : 'text/plain;charset=utf-8');
+};
+
+/* =========================================================================
+   Library
+   ========================================================================= */
+async function savePalette(colors = S.pal.colors) {
+  const name = await promptDlg('보관함에 저장', '', `팔레트 ${LIB.palettes.length + 1}`, { okLabel: '저장' }); if (name == null) return;
+  LIB.palettes.unshift({ id: uid(), name: name.trim() || `팔레트 ${LIB.palettes.length + 1}`, colors: [...colors], t: Date.now() }); saveLib();
+  if (S.tab === 'library') renderLibrary(); toast('보관함에 저장했어요', S.tab === 'library' ? {} : { action: '보관함', onAction: () => setTab('library') });
+}
+function renderLibrary() {
+  $('#libPal').innerHTML = LIB.palettes.length ? LIB.palettes.map(p => `<div class="lp" data-id="${p.id}">
+      <div class="strip" data-a="load" title="팔레트로 불러오기">${p.colors.map(c => `<span style="background:${c}"></span>`).join('')}</div>
+      <div class="lb"><div class="t"><b>${esc(p.name)}</b><small>${p.colors.length}색 · ${fmtYMD(p.t)}</small></div>
+        <button class="tool" data-a="load" title="불러오기">${icon('open')}</button><button class="tool" data-a="ren" title="이름 바꾸기">${icon('pen')}</button><button class="tool" data-a="exp" title="내보내기">${icon('download')}</button><button class="tool danger" data-a="del" title="지우기">${icon('trash')}</button></div></div>`).join('')
+    : '<div class="empty" style="grid-column:1/-1"><b>보관함이 비어 있어요</b>마음에 드는 팔레트를 만들고 "지금 팔레트 저장"을 누르세요.<br>보관함은 이 기기의 브라우저에만 저장돼요. 가끔 "전체 백업"으로 파일을 받아 두세요.</div>';
+  $('#libCol').innerHTML = LIB.colors.length ? LIB.colors.map((x, i) => `<div class="lcol"><button class="sw-chip" data-c="${x.c}" style="background:${x.c}" title="${esc(koName(x.c))}"></button>${x.c.toUpperCase()}<button class="x" data-del="${i}" title="빼기">${icon('x')}</button></div>`).join('')
+    + `<div style="width:100%;margin-top:6px"><button class="btn line sm" id="libColPal">${icon('palette', 'sm')}저장한 색으로 팔레트 만들기</button></div>` : '<span class="muted" style="font-size:12.5px">아직 저장한 색이 없어요</span>';
+}
+$('#libPal').addEventListener('click', async e => {
+  const card = e.target.closest('.lp'); const a = e.target.closest('[data-a]')?.dataset.a; if (!card || !a) return;
+  const p = LIB.palettes.find(x => x.id === card.dataset.id); if (!p) return;
+  if (a === 'load') { setPalette(p.colors); setTab('palette'); toast(`"${p.name}"을 불러왔어요`); }
+  else if (a === 'ren') { const n = await promptDlg('이름 바꾸기', '', p.name); if (n != null && n.trim()) { p.name = n.trim(); saveLib(); renderLibrary(); } }
+  else if (a === 'exp') openExport({ name: slug(p.name, 'palette'), groups: [{ name: slug(p.name, 'palette'), colors: p.colors, keys: p.colors.map((_, i) => String(i + 1)) }] });
+  else if (a === 'del') { if (await confirmDlg('팔레트 지우기', `"${p.name}"을 보관함에서 지울까요?`, '지우기', true)) { const i = LIB.palettes.indexOf(p); LIB.palettes.splice(i, 1); saveLib(); renderLibrary(); toast('지웠어요', { action: '되돌리기', onAction: () => { LIB.palettes.splice(i, 0, p); saveLib(); renderLibrary(); } }); } }
+});
+$('#libCol').addEventListener('click', e => {
+  const d = e.target.closest('[data-del]'); if (d) { LIB.colors.splice(+d.dataset.del, 1); saveLib(); renderLibrary(); return; }
+  if (e.target.closest('#libColPal')) { setPalette(LIB.colors.map(x => x.c).slice(0, 12), '저장한 색으로 팔레트를 만들었어요'); return; }
+  const c = e.target.closest('[data-c]'); if (c) setCur(c.dataset.c, { recent: true });
+});
+$('#libSave').onclick = $('#saveBtn').onclick = () => savePalette();
+$('#libText').onclick = async () => {
+  const v = await promptDlg('텍스트에서 색 찾기', '웹페이지, CSS, 디자인 문서에서 복사한 글을 붙여넣으면 안에 든 색을 모두 찾아 팔레트로 저장해요.', '', { multi: true, okLabel: '찾기' });
+  if (v == null) return; const cs = extractColors(v); if (!cs.length) return toast('색을 찾지 못했어요', { err: true });
+  for (let i = 0; i < cs.length; i += 12) LIB.palettes.unshift({ id: uid(), name: `텍스트에서 찾은 색${cs.length > 12 ? ' ' + (i / 12 + 1) : ''}`, colors: cs.slice(i, i + 12), t: Date.now() });
+  saveLib(); renderLibrary(); toast(`${cs.length}색을 찾아 저장했어요`);
+};
+$('#libBackup').onclick = () => { const d = new Date(); download(`colorer-backup-${d.getFullYear()}${pad2(d.getMonth() + 1)}${pad2(d.getDate())}.json`, JSON.stringify({ app: 'colorer', v: 1, t: Date.now(), palettes: LIB.palettes, colors: LIB.colors, current: S.pal.colors }, null, 2), 'application/json'); };
+$('#libImport').onclick = () => $('#libFile').click();
+function parseAse(buf) {
+  const v = new DataView(buf); if (new TextDecoder().decode(buf.slice(0, 4)) !== 'ASEF') return null;
+  const n = v.getUint32(8); let o = 12; const out = [];
+  for (let i = 0; i < n && o < buf.byteLength; i++) {
+    const type = v.getUint16(o), len = v.getUint32(o + 2); const b = o + 6;
+    if (type === 1) {
+      const nl = v.getUint16(b); const m = b + 2 + nl * 2; const model = new TextDecoder().decode(buf.slice(m, m + 4)); const f = k => v.getFloat32(m + 4 + k * 4);
+      if (model === 'RGB ') out.push(rgbToHex([f(0) * 255, f(1) * 255, f(2) * 255]));
+      else if (model === 'Gray') out.push(rgbToHex([f(0) * 255, f(0) * 255, f(0) * 255]));
+      else if (model === 'CMYK') { const [c, mm, y, k] = [f(0), f(1), f(2), f(3)]; out.push(rgbToHex([255 * (1 - c) * (1 - k), 255 * (1 - mm) * (1 - k), 255 * (1 - y) * (1 - k)])); }
+      else if (model === 'LAB ') { const c = parseColor(`lab(${f(0) * 100}% ${f(1)} ${f(2)})`); if (c) out.push(c); }
+    }
+    o = b + len;
+  }
+  return out;
+}
+$('#libFile').onchange = async e => {
+  const f = e.target.files[0]; e.target.value = ''; if (!f) return;
+  try {
+    const base = f.name.replace(/\.[^.]+$/, '');
+    if (/\.ase$/i.test(f.name)) { const cs = parseAse(await f.arrayBuffer()); if (!cs || !cs.length) throw 0; LIB.palettes.unshift({ id: uid(), name: base, colors: [...new Set(cs)].slice(0, 64), t: Date.now() }); saveLib(); renderLibrary(); return toast(`${cs.length}색을 가져왔어요`); }
+    const txt = await f.text();
+    if (/\.json$/i.test(f.name) || /^\s*[\[{]/.test(txt)) {
+      const d = JSON.parse(txt);
+      if (d && d.app === 'colorer') {
+        const ids = new Set(LIB.palettes.map(p => p.id)); let n = 0;
+        for (const p of d.palettes || []) if (p && Array.isArray(p.colors) && !ids.has(p.id)) { LIB.palettes.push({ id: p.id || uid(), name: String(p.name || '팔레트'), colors: p.colors.filter(validHex), t: p.t || Date.now() }); n++; }
+        const have = new Set(LIB.colors.map(x => x.c)); for (const x of d.colors || []) if (x && validHex(x.c) && !have.has(x.c)) LIB.colors.push({ c: x.c, t: x.t || Date.now() });
+        saveLib(); renderLibrary(); return toast(`백업에서 팔레트 ${n}개를 가져왔어요`);
+      }
+      const cs = extractColors(JSON.stringify(d)); if (!cs.length) throw 0;
+      LIB.palettes.unshift({ id: uid(), name: base, colors: cs.slice(0, 64), t: Date.now() }); saveLib(); renderLibrary(); return toast(`${cs.length}색을 가져왔어요`);
+    }
+    let cs = [];
+    if (/^GIMP Palette/.test(txt)) for (const line of txt.split(/\r?\n/)) { const m = line.match(/^\s*(\d{1,3})\s+(\d{1,3})\s+(\d{1,3})/); if (m) cs.push(rgbToHex([+m[1], +m[2], +m[3]])); }
+    else cs = extractColors(txt);
+    cs = [...new Set(cs)]; if (!cs.length) throw 0;
+    LIB.palettes.unshift({ id: uid(), name: base, colors: cs.slice(0, 64), t: Date.now() }); saveLib(); renderLibrary(); toast(`${cs.length}색을 가져왔어요`);
+  } catch { toast('이 파일에서 색을 읽지 못했어요', { err: true }); }
+};
+
+/* =========================================================================
+   Share link, keyboard, help, init
+   ========================================================================= */
+function shareUrl() { return location.href.split('#')[0] + '#p=' + S.pal.colors.map(c => c.slice(1)).join('-'); }
+$('#shareBtn').onclick = () => { const u = shareUrl(); try { history.replaceState(null, '', u); } catch {} copyText(u, '팔레트 링크를'); };
+$('#helpBtn').onclick = () => $('#helpDlg').showModal();
+function loadHash() {
+  const m = location.hash.match(/[#&]p=([0-9a-f-]+)/i); if (!m) return false;
+  const cs = m[1].split('-').filter(x => /^[0-9a-f]{6}$/i.test(x)).map(x => '#' + x.toLowerCase()); if (cs.length < 1) return false;
+  S.pal.colors = cs.slice(0, 12); S.pal.locks = S.pal.colors.map(() => false); S.tab = 'palette'; return true;
+}
+window.addEventListener('hashchange', () => { if (loadHash()) { setTab('palette'); toast('링크의 팔레트를 불러왔어요'); } });
+document.addEventListener('keydown', e => {
+  if (document.querySelector('dialog[open]')) return;
+  const typing = e.target.closest('input, textarea, select, [contenteditable]');
+  if ((e.ctrlKey || e.metaKey) && !typing && S.tab === 'palette') {
+    if (e.key.toLowerCase() === 'z' && !e.shiftKey) { e.preventDefault(); undo(); return; }
+    if (e.key.toLowerCase() === 'y' || (e.key.toLowerCase() === 'z' && e.shiftKey)) { e.preventDefault(); redo(); return; }
+  }
+  if (typing || e.ctrlKey || e.metaKey || e.altKey) return;
+  if (e.code === 'Space' && S.tab === 'palette' && !e.target.closest('button')) { e.preventDefault(); generate(); return; }
+  if (/^[1-7]$/.test(e.key)) setTab(TABS[+e.key - 1]);
+});
+if (matchMedia('(hover: none)').matches) $('#spaceKbd').hidden = true;
+
+hydrateIcons();
+const fromHash = loadHash();
+$('#libN').textContent = LIB.palettes.length;
+renderSide();
+setTab(S.tab);
+if (fromHash) toast('링크의 팔레트를 불러왔어요');
+</script>
+</body>
+</html>
