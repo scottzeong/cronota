@@ -1,0 +1,1826 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#F5F1E8" />
+<title>Thinker · 아웃그리드 생각 정리 노트</title>
+<meta name="description" content="답을 주지 않고 질문만 던지는 생각 정리 노트. 주장·근거·반론, 다섯 번 왜, 장단점, 결정, 문제 풀기 같은 생각의 틀을 따라가며 생각을 꺼내고 한 장으로 정리해요. 인공지능 없이 규칙으로만 동작하고, 기록은 내 기기에만 저장돼요." />
+<!-- Fonts: outgrid's own files first (fonts/ next to this page), public CDN as a fallback. -->
+<style>
+  @font-face { font-family: "wantedSans"; src: url("fonts/WantedSansVariable.woff2") format("woff2"); font-weight: 100 800; font-style: normal; font-display: swap; }
+  @font-face { font-family: "maruBuri"; src: url("fonts/MaruBuri-Regular.woff2") format("woff2"); font-weight: 400; font-style: normal; font-display: swap; }
+  @font-face { font-family: "maruBuri"; src: url("fonts/MaruBuri-SemiBold.woff2") format("woff2"); font-weight: 600; font-style: normal; font-display: swap; }
+</style>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/wanteddev/wanted-sans@v1.0.3/packages/wanted-sans/fonts/webfonts/variable/split/WantedSansVariable.min.css" />
+<link rel="stylesheet" href="https://hangeul.pstatic.net/hangeul_static/css/maru-buri.css" />
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23244D3A'/%3E%3Cpath d='M16 18h32a4 4 0 0 1 4 4v18a4 4 0 0 1-4 4H30l-9 7v-7h-5a4 4 0 0 1-4-4V22a4 4 0 0 1 4-4z' fill='none' stroke='%23F5F1E8' stroke-width='3.5' stroke-linejoin='round'/%3E%3Cpath d='M27.5 27a4.5 4.5 0 1 1 6.3 4.1c-1.2.6-1.8 1.4-1.8 2.7' fill='none' stroke='%23D9C8A9' stroke-width='3.5' stroke-linecap='round'/%3E%3Ccircle cx='32' cy='38.6' r='2' fill='%23D9C8A9'/%3E%3C/svg%3E" />
+<style>
+  :root {
+    --bg: #F5F1E8;
+    --surface: #FCFAF5;
+    --paper: #FFFDF8;
+    --ink: #1C2824;
+    --ink-2: #33403A;
+    --muted: #5E665F;
+    --faint: #9A9F95;
+    --hair: #E3DCCB;
+    --hover: #F0EADD;
+    --press: #E7DFCD;
+    --dark: #244D3A;
+    --dark-2: #1B3B2C;
+    --river: #3E6F73;
+    --clay: #8A5A3B;
+    --sand: #D9C8A9;
+    --focus: #8A5A3B;
+    --danger: #963F3B;
+    --rec: #B5443B;
+    --mint: #E8EFE8;
+    --shadow: 0 1px 0 rgba(28,40,36,.03), 0 18px 40px -30px rgba(28,40,36,.30);
+    --sans: "wantedSans", "Wanted Sans Variable", "Wanted Sans", -apple-system, BlinkMacSystemFont, "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+    --serif: "maruBuri", "MaruBuri", "Batang", "Noto Serif KR", serif;
+    --r-sm: 10px;
+    --r-md: 13px;
+    --r-lg: 20px;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    font-family: var(--sans); word-break: keep-all; background: var(--bg); color: var(--ink);
+    font-size: 14px; letter-spacing: -0.005em; -webkit-font-smoothing: antialiased;
+    min-height: 100dvh; display: flex; flex-direction: column;
+  }
+  [hidden] { display: none !important; }
+  button { font: inherit; color: inherit; cursor: pointer; border: 0; background: none; padding: 0; -webkit-tap-highlight-color: transparent; }
+  button:disabled { cursor: default; opacity: .35; }
+  input, select, textarea { font: inherit; color: inherit; }
+  :focus-visible { outline: 2.5px solid var(--focus); outline-offset: 3px; }
+  ::selection { background: rgba(36,77,58,.16); }
+  svg.i { width: 19px; height: 19px; stroke: currentColor; fill: none; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+  svg.i.sm { width: 16px; height: 16px; }
+  .muted { color: var(--faint); }
+  .tnum { font-variant-numeric: tabular-nums; }
+
+  /* ---------- Header ---------- */
+  .top { position: sticky; top: 0; z-index: 40; background: var(--bg); }
+  .top-inner { max-width: 1440px; margin: 0 auto; padding: 14px 24px 8px; display: flex; align-items: center; gap: 14px; }
+  .brand { display: flex; align-items: center; gap: 12px; flex: none; text-decoration: none; color: inherit; }
+  .logo { display: block; height: 34px; width: auto; flex: none; }
+  .app-name { font-family: var(--serif); font-weight: 600; font-size: 23px; letter-spacing: -.02em; color: var(--dark); line-height: 1; padding-left: 12px; border-left: 1.5px solid var(--hair); }
+  .app-name small { display: block; font-family: var(--sans); font-size: 11px; font-weight: 500; color: var(--faint); letter-spacing: 0; margin-top: 4px; }
+  .head-actions { margin-left: auto; display: flex; align-items: center; gap: 6px; min-width: 0; }
+  .icon-btn { width: 38px; height: 38px; border-radius: 999px; display: grid; place-items: center; color: var(--ink-2); transition: background .15s, color .15s; flex: none; }
+  .icon-btn:hover:not(:disabled) { background: var(--hover); color: var(--ink); }
+
+  /* ---------- Buttons ---------- */
+  .btn { height: 38px; padding: 0 16px; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; font-weight: 600; font-size: 13.5px; background: var(--hover); color: var(--ink-2); white-space: nowrap; transition: background .15s, box-shadow .15s; flex: none; }
+  .btn:hover:not(:disabled) { background: var(--press); }
+  .btn.primary { background: var(--dark); color: var(--surface); box-shadow: 0 8px 18px -10px rgba(36,77,58,.7); }
+  .btn.primary:hover:not(:disabled) { background: var(--dark-2); }
+  .btn.clay { background: var(--clay); color: var(--surface); }
+  .btn.clay:hover:not(:disabled) { background: #74492F; }
+  .btn.ghost { background: none; color: var(--muted); }
+  .btn.ghost:hover:not(:disabled) { background: var(--hover); color: var(--ink); }
+  .btn.line { background: var(--surface); box-shadow: inset 0 0 0 1px var(--hair); }
+  .btn.line:hover:not(:disabled) { background: var(--hover); }
+  .btn.sm { height: 32px; padding: 0 12px; font-size: 12.5px; gap: 5px; }
+  .btn.block { width: 100%; }
+  .btn.danger { color: var(--danger); }
+  .btn.rec { background: var(--rec); color: #fff; }
+
+  /* ---------- Tabs ---------- */
+  .tabs-wrap { max-width: 1440px; margin: 0 auto; padding: 4px 24px 10px; display: flex; align-items: center; gap: 12px; }
+  .tabs { display: flex; gap: 2px; padding: 4px; background: var(--press); border-radius: 999px; overflow-x: auto; scrollbar-width: none; flex: none; max-width: 100%; }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab { height: 34px; padding: 0 15px; border-radius: 999px; font-weight: 600; font-size: 13px; color: var(--muted); white-space: nowrap; display: inline-flex; align-items: center; gap: 6px; transition: background .15s, color .15s; flex: none; }
+  .tab svg.i { width: 16px; height: 16px; }
+  .tab:hover { color: var(--ink); }
+  .tab[aria-selected="true"] { background: var(--dark); color: var(--surface); box-shadow: 0 6px 14px -8px rgba(36,77,58,.6); }
+  .tab .n { font-size: 11px; font-weight: 700; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px; background: rgba(28,40,36,.08); display: inline-grid; place-items: center; font-variant-numeric: tabular-nums; }
+  .tab .n.warn { background: var(--rec); color: #fff; }
+  .tab[aria-selected="true"] .n:not(.warn) { background: rgba(255,255,255,.18); }
+  .applied { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; min-width: 0; align-items: center; }
+  .applied::-webkit-scrollbar { display: none; }
+  .achip { height: 28px; padding: 0 11px; border-radius: 999px; font-size: 12px; font-weight: 600; background: var(--mint); color: var(--dark); white-space: nowrap; display: inline-flex; align-items: center; gap: 5px; flex: none; font-variant-numeric: tabular-nums; }
+  .achip.warn { background: #F3E7DC; color: var(--clay); }
+  .achip.bad { background: #F6E1DC; color: var(--rec); }
+  .achip svg.i { width: 14px; height: 14px; }
+
+  /* ---------- Layout ---------- */
+  main { flex: 1; width: 100%; max-width: 1440px; margin: 0 auto; padding: 0 24px 24px; display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 16px; height: calc(100dvh - 122px); min-height: 520px; }
+  .panel { background: var(--surface); border-radius: var(--r-lg); display: flex; flex-direction: column; min-height: 0; overflow: hidden; box-shadow: 0 0 0 1px var(--hair), var(--shadow); }
+  .view { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+  .wbar { display: flex; align-items: center; gap: 6px; padding: 10px 12px; border-bottom: 1px solid var(--hair); flex-wrap: wrap; row-gap: 8px; min-height: 59px; }
+  .wbar .count { font-size: 13px; color: var(--muted); margin: 0 6px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .wbar .count b { color: var(--ink); font-weight: 600; }
+  .grow { flex: 1; }
+  .sep { width: 1px; height: 20px; background: var(--hair); margin: 0 4px; flex: none; }
+  .tool { height: 36px; min-width: 36px; padding: 0 9px; border-radius: var(--r-sm); display: inline-flex; align-items: center; justify-content: center; gap: 6px; color: var(--ink-2); font-size: 12.5px; font-weight: 600; transition: background .15s, color .15s; flex: none; white-space: nowrap; }
+  .tool:hover:not(:disabled) { background: var(--hover); color: var(--ink); }
+  .tool[aria-pressed="true"] { background: var(--dark); color: var(--surface); }
+  .tool.danger:hover:not(:disabled) { color: var(--danger); }
+  .tool.prim { background: var(--dark); color: var(--surface); padding: 0 13px; border-radius: 999px; }
+  .tool.prim:hover:not(:disabled) { background: var(--dark-2); color: var(--surface); }
+  .scroll { flex: 1; min-height: 0; overflow: auto; overscroll-behavior: contain; position: relative; }
+  .wk-nav { display: flex; align-items: center; gap: 2px; }
+  .wk-lbl { font-weight: 700; font-size: 14px; color: var(--ink); padding: 0 8px; white-space: nowrap; font-variant-numeric: tabular-nums; min-width: 0; }
+  .wk-lbl small { font-weight: 600; font-size: 11.5px; color: var(--clay); margin-left: 6px; }
+  .search { position: relative; flex: 1 1 180px; max-width: 280px; min-width: 140px; }
+  .search svg { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--faint); width: 16px; height: 16px; pointer-events: none; }
+  .search .inp { padding-left: 36px; height: 36px; }
+  /* ---------- Generic list rows / cards ---------- */
+  .pad { padding: 14px 18px 20px; }
+  .grp { margin-bottom: 16px; }
+  .grp-h { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 700; color: var(--clay); letter-spacing: .04em; margin: 4px 2px 8px; }
+  .grp-h .v { color: var(--faint); font-weight: 600; letter-spacing: 0; font-variant-numeric: tabular-nums; }
+  .grp-h .grow { flex: 1; height: 1px; background: var(--hair); }
+  .grp-h button { font-size: 12px; font-weight: 600; color: var(--muted); letter-spacing: 0; padding: 4px 8px; border-radius: 999px; }
+  .grp-h button:hover { background: var(--hover); color: var(--ink); }
+  .rows { border-radius: 16px; background: #fff; box-shadow: 0 0 0 1px var(--hair); overflow: hidden; }
+  .si { display: flex; align-items: center; gap: 10px; padding: 9px 10px 9px 12px; border-bottom: 1px solid var(--hover); cursor: pointer; min-height: 52px; }
+  .si:last-child { border-bottom: 0; }
+  .si:hover { background: var(--paper); }
+  .ck { width: 24px; height: 24px; border-radius: 999px; box-shadow: inset 0 0 0 1.6px var(--sand); display: grid; place-items: center; flex: none; color: transparent; }
+  .ck svg { width: 15px; height: 15px; stroke-width: 2.4; }
+  .si.done .ck { background: var(--dark); box-shadow: none; color: #fff; }
+  .si .tx { flex: 1; min-width: 0; }
+  .si .nm { font-weight: 600; font-size: 14px; display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+  .si .q { font-weight: 700; color: var(--dark); font-variant-numeric: tabular-nums; font-size: 13px; }
+  .si .mt { font-size: 11.5px; color: var(--faint); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .si.done .nm { text-decoration: line-through; color: var(--faint); }
+  .si.done .q { color: var(--faint); }
+  .si.dim { cursor: default; }
+  .si.dim .nm { color: var(--muted); }
+  .mini { width: 32px; height: 32px; border-radius: 999px; display: grid; place-items: center; color: var(--faint); flex: none; }
+  .mini:hover { background: var(--hover); color: var(--ink); }
+  .mini.danger:hover { color: var(--danger); }
+  .mini svg { width: 16px; height: 16px; }
+  .tagb { font-size: 10.5px; font-weight: 700; padding: 2px 7px; border-radius: 999px; background: var(--mint); color: var(--dark); white-space: nowrap; }
+  .tagb.warn { background: #F3E7DC; color: var(--clay); }
+  .tagb.bad { background: #F6E1DC; color: var(--rec); }
+  .tagb.gray { background: var(--hover); color: var(--muted); }
+  .addline { display: grid; grid-template-columns: minmax(0, 1fr) 96px auto; gap: 6px; margin-bottom: 14px; }
+  .progress { display: flex; align-items: center; gap: 10px; font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums; margin-bottom: 14px; }
+  .progress .bar { flex: 1; }
+  .progress b { color: var(--ink); }
+  .bar { height: 8px; border-radius: 8px; background: var(--press); overflow: hidden; }
+  .bar i { display: block; height: 100%; width: 0; background: var(--dark); border-radius: 8px; transition: width .2s; }
+  .linkbtn { font-size: 12px; font-weight: 600; color: var(--dark); padding: 6px 10px; border-radius: 999px; background: var(--mint); white-space: nowrap; flex: none; }
+  .linkbtn:hover { background: #DCE7DD; }
+  .empty { padding: 50px 24px; text-align: center; color: var(--faint); font-size: 13px; line-height: 1.7; }
+  .empty b { display: block; font-family: var(--serif); color: var(--dark); font-size: 18px; font-weight: 600; margin-bottom: 4px; }
+  .empty .btn { margin-top: 14px; }
+  .seg { display: flex; padding: 3px; gap: 2px; background: var(--press); border-radius: 999px; flex-wrap: wrap; }
+  .seg button { flex: 1; height: 30px; border-radius: 999px; font-size: 12.5px; font-weight: 600; color: var(--muted); padding: 0 10px; white-space: nowrap; }
+  .seg button[aria-pressed="true"] { background: var(--surface); color: var(--dark); box-shadow: 0 2px 6px -3px rgba(28,40,36,.3); }
+  .seg button .n { font-size: 11px; color: var(--faint); margin-left: 3px; font-variant-numeric: tabular-nums; }
+  /* ---------- Side panel ---------- */
+  #side .ph { padding: 16px 20px 12px; border-bottom: 1px solid var(--hair); display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  #side .ph h2 { margin: 0; font-family: var(--serif); font-size: 19px; font-weight: 600; color: var(--dark); letter-spacing: -.02em; }
+  #side .ph p { margin: 3px 0 0; font-size: 12px; color: var(--faint); }
+  #side .collapse { display: none; }
+  .pbody { flex: 1; min-height: 0; overflow-y: auto; padding: 6px 20px 20px; overscroll-behavior: contain; }
+  .sec { padding: 16px 0; border-bottom: 1px solid var(--hair); }
+  .sec:last-child { border-bottom: 0; }
+  .sec h3 { margin: 0 0 10px; font-size: 12px; font-weight: 700; color: var(--clay); letter-spacing: .04em; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .sec h3 .v { color: var(--faint); font-weight: 600; letter-spacing: 0; font-variant-numeric: tabular-nums; }
+  .sec p.hint { margin: 0 0 10px; font-size: 12.5px; color: var(--muted); line-height: 1.6; }
+  .btns { display: flex; flex-wrap: wrap; gap: 6px; }
+  .btns.g2 { display: grid; grid-template-columns: 1fr 1fr; }
+  .btns.g2 .btn { width: 100%; }
+  .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+  .field:last-child { margin-bottom: 0; }
+  .field > label, .field > .lbl { font-size: 12px; font-weight: 600; color: var(--ink-2); display: flex; justify-content: space-between; gap: 6px; }
+  .field > label .v, .field > .lbl .v { color: var(--faint); font-weight: 500; font-variant-numeric: tabular-nums; }
+  .inp, select.inp { width: 100%; height: 40px; border: 0; background: #fff; box-shadow: inset 0 0 0 1px var(--hair); border-radius: 999px; padding: 0 14px; font-size: 13.5px; outline: none; transition: box-shadow .15s; min-width: 0; }
+  textarea.inp { height: auto; border-radius: 16px; padding: 10px 14px; line-height: 1.6; resize: vertical; }
+  select.inp { appearance: none; -webkit-appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235E665F' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; background-size: 16px; padding-right: 34px; }
+  .inp:focus { box-shadow: inset 0 0 0 1.5px var(--dark), 0 0 0 4px rgba(36,77,58,.08); }
+  .inp.tc { text-align: center; font-variant-numeric: tabular-nums; padding: 0 6px; }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+  .num { display: grid; grid-template-columns: 34px 1fr 34px; align-items: center; background: #fff; box-shadow: inset 0 0 0 1px var(--hair); border-radius: 999px; height: 40px; }
+  .num button { height: 34px; width: 34px; border-radius: 999px; display: grid; place-items: center; color: var(--muted); margin: 3px; }
+  .num button:hover { background: var(--hover); color: var(--ink); }
+  .num input { border: 0; background: none; text-align: center; width: 100%; height: 100%; outline: none; font-weight: 600; font-variant-numeric: tabular-nums; min-width: 0; -moz-appearance: textfield; }
+  .num input::-webkit-inner-spin-button { -webkit-appearance: none; }
+  .num svg.i { width: 15px; height: 15px; }
+  .switch { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 13px; font-weight: 600; color: var(--ink-2); cursor: pointer; padding: 6px 0; }
+  .switch small { display: block; font-size: 11.5px; font-weight: 500; color: var(--faint); margin-top: 2px; line-height: 1.45; }
+  .switch input { appearance: none; -webkit-appearance: none; width: 40px; height: 24px; border-radius: 999px; background: var(--sand); position: relative; cursor: pointer; transition: background .15s; flex: none; margin: 0; }
+  .switch input::after { content: ''; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 999px; background: #fff; transition: transform .15s; box-shadow: 0 1px 3px rgba(0,0,0,.2); }
+  .switch input:checked { background: var(--dark); }
+  .switch input:checked::after { transform: translateX(16px); }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip { height: 32px; padding: 0 12px; border-radius: 999px; background: #fff; box-shadow: inset 0 0 0 1px var(--hair); font-size: 12.5px; font-weight: 600; color: var(--ink-2); display: inline-flex; align-items: center; gap: 6px; }
+  .chip:hover { background: var(--hover); }
+  .chip[aria-pressed="true"] { background: var(--dark); color: var(--surface); box-shadow: none; }
+  .chip small { color: var(--faint); font-weight: 500; font-variant-numeric: tabular-nums; }
+  .chip.warn { background: #FBF3EA; box-shadow: inset 0 0 0 1px #E5C9AE; color: var(--clay); }
+  .chip .x { width: 18px; height: 18px; border-radius: 999px; display: grid; place-items: center; color: var(--faint); margin-right: -6px; }
+  .chip .x:hover { background: var(--press); color: var(--danger); }
+  .chip .x svg { width: 12px; height: 12px; }
+  .note { font-size: 12px; padding: 10px 12px; border-radius: var(--r-md); background: var(--hover); color: var(--muted); line-height: 1.6; margin-top: 10px; }
+  .note.ok { background: #E8F0E9; color: var(--dark); }
+  .note.warn { background: #F3E7DC; color: #6E4429; }
+  .kpis { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  .kpi { border-radius: 14px; background: #fff; box-shadow: 0 0 0 1px var(--hair); padding: 10px 12px; min-width: 0; cursor: default; text-align: left; }
+  button.kpi { cursor: pointer; }
+  button.kpi:hover { background: var(--paper); }
+  .kpi .k { font-size: 11.5px; font-weight: 600; color: var(--muted); white-space: nowrap; }
+  .kpi .v { font-size: 22px; font-weight: 700; letter-spacing: -.03em; margin-top: 3px; font-variant-numeric: tabular-nums; color: var(--ink); white-space: nowrap; }
+  .kpi .v small { font-size: 12px; font-weight: 600; color: var(--muted); margin-left: 2px; letter-spacing: 0; }
+  .slist { display: flex; flex-direction: column; gap: 6px; }
+  .sitem { display: flex; align-items: center; gap: 8px; padding: 8px 8px 8px 12px; border-radius: var(--r-md); background: #fff; box-shadow: inset 0 0 0 1px var(--hair); font-size: 13px; text-align: left; width: 100%; }
+  button.sitem:hover { background: var(--paper); }
+  .sitem .tx { flex: 1; min-width: 0; }
+  .sitem .tx b { font-weight: 600; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .sitem .tx small { display: block; font-size: 11.5px; color: var(--faint); margin-top: 1px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .sitem .r { font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; font-size: 12.5px; color: var(--ink-2); }
+  .mbars { display: flex; align-items: flex-end; gap: 6px; height: 90px; margin: 6px 0 4px; }
+  .mbars div { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; height: 100%; justify-content: flex-end; font-size: 10.5px; color: var(--faint); font-variant-numeric: tabular-nums; }
+  .mbars i { width: 100%; max-width: 34px; background: var(--sand); border-radius: 5px 5px 2px 2px; min-height: 2px; }
+  .mbars div.cur i { background: var(--dark); }
+  /* ---------- Dialogs ---------- */
+  dialog { border: 0; border-radius: 22px; padding: 0; width: min(520px, calc(100vw - 32px)); background: var(--surface); box-shadow: 0 0 0 1px var(--hair), 0 30px 70px -30px rgba(28,40,36,.45); color: var(--ink); }
+  dialog.wide { width: min(640px, calc(100vw - 32px)); }
+  dialog::backdrop { background: rgba(28,40,36,.32); backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px); }
+  .dlg-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 20px 22px 8px; }
+  .dlg-head h2 { margin: 0; font-family: var(--serif); font-size: 20px; font-weight: 600; letter-spacing: -.02em; color: var(--dark); min-width: 0; }
+  .dlg-head h2 small { display: block; font-family: var(--sans); font-size: 12px; font-weight: 500; color: var(--faint); margin-top: 4px; letter-spacing: 0; }
+  .dlg-body { padding: 8px 22px 22px; display: flex; flex-direction: column; gap: 14px; max-height: 76vh; overflow-y: auto; }
+  .dlg-body p { margin: 0; font-size: 13px; color: var(--muted); line-height: 1.65; }
+  .dlg-body .sec { padding: 12px 0; }
+  .btn-row { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; align-items: center; }
+  .btn-row .grow { flex: 1; }
+  .help h4 { margin: 4px 0 6px; font-size: 12px; font-weight: 700; color: var(--clay); letter-spacing: .04em; }
+  .help ul { margin: 0; padding-left: 18px; font-size: 13px; color: var(--ink-2); line-height: 1.75; }
+  .keys { display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; font-size: 13px; align-items: center; }
+  kbd { font-family: var(--sans); font-size: 11.5px; font-weight: 700; padding: 3px 7px; border-radius: 6px; background: #fff; box-shadow: inset 0 0 0 1px var(--hair), 0 1px 0 var(--hair); color: var(--ink-2); white-space: nowrap; }
+  .plist { display: flex; flex-direction: column; border-radius: 16px; background: #fff; box-shadow: 0 0 0 1px var(--hair); overflow: hidden; max-height: 42vh; overflow-y: auto; }
+  .prow { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-bottom: 1px solid var(--hover); text-align: left; width: 100%; min-height: 50px; }
+  .prow:last-child { border-bottom: 0; }
+  .prow:hover { background: var(--paper); }
+  .prow .tx { flex: 1; min-width: 0; }
+  .prow .tx b { font-weight: 600; font-size: 14px; }
+  .prow .tx small { display: block; font-size: 11.5px; color: var(--faint); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .prow .add { width: 32px; height: 32px; border-radius: 999px; display: grid; place-items: center; background: var(--mint); color: var(--dark); flex: none; }
+  .prow.in .add { background: var(--dark); color: #fff; }
+  .cur-dishes { display: flex; flex-wrap: wrap; gap: 6px; min-height: 32px; align-items: center; }
+  .cur-dishes .empty-t { font-size: 12.5px; color: var(--faint); }
+  .ings { list-style: none; margin: 0; padding: 0; border-radius: 16px; background: #fff; box-shadow: 0 0 0 1px var(--hair); overflow: hidden; }
+  .ings li { display: flex; align-items: center; gap: 10px; padding: 9px 14px; border-bottom: 1px solid var(--hover); font-size: 13.5px; }
+  .ings li:last-child { border-bottom: 0; }
+  .ings li .nm { flex: 1; font-weight: 600; }
+  .ings li .q { font-weight: 700; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+  .ings li .st { width: 20px; height: 20px; border-radius: 999px; display: grid; place-items: center; flex: none; }
+  .ings li .st svg { width: 13px; height: 13px; stroke-width: 2.4; }
+  .ings li.have .st { background: var(--dark); color: #fff; }
+  .ings li.miss .st { box-shadow: inset 0 0 0 1.6px var(--sand); }
+  .ings li.pan .st { background: var(--hover); color: var(--faint); }
+  .steps { margin: 0; padding-left: 22px; font-size: 13.5px; line-height: 1.75; color: var(--ink-2); }
+  .steps li { padding-left: 4px; margin-bottom: 4px; }
+  .rmeta { display: flex; gap: 6px; flex-wrap: wrap; }
+  .inline-add { display: grid; grid-template-columns: 1fr 1fr auto; gap: 6px; align-items: center; }
+  .checks { display: flex; flex-direction: column; gap: 2px; }
+  .checks label { display: flex; align-items: center; gap: 10px; padding: 7px 4px; font-size: 13.5px; cursor: pointer; border-radius: 10px; }
+  .checks label:hover { background: var(--hover); }
+  .checks input { width: 18px; height: 18px; accent-color: var(--dark); }
+  .checks small { color: var(--faint); margin-left: auto; font-size: 12px; }
+  /* ---------- Toast ---------- */
+  #toast { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom)); transform: translateX(-50%); background: var(--dark); color: var(--surface); padding: 11px 18px; border-radius: 999px; box-shadow: 0 14px 30px -14px rgba(28,40,36,.55); font-size: 13px; font-weight: 600; z-index: 200; display: none; align-items: center; gap: 14px; max-width: calc(100vw - 32px); }
+  #toast.show { display: flex; }
+  #toast.err { background: var(--danger); }
+  #toast button { color: var(--sand); font-weight: 600; white-space: nowrap; text-decoration: underline; text-underline-offset: 3px; }
+
+  .foot { max-width: 1440px; margin: 0 auto; padding: 0 24px 16px; font-size: 11.5px; color: var(--faint); display: flex; gap: 6px; align-items: center; }
+  .foot svg { width: 13px; height: 13px; }
+  #printArea { display: none; }
+  /* ---------- Thinker ---------- */
+  #work .view { overflow: hidden; }
+  .thread { padding: 20px 22px 10px; display: flex; flex-direction: column; gap: 10px; max-width: 820px; margin: 0 auto; width: 100%; }
+  .qb { align-self: flex-start; max-width: 90%; }
+  .qb .lb { font-size: 11.5px; font-weight: 700; color: var(--clay); letter-spacing: .04em; margin: 6px 0 5px 4px; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+  .qb .lb .n { color: var(--faint); font-weight: 600; letter-spacing: 0; font-variant-numeric: tabular-nums; }
+  .qb .bub { font-family: var(--serif); font-size: 16.5px; line-height: 1.6; color: var(--dark); background: var(--paper); box-shadow: 0 0 0 1px var(--hair); padding: 11px 16px; border-radius: 4px 18px 18px 18px; }
+  .qb.cur .bub { background: #fff; box-shadow: 0 0 0 1.5px var(--dark), 0 14px 28px -20px rgba(36,77,58,.55); font-size: 19px; padding: 14px 18px; }
+  .qb.probe .bub { background: #FBF3EA; box-shadow: 0 0 0 1px #E5C9AE; color: #5F3B24; font-size: 15.5px; }
+  .qb.probe.cur .bub { box-shadow: 0 0 0 1.5px var(--clay), 0 14px 28px -20px rgba(138,90,59,.55); font-size: 17.5px; }
+  .ab { align-self: flex-end; max-width: 84%; background: var(--dark); color: var(--surface); padding: 10px 15px; border-radius: 18px 4px 18px 18px; font-size: 14.5px; line-height: 1.65; white-space: pre-wrap; word-break: break-word; text-align: left; }
+  button.ab:hover { background: var(--dark-2); }
+  .ab.small { font-size: 13.5px; background: #3A5F4D; }
+  .ab.skip { background: var(--hover); color: var(--faint); font-style: italic; }
+  .ab ul { margin: 0; padding-left: 18px; white-space: normal; }
+  .ab .wt { opacity: .72; font-size: 11px; margin-left: 5px; letter-spacing: 1px; }
+  .ab mark { background: rgba(217,200,169,.32); color: inherit; border-radius: 4px; padding: 0 2px; text-decoration: underline wavy var(--sand); text-underline-offset: 3px; }
+  .sysline { align-self: center; font-size: 11.5px; color: var(--faint); padding: 2px 10px; }
+  .composer { border-top: 1px solid var(--hair); padding: 12px 16px 14px; background: var(--surface); flex: none; }
+  .composer .in { max-width: 820px; margin: 0 auto; }
+  .composer textarea.inp { min-height: 92px; max-height: 40vh; font-size: 15px; resize: none; }
+  .cbar { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin-top: 9px; }
+  .cbar .live { font-size: 11.5px; color: var(--faint); font-variant-numeric: tabular-nums; margin-left: 4px; }
+  .hintbox { font-size: 12.5px; color: var(--muted); background: var(--hover); padding: 8px 12px; border-radius: 12px; margin-bottom: 8px; line-height: 1.6; }
+  .hintbox b { color: var(--clay); font-weight: 700; margin-right: 4px; }
+  .items { display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; max-height: 32vh; overflow-y: auto; }
+  .item { display: flex; align-items: center; gap: 8px; background: #fff; box-shadow: inset 0 0 0 1px var(--hair); border-radius: 12px; padding: 5px 5px 5px 12px; font-size: 14px; min-height: 42px; }
+  .item .t { flex: 1; min-width: 0; word-break: break-word; }
+  .item .no { font-size: 11.5px; font-weight: 700; color: var(--faint); font-variant-numeric: tabular-nums; }
+  .wseg { display: flex; gap: 2px; background: var(--press); border-radius: 999px; padding: 2px; flex: none; }
+  .wseg button { min-width: 30px; height: 28px; padding: 0 6px; border-radius: 999px; font-size: 11.5px; font-weight: 700; color: var(--muted); }
+  .wseg button[aria-pressed="true"] { background: var(--clay); color: #fff; }
+  .addrow { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px; }
+  .scale { display: grid; grid-template-columns: repeat(11, minmax(0, 1fr)); gap: 4px; }
+  .scale button { height: 44px; border-radius: 12px; background: #fff; box-shadow: inset 0 0 0 1px var(--hair); font-weight: 700; font-size: 15px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+  .scale button:hover { background: var(--hover); }
+  .scale button[aria-pressed="true"] { background: var(--dark); color: #fff; box-shadow: none; }
+  .ends { display: flex; justify-content: space-between; font-size: 12px; color: var(--faint); margin-top: 6px; padding: 0 2px; }
+  .opts { display: flex; flex-direction: column; gap: 6px; }
+  .opt { display: flex; align-items: center; gap: 10px; min-height: 46px; padding: 8px 14px; border-radius: 14px; background: #fff; box-shadow: inset 0 0 0 1px var(--hair); text-align: left; font-size: 14px; font-weight: 600; }
+  .opt:hover { background: var(--paper); }
+  .opt[aria-pressed="true"] { background: var(--mint); box-shadow: inset 0 0 0 1.5px var(--dark); color: var(--dark); }
+  .opt .dot { width: 18px; height: 18px; border-radius: 999px; box-shadow: inset 0 0 0 1.6px var(--sand); flex: none; }
+  .opt[aria-pressed="true"] .dot { box-shadow: inset 0 0 0 5px var(--dark); }
+  .mx { overflow-x: auto; margin-bottom: 4px; max-height: 44vh; overflow-y: auto; }
+  .mx table { border-collapse: separate; border-spacing: 0; font-size: 13px; min-width: 100%; }
+  .mx th, .mx td { padding: 6px 8px; text-align: center; border-bottom: 1px solid var(--hover); white-space: nowrap; }
+  .mx th { font-size: 12px; font-weight: 700; color: var(--ink-2); }
+  .mx th small { display: block; color: var(--clay); font-weight: 600; font-size: 10.5px; }
+  .mx td:first-child, .mx th:first-child { text-align: left; font-weight: 600; white-space: normal; min-width: 90px; max-width: 200px; }
+  .mx td.tot { font-weight: 700; color: var(--dark); font-variant-numeric: tabular-nums; }
+  .mx tr.best td { background: var(--mint); }
+  .mx select { height: 34px; border: 0; border-radius: 10px; background: #fff; box-shadow: inset 0 0 0 1px var(--hair); padding: 0 6px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .probe-tag { font-size: 10.5px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: #F3E7DC; color: var(--clay); letter-spacing: 0; }
+
+  /* Home */
+  .home { max-width: 900px; margin: 0 auto; padding: 26px 22px 30px; width: 100%; }
+  .home h1 { font-family: var(--serif); font-size: 27px; color: var(--dark); font-weight: 600; margin: 0 0 6px; letter-spacing: -.02em; }
+  .home .lead { color: var(--muted); font-size: 13.5px; margin: 0 0 16px; line-height: 1.65; }
+  .topic { width: 100%; border: 0; background: #fff; box-shadow: inset 0 0 0 1px var(--hair); border-radius: 18px; padding: 14px 18px; font-family: var(--serif); font-size: 19px; line-height: 1.5; color: var(--ink); outline: none; resize: none; min-height: 64px; }
+  .topic:focus { box-shadow: inset 0 0 0 1.5px var(--dark), 0 0 0 4px rgba(36,77,58,.08); }
+  .topic-ex { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 22px; }
+  .fwgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px; }
+  .fw { text-align: left; background: #fff; box-shadow: 0 0 0 1px var(--hair); border-radius: 18px; padding: 14px 15px 13px; display: flex; flex-direction: column; gap: 5px; position: relative; min-height: 128px; }
+  .fw:hover { background: var(--paper); }
+  .fw[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--dark); background: #F4F8F3; }
+  .fw .em { font-size: 22px; line-height: 1; }
+  .fw b { font-family: var(--serif); font-size: 16.5px; color: var(--dark); font-weight: 600; }
+  .fw p { margin: 0; font-size: 12.5px; color: var(--muted); line-height: 1.55; }
+  .fw .flow { font-size: 11px; color: var(--faint); margin-top: auto; padding-top: 4px; line-height: 1.5; }
+  .fw .rec { position: absolute; top: 12px; right: 12px; }
+  .fw .acts { position: absolute; top: 6px; right: 6px; display: flex; }
+  .startbar { position: sticky; bottom: 0; display: flex; align-items: center; gap: 10px; padding: 14px 0 4px; background: linear-gradient(rgba(252,250,245,0), var(--surface) 30%); margin-top: 8px; }
+  .startbar .sel { font-size: 13px; color: var(--muted); flex: 1; min-width: 0; }
+  .startbar .sel b { color: var(--dark); }
+  .h2 { font-size: 12px; font-weight: 700; color: var(--clay); letter-spacing: .04em; margin: 26px 2px 10px; display: flex; align-items: center; gap: 8px; }
+  .h2 .grow { flex: 1; height: 1px; background: var(--hair); }
+
+  /* Steps (side) */
+  .stl { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+  .stl li button { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; padding: 7px 8px; border-radius: 10px; font-size: 13px; color: var(--ink-2); }
+  .stl li button:hover:not(:disabled) { background: var(--hover); }
+  .stl li button:disabled { opacity: 1; }
+  .stl .d { width: 20px; height: 20px; border-radius: 999px; flex: none; display: grid; place-items: center; box-shadow: inset 0 0 0 1.5px var(--sand); font-size: 10.5px; font-weight: 700; color: var(--faint); font-variant-numeric: tabular-nums; }
+  .stl .d svg { width: 12px; height: 12px; stroke-width: 2.6; }
+  .stl li.done .d { background: var(--dark); color: #fff; box-shadow: none; }
+  .stl li.cur button { background: var(--mint); color: var(--dark); font-weight: 700; }
+  .stl li.cur .d { box-shadow: inset 0 0 0 2px var(--dark); color: var(--dark); }
+  .stl li.skip { opacity: .45; }
+  .stl li.skip .t { text-decoration: line-through; }
+  .stl .t { flex: 1; min-width: 0; }
+  .stl .t small { display: block; color: var(--faint); font-size: 11.5px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  /* Summary */
+  .sum { max-width: 820px; margin: 0 auto; padding: 24px 24px 34px; width: 100%; }
+  .sum h1 { font-family: var(--serif); font-size: 26px; font-weight: 600; color: var(--dark); margin: 0; letter-spacing: -.02em; line-height: 1.35; }
+  .sum .meta { font-size: 12.5px; color: var(--faint); margin: 6px 0 18px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .concl { background: var(--mint); border-radius: 18px; padding: 16px 20px; margin-bottom: 10px; }
+  .concl .k { font-size: 11.5px; font-weight: 700; color: var(--dark); letter-spacing: .04em; opacity: .75; }
+  .concl .v { font-family: var(--serif); font-size: 19px; color: var(--dark); line-height: 1.6; margin-top: 4px; white-space: pre-wrap; }
+  .sum section { border-top: 1px solid var(--hair); padding: 14px 0; }
+  .sum h3 { margin: 0 0 4px; font-size: 12px; font-weight: 700; color: var(--clay); letter-spacing: .04em; display: flex; gap: 8px; align-items: center; }
+  .sum .sq { font-size: 12.5px; color: var(--faint); margin-bottom: 6px; line-height: 1.5; }
+  .sum .ans { font-size: 15px; line-height: 1.75; white-space: pre-wrap; word-break: break-word; }
+  .sum .ans ul { margin: 0; padding-left: 20px; white-space: normal; }
+  .sum .ans .wt { color: var(--clay); font-size: 12px; margin-left: 4px; letter-spacing: 1px; }
+  .sum .ans.skip { color: var(--faint); font-style: italic; }
+  .sum .pr { margin-top: 8px; padding: 2px 0 2px 12px; border-left: 2px solid var(--sand); font-size: 13px; color: var(--muted); line-height: 1.6; white-space: pre-wrap; }
+  .sum .pr b { color: var(--clay); font-weight: 600; }
+  .chain { display: flex; flex-direction: column; align-items: flex-start; gap: 0; }
+  .chain div { background: #fff; box-shadow: 0 0 0 1px var(--hair); border-radius: 12px; padding: 7px 12px; font-size: 13.5px; line-height: 1.5; }
+  .chain div.root { background: var(--dark); color: #fff; box-shadow: none; }
+  .chain i { font-style: normal; color: var(--faint); font-size: 11.5px; padding: 3px 0 3px 14px; }
+  .vs { display: grid; grid-template-columns: auto 1fr auto; gap: 8px 10px; align-items: center; font-size: 13px; }
+  .vs .bar i { background: var(--dark); }
+  .vs .bar.c i { background: var(--clay); }
+  .vs b { font-variant-numeric: tabular-nums; }
+  .habit { display: flex; flex-wrap: wrap; gap: 6px; }
+  .follow { margin: 0; padding-left: 20px; font-size: 14px; line-height: 1.8; color: var(--ink-2); }
+  .mapwrap { padding: 16px; overflow: auto; flex: 1; min-height: 0; }
+  .mapwrap svg { display: block; margin: 0 auto; max-width: 100%; height: auto; }
+  .bigscore { font-size: 30px; font-weight: 700; color: var(--dark); letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+  .bigscore small { font-size: 13px; color: var(--faint); font-weight: 600; margin-left: 3px; }
+  .arrow { color: var(--faint); margin: 0 10px; font-size: 18px; }
+
+  /* Log */
+  .row-tag { font-size: 11px; }
+  .si .em { font-size: 20px; width: 30px; text-align: center; flex: none; }
+  .si .pbar { width: 54px; flex: none; }
+  .si .pbar .bar { height: 6px; }
+  .wcloud { display: flex; flex-wrap: wrap; gap: 6px; }
+
+  /* Custom fw dialog */
+  .codehelp { font-size: 12px; color: var(--muted); background: var(--hover); border-radius: 12px; padding: 10px 12px; line-height: 1.7; }
+  .codehelp code { font-family: var(--sans); font-weight: 700; color: var(--clay); background: #fff; padding: 1px 6px; border-radius: 6px; }
+
+  @media (max-width: 1100px) { main { grid-template-columns: minmax(0, 1fr) 320px; } }
+  @media (max-width: 999px) {
+    main { display: flex; flex-direction: column; height: auto; min-height: 0; padding: 0 12px 16px; }
+    #side .collapse { display: grid; }
+    #side.closed .pbody { display: none; }
+    #side.closed .ph { border-bottom: 0; }
+    .pbody { overflow: visible; }
+    .scroll { overflow: visible; }
+    .tabs-wrap { padding: 2px 12px 10px; }
+    .top-inner { padding: 12px 12px 6px; gap: 8px; }
+    .foot { padding: 0 12px 12px; }
+    .pad { padding: 12px; }
+    #work { min-height: 72vh; }
+    .composer { position: sticky; bottom: 0; z-index: 5; box-shadow: 0 -10px 20px -18px rgba(28,40,36,.4); }
+    #work .view { overflow: visible; }
+  }
+  @media (max-width: 760px) {
+    .logo { height: 27px; }
+    .app-name { font-size: 19px; padding-left: 10px; }
+    .app-name small { display: none; }
+    .tool .t { display: none; }
+    .tabs-wrap { flex-direction: column; align-items: stretch; gap: 8px; }
+    .brand { min-width: 0; overflow: hidden; }
+    .app-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .head-actions { gap: 0; }
+    .icon-btn { width: 34px; height: 34px; }
+    .thread { padding: 14px 12px 8px; }
+    .qb.cur .bub { font-size: 17px; }
+    .home { padding: 18px 14px 24px; }
+    .home h1 { font-size: 22px; }
+    .topic { font-size: 17px; }
+    .sum { padding: 18px 14px 28px; }
+    .scale button { height: 40px; font-size: 13px; border-radius: 10px; }
+    .composer { padding: 10px 10px 12px; }
+  }
+  @media (max-width: 430px) {
+    .logo { height: 23px; }
+    .app-name { font-size: 17px; padding-left: 8px; }
+    .icon-btn { width: 31px; height: 31px; }
+    .icon-btn svg.i { width: 17px; height: 17px; }
+    .top-inner { gap: 6px; }
+  }
+  @media print {
+    body > *:not(#printArea) { display: none !important; }
+    #printArea { display: block !important; }
+    body { background: #fff; display: block; }
+    #printArea .sum { max-width: none; padding: 0; }
+    #printArea section { break-inside: avoid; }
+    @page { size: A4; margin: 16mm; }
+  }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="top-inner">
+    <a class="brand" href="./" aria-label="Thinker">
+      <img class="logo" alt="OUTGRID" src="data:image/png;base64,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" />
+      <span class="app-name">Thinker<small>질문으로 생각 정리</small></span>
+    </a>
+    <div class="head-actions">
+      <button class="icon-btn" id="newBtn" title="새 생각 (N)"><i data-icon="plus"></i></button>
+      <button class="icon-btn" id="helpBtn" title="도움말"><i data-icon="help"></i></button>
+      <button class="icon-btn" id="setBtn" title="설정·백업"><i data-icon="gear"></i></button>
+    </div>
+  </div>
+  <div class="tabs-wrap">
+    <nav class="tabs" id="tabs" role="tablist">
+      <button class="tab" role="tab" data-tab="think" aria-selected="true"><i data-icon="bulb"></i>생각하기</button>
+      <button class="tab" role="tab" data-tab="log"><i data-icon="list"></i>기록<span class="n" id="nLog">0</span></button>
+      <button class="tab" role="tab" data-tab="fw"><i data-icon="layers"></i>생각의 틀<span class="n" id="nFw">0</span></button>
+    </nav>
+    <div class="applied" id="applied"></div>
+  </div>
+</header>
+
+<main>
+  <section class="panel" id="work">
+    <div class="view" data-view="think" id="vThink"></div>
+    <div class="view" data-view="log" hidden>
+      <div class="wbar">
+        <div class="search"><i data-icon="search"></i><input class="inp" id="logQ" type="search" placeholder="주제나 답 찾기" /></div>
+        <div class="seg" id="logSeg" style="flex:none">
+          <button data-f="all" aria-pressed="true">전체</button><button data-f="open">진행 중</button><button data-f="done">마침</button>
+        </div>
+        <select class="inp" id="logFw" style="width:auto;flex:none;height:36px"></select>
+      </div>
+      <div class="scroll"><div class="pad" id="logList"></div></div>
+    </div>
+    <div class="view" data-view="fw" hidden>
+      <div class="wbar">
+        <span class="count" id="fwCount"></span><span class="grow"></span>
+        <button class="tool" id="fwImport" title="틀 가져오기"><i data-icon="upload"></i><span class="t">가져오기</span></button>
+        <button class="tool prim" id="fwNew"><i data-icon="plus"></i><span class="t">나만의 틀</span></button>
+      </div>
+      <div class="scroll"><div class="pad" id="fwList"></div></div>
+    </div>
+  </section>
+
+  <aside class="panel" id="side">
+    <div class="ph">
+      <div><h2 id="sideT">생각 정리</h2><p id="sideS"></p></div>
+      <button class="icon-btn collapse" id="sideToggle" title="접기·펼치기"><i data-icon="chevron"></i></button>
+    </div>
+    <div class="pbody" id="sideBody"></div>
+  </aside>
+</main>
+
+<div class="foot"><i data-icon="shield"></i>Thinker는 인공지능 없이 정해진 규칙으로만 질문해요. 답은 주지 않아요. 적은 생각은 이 기기에만 저장되고 어디에도 전송되지 않아요.</div>
+
+<input type="file" id="fileIn" accept=".json,application/json" hidden />
+
+<!-- Edit answer -->
+<dialog id="edDlg">
+  <div class="dlg-head"><h2 id="edT">답 고치기<small id="edQ"></small></h2><button class="icon-btn" data-close><i data-icon="x"></i></button></div>
+  <div class="dlg-body">
+    <textarea class="inp" id="edA" rows="6"></textarea>
+    <div class="btn-row"><button class="btn ghost" id="edGo"><i data-icon="left"></i>이 질문으로 돌아가기</button><span class="grow"></span><button class="btn ghost" data-close>취소</button><button class="btn primary" id="edSave">저장</button></div>
+  </div>
+</dialog>
+
+<!-- Rename -->
+<dialog id="rnDlg">
+  <div class="dlg-head"><h2>주제 바꾸기</h2><button class="icon-btn" data-close><i data-icon="x"></i></button></div>
+  <div class="dlg-body">
+    <textarea class="inp" id="rnA" rows="3"></textarea>
+    <div class="btn-row"><button class="btn ghost" data-close>취소</button><button class="btn primary" id="rnSave">저장</button></div>
+  </div>
+</dialog>
+
+<!-- Custom framework -->
+<dialog id="cfwDlg" class="wide">
+  <div class="dlg-head"><h2 id="cfwT">나만의 틀<small>질문 순서를 직접 정해요</small></h2><button class="icon-btn" data-close><i data-icon="x"></i></button></div>
+  <div class="dlg-body">
+    <div class="row2">
+      <div class="field"><label>이름</label><input class="inp" id="cfwName" maxlength="30" placeholder="예: 주간 점검" /></div>
+      <div class="field"><label>아이콘</label><input class="inp" id="cfwEm" maxlength="4" placeholder="📝" /></div>
+    </div>
+    <div class="field"><label>한 줄 설명</label><input class="inp" id="cfwDesc" maxlength="80" placeholder="어떤 때 쓰는 틀인가요?" /></div>
+    <div class="field"><label>질문 <span class="v" id="cfwN"></span></label><textarea class="inp" id="cfwQ" rows="10" placeholder="한 줄에 질문 하나씩 적어요"></textarea></div>
+    <div class="codehelp">한 줄에 질문 하나씩, 위에서부터 순서대로 물어봐요. 질문 안에 <code>{주제}</code>를 넣으면 처음 적은 주제로, <code>{앞}</code>을 넣으면 바로 앞 답으로 바뀌어요.<br>
+      맨 앞에 <code>목록:</code>을 붙이면 여러 개를 적는 질문, <code>점수:</code>는 0~10 점수 질문이에요. <code>이름 | 질문</code>처럼 쓰면 정리할 때 그 이름이 제목이 돼요.</div>
+    <div class="btn-row"><button class="btn ghost danger" id="cfwDel"><i data-icon="trash"></i>지우기</button><button class="btn ghost" id="cfwExport"><i data-icon="download"></i>내보내기</button><span class="grow"></span><button class="btn ghost" data-close>취소</button><button class="btn primary" id="cfwSave">저장</button></div>
+  </div>
+</dialog>
+
+<!-- Settings -->
+<dialog id="setDlg" class="wide">
+  <div class="dlg-head"><h2>설정·백업</h2><button class="icon-btn" data-close><i data-icon="x"></i></button></div>
+  <div class="dlg-body">
+    <div class="sec" style="padding-top:0">
+      <h3>되묻기</h3>
+      <div class="field"><div class="lbl">한 질문에서 되묻는 횟수 <span class="v" id="depthV"></span></div>
+        <div class="seg" id="depthSeg"><button data-v="0">끄기</button><button data-v="1">1번</button><button data-v="2">2번</button><button data-v="3">3번</button></div></div>
+      <div class="field"><div class="lbl">이보다 짧으면 구체적으로 물어봐요 <span class="v">글자 수(띄어쓰기 빼고)</span></div>
+        <div class="num" id="minLen" style="width:180px"><button data-d="-1"><i data-icon="minus"></i></button><input type="number" inputmode="numeric" min="0" max="80" /><button data-d="1"><i data-icon="plus"></i></button></div></div>
+      <div id="detSw"></div>
+    </div>
+    <div class="sec">
+      <h3>쓰기</h3>
+      <label class="switch">Enter로 다음 질문<small>끄면 Ctrl+Enter로 넘어가고 Enter는 줄바꿈이에요</small><input type="checkbox" id="swEnter" /></label>
+      <label class="switch">예시 늘 보이기<small>질문마다 예시 답을 미리 보여 줘요</small><input type="checkbox" id="swHint" /></label>
+    </div>
+    <div class="sec">
+      <h3>백업</h3>
+      <p class="hint">모든 생각과 나만의 틀을 JSON 파일 하나로 받거나, 받은 파일을 다시 불러와요. 불러오면 지금 기록에 더해져요.</p>
+      <div class="btns g2"><button class="btn line" id="bkOut"><i data-icon="download"></i>백업 받기</button><button class="btn line" id="bkIn"><i data-icon="upload"></i>백업 불러오기</button></div>
+      <div class="btns" style="margin-top:8px"><button class="btn ghost danger" id="wipe"><i data-icon="trash"></i>모든 기록 지우기</button></div>
+    </div>
+  </div>
+</dialog>
+
+<!-- Help -->
+<dialog id="helpDlg" class="wide">
+  <div class="dlg-head"><h2>Thinker는 이렇게 써요<small>답을 주지 않고, 질문으로 생각을 꺼내요</small></h2><button class="icon-btn" data-close><i data-icon="x"></i></button></div>
+  <div class="dlg-body help">
+    <div><h4>흐름</h4><ul>
+      <li>주제를 적고 생각의 틀을 고르면, 그 틀의 순서대로 질문이 하나씩 나와요.</li>
+      <li>답이 너무 짧거나, ‘항상·절대·다들·무조건’ 같은 말이 있으면 한 번 더 되물어요.</li>
+      <li>‘모르겠다’, ‘해야 한다’, 남의 마음을 짐작하는 말, 나에게 붙인 이름표도 알아차리고 물어봐요.</li>
+      <li>더 파고들고 싶으면 ‘앞 답 더 파고들기’를 눌러요. 넘어가고 싶으면 ‘건너뛰기’예요.</li>
+      <li>끝나면 모든 답이 한 장의 정리와 생각 지도로 모여요. Markdown·그림·인쇄로 받을 수 있어요.</li>
+    </ul></div>
+    <div><h4>약속</h4><ul>
+      <li>인공지능을 쓰지 않아요. 미리 정한 질문과 규칙만 따라가요.</li>
+      <li>답을 평가하거나 정답을 알려 주지 않아요. 생각은 온전히 내 것이에요.</li>
+      <li>기록은 이 브라우저에만 저장돼요. 가끔 백업을 받아 두세요.</li>
+    </ul></div>
+    <div><h4>단축키</h4>
+      <div class="keys"><kbd>Ctrl Enter</kbd><span>다음 질문으로</span><kbd>Alt ←</kbd><span>이전 질문</span><kbd>N</kbd><span>새 생각</span><kbd>1 2 3</kbd><span>탭 바꾸기 (입력 중이 아닐 때)</span></div>
+    </div>
+  </div>
+</dialog>
+
+<!-- Confirm -->
+<dialog id="cfDlg">
+  <div class="dlg-head"><h2 id="cfT"></h2></div>
+  <div class="dlg-body"><p id="cfM"></p><div class="btn-row"><button class="btn ghost" id="cfNo">취소</button><button class="btn primary" id="cfOk">확인</button></div></div>
+</dialog>
+
+<div id="toast" role="status" aria-live="polite"><span id="toastMsg"></span><button id="toastAct" hidden></button></div>
+<div id="printArea"></div>
+<script>
+'use strict';
+/* =========================================================================
+   Thinker · outgrid — question-only thinking notebook
+   No AI. Fixed thinking frameworks ask one question at a time, and a small
+   set of rules asks back when an answer is too short, absolute ("항상",
+   "절대", "다들"…), vague, a "should", mind-reading, a label, or "모르겠다".
+   At the end every answer is gathered into one summary and a thought map.
+   Everything lives in localStorage on this device.
+   ========================================================================= */
+
+/* ---------- Icons ---------- */
+const ICONS = {
+  plus: '<path d="M12 5v14M5 12h14"/>',
+  minus: '<path d="M5 12h14"/>',
+  left: '<path d="m14.5 6-6 6 6 6"/>',
+  right: '<path d="m9.5 6 6 6-6 6"/>',
+  check: '<path d="m5 12.5 4.5 4.5L19 7.5"/>',
+  x: '<path d="M6 6l12 12M18 6 6 18"/>',
+  pen: '<path d="M14.5 5.5 18.5 9.5"/><path d="M4 20l1-4.5L15.8 4.7a2 2 0 0 1 2.8 0l.7.7a2 2 0 0 1 0 2.8L8.5 19 4 20z"/>',
+  trash: '<path d="M4.5 7h15"/><path d="M9.5 7V5.2a1.2 1.2 0 0 1 1.2-1.2h2.6a1.2 1.2 0 0 1 1.2 1.2V7"/><path d="m6.5 7 .9 11.3a2 2 0 0 0 2 1.7h5.2a2 2 0 0 0 2-1.7L17.5 7"/>',
+  help: '<circle cx="12" cy="12" r="8.5"/><path d="M9.6 9.5a2.5 2.5 0 0 1 4.8.9c0 1.7-2.4 2-2.4 3.6M12 16.8v.1"/>',
+  gear: '<circle cx="12" cy="12" r="3"/><path d="M19.4 13.5a7.6 7.6 0 0 0 0-3l2-1.5-2-3.4-2.3.9a7.5 7.5 0 0 0-2.6-1.5L14 2.5h-4l-.5 2.5A7.5 7.5 0 0 0 6.9 6.5l-2.3-.9-2 3.4 2 1.5a7.6 7.6 0 0 0 0 3l-2 1.5 2 3.4 2.3-.9a7.5 7.5 0 0 0 2.6 1.5l.5 2.5h4l.5-2.5a7.5 7.5 0 0 0 2.6-1.5l2.3.9 2-3.4z"/>',
+  download: '<path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/>',
+  upload: '<path d="M12 16V5"/><path d="m7 9.5 5-5 5 5"/><path d="M5 20h14"/>',
+  list: '<path d="M9 6.5h11M9 12h11M9 17.5h11"/><circle cx="4.8" cy="6.5" r=".9" fill="currentColor"/><circle cx="4.8" cy="12" r=".9" fill="currentColor"/><circle cx="4.8" cy="17.5" r=".9" fill="currentColor"/>',
+  shield: '<path d="M12 3.5 5 6.2v5.3c0 4.3 3 7.6 7 9 4-1.4 7-4.7 7-9V6.2z"/><path d="m9.2 12 2 2 3.8-4"/>',
+  chevron: '<path d="m6 9 6 6 6-6"/>',
+  bulb: '<path d="M9 17.5h6M10 20.5h4"/><path d="M12 3.5a6 6 0 0 0-3.6 10.8c.7.6 1.1 1.3 1.1 2.2v1h5v-1c0-.9.4-1.6 1.1-2.2A6 6 0 0 0 12 3.5z"/>',
+  layers: '<path d="m12 3.5 8.5 4.5-8.5 4.5L3.5 8z"/><path d="m3.5 12 8.5 4.5 8.5-4.5"/><path d="m3.5 16 8.5 4.5 8.5-4.5"/>',
+  search: '<circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5"/>',
+  map: '<circle cx="12" cy="12" r="2.6"/><circle cx="4.8" cy="6" r="1.8"/><circle cx="19.2" cy="6" r="1.8"/><circle cx="4.8" cy="18" r="1.8"/><circle cx="19.2" cy="18" r="1.8"/><path d="M6.3 7.1 9.9 10.4M17.7 7.1l-3.6 3.3M6.3 16.9l3.6-3.3M17.7 16.9l-3.6-3.3"/>',
+  doc: '<path d="M6.5 3.5h7l4 4v13h-11z"/><path d="M13.5 3.5v4h4M9 12.5h6M9 16h6"/>',
+  copy: '<rect x="8.5" y="8.5" width="11" height="11" rx="2"/><path d="M15.5 8.5V6a1.5 1.5 0 0 0-1.5-1.5H6A1.5 1.5 0 0 0 4.5 6v8A1.5 1.5 0 0 0 6 15.5h2.5"/>',
+  image: '<rect x="3.5" y="5" width="17" height="14" rx="2.5"/><circle cx="9" cy="10" r="1.6"/><path d="m20.5 16-5-5-8 8"/>',
+  print: '<path d="M7 9V3.5h10V9"/><rect x="3.5" y="9" width="17" height="7.5" rx="2"/><path d="M7 14h10v6.5H7z"/>',
+  skip: '<path d="m6 6 7 6-7 6zM16.5 6v12"/>',
+  send: '<path d="M5 12h13M13 6.5l5.5 5.5-5.5 5.5"/>',
+  dig: '<path d="M12 4v10"/><path d="m8 10 4 4 4-4"/><path d="M5 19.5h14"/><path d="M8 17h8" opacity=".5"/>',
+  root: '<path d="M12 3.5v8"/><path d="M12 11.5c-2 2-5 2.5-6.5 5M12 11.5c2 2 5 2.5 6.5 5M12 11.5v9"/>',
+  refresh: '<path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3"/><path d="M19.5 4.5v4h-4"/>',
+  dup: '<rect x="8.5" y="8.5" width="11" height="11" rx="2"/><path d="M14 11.5v5M11.5 14h5"/><path d="M15.5 8.5V6a1.5 1.5 0 0 0-1.5-1.5H6A1.5 1.5 0 0 0 4.5 6v8A1.5 1.5 0 0 0 6 15.5h2.5"/>',
+  play: '<path d="M7.5 5.5v13l11-6.5z"/>',
+  more: '<circle cx="5.5" cy="12" r="1.3" fill="currentColor"/><circle cx="12" cy="12" r="1.3" fill="currentColor"/><circle cx="18.5" cy="12" r="1.3" fill="currentColor"/>',
+  eye: '<path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3"/>',
+};
+function icon(n, cls = '') { return `<svg class="i ${cls}" viewBox="0 0 24 24" aria-hidden="true">${ICONS[n] || ''}</svg>`; }
+function hydrateIcons(root = document) { root.querySelectorAll('i[data-icon]').forEach(el => { const t = document.createElement('template'); t.innerHTML = icon(el.dataset.icon, el.className); el.replaceWith(t.content.firstChild); }); }
+
+/* ---------- Helpers ---------- */
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const pad2 = n => String(n).padStart(2, '0');
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+const store = {
+  get(k, d) { try { const v = localStorage.getItem('thinker.' + k); return v == null ? d : JSON.parse(v); } catch { return d; } },
+  set(k, v) { try { localStorage.setItem('thinker.' + k, JSON.stringify(v)); } catch { toast('저장 공간이 부족해서 저장하지 못했어요', { err: true }); } },
+};
+function merge(d, s) { const o = { ...d }; if (s && typeof s === 'object') for (const k in s) o[k] = (d[k] && typeof d[k] === 'object' && !Array.isArray(d[k])) ? merge(d[k], s[k]) : s[k]; return o; }
+function fmtDate(t, time = true) {
+  const d = new Date(t), now = new Date();
+  const same = d.toDateString() === now.toDateString();
+  const y = new Date(now); y.setDate(now.getDate() - 1);
+  const hm = `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+  if (same) return time ? `오늘 ${hm}` : '오늘';
+  if (d.toDateString() === y.toDateString()) return time ? `어제 ${hm}` : '어제';
+  const base = d.getFullYear() === now.getFullYear() ? `${d.getMonth() + 1}월 ${d.getDate()}일` : `${d.getFullYear()}.${d.getMonth() + 1}.${d.getDate()}`;
+  return time ? `${base} ${hm}` : base;
+}
+function fmtDur(ms) { const m = Math.round(ms / 60000); if (m < 1) return '1분 안'; if (m < 60) return `${m}분`; const h = Math.floor(m / 60); return `${h}시간 ${m % 60}분`; }
+function download(name, data, type) {
+  const blob = data instanceof Blob ? data : new Blob([data], { type });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name;
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+}
+function fileSafe(s) { return String(s || 'thinker').replace(/[\\/:*?"<>|\n\r]+/g, ' ').trim().slice(0, 40) || 'thinker'; }
+async function copyText(t) {
+  try { await navigator.clipboard.writeText(t); return true; } catch {
+    const ta = document.createElement('textarea'); ta.value = t; ta.style.position = 'fixed'; ta.style.opacity = '0'; document.body.appendChild(ta); ta.select();
+    let ok = false; try { ok = document.execCommand('copy'); } catch {} ta.remove(); return ok;
+  }
+}
+const chars = t => String(t || '').replace(/\s/g, '').length;
+const oneLine = (t, n = 40) => { const s = String(t || '').replace(/\s+/g, ' ').trim(); return s.length > n ? s.slice(0, n - 1) + '…' : s; };
+
+let toastTimer;
+function toast(msg, { err = false, action, onAction, ms = 3200 } = {}) {
+  const t = $('#toast'); $('#toastMsg').textContent = msg; t.classList.toggle('err', err);
+  const b = $('#toastAct'); b.hidden = !action; b.textContent = action || ''; b.onclick = () => { t.classList.remove('show'); onAction && onAction(); };
+  t.classList.add('show'); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), action ? Math.max(ms, 6000) : ms);
+}
+function confirmDlg(title, msg, okLabel = '확인', danger = false) {
+  return new Promise(res => {
+    const d = $('#cfDlg'); $('#cfT').textContent = title; $('#cfM').textContent = msg;
+    const ok = $('#cfOk'); ok.textContent = okLabel; ok.className = 'btn ' + (danger ? 'rec' : 'primary');
+    const done = v => { d.close(); res(v); };
+    ok.onclick = () => done(true); $('#cfNo').onclick = () => done(false); d.oncancel = e => { e.preventDefault(); done(false); };
+    d.showModal();
+  });
+}
+function numGet(el) { const i = $('input', el); return clamp(Math.round(+i.value || 0), +i.min || 0, +i.max || 99); }
+function numSet(el, v) { $('input', el).value = v; }
+function numBind(el, onChange) {
+  el.addEventListener('click', e => { const b = e.target.closest('button[data-d]'); if (!b) return; const i = $('input', el); numSet(el, clamp(numGet(el) + +b.dataset.d, +i.min || 0, +i.max || 99)); onChange && onChange(numGet(el)); });
+  $('input', el).addEventListener('change', () => { numSet(el, numGet(el)); onChange && onChange(numGet(el)); });
+}
+function segSet(el, attr, v) { $$('button', el).forEach(b => b.setAttribute('aria-pressed', String(b.dataset[attr] === String(v)))); }
+
+/* =========================================================================
+   Frameworks — each step: id, l (label), t (type: text | list | scale |
+   choice | pick | matrix | why), q (question, may use {topic} {prev} {a:id}
+   {best} {pick}), alt (other wordings), h (example), min (chars or items),
+   w (weighted list), lo/hi (scale ends), opts (choice), from (pick source),
+   rows/cols (matrix sources), ask(v, s) (rule-based follow-up for scale /
+   choice / matrix answers).
+   ========================================================================= */
+const FW = [
+  {
+    id: 'claim', em: '🗣️', name: '주장 다듬기', short: '주장 → 근거 → 반론 → 결론',
+    desc: '내 생각을 하나의 주장으로 세우고, 근거와 반론을 거쳐 단단하게 다듬어요.',
+    steps: [
+      { id: 'claim', l: '주장', q: '‘{topic}’에 대해 당신의 주장은 무엇인가요? 한 문장으로 말해 보세요.', alt: ['결국 하고 싶은 말이 무엇인가요? 한 문장이면 충분해요.', '이 주제에서 당신은 어느 쪽에 서 있나요? 그 입장을 한 문장으로 적어 보세요.'], h: '재택근무는 일주일에 이틀이 가장 좋다.' },
+      { id: 'reason', l: '이유', t: 'list', min: 2, q: '왜 그렇게 생각하나요? 이유를 하나씩 적어 보세요.', alt: ['그 주장을 떠받치는 기둥은 무엇인가요? 하나씩 적어 보세요.'], h: '출퇴근 시간이 줄어 집중할 시간이 늘어난다.' },
+      { id: 'evidence', l: '근거', q: '그 이유를 뒷받침하는 사실이나 경험은 무엇인가요?', alt: ['직접 보거나 겪은 일, 숫자, 사례 중에 무엇이 있나요?', '처음 듣는 사람도 고개를 끄덕이게 할 증거는 무엇인가요?'], h: '지난달 재택한 날의 작업량이 평소보다 30% 많았다.' },
+      { id: 'source', l: '근거 점검', q: '그 근거는 얼마나 믿을 만한가요? 어디서, 어떻게 알게 되었나요?', h: '내 작업 기록이라 정확하지만, 한 달치뿐이라 아직 짧다.' },
+      { id: 'counter', l: '반론', q: '반대하는 사람이라면 뭐라고 말할까요? 가장 강한 반론을 적어 보세요.', alt: ['이 주장의 가장 약한 곳은 어디인가요?', '똑똑한 반대편 사람이 단 한 마디만 한다면 무엇일까요?'], h: '얼굴을 보지 않으면 협업이 느려진다.' },
+      { id: 'concede', l: '인정할 점', q: '그 반론에서 인정할 만한 부분은 무엇인가요?', h: '급한 일이 생기면 메신저로는 답이 늦는 게 맞다.' },
+      { id: 'rebut', l: '재반박', q: '그래도 주장을 지킨다면, 그 반론에 어떻게 답하겠어요?', h: '회의가 몰리는 날은 사무실에 나오면 된다.' },
+      { id: 'conf', l: '확신', t: 'scale', q: '지금 이 주장을 얼마나 확신하나요?', lo: '전혀 아니다', hi: '완전히 확신', ask: v => v >= 9 ? '거의 확신하네요. 그래도 이 주장이 틀릴 수 있는 상황을 하나만 상상해 본다면요?' : v <= 3 ? '확신이 낮네요. 무엇을 알게 되면 더 확신할 수 있을까요?' : null },
+      { id: 'concl', l: '결론', q: '처음 주장을 다시 써 본다면 어떻게 쓰겠어요? 고칠 곳이 있다면 고쳐서 적어 보세요.', h: '집중 업무가 많은 주에는 재택 이틀, 협업이 많은 주에는 하루가 좋다.' },
+    ],
+    follow: ['이 주장이 틀렸다는 걸 알려면 무엇을 보면 될까요?', '1년 뒤에도 같은 생각일까요? 무엇이 바뀌면 생각이 바뀔까요?', '이 주장에 가장 반대할 사람과 이야기한다면 무엇을 먼저 물어볼까요?'],
+  },
+  {
+    id: 'whys', em: '🔍', name: '다섯 번 왜', short: '문제 → 왜 × 5 → 근본 원인 → 행동',
+    desc: '눈에 보이는 문제에서 출발해 ‘왜?’를 거듭 물으며 뿌리 원인까지 내려가요.',
+    steps: [
+      { id: 'problem', l: '문제', q: '‘{topic}’ — 지금 눈에 보이는 문제를 있는 그대로 적어 보세요.', alt: ['무엇이 문제인가요? 해석은 빼고 일어난 일만 적어 보세요.'], h: '이번 달에만 아침 회의에 네 번 늦었다.' },
+      { id: 'why1', l: '왜 1', t: 'why', q: '‘{prev}’ — 왜 그럴까요?', h: '집에서 늦게 나온다.' },
+      { id: 'why2', l: '왜 2', t: 'why', q: '‘{prev}’ — 그건 또 왜 그럴까요?', h: '아침에 준비가 오래 걸린다.' },
+      { id: 'why3', l: '왜 3', t: 'why', q: '‘{prev}’ — 왜 그런 걸까요?', h: '일어나서 휴대폰을 30분쯤 본다.' },
+      { id: 'why4', l: '왜 4', t: 'why', q: '‘{prev}’ — 그 밑에는 무엇이 있을까요? 왜 그런가요?', h: '전날 밤 늦게 자서 머리가 멍하다.' },
+      { id: 'why5', l: '왜 5', t: 'why', q: '‘{prev}’ — 마지막으로, 왜 그럴까요?', h: '잠들기 전에 할 일을 미루다가 밤에 몰아서 한다.' },
+      { id: 'root', l: '근본 원인', q: '지금까지 내려온 ‘왜’ 가운데 가장 뿌리에 있는 원인은 무엇인 것 같나요?', h: '저녁 시간에 할 일을 정해 두지 않아 밤이 늦어진다.' },
+      { id: 'control', l: '바꿀 수 있나', t: 'choice', q: '그 원인은 내가 바꿀 수 있는 것인가요?', opts: ['내가 바꿀 수 있다', '일부만 바꿀 수 있다', '내가 바꿀 수 없다'], ask: v => v === '내가 바꿀 수 없다' ? '바꿀 수 없다면, 그 원인을 대하는 나의 반응이나 준비는 바꿀 수 있을까요?' : v === '일부만 바꿀 수 있다' ? '그중 내가 바꿀 수 있는 부분은 정확히 어디까지인가요?' : null },
+      { id: 'action', l: '작은 행동', q: '그 원인을 건드리는 작은 행동 하나는 무엇인가요? 언제부터 해 보겠어요?', h: '오늘부터 저녁 9시에 내일 할 일 세 가지를 적는다.' },
+      { id: 'concl', l: '정리', q: '이 문제에서 새로 알게 된 것을 한두 문장으로 정리해 보세요.', h: '지각은 아침이 아니라 전날 저녁의 문제였다.' },
+    ],
+    follow: ['같은 뿌리에서 자라는 다른 문제는 없나요?', '이 행동이 효과가 있었는지 무엇으로 확인할까요?', '다른 갈래의 ‘왜’로 내려가면 다른 원인이 나올까요?'],
+  },
+  {
+    id: 'proscons', em: '⚖️', name: '장단점 저울', short: '선택 → 장점 → 단점 → 무게 → 결론',
+    desc: '할까 말까 망설일 때, 좋은 점과 대가를 무게와 함께 저울에 올려 봐요.',
+    steps: [
+      { id: 'option', l: '선택', q: '‘{topic}’ — 무엇을 할지 말지 고민하나요? 하나의 선택으로 적어 보세요.', h: '다음 달부터 아침 운동을 시작한다.' },
+      { id: 'pros', l: '장점', t: 'list', w: true, min: 2, q: '그렇게 하면 좋은 점은 무엇인가요? 적고 나서 중요한 정도(1~3)를 매겨 보세요.', h: '하루를 개운하게 시작한다.' },
+      { id: 'cons', l: '단점', t: 'list', w: true, min: 2, q: '안 좋은 점이나 치러야 할 대가는 무엇인가요? 중요한 정도도 매겨 보세요.', h: '30분 일찍 일어나야 한다.' },
+      { id: 'unknown', l: '모르는 것', q: '아직 모르는 것, 확인이 필요한 것은 무엇인가요?', h: '회사 근처 헬스장의 아침 운영 시간.' },
+      { id: 'heavy', l: '가장 무거운 것', q: '양쪽 목록에서 가장 무거운 것 하나를 고른다면 무엇이고, 왜 그런가요?', h: '건강검진 수치가 나빠진 것. 미루면 더 나빠질 것 같아서.' },
+      { id: 'regret', l: '후회', q: '하지 않았을 때, 1년 뒤의 나는 후회할까요? 했을 때는요?', h: '안 하면 후회할 것 같고, 해서 후회할 일은 별로 없다.' },
+      { id: 'gut', l: '마음', t: 'scale', q: '지금 마음은 어느 쪽에 더 가깝나요?', lo: '하지 않는다', hi: '한다', ask: v => v === 5 ? '딱 가운데네요. 한쪽으로 기울게 할 정보 하나를 꼽는다면 무엇일까요?' : null },
+      { id: 'concl', l: '결론', q: '결론은 무엇인가요? 그리고 이 결론을 바꾸게 할 조건이 있다면 무엇인가요?', h: '한다. 다만 한 달 해 보고 잠이 부족하면 저녁 운동으로 바꾼다.' },
+    ],
+    follow: ['목록에 없는 장점이나 단점이 숨어 있지 않을까요?', '다른 사람이라면 무게를 어떻게 매길까요?', '‘하거나 말거나’ 말고 세 번째 길은 없을까요?'],
+  },
+  {
+    id: 'decide', em: '🧭', name: '선택지 고르기', short: '목적 → 선택지 → 기준 → 점수 → 결정',
+    desc: '여러 선택지를 기준별로 점수 매겨 비교해요. 점수와 마음이 다른 곳도 살펴봐요.',
+    steps: [
+      { id: 'goal', l: '목적', q: '‘{topic}’ — 무엇을 결정해야 하나요? 이 결정으로 얻고 싶은 것은 무엇인가요?', h: '이사할 동네를 정해야 한다. 출퇴근이 편하고 조용히 쉬고 싶다.' },
+      { id: 'options', l: '선택지', t: 'list', min: 2, short: false, q: '가능한 선택지를 모두 적어 보세요. ‘아무것도 하지 않기’도 선택지예요.', h: 'A동, B동, 지금 집에 1년 더' },
+      { id: 'criteria', l: '기준', t: 'list', w: true, min: 2, short: false, q: '좋은 선택인지 판단할 기준은 무엇인가요? 기준마다 중요한 정도(1~3)를 매겨 보세요.', h: '출퇴근 시간, 월세, 조용함' },
+      { id: 'matrix', l: '점수', t: 'matrix', rows: 'options', cols: 'criteria', q: '각 선택지가 기준을 얼마나 잘 만족하는지 1~5점으로 매겨 보세요.' },
+      { id: 'worst', l: '최악의 경우', q: '점수가 가장 높은 ‘{best}’{을} 골랐을 때 생길 수 있는 가장 나쁜 일은 무엇인가요? 그 일을 견딜 수 있나요?', h: '월세가 오르면 부담이 크다. 1년은 견딜 수 있다.' },
+      { id: 'ten', l: '10·10·10', q: '10분 뒤, 10개월 뒤, 10년 뒤의 나는 이 결정을 각각 어떻게 볼까요?', h: '10분 뒤엔 홀가분, 10개월 뒤엔 익숙, 10년 뒤엔 잘 기억도 안 날 듯.' },
+      { id: 'gap', l: '점수와 마음', q: '점수 결과와 마음이 끌리는 쪽이 같나요? 다르다면 그 차이는 무엇을 말해 주나요?', h: '마음은 B동인데, 그건 카페가 많아서였다. 기준에 없던 것.' },
+      { id: 'concl', l: '결정', q: '무엇을 선택하겠어요? 언제까지, 첫 번째로 무엇을 하겠어요?', h: 'A동. 이번 주말에 집 두 곳을 보러 간다.' },
+    ],
+    follow: ['빠뜨린 기준은 없나요? 그 기준을 넣으면 순위가 바뀌나요?', '이 결정을 되돌리려면 얼마나 비용이 들까요?', '믿는 사람에게 점수표를 보여 준다면 어디를 지적할까요?'],
+  },
+  {
+    id: 'solve', em: '🔧', name: '문제 풀기', short: '정의 → 지금·원하는 모습 → 원인 → 아이디어 → 첫 걸음',
+    desc: '문제를 또렷하게 정의하고, 원인과 아이디어를 넓게 펼친 뒤 첫 걸음을 정해요.',
+    steps: [
+      { id: 'define', l: '문제 정의', q: '‘{topic}’ — 문제가 정확히 무엇인가요? 누가, 언제, 어디서 겪나요?', h: '우리 팀은 매주 금요일 오후 보고서 마감 때문에 야근을 한다.' },
+      { id: 'now', l: '지금 모습', q: '지금은 어떤 상태인가요? 숫자나 구체적인 장면으로 적어 보세요.', h: '금요일마다 평균 2시간 야근, 지난달 네 번 모두.' },
+      { id: 'want', l: '원하는 모습', q: '문제가 풀리면 어떤 모습일까요? 무엇을 보면 풀렸다고 알 수 있나요?', h: '금요일 6시에 모두 퇴근한다. 한 달 동안 야근 0번.' },
+      { id: 'causes', l: '원인', t: 'list', min: 2, q: '지금과 원하는 모습 사이를 벌려 놓는 원인은 무엇일까요? 떠오르는 대로 적어 보세요.', h: '자료가 목요일 밤에야 모인다.' },
+      { id: 'tried', l: '해 본 것', q: '지금까지 해 본 방법이 있나요? 잘 안 됐다면 왜 그랬을까요?', h: '마감을 목요일로 당겨 봤지만 자료가 늦게 와서 소용없었다.' },
+      { id: 'ideas', l: '아이디어', t: 'list', min: 3, q: '해결 아이디어를 최소 세 개 적어 보세요. 엉뚱해도 괜찮아요.', h: '자료 제출 마감을 수요일로 정한다.' },
+      { id: 'pick', l: '고른 것', t: 'pick', from: 'ideas', q: '그중 가장 먼저 해 볼 하나를 골라 주세요.' },
+      { id: 'whypick', l: '고른 이유', q: '왜 ‘{pick}’{을} 골랐나요?', h: '돈이 안 들고 바로 시작할 수 있어서.' },
+      { id: 'first', l: '첫 걸음', q: '‘{pick}’의 첫 걸음은 무엇인가요? 언제, 어디서, 누구와 하나요?', h: '월요일 회의에서 팀장님께 제안한다.' },
+      { id: 'obstacle', l: '걸림돌', q: '무엇이 방해할 수 있나요? 그때는 어떻게 하겠어요?', h: '다른 팀 자료가 늦을 수 있다. 그 팀에 수요일 알림을 보낸다.' },
+      { id: 'concl', l: '정리', q: '이 문제를 어떻게 풀어 갈지 한두 문장으로 정리해 보세요.', h: '자료 마감을 수요일로 앞당겨 금요일 야근을 없앤다. 한 달 뒤 확인.' },
+    ],
+    follow: ['이 방법이 실패한다면 다음 아이디어는 무엇인가요?', '문제를 다른 사람의 눈으로 다시 정의하면 어떻게 될까요?', '원인 중에 아직 확인하지 않은 짐작은 없나요?'],
+  },
+  {
+    id: 'check', em: '🪞', name: '생각 점검', short: '상황 → 떠오른 생각 → 증거 → 다른 시선 → 균형',
+    desc: '마음이 흔들릴 때, 떠오른 생각을 사실과 나눠 보고 더 균형 잡힌 생각을 찾아요.',
+    steps: [
+      { id: 'situation', l: '상황', q: '‘{topic}’ — 어떤 일이 있었나요? 카메라에 찍힌 것처럼 사실만 적어 보세요.', h: '회의에서 내 의견을 말했는데 팀장님이 대답 없이 다음 안건으로 넘어갔다.' },
+      { id: 'thought', l: '떠오른 생각', q: '그 순간 머릿속에 스친 생각은 무엇이었나요? 떠오른 그대로 적어 보세요.', h: '내 의견이 한심하다고 생각했을 거야.' },
+      { id: 'feel', l: '감정', q: '그때 어떤 감정이 들었나요?', short: false, h: '창피함, 서운함' },
+      { id: 'feel1', l: '감정의 세기', t: 'scale', q: '그 감정은 얼마나 강했나요?', lo: '거의 없음', hi: '아주 강함' },
+      { id: 'for', l: '맞다는 증거', q: '그 생각이 맞다는 증거는 무엇인가요? 짐작 말고 실제로 있었던 일만요.', h: '대답을 하지 않았다.' },
+      { id: 'against', l: '아니라는 증거', q: '그 생각과 맞지 않는 증거나 예외는 없나요?', alt: ['그 생각으로는 설명되지 않는 일이 있었나요?'], h: '지난주엔 내 의견을 칭찬했다. 그날 회의 시간이 모자랐다.' },
+      { id: 'other', l: '다른 설명', t: 'list', min: 2, q: '같은 상황을 다르게 설명할 방법은 무엇이 있을까요?', h: '시간에 쫓겨서 넘어갔다.' },
+      { id: 'friend', l: '친구에게', q: '친한 친구가 똑같은 일을 겪었다면 뭐라고 말해 주겠어요?', h: '한 번 대답 안 했다고 네 의견이 별로라는 뜻은 아니야.' },
+      { id: 'balanced', l: '균형 잡힌 생각', q: '모든 걸 고려해서, 조금 더 균형 잡힌 생각을 적어 보세요.', h: '팀장님 반응은 시간 때문일 수도 있다. 궁금하면 따로 물어보면 된다.' },
+      { id: 'feel2', l: '지금 감정', t: 'scale', q: '지금 그 감정은 얼마나 강한가요?', lo: '거의 없음', hi: '아주 강함', ask: (v, s) => { const a = ans(s, 'feel1'); return a && a.v != null && v >= a.v ? '감정이 그대로이거나 더 커졌네요. 아직 마음에 걸리는 부분은 무엇인가요?' : null; } },
+      { id: 'concl', l: '기억할 것', q: '다음에 비슷한 일이 생기면 무엇을 기억하고 싶나요?', h: '반응 하나로 마음을 단정하지 말고, 궁금하면 직접 물어본다.' },
+    ],
+    follow: ['이런 생각이 자주 떠오르는 상황이 있나요?', '그 생각을 확인해 볼 작은 실험은 무엇일까요?', '이 일을 한 달 뒤에 떠올리면 어떤 느낌일까요?'],
+  },
+  {
+    id: 'hats', em: '🎩', name: '여섯 모자', short: '사실 → 느낌 → 위험 → 장점 → 아이디어 → 정리',
+    desc: '한 번에 한 가지 관점으로만 생각해요. 사실, 느낌, 위험, 장점, 새 아이디어를 차례로.',
+    steps: [
+      { id: 'white', l: '흰 모자 · 사실', q: '‘{topic}’ — 지금 알고 있는 사실과 숫자만 적어 보세요. 해석이나 느낌은 빼고요.', h: '예산 500만 원, 마감 3주, 참여 인원 4명.' },
+      { id: 'red', l: '빨간 모자 · 느낌', q: '솔직한 느낌은 어떤가요? 이유는 없어도 괜찮아요.', short: false, h: '설레는데 조금 불안하다.' },
+      { id: 'black', l: '검은 모자 · 위험', q: '무엇이 잘못될 수 있나요? 위험과 약점을 적어 보세요.', h: '3주는 빠듯하다. 디자이너가 한 명뿐이다.' },
+      { id: 'yellow', l: '노란 모자 · 장점', q: '잘 된다면 무엇이 좋을까요? 가치와 기회를 적어 보세요.', h: '새 고객층을 만날 수 있다.' },
+      { id: 'green', l: '초록 모자 · 아이디어', t: 'list', min: 2, q: '새로운 아이디어나 다른 방법은 무엇이 있을까요?', h: '1차는 작게 열고 반응을 본다.' },
+      { id: 'blue', l: '파란 모자 · 정리', q: '지금까지 쓴 것을 보고, 다음에 무엇을 하면 좋을까요?', h: '범위를 줄여 2주 안에 시범판을 만든다.' },
+      { id: 'concl', l: '결론', q: '이 주제에 대한 지금의 생각을 한 문장으로 적어 보세요.', h: '해 볼 만하다. 다만 작게 시작한다.' },
+    ],
+    follow: ['가장 적게 쓴 모자는 무엇인가요? 그 모자로 한 번 더 생각해 볼까요?', '같은 주제를 다른 사람의 자리에서 모자를 써 보면 어떨까요?'],
+  },
+  {
+    id: 'grow', em: '🌱', name: '목표 세우기', short: '목표 → 지금 → 방법 → 이번 주 한 가지',
+    desc: '이루고 싶은 것과 지금 위치를 또렷하게 보고, 이번 주에 할 한 걸음을 정해요.',
+    steps: [
+      { id: 'goal', l: '목표', q: '‘{topic}’ — 무엇을 이루고 싶나요? 언제까지 이루고 싶나요?', h: '올해 안에 하프 마라톤을 완주한다.' },
+      { id: 'why', l: '중요한 이유', q: '그게 왜 중요한가요? 이루면 무엇이 달라지나요?', h: '체력이 바닥이라는 느낌에서 벗어나고 싶다.' },
+      { id: 'measure', l: '확인 방법', q: '이뤘다는 걸 어떻게 알 수 있나요? 숫자로 말한다면요?', h: '21km를 2시간 30분 안에 걷지 않고 달린다.' },
+      { id: 'reality', l: '지금', q: '지금은 어디쯤 와 있나요? 있는 그대로 적어 보세요.', h: '5km를 쉬지 않고 달릴 수 있다.' },
+      { id: 'now10', l: '지금 점수', t: 'scale', q: '목표를 10이라고 하면 지금은 몇인가요?', lo: '시작 전', hi: '이룸', ask: v => v <= 2 ? '거의 시작 전이네요. 그래도 0이 아닌 이유는 무엇인가요?' : v >= 8 ? '거의 다 왔네요. 남은 부분에서 가장 어려운 것은 무엇인가요?' : null },
+      { id: 'block', l: '가로막는 것', q: '목표를 가로막고 있는 것은 무엇인가요?', h: '퇴근이 늦어 달릴 시간이 없다.' },
+      { id: 'have', l: '가진 것', q: '이미 가진 것은 무엇인가요? 시간, 사람, 경험, 도구 모두요.', h: '주말 아침 시간, 같이 달릴 친구, 러닝화.' },
+      { id: 'options', l: '방법', t: 'list', min: 3, q: '목표에 다가갈 방법을 모두 적어 보세요.', h: '주말 장거리 달리기' },
+      { id: 'will', l: '이번 주 한 가지', q: '이번 주에 할 한 가지는 무엇인가요? 언제, 어디서 하나요?', h: '토요일 아침 7시에 한강에서 7km.' },
+      { id: 'commit', l: '할 가능성', t: 'scale', q: '그 한 가지를 실제로 할 가능성은 몇 점인가요?', lo: '못 할 것 같다', hi: '반드시 한다', ask: v => v < 7 ? `${v}점이네요. 7점이 되려면 무엇이 바뀌어야 할까요?` : null },
+      { id: 'concl', l: '다짐', q: '목표와 이번 주 할 일을 한 문장으로 다시 적어 보세요.', h: '올해 하프 완주를 위해, 이번 토요일 7km부터 달린다.' },
+    ],
+    follow: ['한 달 뒤에 지금 점수는 몇이 되어 있으면 좋을까요?', '목표를 이룬 사람에게 무엇을 묻고 싶나요?', '계획대로 안 된 주에는 무엇을 하기로 할까요?'],
+  },
+  {
+    id: 'retro', em: '🔁', name: '돌아보기', short: '있었던 일 → 잘된 것 → 아쉬운 것 → 다음 시도',
+    desc: '하루, 한 주, 한 프로젝트를 돌아보며 계속할 것과 바꿀 것을 찾아요.',
+    steps: [
+      { id: 'what', l: '있었던 일', q: '‘{topic}’ — 무슨 일이 있었나요? 시간 순서대로 짧게 적어 보세요.', h: '월요일 기획 회의, 수요일 시안 공유, 금요일 출시.' },
+      { id: 'keep', l: '잘된 것', t: 'list', min: 2, q: '잘된 것, 앞으로도 계속하고 싶은 것은 무엇인가요?', h: '매일 아침 10분 짧은 회의' },
+      { id: 'problem', l: '아쉬운 것', t: 'list', min: 1, q: '아쉬웠던 것, 문제였던 것은 무엇인가요?', h: '시안 피드백이 늦게 모였다.' },
+      { id: 'why', l: '아쉬움의 이유', q: '가장 큰 아쉬움은 왜 생겼을까요?', h: '피드백 마감을 정하지 않았다.' },
+      { id: 'learn', l: '배운 것', q: '새로 알게 된 것은 무엇인가요?', h: '마감이 없는 일은 늘 뒤로 밀린다.' },
+      { id: 'try', l: '다음 시도', t: 'list', min: 1, q: '다음에 시도해 볼 것은 무엇인가요?', h: '피드백 마감을 시안과 함께 알린다.' },
+      { id: 'concl', l: '한 문장', q: '이번을 한 문장으로 정리한다면요?', h: '속도는 좋았고, 피드백 마감만 정하면 더 좋아진다.' },
+    ],
+    follow: ['지난번 돌아보기에서 정한 시도는 해 봤나요?', '같이 한 사람은 이번을 어떻게 돌아볼까요?'],
+  },
+  {
+    id: 'socrates', em: '🏛️', name: '소크라테스 질문', short: '뜻 → 예 → 가정 → 근거 → 관점 → 결과',
+    desc: '하나의 생각을 여러 각도에서 묻고 또 물어요. 막연한 믿음을 또렷하게 만들 때.',
+    steps: [
+      { id: 'clarify', l: '뜻', q: '‘{topic}’ — 이건 정확히 무슨 뜻인가요? 다른 말로 풀어 설명해 보세요.', h: '‘성공한다’는 건 내가 원하는 일을 하며 먹고사는 것이다.' },
+      { id: 'example', l: '예', q: '구체적인 예를 하나 들어 줄 수 있나요?', h: '좋아하는 디자인 일로 월세를 내는 것.' },
+      { id: 'assume', l: '가정', q: '이 생각이 맞으려면 무엇이 먼저 사실이어야 하나요?', h: '좋아하는 일이 돈이 되는 일이어야 한다.' },
+      { id: 'evidence', l: '근거', q: '그걸 어떻게 알게 되었나요? 근거는 무엇인가요?', h: '주변에 그렇게 사는 사람이 두 명 있다.' },
+      { id: 'view', l: '다른 관점', q: '전혀 다른 입장의 사람은 이 생각을 어떻게 볼까요?', h: '부모님은 안정이 먼저라고 볼 것이다.' },
+      { id: 'impl', l: '결과', q: '이 생각대로라면 어떤 결과가 따라오나요? 그 결과를 받아들일 수 있나요?', h: '몇 년은 수입이 들쭉날쭉할 것이다. 받아들일 수 있다.' },
+      { id: 'meta', l: '질문에 대한 질문', q: '처음 질문 자체는 왜 중요한가요? 더 좋은 질문이 있다면 무엇일까요?', h: '‘어떻게 하면 좋아하는 일을 오래 할 수 있을까’가 더 좋은 질문이다.' },
+      { id: 'concl', l: '달라진 생각', q: '지금 생각은 처음과 어떻게 달라졌나요?', h: '성공의 기준을 돈보다 지속에 두게 됐다.' },
+    ],
+    follow: ['내가 당연하게 여긴 단어는 무엇이었나요?', '이 생각을 열 살 아이에게 설명한다면 어떻게 말할까요?'],
+  },
+];
+const FWX = {}; FW.forEach(f => FWX[f.id] = f);
+
+/* Topic → framework hints (rule-based recommender) */
+const REC = [
+  [/할까|말까|vs|VS|중에|고를|고르|선택|결정|어느|어떤 걸|갈까|살까|옮길|이직|그만둘/, ['decide', 'proscons']],
+  [/왜|자꾸|계속|매번|안 ?돼|안 ?되|문제|늦|실수|잘 안/, ['whys', 'solve']],
+  [/기분|불안|걱정|화가|화나|속상|우울|짜증|무서|두려|서운|미워|싫어|창피|억울|상처/, ['check']],
+  [/주장|의견|찬성|반대|옳|맞는|틀린|논쟁|토론|생각한다|해야 한다/, ['claim', 'socrates']],
+  [/목표|하고 싶|되고 싶|이루|계획|습관|시작|도전|배우/, ['grow']],
+  [/오늘|이번 ?주|이번 ?달|어제|회고|돌아|지난|마치고|끝나고|프로젝트/, ['retro']],
+  [/아이디어|기획|새로운|사업|만들|제안|신제품|행사/, ['hats', 'solve']],
+  [/의미|무엇인가|란 무엇|뜻|성공|행복|좋은 삶|정의/, ['socrates']],
+];
+function recommend(topic) { const out = []; for (const [re, ids] of REC) if (re.test(topic || '')) ids.forEach(i => !out.includes(i) && out.push(i)); return out.slice(0, 2); }
+const TOPIC_EX = ['이직을 할까, 남을까', '왜 자꾸 미루게 될까', '회의 때 들은 말이 계속 신경 쓰인다', '올해 꼭 이루고 싶은 것', '이번 프로젝트 돌아보기', '좋은 리더란 무엇일까'];
+
+/* =========================================================================
+   Ask-back rules (no AI): pattern → question. Priority order matters.
+   ========================================================================= */
+const KIND = {
+  short: '구체적으로', more: '하나 더', ask: '다시 보기', question: '질문으로 답함', unknown: '모르겠다', abs: '단정하는 말', label: '이름표',
+  mind: '마음 짐작', fortune: '앞일 단정', should: '해야 한다', vague: '흐릿한 말', repeat: '같은 답', deeper: '더 파고들기',
+};
+const DET_TOGGLES = [
+  ['abs', '단정하는 말', '항상·절대·다들·무조건·모두 같은 말을 되물어요'],
+  ['unknown', '모르겠다', '‘모르겠다’, ‘글쎄’에 짐작해 보도록 물어요'],
+  ['label', '이름표', '‘나는 바보’처럼 자신에게 붙인 이름표를 행동으로 바꿔 보게 해요'],
+  ['mind', '마음·앞일 짐작', '‘싫어할 거야’, ‘뻔해’, ‘망했다’를 확인한 사실인지 물어요'],
+  ['should', '해야 한다', '‘해야 한다’, ‘하면 안 된다’의 기준을 물어요'],
+  ['vague', '흐릿한 말', '그냥·뭔가·왠지·대충 같은 말을 구체적으로 물어요'],
+  ['repeat', '같은 답', '앞에서 쓴 답을 그대로 쓰면 다른 각도를 물어요'],
+  ['question', '질문으로 답함', '답 대신 질문을 쓰면 스스로 답해 보게 해요'],
+];
+const ABS = [
+  { re: /항상/, w: '항상', g: 'freq' }, { re: /언제나/, w: '언제나', g: 'freq' }, { re: /(^|[\s"'‘“(])늘(?=[\s,.!?…]|$)/, w: '늘', g: 'freq' },
+  { re: /매번/, w: '매번', g: 'freq' }, { re: /맨날/, w: '맨날', g: 'freq' }, { re: /허구한 ?날/, w: '허구한 날', g: 'freq' }, { re: /번번이/, w: '번번이', g: 'freq' },
+  { re: /절대/, w: '절대', g: 'never' }, { re: /결코/, w: '결코', g: 'never' }, { re: /전혀/, w: '전혀', g: 'never' }, { re: /한 ?번도/, w: '한 번도', g: 'never' },
+  { re: /아무것도/, w: '아무것도', g: 'never' }, { re: /하나도/, w: '하나도', g: 'never' }, { re: /도무지/, w: '도무지', g: 'never' },
+  { re: /다들/, w: '다들', g: 'all' }, { re: /모두/, w: '모두', g: 'all' }, { re: /모든 ?(사람|게|것|일|걸)/, w: '모든', g: 'all' }, { re: /누구나/, w: '누구나', g: 'all' },
+  { re: /아무도/, w: '아무도', g: 'all' }, { re: /남들 ?다/, w: '남들 다', g: 'all' }, { re: /세상 ?사람/, w: '세상 사람', g: 'all' }, { re: /(^|\s)다(?= ?(그래|그렇|싫어|알아|하는|해|나를|날|똑같))/, w: '다', g: 'all' },
+  { re: /무조건/, w: '무조건', g: 'sure' }, { re: /반드시/, w: '반드시', g: 'sure' }, { re: /100 ?%|백 ?퍼(센트)?/, w: '100%', g: 'sure' }, { re: /틀림없이/, w: '틀림없이', g: 'sure' }, { re: /당연히/, w: '당연히', g: 'sure' },
+  { re: /영원히/, w: '영원히', g: 'ever' }, { re: /평생/, w: '평생', g: 'ever' }, { re: /앞으로도 ?계속/, w: '앞으로도 계속', g: 'ever' },
+  { re: /최악/, w: '최악', g: 'ext' }, { re: /완전히|완전 (망|끝|별로|싫)/, w: '완전히', g: 'ext' },
+];
+const ABS_Q = {
+  freq: ['‘{w}’{라}고 했어요. 정말 {w} 그런가요? 그렇지 않았던 때를 하나 떠올려 볼 수 있나요?', '‘{w}’ 그렇다면, 지난 한 달 중 며칠쯤이었나요? 아니었던 날은 어땠나요?'],
+  never: ['‘{w}’{라}고 했는데, 정말 예외가 하나도 없나요? 조금이라도 달랐던 때는요?', '‘{w}’를 빼고 다시 말해 본다면 어떤 문장이 될까요?'],
+  all: ['‘{w}’{라}고 했는데, 정말 모든 사람이 그런가요? 실제로 떠오르는 사람은 몇 명인가요?', '‘{w}’ 속에 들어가지 않는 사람을 한 명만 떠올려 볼까요?'],
+  sure: ['‘{w}’{라}고 확신하는 근거는 무엇인가요? 그렇지 않을 가능성은 몇 % 정도일까요?', '‘{w}’{라}고 했는데, 예외가 되는 조건이 하나라도 있을까요?'],
+  ever: ['‘{w}’{라}고 했는데, 지금의 상황이 정말 끝까지 이어질까요? 바뀔 수 있는 것은 무엇인가요?'],
+  ext: ['‘{w}’{라}고 했어요. 0부터 10까지로 말하면 몇 정도인가요? 그보다 더 나쁜 경우는 무엇일까요?'],
+};
+const UNKNOWN_RE = /모르겠|몰라|모름|글쎄|잘 모르|생각이 안 ?나|떠오르지 않/;
+const LABEL_RE = /(바보|멍청이|멍청해|멍청한|쓸모없|쓸모 없|한심|실패자|패배자|무능|못난 ?놈|루저|구제불능|찌질|쓰레기 ?같|게으름뱅이|민폐)/;
+const MIND_RE = /(싫어할|비웃을|실망할|욕할|미워할|무시할|한심하게 볼|이상하게 볼|생각할|짜증 ?낼|싫어하는|무시하는|비웃는)\s?(거|것|걸|게)|날 싫어|나를 싫어|날 무시|나를 무시/;
+const FORTUNE_RE = /뻔(해|하다|하지|한|할)|망할|망했|끝장|끝났|안 될 거|안될 거|될 리가|될 리 없|어차피/;
+const SHOULD_RE = /(해야|어야|아야|여야|돼야|되어야)\s?(해|한다|하는데|하잖|하지|돼|된다|만|지)|하면 ?안 ?(돼|된다|되는|되지)|해선 ?안/;
+const VAGUE = [
+  { re: /그냥/, w: '그냥' }, { re: /뭔가/, w: '뭔가' }, { re: /왠지/, w: '왠지' }, { re: /어쩐지/, w: '어쩐지' }, { re: /대충/, w: '대충' }, { re: /이것저것|이런저런/, w: '이것저것' },
+  { re: /등등/, w: '등등' }, { re: /여러 ?가지/, w: '여러 가지' }, { re: /어떻게든/, w: '어떻게든' }, { re: /그런 거|그런 것/, w: '그런 거' }, { re: /(^|\s)좀(?=\s|$)/, w: '좀' }, { re: /아무튼|암튼/, w: '아무튼' }, { re: /별로/, w: '별로' },
+];
+const Q_SHORT = ['조금만 더 구체적으로 말해 줄래요? 예를 하나 든다면요?', '짧게 적었네요. 언제, 어디서, 누구와 있었던 일인지 덧붙여 볼까요?', '처음 듣는 사람도 알아듣도록 한두 문장 더 풀어 볼까요?', '그렇게 생각하게 된 장면을 하나만 떠올려 적어 볼까요?'];
+const Q_MORE = ['하나만 더 떠올려 볼까요?', '조금만 더 넓혀 볼까요? 하나 더 적어 보세요.', '다른 사람이라면 무엇을 더 적을까요? 하나만 더요.'];
+const Q_UNKNOWN = ['‘모르겠다’도 좋은 출발이에요. 그래도 짐작해 본다면 무엇일까요?', '정확하지 않아도 괜찮아요. 굳이 하나를 고른다면요? 알아내려면 무엇을 확인하면 될까요?'];
+const Q_LABEL = ['‘{w}’{은} 사람 전체에 붙이는 이름표 같아요. 실제로 있었던 ‘행동’ 하나로 바꿔 말해 본다면요?', '‘{w}’{라}는 말 대신, 무엇을 했고 무엇을 하지 못했는지로 말해 볼까요?'];
+const Q_MIND = ['그건 확인한 사실인가요, 아니면 짐작인가요? 확인해 볼 방법이 있을까요?', '그 사람의 마음을 직접 들은 적이 있나요? 다른 이유로 그랬을 가능성은요?'];
+const Q_FORTUNE = ['앞일을 확신하고 있네요. 다르게 흘러갈 가능성은 몇 % 정도일까요? 그렇다면 어떤 모습일까요?', '‘{w}’{라}고 했는데, 정말 그렇게 될지 아직 모르는 부분은 무엇인가요?'];
+const Q_SHOULD = ['‘해야 한다’는 누가 정한 기준인가요? 하지 않으면 실제로 어떤 일이 생기나요?', '‘해야 한다’를 ‘하고 싶다’ 또는 ‘하기로 한다’로 바꾸면 어떻게 느껴지나요?'];
+const Q_VAGUE = ['‘{w}’ 말고 조금 더 또렷하게 말해 볼까요? 구체적으로 무엇인가요?', '‘{w}’ 뒤에 숨어 있는 것을 한 가지만 꺼내 본다면요?'];
+const Q_REPEAT = ['앞에서 한 답과 같아요. 이번 질문의 관점에서 다시 보면 어떻게 달라질까요?'];
+const Q_QUESTION = ['질문으로 답했네요. 스스로 답해 본다면 뭐라고 하겠어요?'];
+const Q_DEEPER = ['그게 왜 중요한가요?', '그게 사실이라면, 그다음에는 무엇이 따라오나요?', '반대로 생각해 보면 어떤가요?', '구체적인 예를 하나 들어 볼까요?', '그걸 어떻게 확인할 수 있을까요?', '다른 사람은 이걸 어떻게 볼까요?', '1년 뒤의 나라면 뭐라고 할까요?', '여기서 가장 확실한 것과 가장 불확실한 것은 각각 무엇인가요?', '그 생각 밑에 깔린 가정은 무엇인가요?', '그게 틀렸다면 무엇이 달라지나요?'];
+
+/* ---------- State ---------- */
+const DEF = { depth: 2, minLen: 12, enter: false, hint: false, det: { abs: true, unknown: true, label: true, mind: true, should: true, vague: true, repeat: true, question: true } };
+let S = merge(DEF, store.get('settings', {}));
+let SS = store.get('sessions', null);       // [session]
+let CF = store.get('custom', []);           // custom frameworks
+const firstRun = !Array.isArray(SS);
+if (!Array.isArray(SS)) SS = [];
+let tab = store.get('tab', 'think');
+let activeId = store.get('active', null);
+let mode = 'home';                          // home | talk | sum
+let homeFw = store.get('homeFw', null);
+let sumView = 'doc';                        // doc | map
+let logF = 'all', logFw = 'all', logQ = '';
+let fwSel = null;
+let showHint = false;
+const save = {
+  sessions() { store.set('sessions', SS); },
+  settings() { store.set('settings', S); },
+  custom() { store.set('custom', CF); },
+};
+
+function allFw() { return [...FW, ...CF]; }
+function fwOf(s) { return FWX[s.fw] || CF.find(f => f.id === s.fw) || s.fwDef || FW[0]; }
+function getS(id = activeId) { return SS.find(s => s.id === id) || null; }
+function ans(s, id) { return s.ans[id] || null; }
+function A(s, id) { return s.ans[id] || (s.ans[id] = { probes: [] }); }
+function steps(s) { return fwOf(s).steps; }
+function isAnswered(s, st) { const a = ans(s, st.id); return !!(a && a.at); }
+function touch(s) { s.updated = Date.now(); save.sessions(); }
+
+/* ---------- Text of an answer ---------- */
+function ansText(s, st) {
+  const a = ans(s, st.id); if (!a) return '';
+  if (a.skipped) return '';
+  switch (st.t) {
+    case 'list': return (a.items || []).map(i => i.t).join(', ');
+    case 'scale': return a.v != null ? `${a.v}점` : '';
+    case 'matrix': { const r = matrixCalc(s, st); return r.best ? `${r.best.o} (${r.best.score}점)` : ''; }
+    default: return a.t || '';
+  }
+}
+function prevAnswered(s, idx) { const st = steps(s); for (let i = idx - 1; i >= 0; i--) { if (s.skip[st[i].id]) continue; const t = ansText(s, st[i]); if (t) return t; } return s.topic; }
+function fill(str, s, idx) {
+  return String(str)
+    .replace(/\{topic\}|\{주제\}/g, () => oneLine(s.topic, 46))
+    .replace(/\{prev\}|\{앞\}/g, () => oneLine(prevAnswered(s, idx), 46))
+    .replace(/\{a:([\w-]+)\}/g, (_, id) => { const st = steps(s).find(x => x.id === id); return st ? oneLine(ansText(s, st), 46) : ''; })
+    .replace(/\{best\}/g, () => { const st = steps(s).find(x => x.t === 'matrix'); const r = st ? matrixCalc(s, st) : null; return r && r.best ? r.best.o : '1위 선택지'; })
+    .replace(/\{pick\}/g, () => { const st = steps(s).find(x => x.t === 'pick'); return st ? oneLine(ansText(s, st), 40) || '고른 것' : ''; })
+    .replace(/(\S)([’'"»]?\s*)\{(라|은|이|을)\}/g, (_, c, mid, p) => c + mid + particles('{' + p + '}', c));
+}
+function qOf(s, st, idx) { const list = [st.q, ...(st.alt || [])]; return fill(list[(s.alt[st.id] || 0) % list.length], s, idx); }
+
+/* ---------- Matrix ---------- */
+function listItems(s, id) { const a = ans(s, id); return a && a.items ? a.items : []; }
+function matrixCalc(s, st) {
+  const opts = listItems(s, st.rows).map(i => i.t), crit = listItems(s, st.cols);
+  const a = ans(s, st.id) || {}; const m = a.m || {};
+  const max = crit.reduce((t, c) => t + 5 * (c.w || 1), 0) || 1;
+  const rows = opts.map(o => { let score = 0; const cells = crit.map(c => { const v = (m[o] && m[o][c.t]) || 3; score += v * (c.w || 1); return v; }); return { o, cells, score, pct: Math.round(score / max * 100) }; });
+  const sorted = [...rows].sort((x, y) => y.score - x.score);
+  return { opts, crit, rows, sorted, best: sorted[0] || null, max };
+}
+
+/* ---------- Ask-back engine ---------- */
+function jong(w) { const c = String(w || '').trim().slice(-1).charCodeAt(0); if (isNaN(c)) return false; if (c >= 0xac00 && c <= 0xd7a3) return (c - 0xac00) % 28 !== 0; return /[0-9a-zA-Z]/.test(String(w).slice(-1)); }
+function particles(t, w) { return t.replace(/\{라\}/g, jong(w) ? '이라' : '라').replace(/\{은\}/g, jong(w) ? '은' : '는').replace(/\{이\}/g, jong(w) ? '이' : '가').replace(/\{을\}/g, jong(w) ? '을' : '를'); }
+function pickQ(s, k, list, w) { s.rot = s.rot || {}; const n = s.rot[k] = (s.rot[k] || 0) + 1; return particles(list[(n - 1) % list.length], w).replace(/\{w\}/g, w || ''); }
+function textChecks(s, st, text, { main = false } = {}) {
+  const out = []; const t = String(text || '').trim(); if (!t) return out; const d = S.det;
+  if (d.question && /\?\s*$/.test(t) && t.length < 80) out.push({ k: 'question', q: () => pickQ(s, 'question', Q_QUESTION) });
+  if (d.unknown && UNKNOWN_RE.test(t)) out.push({ k: 'unknown', q: () => pickQ(s, 'unknown', Q_UNKNOWN), w: '모르겠다' });
+  if (d.abs) { const hit = ABS.find(x => x.re.test(t)); if (hit) out.push({ k: 'abs', w: hit.w, q: () => pickQ(s, 'abs_' + hit.g, ABS_Q[hit.g], hit.w) }); }
+  if (d.label) { const m = t.match(LABEL_RE); if (m) out.push({ k: 'label', w: m[1], q: () => pickQ(s, 'label', Q_LABEL, m[1]) }); }
+  if (d.mind) {
+    const m = t.match(MIND_RE); if (m) out.push({ k: 'mind', w: m[0], q: () => pickQ(s, 'mind', Q_MIND) });
+    const f = t.match(FORTUNE_RE); if (f) out.push({ k: 'fortune', w: f[0], q: () => pickQ(s, 'fortune', Q_FORTUNE, f[0]) });
+  }
+  if (d.should) { const m = t.match(SHOULD_RE); if (m) out.push({ k: 'should', w: m[0], q: () => pickQ(s, 'should', Q_SHOULD) }); }
+  if (d.vague) { const v = VAGUE.find(x => x.re.test(t)); if (v) out.push({ k: 'vague', w: v.w, q: () => pickQ(s, 'vague', Q_VAGUE, v.w) }); }
+  if (d.repeat && main && t.length > 3) {
+    const norm = x => String(x || '').replace(/[\s.,!?…~]/g, '');
+    const same = steps(s).some(o => o.id !== st.id && (o.t || 'text') !== 'list' && norm(ans(s, o.id)?.t) === norm(t));
+    if (same) out.push({ k: 'repeat', q: () => pickQ(s, 'repeat', Q_REPEAT) });
+  }
+  return out;
+}
+function mainChecks(s, st, a) {
+  const out = []; const t = st.t || 'text';
+  if (t === 'text' || t === 'why') {
+    const min = st.min ?? S.minLen;
+    if (st.short !== false && min > 0 && chars(a.t) < min && !UNKNOWN_RE.test(a.t || '')) out.push({ k: 'short', q: () => pickQ(s, 'short', Q_SHORT) });
+  } else if (t === 'list') {
+    if ((a.items || []).length < (st.min || 1)) out.push({ k: 'more', q: () => pickQ(s, 'more', Q_MORE) + (st.h ? ` (예: ${st.h})` : '') });
+  } else if (t === 'scale' || t === 'choice') {
+    const v = t === 'scale' ? a.v : a.t; const q = st.ask && st.ask(v, s); if (q) out.push({ k: 'ask', q: () => q });
+  } else if (t === 'matrix') {
+    const r = matrixCalc(s, st);
+    if (r.sorted.length >= 2 && r.sorted[0].score - r.sorted[1].score <= Math.max(1, r.max * 0.05)) out.push({ k: 'ask', q: () => `‘${r.sorted[0].o}’와(과) ‘${r.sorted[1].o}’의 점수가 거의 같아요. 둘을 가르는 기준이 하나 더 있다면 무엇일까요?` });
+  }
+  return out;
+}
+function mainText(s, st, a) { const t = st.t || 'text'; if (t === 'list') return (a.items || []).map(i => i.t).join('\n'); if (t === 'text' || t === 'why' || t === 'pick') return a.t; return ''; }
+function nextProbe(s, st, main, text) {
+  if (!S.depth) return null;
+  const a = A(s, st.id); if (a.probes.length >= S.depth) return null;
+  const asked = new Set(a.probes.map(p => p.k));
+  const cand = [...(main ? mainChecks(s, st, a) : []), ...textChecks(s, st, main ? mainText(s, st, a) : text, { main })];
+  const p = cand.find(c => !asked.has(c.k)); if (!p) return null;
+  return { k: p.k, q: p.q(), w: p.w || '' };
+}
+
+/* ---------- Flow ---------- */
+function newSession(topic, fwId) {
+  const f = allFw().find(x => x.id === fwId) || FW[0];
+  const s = { id: uid(), fw: f.id, topic: topic.trim(), created: Date.now(), updated: Date.now(), done: false, cur: 0, ans: {}, skip: {}, alt: {}, pending: null, draft: '' };
+  if (!FWX[f.id]) s.fwDef = JSON.parse(JSON.stringify(f));
+  SS.unshift(s); save.sessions();
+  return s;
+}
+function openSession(id, m) { const s = getS(id); if (!s) return; activeId = id; store.set('active', id); mode = m || (s.done ? 'sum' : 'talk'); sumView = 'doc'; setTab('think'); }
+function curStep(s) { return steps(s)[s.cur]; }
+function advance(s) {
+  const st = steps(s); let i = s.cur + 1;
+  if (s.rootJump) { while (i < st.length && st[i].t === 'why') { s.skip[st[i].id] = true; i++; } s.rootJump = false; }
+  while (i < st.length && s.skip[st[i].id]) i++;
+  s.cur = i; s.pending = null; s.draft = '';
+  if (i >= st.length) { s.cur = st.length; s.done = true; s.doneAt = s.doneAt || Date.now(); mode = 'sum'; sumView = 'doc'; toast('생각을 모두 꺼냈어요. 한 장으로 정리했어요'); }
+  touch(s);
+}
+function goBack(s) {
+  if (s.pending) { s.pending = null; touch(s); return; }
+  const st = steps(s); let i = Math.min(s.cur, st.length) - 1;
+  while (i >= 0 && s.skip[st[i].id]) i--;
+  if (i < 0) return;
+  s.cur = i; s.done = false; s.draft = ''; touch(s);
+}
+function jumpTo(s, i) { const st = steps(s); if (i < 0 || i >= st.length) return; delete s.skip[st[i].id]; s.cur = i; s.pending = null; s.done = false; s.draft = ''; mode = 'talk'; touch(s); }
+function submit() {
+  const s = getS(); if (!s) return; const st = curStep(s); if (!st) return;
+  if (s.pending) return answerProbe(s, st);
+  const a = A(s, st.id); const t = st.t || 'text';
+  if (t === 'text' || t === 'why') {
+    const v = ($('#cIn')?.value || '').trim();
+    if (!v) { toast('생각을 적어 주세요. 넘어가려면 ‘건너뛰기’를 눌러요'); $('#cIn')?.focus(); return; }
+    if (a.t !== v) a.probes = []; a.t = v;
+  } else if (t === 'list') {
+    const v = ($('#cAdd')?.value || '').trim(); if (v) { (a.items = a.items || []).push({ t: v, w: st.w ? 2 : 0 }); a.probes = []; }
+    if (!(a.items || []).length) { toast('하나 이상 적어 주세요'); $('#cAdd')?.focus(); return; }
+  } else if (t === 'scale') {
+    if (a.v == null) { toast('점수를 골라 주세요'); return; }
+  } else if (t === 'choice' || t === 'pick') {
+    const own = ($('#cOwn')?.value || '').trim(); if (own) a.t = own;
+    if (!a.t) { toast('하나를 골라 주세요'); return; }
+  } else if (t === 'matrix') {
+    const r = matrixCalc(s, st); if (r.opts.length < 1 || r.crit.length < 1) { toast('선택지와 기준이 있어야 점수를 매길 수 있어요'); }
+    a.m = a.m || {};
+  }
+  a.q = qOf(s, st, s.cur); a.at = Date.now(); a.skipped = false;
+  const p = !a.probes.length ? nextProbe(s, st, true) : null;
+  if (p) { s.pending = p; s.draft = ''; touch(s); renderThink(); focusComposer(); return; }
+  advance(s); renderAll(); focusComposer();
+}
+function answerProbe(s, st) {
+  const v = ($('#cIn')?.value || '').trim();
+  if (!v) { toast('되물음에 답해 주세요. 넘어가려면 ‘넘어가기’를 눌러요'); $('#cIn')?.focus(); return; }
+  const a = A(s, st.id); const p = s.pending;
+  a.probes.push({ k: p.k, q: p.q, a: v, w: p.w || '' });
+  if (p.k === 'more' && (st.t === 'list')) {
+    v.split(/\n+/).map(x => x.trim()).filter(Boolean).forEach(x => (a.items = a.items || []).push({ t: x, w: st.w ? 2 : 0 }));
+  }
+  s.pending = null; s.draft = '';
+  const n = nextProbe(s, st, false, v);
+  if (n) { s.pending = n; touch(s); renderThink(); focusComposer(); return; }
+  advance(s); renderAll(); focusComposer();
+}
+function skipProbe() { const s = getS(); const st = curStep(s); if (!s || !s.pending) return; A(s, st.id).probes.push({ k: s.pending.k, q: s.pending.q, a: '', w: s.pending.w || '' }); advance(s); renderAll(); focusComposer(); }
+function skipStep() {
+  const s = getS(); const st = curStep(s); if (!st) return;
+  const a = A(s, st.id); a.skipped = true; a.at = Date.now(); a.q = qOf(s, st, s.cur); advance(s); renderAll(); focusComposer();
+}
+function digDeeper() {
+  const s = getS(); if (!s) return; const st = steps(s);
+  let i = Math.min(s.cur, st.length) - 1; while (i >= 0 && (s.skip[st[i].id] || !isAnswered(s, st[i]) || ans(s, st[i].id).skipped)) i--;
+  if (i < 0) { toast('먼저 하나 이상 답해 주세요'); return; }
+  s.deepN = (s.deepN || 0) + 1; s.cur = i; s.done = false;
+  s.pending = { k: 'deeper', q: Q_DEEPER[(s.deepN - 1) % Q_DEEPER.length] }; mode = 'talk'; touch(s); renderAll(); focusComposer();
+}
+function focusComposer() { if (matchMedia('(pointer: coarse)').matches) return; setTimeout(() => { const el = $('#cIn') || $('#cAdd'); el && el.focus(); }, 30); }
+
+/* =========================================================================
+   Rendering
+   ========================================================================= */
+function setTab(t) { tab = t; store.set('tab', t); renderAll(); }
+function renderAll() {
+  $$('#tabs .tab').forEach(b => b.setAttribute('aria-selected', String(b.dataset.tab === tab)));
+  $$('#work > .view').forEach(v => v.hidden = v.dataset.view !== tab);
+  $('#nLog').textContent = SS.length; $('#nFw').textContent = allFw().length;
+  const s = getS();
+  const ap = $('#applied');
+  ap.innerHTML = s && tab === 'think' && mode !== 'home' ? `<span class="achip">${esc(fwOf(s).em || '📝')} ${esc(fwOf(s).name)}</span>${s.done ? '<span class="achip">마침</span>' : `<span class="achip warn">${Math.min(s.cur + 1, steps(s).length)} / ${steps(s).length}</span>`}` : '';
+  if (tab === 'think') renderThink(); else if (tab === 'log') renderLog(); else renderFw();
+  renderSide();
+}
+
+/* ----- Think tab ----- */
+function renderThink() {
+  const s = getS();
+  if (!s || mode === 'home') return renderHome();
+  if (mode === 'sum') return renderSum(s);
+  renderTalk(s);
+}
+function hl(text, s) {
+  // highlight words the rules noticed, inside an answer bubble
+  let h = esc(text);
+  const words = new Set(); Object.values(s.ans).forEach(a => (a.probes || []).forEach(p => p.w && p.w.length >= 2 && p.w.length < 12 && words.add(p.w)));
+  words.forEach(w => { const e = esc(w); if (e && h.includes(e)) h = h.split(e).join(`<mark>${e}</mark>`); });
+  return h;
+}
+function ansHtml(s, st) {
+  const a = ans(s, st.id); if (!a) return '';
+  if (a.skipped) return '<span>건너뜀</span>';
+  switch (st.t) {
+    case 'list': return `<ul>${(a.items || []).map(i => `<li>${hl(i.t, s)}${st.w ? `<span class="wt">${'●'.repeat(i.w || 1)}</span>` : ''}</li>`).join('')}</ul>`;
+    case 'scale': return `<b style="font-size:18px">${a.v}</b> / 10${st.lo ? ` <span class="wt" style="letter-spacing:0">(${esc(st.lo)} 0 ~ ${esc(st.hi)} 10)</span>` : ''}`;
+    case 'matrix': { const r = matrixCalc(s, st); return r.sorted.map((x, i) => `${i + 1}. ${esc(x.o)} — ${x.score}점 (${x.pct}%)`).join('\n') || '점수 없음'; }
+    default: return hl(a.t || '', s);
+  }
+}
+function probesHtml(s, st, idx) {
+  const a = ans(s, st.id); if (!a) return '';
+  return (a.probes || []).map(p => `
+    <div class="qb probe"><div class="lb"><span class="probe-tag">${esc(KIND[p.k] || '되물음')}</span></div><div class="bub">${esc(p.q)}</div></div>
+    ${p.a ? `<button class="ab small" data-edit-probe="${idx}" data-pi="${(a.probes || []).indexOf(p)}">${hl(p.a, s)}</button>` : '<div class="ab skip small">넘어감</div>'}`).join('');
+}
+function renderTalk(s) {
+  const st = steps(s); const f = fwOf(s); const total = st.length;
+  let h = `<div class="wbar">
+    <button class="tool" id="tHome" title="처음 화면"><i data-icon="left"></i></button>
+    <div class="wk-lbl" style="flex:1;overflow:hidden;text-overflow:ellipsis">${esc(oneLine(s.topic, 60))}</div>
+    <button class="tool" id="tRename" title="주제 바꾸기"><i data-icon="pen"></i></button>
+    <button class="tool" id="tSum" title="지금까지 정리 보기"><i data-icon="doc"></i><span class="t">중간 정리</span></button>
+  </div><div class="scroll" id="thScroll"><div class="thread">`;
+  h += `<div class="sysline">${esc(f.em || '📝')} ${esc(f.name)} · ${fmtDate(s.created)} 시작</div>`;
+  for (let i = 0; i < Math.min(s.cur, total); i++) {
+    const x = st[i]; if (s.skip[x.id]) continue; const a = ans(s, x.id);
+    h += `<div class="qb"><div class="lb">${esc(x.l)}<span class="n">${i + 1}/${total}</span></div><div class="bub">${esc(a && a.q || qOf(s, x, i))}</div></div>`;
+    h += a && a.skipped ? `<button class="ab skip" data-edit="${i}">건너뜀</button>` : `<button class="ab" data-edit="${i}" title="눌러서 고치기">${ansHtml(s, x)}</button>`;
+    h += probesHtml(s, x, i);
+  }
+  const cur = st[s.cur];
+  if (cur) {
+    const a = ans(s, cur.id);
+    if (s.pending) {
+      h += `<div class="qb"><div class="lb">${esc(cur.l)}<span class="n">${s.cur + 1}/${total}</span></div><div class="bub">${esc(a && a.q || qOf(s, cur, s.cur))}</div></div>`;
+      h += `<button class="ab" data-edit="${s.cur}">${ansHtml(s, cur)}</button>` + probesHtml(s, cur, s.cur);
+      h += `<div class="qb probe cur"><div class="lb"><span class="probe-tag">${esc(KIND[s.pending.k] || '되물음')}</span></div><div class="bub">${esc(s.pending.q)}</div></div>`;
+    } else {
+      h += `<div class="qb cur"><div class="lb">${esc(cur.l)}<span class="n">${s.cur + 1}/${total}</span></div><div class="bub">${esc(qOf(s, cur, s.cur))}</div></div>`;
+    }
+  }
+  h += `</div></div><div class="composer"><div class="in" id="comp"></div></div>`;
+  const v = $('#vThink'); v.innerHTML = h; hydrateIcons(v);
+  $('#tHome').onclick = () => { mode = 'home'; renderAll(); };
+  $('#tRename').onclick = () => openRename(s);
+  $('#tSum').onclick = () => { mode = 'sum'; sumView = 'doc'; renderAll(); };
+  $$('[data-edit]', v).forEach(b => b.onclick = () => openEdit(s, +b.dataset.edit));
+  $$('[data-edit-probe]', v).forEach(b => b.onclick = () => openEdit(s, +b.dataset.editProbe, +b.dataset.pi));
+  renderComposer(s, cur);
+  const sc = $('#thScroll'); requestAnimationFrame(() => { sc.scrollTop = sc.scrollHeight; if (matchMedia('(max-width: 999px)').matches) { const q = $('.qb.cur', v); q && q.scrollIntoView({ block: 'center' }); } });
+}
+function composerKeys(el) {
+  el.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.isComposing && ((e.ctrlKey || e.metaKey) || (S.enter && !e.shiftKey))) { e.preventDefault(); submit(); }
+  });
+}
+function renderComposer(s, st) {
+  const c = $('#comp'); if (!st) { c.innerHTML = ''; return; }
+  const a = A(s, st.id); const t = st.t || 'text';
+  const hint = st.h && (S.hint || showHint) ? `<div class="hintbox"><b>예시</b>${esc(st.h)}</div>` : '';
+  const backBtn = `<button class="btn ghost sm" id="cBack" ${s.cur === 0 && !s.pending ? 'disabled' : ''} title="이전 질문 (Alt ←)"><i data-icon="left"></i>이전</button>`;
+  const hasPrev = steps(s).slice(0, s.cur).some(x => isAnswered(s, x) && !ans(s, x.id).skipped);
+  let h = '';
+  if (s.pending) {
+    h = `<textarea class="inp" id="cIn" rows="3" placeholder="되물음에 답해 보세요">${esc(s.draft || '')}</textarea>
+      <div class="cbar">${backBtn}<span class="live" id="cLive"></span><span class="grow"></span>
+      <button class="btn ghost sm" id="cPSkip"><i data-icon="skip"></i>넘어가기</button>
+      <button class="btn primary" id="cGo">답하기<i data-icon="send"></i></button></div>`;
+  } else if (t === 'text' || t === 'why') {
+    const val = s.draft || a.t || '';
+    h = `${hint}<textarea class="inp" id="cIn" rows="3" placeholder="${t === 'why' ? '왜 그런지 적어 보세요' : '떠오르는 대로 적어 보세요'}">${esc(val)}</textarea>
+      <div class="cbar">${backBtn}
+        ${st.h && !S.hint ? `<button class="btn ghost sm" id="cHint"><i data-icon="eye"></i>예시</button>` : ''}
+        ${(st.alt || []).length ? `<button class="btn ghost sm" id="cAlt" title="같은 뜻의 다른 질문으로"><i data-icon="refresh"></i>다르게 묻기</button>` : ''}
+        ${hasPrev ? `<button class="btn ghost sm" id="cDig" title="앞 답을 더 파고드는 질문 받기"><i data-icon="dig"></i>앞 답 더 파고들기</button>` : ''}
+        <span class="live" id="cLive"></span><span class="grow"></span>
+        ${t === 'why' ? `<button class="btn ghost sm" id="cRoot" title="남은 ‘왜’를 건너뛰고 근본 원인으로"><i data-icon="root"></i>여기가 뿌리 같아요</button>` : ''}
+        <button class="btn ghost sm" id="cSkip"><i data-icon="skip"></i>건너뛰기</button>
+        <button class="btn primary" id="cGo">다음<i data-icon="send"></i></button></div>`;
+  } else if (t === 'list') {
+    const items = a.items || [];
+    h = `${hint}<div class="items">${items.map((it, i) => `<div class="item"><span class="no">${i + 1}</span><span class="t">${esc(it.t)}</span>
+        ${st.w ? `<div class="wseg" data-i="${i}" title="중요한 정도">${[1, 2, 3].map(n => `<button data-w="${n}" aria-pressed="${(it.w || 1) === n}">${n}</button>`).join('')}</div>` : ''}
+        <button class="mini danger" data-del="${i}" title="빼기"><i data-icon="x"></i></button></div>`).join('')}</div>
+      <div class="addrow"><input class="inp" id="cAdd" placeholder="${items.length ? '하나 더 적고 Enter' : '하나 적고 Enter'}" value="${esc(s.draft || '')}" /><button class="btn line" id="cAddBtn"><i data-icon="plus"></i>더하기</button></div>
+      <div class="cbar">${backBtn}
+        ${st.h && !S.hint ? `<button class="btn ghost sm" id="cHint"><i data-icon="eye"></i>예시</button>` : ''}
+        ${hasPrev ? `<button class="btn ghost sm" id="cDig"><i data-icon="dig"></i>앞 답 더 파고들기</button>` : ''}
+        <span class="live">${items.length}개${st.min ? ` · 적어도 ${st.min}개` : ''}</span><span class="grow"></span>
+        <button class="btn ghost sm" id="cSkip"><i data-icon="skip"></i>건너뛰기</button>
+        <button class="btn primary" id="cGo">다 적었어요<i data-icon="send"></i></button></div>`;
+  } else if (t === 'scale') {
+    h = `<div class="scale">${Array.from({ length: 11 }, (_, n) => `<button data-v="${n}" aria-pressed="${a.v === n}">${n}</button>`).join('')}</div>
+      <div class="ends"><span>0 · ${esc(st.lo || '')}</span><span>${esc(st.hi || '')} · 10</span></div>
+      <div class="cbar">${backBtn}<span class="grow"></span><button class="btn ghost sm" id="cSkip"><i data-icon="skip"></i>건너뛰기</button><button class="btn primary" id="cGo">다음<i data-icon="send"></i></button></div>`;
+  } else if (t === 'choice' || t === 'pick') {
+    const opts = t === 'choice' ? st.opts : listItems(s, st.from).map(i => i.t);
+    const own = a.t && !opts.includes(a.t) ? a.t : '';
+    h = `<div class="opts">${opts.map(o => `<button class="opt" data-o="${esc(o)}" aria-pressed="${a.t === o}"><span class="dot"></span>${esc(o)}</button>`).join('')}</div>
+      ${t === 'pick' ? `<input class="inp" id="cOwn" style="margin-top:8px" placeholder="${opts.length ? '목록에 없다면 직접 적기' : '앞 목록이 비어 있어요. 직접 적어 주세요'}" value="${esc(own)}" />` : ''}
+      <div class="cbar">${backBtn}<span class="grow"></span><button class="btn ghost sm" id="cSkip"><i data-icon="skip"></i>건너뛰기</button><button class="btn primary" id="cGo">다음<i data-icon="send"></i></button></div>`;
+  } else if (t === 'matrix') {
+    h = `<div class="mx" id="mx"></div>
+      <div class="cbar">${backBtn}<span class="live">1점 = 전혀 아니다 · 5점 = 아주 잘 맞다 · 기준의 무게(●)를 곱해 더해요</span><span class="grow"></span><button class="btn ghost sm" id="cSkip"><i data-icon="skip"></i>건너뛰기</button><button class="btn primary" id="cGo">다음<i data-icon="send"></i></button></div>`;
+  }
+  c.innerHTML = h; hydrateIcons(c);
+  const go = $('#cGo'); go && (go.onclick = submit);
+  const bk = $('#cBack'); bk && (bk.onclick = () => { goBack(s); renderAll(); focusComposer(); });
+  const sk = $('#cSkip'); sk && (sk.onclick = skipStep);
+  const ps = $('#cPSkip'); ps && (ps.onclick = skipProbe);
+  const hi = $('#cHint'); hi && (hi.onclick = () => { showHint = !showHint; renderComposer(s, st); });
+  const al = $('#cAlt'); al && (al.onclick = () => { s.alt[st.id] = (s.alt[st.id] || 0) + 1; const inp = $('#cIn'); if (inp) s.draft = inp.value; touch(s); renderThink(); focusComposer(); });
+  const dg = $('#cDig'); dg && (dg.onclick = () => { const inp = $('#cIn') || $('#cAdd'); if (inp && inp.value.trim()) { s.draft = inp.value; } digDeeper(); });
+  const rt = $('#cRoot'); rt && (rt.onclick = () => { const v = ($('#cIn')?.value || '').trim(); s.rootJump = true; if (v) submit(); else { const a2 = A(s, st.id); a2.skipped = true; a2.at = Date.now(); a2.q = qOf(s, st, s.cur); s.skip[st.id] = true; advance(s); renderAll(); focusComposer(); } });
+  const inp = $('#cIn');
+  if (inp) {
+    composerKeys(inp);
+    const live = () => { const n = chars(inp.value); const l = $('#cLive'); if (l) l.textContent = n ? `${n}자` : ''; autoGrow(inp); };
+    let tm; inp.addEventListener('input', () => { live(); clearTimeout(tm); tm = setTimeout(() => { s.draft = inp.value; save.sessions(); }, 400); });
+    live();
+  }
+  const add = $('#cAdd');
+  if (add) {
+    const doAdd = () => { const v = add.value.trim(); if (!v) return false; (a.items = a.items || []).push({ t: v, w: st.w ? 2 : 0 }); a.probes = []; s.draft = ''; touch(s); renderComposer(s, st); setTimeout(() => $('#cAdd')?.focus(), 10); return true; };
+    add.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); if ((e.ctrlKey || e.metaKey) || !add.value.trim()) submit(); else doAdd(); } });
+    add.addEventListener('input', () => { s.draft = add.value; });
+    $('#cAddBtn').onclick = doAdd;
+    $$('[data-del]', c).forEach(b => b.onclick = () => { a.items.splice(+b.dataset.del, 1); a.probes = []; touch(s); renderComposer(s, st); });
+    $$('.wseg', c).forEach(w => w.onclick = e => { const b = e.target.closest('button[data-w]'); if (!b) return; a.items[+w.dataset.i].w = +b.dataset.w; touch(s); segSet(w, 'w', b.dataset.w); });
+  }
+  $$('.scale button', c).forEach(b => b.onclick = () => { if (a.v !== +b.dataset.v) a.probes = []; a.v = +b.dataset.v; touch(s); $$('.scale button', c).forEach(x => x.setAttribute('aria-pressed', String(x === b))); });
+  $$('.opt', c).forEach(b => b.onclick = () => { if (a.t !== b.dataset.o) a.probes = []; a.t = b.dataset.o; const own = $('#cOwn'); if (own) own.value = ''; touch(s); $$('.opt', c).forEach(x => x.setAttribute('aria-pressed', String(x === b))); });
+  if (t === 'matrix') renderMatrix(s, st);
+}
+function autoGrow(el) { el.style.height = 'auto'; el.style.height = Math.min(el.scrollHeight + 2, innerHeight * 0.4) + 'px'; }
+function renderMatrix(s, st) {
+  const a = A(s, st.id); a.m = a.m || {}; const r = matrixCalc(s, st); const box = $('#mx');
+  if (!r.opts.length || !r.crit.length) { box.innerHTML = `<div class="note warn">앞에서 선택지와 기준을 적어야 점수를 매길 수 있어요. ‘이전’으로 돌아가 채워 주세요.</div>`; return; }
+  const bestO = r.best && r.best.o;
+  box.innerHTML = `<table><thead><tr><th>선택지</th>${r.crit.map(c => `<th>${esc(oneLine(c.t, 14))}<small>${'●'.repeat(c.w || 1)}</small></th>`).join('')}<th>합계</th></tr></thead><tbody>
+    ${r.rows.map(row => `<tr class="${row.o === bestO ? 'best' : ''}"><td>${esc(row.o)}</td>${row.cells.map((v, ci) => `<td><select data-o="${esc(row.o)}" data-c="${esc(r.crit[ci].t)}">${[1, 2, 3, 4, 5].map(n => `<option ${n === v ? 'selected' : ''}>${n}</option>`).join('')}</select></td>`).join('')}<td class="tot">${row.score}<small class="muted"> / ${r.max}</small></td></tr>`).join('')}
+  </tbody></table>`;
+  $$('select', box).forEach(sel => sel.onchange = () => { const o = sel.dataset.o, c = sel.dataset.c; (a.m[o] = a.m[o] || {})[c] = +sel.value; a.probes = []; touch(s); renderMatrix(s, st); });
+}
+
+/* ----- Home ----- */
+function renderHome() {
+  const draft = store.get('homeTopic', '');
+  const rec = recommend(draft);
+  const open = SS.filter(s => !s.done).slice(0, 3);
+  const sel = homeFw && allFw().find(f => f.id === homeFw) ? homeFw : null;
+  const v = $('#vThink');
+  v.innerHTML = `<div class="scroll"><div class="home">
+    <h1>무엇에 대해 생각해 볼까요?</h1>
+    <p class="lead">Thinker는 답을 주지 않아요. 고른 생각의 틀을 따라 질문만 차례로 던져요. 답이 짧거나 ‘항상’, ‘절대’, ‘다들’ 같은 말이 보이면 한 번 더 되물어요.</p>
+    <textarea class="topic" id="hTopic" rows="2" maxlength="300" placeholder="예: 이직을 할까, 남을까">${esc(draft)}</textarea>
+    <div class="topic-ex">${TOPIC_EX.map(t => `<button class="chip" data-ex="${esc(t)}">${esc(t)}</button>`).join('')}</div>
+    ${open.length ? `<div class="h2">이어서 생각하기<span class="grow"></span></div><div class="rows">${open.map(s => logRow(s)).join('')}</div>` : ''}
+    <div class="h2">생각의 틀 고르기<span class="grow"></span></div>
+    <div class="fwgrid" id="hFw">${allFw().map(f => fwCard(f, sel === f.id, rec.includes(f.id))).join('')}</div>
+    <div class="startbar"><div class="sel" id="hSel"></div><button class="btn primary" id="hStart"><i data-icon="play"></i>생각 시작</button></div>
+  </div></div>`;
+  hydrateIcons(v);
+  const ta = $('#hTopic'); autoGrow(ta);
+  const upd = () => {
+    const f = allFw().find(x => x.id === homeFw);
+    $('#hSel').innerHTML = f ? `<b>${esc(f.em || '📝')} ${esc(f.name)}</b> · 질문 ${f.steps.length}개` : '틀을 하나 골라 주세요';
+    const r = recommend(ta.value);
+    $$('#hFw .fw').forEach(b => { const tg = $('.rec', b); if (tg) tg.hidden = !r.includes(b.dataset.fw); });
+  };
+  ta.addEventListener('input', () => { store.set('homeTopic', ta.value); autoGrow(ta); upd(); });
+  ta.addEventListener('keydown', e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); $('#hStart').click(); } });
+  $$('[data-ex]', v).forEach(b => b.onclick = () => { ta.value = b.dataset.ex; store.set('homeTopic', ta.value); upd(); const r = recommend(ta.value); if (r[0]) { homeFw = r[0]; store.set('homeFw', homeFw); $$('#hFw .fw').forEach(x => x.setAttribute('aria-pressed', String(x.dataset.fw === homeFw))); upd(); } });
+  $$('#hFw .fw').forEach(b => b.onclick = () => { homeFw = b.dataset.fw; store.set('homeFw', homeFw); $$('#hFw .fw').forEach(x => x.setAttribute('aria-pressed', String(x === b))); upd(); renderSide(); });
+  bindLogRows(v);
+  $('#hStart').onclick = () => {
+    const topic = ta.value.trim();
+    if (!topic) { toast('생각할 주제를 먼저 적어 주세요'); ta.focus(); return; }
+    let fid = homeFw; if (!fid) { const r = recommend(topic); fid = r[0]; if (!fid) { toast('생각의 틀을 하나 골라 주세요'); return; } }
+    const s = newSession(topic, fid); store.set('homeTopic', ''); openSession(s.id, 'talk'); focusComposer();
+  };
+  upd();
+}
+function fwCard(f, on, rec) {
+  return `<button class="fw" data-fw="${esc(f.id)}" aria-pressed="${!!on}"><span class="rec tagb warn" ${rec ? '' : 'hidden'}>추천</span>
+    <span class="em">${esc(f.em || '📝')}</span><b>${esc(f.name)}</b><p>${esc(f.desc || '')}</p><span class="flow">${esc(f.short || f.steps.map(x => x.l).join(' → '))} · ${f.steps.length}문</span></button>`;
+}
+
+/* ----- Summary ----- */
+function sumHtml(s, forPrint = false) {
+  const f = fwOf(s); const st = steps(s);
+  const concl = st.find(x => x.id === 'concl'); const ca = concl && ans(s, concl.id);
+  let h = `<div class="sum"><h1>${esc(s.topic)}</h1>
+    <div class="meta"><span class="tagb">${esc(f.em || '📝')} ${esc(f.name)}</span><span>${fmtDate(s.created)}</span>${s.done && s.doneAt ? `<span>· ${fmtDur(s.doneAt - s.created)} 동안 생각</span>` : `<span class="tagb warn">진행 중 ${Math.min(s.cur, st.length)}/${st.length}</span>`}<span>· ${totalChars(s).toLocaleString('ko-KR')}자</span></div>`;
+  if (ca && ca.t && !ca.skipped) h += `<div class="concl"><div class="k">${esc(concl.l)}</div><div class="v">${esc(ca.t)}</div></div>`;
+  h += specialHtml(s, f);
+  st.forEach((x, i) => {
+    if (x.id === 'concl' || s.skip[x.id]) return; const a = ans(s, x.id); if (!a || !a.at) return;
+    const body = a.skipped ? `<div class="ans skip">건너뜀</div>` : x.t === 'matrix' ? matrixTable(s, x) : `<div class="ans">${sumAns(s, x)}</div>`;
+    h += `<section><h3>${esc(x.l)}</h3><div class="sq">${esc(a.q || qOf(s, x, i))}</div>${body}
+      ${(a.probes || []).filter(p => p.k !== 'more').map(p => `<div class="pr"><b>${esc(KIND[p.k] || '되물음')}</b> · ${esc(p.q)}\n→ ${p.a ? esc(p.a) : '<span class="muted">넘어감</span>'}</div>`).join('')}</section>`;
+  });
+  const hb = habits(s);
+  if (hb.length) h += `<section><h3>되물음을 부른 말</h3><div class="sq">답 속에서 규칙이 알아차린 말이에요. 자주 나오는 말은 생각의 습관일 수 있어요.</div><div class="habit">${hb.map(([k, n]) => `<span class="chip">${esc(k)}<small>${n}</small></span>`).join('')}</div></section>`;
+  if (f.follow && f.follow.length && !forPrint) h += `<section><h3>더 생각해 볼 질문</h3><ol class="follow">${f.follow.map(q => `<li>${esc(q)}</li>`).join('')}</ol></section>`;
+  return h + '</div>';
+}
+function sumAns(s, x) {
+  const a = ans(s, x.id);
+  if (x.t === 'list') return `<ul>${(a.items || []).map(i => `<li>${esc(i.t)}${x.w ? `<span class="wt">${'●'.repeat(i.w || 1)}</span>` : ''}</li>`).join('')}</ul>`;
+  if (x.t === 'scale') return `<span class="bigscore">${a.v}<small>/ 10</small></span> <span class="muted" style="font-size:12px">${esc(x.lo || '')} 0 ~ ${esc(x.hi || '')} 10</span>`;
+  return esc(a.t || '');
+}
+function matrixTable(s, x) {
+  const r = matrixCalc(s, x); if (!r.opts.length) return '<div class="ans skip">점수 없음</div>';
+  return `<div class="mx"><table><thead><tr><th>선택지</th>${r.crit.map(c => `<th>${esc(oneLine(c.t, 14))}<small>${'●'.repeat(c.w || 1)}</small></th>`).join('')}<th>합계</th></tr></thead><tbody>
+    ${r.sorted.map((row, i) => `<tr class="${i === 0 ? 'best' : ''}"><td>${i + 1}. ${esc(row.o)}</td>${row.cells.map(v => `<td>${v}</td>`).join('')}<td class="tot">${row.score} <small class="muted">(${row.pct}%)</small></td></tr>`).join('')}</tbody></table></div>`;
+}
+function specialHtml(s, f) {
+  const get = id => ans(s, id);
+  if (f.id === 'proscons') {
+    const sum = id => (get(id)?.items || []).reduce((t, i) => t + (i.w || 1), 0);
+    const p = sum('pros'), c = sum('cons'); if (!p && !c) return ''; const m = Math.max(p, c, 1);
+    return `<section><h3>저울</h3><div class="sq">항목마다 매긴 중요도(●)를 더한 값이에요. 결론은 저울이 아니라 당신이 정해요.</div>
+      <div class="vs"><span>장점</span><div class="bar"><i style="width:${p / m * 100}%"></i></div><b>${p}</b><span>단점</span><div class="bar c"><i style="width:${c / m * 100}%"></i></div><b>${c}</b></div></section>`;
+  }
+  if (f.id === 'check') {
+    const a = get('feel1'), b = get('feel2'); if (!a || a.v == null || !b || b.v == null) return '';
+    return `<section><h3>감정의 세기</h3><div class="sq">${esc(get('feel')?.t || '')}</div><div style="display:flex;align-items:center"><span class="bigscore">${a.v}<small>처음</small></span><span class="arrow">→</span><span class="bigscore">${b.v}<small>지금</small></span></div></section>`;
+  }
+  if (f.id === 'whys') {
+    const st = steps(s).filter(x => x.id === 'problem' || x.t === 'why' || x.id === 'root').filter(x => !s.skip[x.id] && get(x.id)?.t && !get(x.id).skipped);
+    if (st.length < 2) return '';
+    return `<section><h3>‘왜’의 사슬</h3><div class="chain">${st.map((x, i) => `${i ? '<i>↓ 왜?</i>' : ''}<div class="${x.id === 'root' ? 'root' : ''}">${esc(get(x.id).t)}</div>`).join('')}</div></section>`;
+  }
+  if (f.id === 'grow') {
+    const a = get('now10'), b = get('commit'); if (!a || a.v == null) return '';
+    return `<section><h3>숫자로 보기</h3><div style="display:flex;gap:28px;flex-wrap:wrap"><div><div class="sq">지금 위치</div><span class="bigscore">${a.v}<small>/ 10</small></span></div>${b && b.v != null ? `<div><div class="sq">실행 가능성</div><span class="bigscore">${b.v}<small>/ 10</small></span></div>` : ''}</div></section>`;
+  }
+  return '';
+}
+function habits(s) {
+  const m = {}; Object.values(s.ans).forEach(a => (a.probes || []).forEach(p => { if (['abs', 'label', 'mind', 'fortune', 'should', 'vague', 'unknown'].includes(p.k)) { const k = p.k === 'should' ? '해야 한다' : p.k === 'unknown' ? '모르겠다' : p.k === 'mind' ? '마음 짐작' : (p.w || KIND[p.k]); m[k] = (m[k] || 0) + 1; } }));
+  return Object.entries(m).sort((a, b) => b[1] - a[1]);
+}
+function totalChars(s) { let n = chars(s.topic); Object.values(s.ans).forEach(a => { n += chars(a.t); (a.items || []).forEach(i => n += chars(i.t)); (a.probes || []).forEach(p => n += chars(p.a)); }); return n; }
+function renderSum(s) {
+  const v = $('#vThink');
+  v.innerHTML = `<div class="wbar">
+    <button class="tool" id="sHome" title="처음 화면"><i data-icon="left"></i></button>
+    <div class="seg" id="sSeg" style="flex:none"><button data-v="doc" aria-pressed="${sumView === 'doc'}">정리</button><button data-v="map" aria-pressed="${sumView === 'map'}">생각 지도</button></div>
+    <span class="grow"></span>
+    <button class="tool" id="sCopy" title="글로 복사"><i data-icon="copy"></i><span class="t">복사</span></button>
+    <button class="tool" id="sMd" title="Markdown 파일로 받기"><i data-icon="doc"></i><span class="t">MD</span></button>
+    <button class="tool" id="sPng" title="생각 지도를 그림으로 받기"><i data-icon="image"></i><span class="t">그림</span></button>
+    <button class="tool" id="sPrint" title="인쇄 · PDF"><i data-icon="print"></i><span class="t">인쇄</span></button>
+    <span class="sep"></span>
+    <button class="tool prim" id="sCont"><i data-icon="pen"></i><span class="t">${s.done ? '다시 고치기' : '이어서 생각'}</span></button>
+  </div>
+  ${sumView === 'doc' ? `<div class="scroll">${sumHtml(s)}<div class="sum" style="padding-top:0"><div class="btn-row" style="justify-content:flex-start"><button class="btn line" id="sOther"><i data-icon="layers"></i>같은 주제, 다른 틀로</button><button class="btn ghost" id="sDig"><i data-icon="dig"></i>마지막 답 더 파고들기</button></div></div></div>` : `<div class="mapwrap" id="mapBox">${mapSvg(s)}</div>`}`;
+  hydrateIcons(v);
+  $('#sHome').onclick = () => { mode = 'home'; renderAll(); };
+  $('#sSeg').onclick = e => { const b = e.target.closest('button[data-v]'); if (!b) return; sumView = b.dataset.v; renderSum(s); };
+  $('#sCopy').onclick = async () => toast(await copyText(toMd(s)) ? '정리한 글을 복사했어요' : '복사하지 못했어요', { err: false });
+  $('#sMd').onclick = () => { download(`${fileSafe(s.topic)}.md`, toMd(s), 'text/markdown;charset=utf-8'); toast('Markdown 파일을 받았어요'); };
+  $('#sPng').onclick = () => exportPng(s);
+  $('#sPrint').onclick = () => { $('#printArea').innerHTML = sumHtml(s, true); window.print(); };
+  $('#sCont').onclick = () => { if (s.done) { s.done = false; s.cur = Math.max(0, steps(s).length - 1); touch(s); } mode = 'talk'; renderAll(); focusComposer(); };
+  const ot = $('#sOther'); ot && (ot.onclick = () => { store.set('homeTopic', s.topic); homeFw = null; mode = 'home'; renderAll(); toast('같은 주제로 다른 틀을 골라 보세요'); });
+  const dg = $('#sDig'); dg && (dg.onclick = digDeeper);
+}
+
+/* ----- Markdown ----- */
+function toMd(s) {
+  const f = fwOf(s); const st = steps(s); const L = [];
+  L.push(`# ${s.topic}`, '', `> ${f.name} · ${new Date(s.created).toLocaleString('ko-KR')} · Thinker`, '');
+  const concl = st.find(x => x.id === 'concl'); const ca = concl && ans(s, concl.id);
+  if (ca && ca.t) L.push(`**${concl.l}** — ${ca.t}`, '');
+  st.forEach((x, i) => {
+    if (x.id === 'concl' || s.skip[x.id]) return; const a = ans(s, x.id); if (!a || !a.at) return;
+    L.push(`## ${x.l}`, '', `*${a.q || qOf(s, x, i)}*`, '');
+    if (a.skipped) L.push('(건너뜀)');
+    else if (x.t === 'list') (a.items || []).forEach(it => L.push(`- ${it.t}${x.w ? ` (${'●'.repeat(it.w || 1)})` : ''}`));
+    else if (x.t === 'scale') L.push(`${a.v} / 10 (${x.lo || ''} 0 ~ ${x.hi || ''} 10)`);
+    else if (x.t === 'matrix') { const r = matrixCalc(s, x); L.push(`| 선택지 | ${r.crit.map(c => `${c.t} (${'●'.repeat(c.w || 1)})`).join(' | ')} | 합계 |`, `|---|${r.crit.map(() => '---').join('|')}|---|`); r.sorted.forEach(row => L.push(`| ${row.o} | ${row.cells.join(' | ')} | ${row.score} |`)); }
+    else L.push(a.t || '');
+    (a.probes || []).filter(p => p.k !== 'more').forEach(p => L.push('', `> **${KIND[p.k] || '되물음'}** · ${p.q}`, `> → ${p.a || '(넘어감)'}`));
+    L.push('');
+  });
+  const hb = habits(s); if (hb.length) L.push('## 되물음을 부른 말', '', hb.map(([k, n]) => `${k} ×${n}`).join(', '), '');
+  if (f.follow) L.push('## 더 생각해 볼 질문', '', ...f.follow.map(q => `- ${q}`), '');
+  return L.join('\n');
+}
+
+/* ----- Thought map (SVG) ----- */
+const MAPC = ['#244D3A', '#3E6F73', '#8A5A3B', '#5B6B3A', '#6A4E6E', '#2F5E7A', '#7A5B2F', '#4A6B5C'];
+function wrapText(t, max) {
+  const out = []; let line = '', w = 0;
+  const cw = ch => /[ᄀ-ᇿ㄰-㆏가-힣一-鿿　-〿]/.test(ch) ? 1 : 0.56;
+  for (const ch of String(t)) { if (ch === '\n') { out.push(line); line = ''; w = 0; continue; } const c = cw(ch); if (w + c > max && line) { const sp = line.lastIndexOf(' '); if (sp > line.length * 0.5) { out.push(line.slice(0, sp)); line = line.slice(sp + 1); w = [...line].reduce((t2, x) => t2 + cw(x), 0); } else { out.push(line); line = ''; w = 0; } } line += ch; w += c; }
+  if (line) out.push(line); return out;
+}
+function clip(lines, n) { if (lines.length <= n) return lines; const o = lines.slice(0, n); o[n - 1] = o[n - 1].replace(/.$/, '…'); return o; }
+function mapSvg(s) {
+  const st = steps(s); const f = fwOf(s);
+  const FONT = `'Wanted Sans Variable','Wanted Sans','Pretendard','Apple SD Gothic Neo','Malgun Gothic',sans-serif`;
+  const SERIF = `'MaruBuri','Batang','Noto Serif KR',serif`;
+  const BW = 210, CW = 180, LH = 17, GAPY = 12, GAPC = 8, X1 = 120, X2 = 60;
+  const branches = [];
+  st.forEach((x, i) => {
+    if (s.skip[x.id]) return; const a = ans(s, x.id); if (!a || !a.at || a.skipped) return;
+    let text = '', kids = [];
+    if (x.t === 'list') kids = (a.items || []).map(it => it.t + (x.w ? ' ' + '●'.repeat(it.w || 1) : ''));
+    else if (x.t === 'scale') text = `${a.v} / 10`;
+    else if (x.t === 'matrix') { const r = matrixCalc(s, x); kids = r.sorted.map((row, k) => `${k + 1}. ${row.o} · ${row.score}점`); }
+    else text = a.t || '';
+    (a.probes || []).filter(p => p.a && p.k !== 'more').forEach(p => kids.push('↳ ' + p.a));
+    const lines = text ? clip(wrapText(text, 13), 4) : [];
+    const kl = kids.slice(0, 6).map(k => clip(wrapText(k, 11), 3));
+    const bh = 30 + lines.length * LH + (lines.length ? 6 : 0);
+    const khs = kl.map(l => 14 + l.length * 15);
+    const kTot = khs.reduce((t, v) => t + v, 0) + Math.max(0, khs.length - 1) * GAPC;
+    branches.push({ x, lines, kl, khs, bh, block: Math.max(bh, kTot), concl: x.id === 'concl', color: MAPC[branches.length % MAPC.length] });
+  });
+  if (!branches.length) return `<div class="empty"><b>아직 그릴 것이 없어요</b>질문에 답하면 생각 지도가 자라요.</div>`;
+  const sides = [[], []], tot = [0, 0];
+  branches.forEach(b => { const k = tot[0] <= tot[1] ? 0 : 1; sides[k].push(b); tot[k] += b.block + GAPY * 2; });
+  const H = Math.max(tot[0], tot[1], 200);
+  const rootLines = clip(wrapText(s.topic, 11), 4); const RW = 190, RH = 44 + rootLines.length * 21;
+  let svg = '', minX = 0, maxX = 0;
+  const node = (x, y, w, h, fill, stroke, r = 14) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${r}" fill="${fill}" stroke="${stroke}" stroke-width="1.2"/>`;
+  sides.forEach((list, side) => {
+    const dir = side === 0 ? 1 : -1; let y = -tot[side] / 2;
+    list.forEach(b => {
+      y += GAPY; const cy = y + b.block / 2; const by = cy - b.bh / 2;
+      const bx = dir > 0 ? RW / 2 + X1 : -RW / 2 - X1 - BW;
+      const ax = dir > 0 ? RW / 2 : -RW / 2, tx = dir > 0 ? bx : bx + BW;
+      svg += `<path d="M${ax},0 C${ax + dir * X1 * 0.6},0 ${tx - dir * X1 * 0.5},${cy} ${tx},${cy}" fill="none" stroke="${b.color}" stroke-width="2.4" stroke-linecap="round" opacity=".75"/>`;
+      svg += node(bx, by, BW, b.bh, b.concl ? '#E8EFE8' : '#FFFFFF', b.color);
+      svg += `<rect x="${bx}" y="${by}" width="5" height="${b.bh}" rx="2.5" fill="${b.color}"/>`;
+      svg += `<text x="${bx + 16}" y="${by + 20}" font-family="${FONT}" font-size="11.5" font-weight="700" fill="${b.color}">${esc(b.x.l)}</text>`;
+      b.lines.forEach((l, i) => svg += `<text x="${bx + 16}" y="${by + 40 + i * LH}" font-family="${FONT}" font-size="13" fill="#1C2824">${esc(l)}</text>`);
+      let ky = cy - (b.khs.reduce((t, v) => t + v, 0) + Math.max(0, b.khs.length - 1) * GAPC) / 2;
+      b.kl.forEach((kl, i) => {
+        const kh = b.khs[i]; const kx = dir > 0 ? bx + BW + X2 : bx - X2 - CW; const kcy = ky + kh / 2;
+        const sx = dir > 0 ? bx + BW : bx, ex = dir > 0 ? kx : kx + CW;
+        svg += `<path d="M${sx},${cy} C${sx + dir * X2 * 0.5},${cy} ${ex - dir * X2 * 0.5},${kcy} ${ex},${kcy}" fill="none" stroke="${b.color}" stroke-width="1.4" opacity=".5"/>`;
+        svg += node(kx, ky, CW, kh, '#FCFAF5', '#E3DCCB', 10);
+        kl.forEach((l, j) => svg += `<text x="${kx + 11}" y="${ky + 19 + j * 15}" font-family="${FONT}" font-size="12" fill="#33403A">${esc(l)}</text>`);
+        minX = Math.min(minX, kx); maxX = Math.max(maxX, kx + CW); ky += kh + GAPC;
+      });
+      minX = Math.min(minX, bx); maxX = Math.max(maxX, bx + BW);
+      y += b.block + GAPY;
+    });
+  });
+  svg += node(-RW / 2, -RH / 2, RW, RH, '#244D3A', '#244D3A', 22);
+  svg += `<text x="0" y="${-RH / 2 + 22}" text-anchor="middle" font-family="${FONT}" font-size="11" font-weight="600" fill="#D9C8A9">${esc((f.em || '') + ' ' + f.name)}</text>`;
+  rootLines.forEach((l, i) => svg += `<text x="0" y="${-RH / 2 + 46 + i * 21}" text-anchor="middle" font-family="${SERIF}" font-size="16.5" font-weight="600" fill="#FCFAF5">${esc(l)}</text>`);
+  minX = Math.min(minX, -RW / 2) - 24; maxX = Math.max(maxX, RW / 2) + 24;
+  const top = -Math.max(H / 2, RH / 2) - 24, W = maxX - minX, HH = Math.max(H, RH) + 48;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${minX} ${top} ${W} ${HH}" width="${W}" height="${HH}" id="mapSvg"><rect x="${minX}" y="${top}" width="${W}" height="${HH}" fill="#F5F1E8"/>${svg}</svg>`;
+}
+function exportPng(s) {
+  const src = mapSvg(s); if (!src.startsWith('<svg')) { toast('아직 그릴 것이 없어요'); return; }
+  const m = src.match(/width="([\d.]+)" height="([\d.]+)"/); const w = +m[1], h = +m[2];
+  const img = new Image();
+  img.onload = () => {
+    const sc = Math.min(2, 8000 / Math.max(w, h)); const c = document.createElement('canvas'); c.width = Math.round(w * sc); c.height = Math.round(h * sc);
+    const g = c.getContext('2d'); g.scale(sc, sc); g.drawImage(img, 0, 0, w, h);
+    c.toBlob(b => { if (!b) { toast('그림을 만들지 못했어요', { err: true }); return; } download(`${fileSafe(s.topic)} 생각지도.png`, b); toast('생각 지도를 그림으로 받았어요'); }, 'image/png');
+  };
+  img.onerror = () => toast('그림을 만들지 못했어요', { err: true });
+  img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(src);
+}
+
+/* ----- Log tab ----- */
+function logRow(s) {
+  const f = fwOf(s); const n = steps(s).length; const d = s.done ? n : Math.min(s.cur, n);
+  return `<div class="si" data-open="${s.id}"><span class="em">${esc(f.em || '📝')}</span>
+    <div class="tx"><div class="nm">${esc(oneLine(s.topic, 70))}${s.sample ? '<span class="tagb gray">예시</span>' : ''}</div><div class="mt">${esc(f.name)} · ${fmtDate(s.updated)}${s.done ? ' · 마침' : ` · ${d}/${n}`}</div></div>
+    <div class="pbar"><div class="bar"><i style="width:${Math.round(d / n * 100)}%"></i></div></div>
+    <button class="mini" data-dup="${s.id}" title="같은 주제로 새로 생각하기"><i data-icon="dup"></i></button>
+    <button class="mini danger" data-delS="${s.id}" title="지우기"><i data-icon="trash"></i></button></div>`;
+}
+function bindLogRows(root) {
+  hydrateIcons(root);
+  $$('[data-open]', root).forEach(r => r.onclick = e => { if (e.target.closest('button')) return; openSession(r.dataset.open); });
+  $$('[data-dup]', root).forEach(b => b.onclick = () => { const s = getS(b.dataset.dup); store.set('homeTopic', s.topic); homeFw = null; activeId = null; mode = 'home'; setTab('think'); toast('같은 주제로 틀을 골라 시작해 보세요'); });
+  $$('[data-dels]', root).forEach(b => b.onclick = async () => {
+    const s = getS(b.dataset.dels); if (!s) return;
+    if (!await confirmDlg('이 생각을 지울까요?', `‘${oneLine(s.topic, 40)}’ 기록을 지워요. 되살릴 수 없어요.`, '지우기', true)) return;
+    SS = SS.filter(x => x.id !== s.id); if (activeId === s.id) { activeId = null; store.set('active', null); mode = 'home'; } save.sessions(); renderAll(); toast('지웠어요');
+  });
+}
+function renderLog() {
+  const sel = $('#logFw'); const fws = allFw();
+  sel.innerHTML = `<option value="all">모든 틀</option>${fws.map(f => `<option value="${esc(f.id)}">${esc(f.em || '')} ${esc(f.name)}</option>`).join('')}`; sel.value = fws.some(f => f.id === logFw) ? logFw : 'all';
+  const q = logQ.trim().toLowerCase();
+  const list = SS.filter(s => (logF === 'all' || (logF === 'done') === !!s.done) && (logFw === 'all' || s.fw === logFw) && (!q || (s.topic + ' ' + Object.values(s.ans).map(a => [a.t, ...(a.items || []).map(i => i.t), ...(a.probes || []).map(p => p.a)].join(' ')).join(' ')).toLowerCase().includes(q)))
+    .sort((a, b) => b.updated - a.updated);
+  const box = $('#logList');
+  if (!SS.length) { box.innerHTML = `<div class="empty"><b>아직 기록이 없어요</b>첫 생각을 시작해 보세요.<br><button class="btn primary" id="logNew"><i data-icon="plus"></i>새 생각</button></div>`; hydrateIcons(box); $('#logNew').onclick = startNew; return; }
+  if (!list.length) { box.innerHTML = `<div class="empty"><b>찾는 기록이 없어요</b>검색어나 거르기를 바꿔 보세요.</div>`; return; }
+  const groups = {}; list.forEach(s => { const k = fmtDate(s.updated, false); (groups[k] = groups[k] || []).push(s); });
+  box.innerHTML = Object.entries(groups).map(([k, arr]) => `<div class="grp"><div class="grp-h">${esc(k)}<span class="v">${arr.length}</span><span class="grow"></span></div><div class="rows">${arr.map(logRow).join('')}</div></div>`).join('');
+  bindLogRows(box);
+}
+
+/* ----- Framework tab ----- */
+function renderFw() {
+  $('#fwCount').innerHTML = `기본 틀 <b>${FW.length}</b> · 나만의 틀 <b>${CF.length}</b>`;
+  const box = $('#fwList');
+  const card = f => `<div style="position:relative">${fwCard(f, fwSel === f.id, false)}</div>`;
+  box.innerHTML = `<div class="grp-h">기본 틀<span class="grow"></span></div><div class="fwgrid">${FW.map(card).join('')}</div>
+    <div class="grp-h" style="margin-top:20px">나만의 틀<span class="v">${CF.length}</span><span class="grow"></span></div>
+    ${CF.length ? `<div class="fwgrid">${CF.map(card).join('')}</div>` : `<div class="note">질문 순서를 직접 정할 수 있어요. 기본 틀을 고른 뒤 오른쪽에서 ‘복사해서 고치기’를 눌러도 돼요.</div>`}`;
+  $$('.fw', box).forEach(b => b.onclick = () => { fwSel = b.dataset.fw; $$('.fw', box).forEach(x => x.setAttribute('aria-pressed', String(x === b))); renderSide(); if (matchMedia('(max-width: 999px)').matches) $('#side').scrollIntoView({ behavior: 'smooth' }); });
+}
+
+/* ----- Side panel ----- */
+function renderSide() {
+  const body = $('#sideBody'); const T = $('#sideT'), Sx = $('#sideS'); let h = '';
+  const s = getS();
+  if (tab === 'think' && s && mode !== 'home') {
+    const f = fwOf(s); const st = steps(s);
+    T.textContent = `${f.em || ''} ${f.name}`; Sx.textContent = f.short || '';
+    const done = st.filter(x => isAnswered(s, x) && !s.skip[x.id]).length;
+    h += `<div class="sec"><div class="progress" style="margin:0 0 10px"><div class="bar"><i style="width:${Math.round(done / st.length * 100)}%"></i></div><b>${done}</b>/${st.length}</div>
+      <ol class="stl">${st.map((x, i) => { const cls = s.skip[x.id] ? 'skip' : (i === s.cur && !s.done) ? 'cur' : isAnswered(s, x) ? 'done' : ''; const t = ansText(s, x);
+        return `<li class="${cls}"><button data-jump="${i}" ${isAnswered(s, x) || i === s.cur || s.skip[x.id] ? '' : 'disabled'}><span class="d">${cls === 'done' ? icon('check') : i + 1}</span><span class="t">${esc(x.l)}${t ? `<small>${esc(oneLine(t, 40))}</small>` : ''}</span></button></li>`; }).join('')}</ol></div>`;
+    const hb = habits(s);
+    h += `<div class="sec"><h3>되물음을 부른 말<span class="v">${hb.reduce((t, x) => t + x[1], 0)}</span></h3>${hb.length ? `<div class="habit">${hb.map(([k, n]) => `<span class="chip">${esc(k)}<small>${n}</small></span>`).join('')}</div>` : '<p class="hint">아직 없어요. 답에 ‘항상’, ‘절대’, ‘다들’ 같은 말이 보이면 여기에 모여요.</p>'}</div>`;
+    h += `<div class="sec"><h3>이 틀은</h3><p class="hint">${esc(f.desc || '')}</p>
+      <div class="btns"><button class="btn line sm" id="sdDig"><i data-icon="dig"></i>앞 답 더 파고들기</button><button class="btn ghost sm danger" id="sdDel"><i data-icon="trash"></i>지우기</button></div></div>`;
+  } else if (tab === 'fw') {
+    const f = allFw().find(x => x.id === fwSel);
+    if (!f) { T.textContent = '생각의 틀'; Sx.textContent = '틀을 고르면 질문 순서가 보여요'; h = `<div class="sec"><p class="hint">생각의 틀은 질문의 순서예요. 같은 주제라도 틀이 다르면 다른 생각이 나와요.</p><p class="hint">모든 질문은 미리 정해져 있고, 답에 따라 되묻는 것도 정해진 규칙으로만 해요. 인공지능은 쓰지 않아요.</p></div>`; }
+    else {
+      const custom = !FWX[f.id];
+      T.textContent = `${f.em || ''} ${f.name}`; Sx.textContent = `질문 ${f.steps.length}개${custom ? ' · 나만의 틀' : ''}`;
+      h += `<div class="sec"><p class="hint">${esc(f.desc || '')}</p><div class="btns g2"><button class="btn primary" id="sdStart"><i data-icon="play"></i>이 틀로 시작</button>${custom ? `<button class="btn line" id="sdEdit"><i data-icon="pen"></i>고치기</button>` : `<button class="btn line" id="sdCopy"><i data-icon="dup"></i>복사해서 고치기</button>`}</div></div>
+        <div class="sec"><h3>질문 순서</h3><ol class="stl">${f.steps.map((x, i) => `<li><button disabled><span class="d">${i + 1}</span><span class="t">${esc(x.l)}<small style="white-space:normal">${esc(x.q.replace(/\{topic\}|\{주제\}/g, '주제').replace(/\{prev\}|\{앞\}/g, '앞 답').replace(/\{best\}/g, '1위 선택지').replace(/\{pick\}/g, '고른 것'))}${x.t && x.t !== 'text' && x.t !== 'why' ? ` · ${({ list: '목록', scale: '0~10 점수', choice: '고르기', pick: '목록에서 고르기', matrix: '점수표' })[x.t]}` : ''}</small></span></button></li>`).join('')}</ol></div>`;
+      if (f.follow) h += `<div class="sec"><h3>끝나고 남는 질문</h3><ol class="follow" style="font-size:13px">${f.follow.map(q => `<li>${esc(q)}</li>`).join('')}</ol></div>`;
+    }
+  } else if (tab === 'think') {
+    const f = allFw().find(x => x.id === homeFw);
+    T.textContent = f ? `${f.em || ''} ${f.name}` : '생각 정리'; Sx.textContent = f ? `질문 ${f.steps.length}개` : '질문만 던지고, 답은 당신이 해요';
+    if (f) h += `<div class="sec"><p class="hint">${esc(f.desc || '')}</p><ol class="stl">${f.steps.map((x, i) => `<li><button disabled><span class="d">${i + 1}</span><span class="t">${esc(x.l)}</span></button></li>`).join('')}</ol></div>`;
+    h += `<div class="sec"><h3>이렇게 되물어요</h3><div class="slist">
+      ${[['짧은 답', '“조금만 더 구체적으로, 예를 하나 든다면요?”'], ['항상·절대·다들', '“정말 항상 그래요? 아니었던 때는요?”'], ['모르겠다', '“짐작해 본다면요? 알려면 무엇을 확인하면 될까요?”'], ['해야 한다', '“누가 정한 기준인가요?”'], ['남의 마음 짐작', '“확인한 사실인가요, 짐작인가요?”']].map(([a, b]) => `<div class="sitem"><div class="tx"><b>${a}</b><small style="white-space:normal">${b}</small></div></div>`).join('')}</div></div>`;
+    h += statsHtml();
+  } else {
+    T.textContent = '생각 습관'; Sx.textContent = '모든 기록에서 모았어요';
+    h += statsHtml(true);
+  }
+  body.innerHTML = h; hydrateIcons(body);
+  $$('[data-jump]', body).forEach(b => b.onclick = () => { const s2 = getS(); const i = +b.dataset.jump; if (isAnswered(s2, steps(s2)[i]) || s2.skip[steps(s2)[i].id]) { openEdit(s2, i); } else { mode = 'talk'; renderAll(); } });
+  const dg = $('#sdDig'); dg && (dg.onclick = digDeeper);
+  const dl = $('#sdDel'); dl && (dl.onclick = async () => { const s2 = getS(); if (!await confirmDlg('이 생각을 지울까요?', `‘${oneLine(s2.topic, 40)}’ 기록을 지워요. 되살릴 수 없어요.`, '지우기', true)) return; SS = SS.filter(x => x.id !== s2.id); activeId = null; store.set('active', null); mode = 'home'; save.sessions(); renderAll(); toast('지웠어요'); });
+  const sd = $('#sdStart'); sd && (sd.onclick = () => { homeFw = fwSel; store.set('homeFw', homeFw); activeId = null; mode = 'home'; setTab('think'); setTimeout(() => $('#hTopic')?.focus(), 30); });
+  const se = $('#sdEdit'); se && (se.onclick = () => openCustom(CF.find(x => x.id === fwSel)));
+  const sc = $('#sdCopy'); sc && (sc.onclick = () => openCustom(null, FWX[fwSel]));
+  $$('[data-open]', body).forEach(r => r.onclick = () => openSession(r.dataset.open));
+}
+function statsHtml(full = false) {
+  if (!SS.length) return full ? `<div class="sec"><p class="hint">생각을 기록하면 여기에 습관이 모여요.</p></div>` : '';
+  const done = SS.filter(s => s.done).length; const m = {}, fwc = {}; let words = 0, probes = 0;
+  SS.forEach(s => { habits(s).forEach(([k, n]) => m[k] = (m[k] || 0) + n); fwc[s.fw] = (fwc[s.fw] || 0) + 1; words += totalChars(s); Object.values(s.ans).forEach(a => probes += (a.probes || []).length); });
+  const top = Object.entries(m).sort((a, b) => b[1] - a[1]).slice(0, 10);
+  const topFw = Object.entries(fwc).sort((a, b) => b[1] - a[1]).slice(0, 5);
+  let h = `<div class="sec"><h3>지금까지</h3><div class="kpis"><div class="kpi"><div class="k">생각</div><div class="v">${SS.length}<small>개</small></div></div><div class="kpi"><div class="k">마침</div><div class="v">${done}<small>개</small></div></div><div class="kpi"><div class="k">되물음</div><div class="v">${probes}<small>번</small></div></div></div>
+    <p class="hint" style="margin-top:10px">모두 ${words.toLocaleString('ko-KR')}자를 적었어요.</p></div>`;
+  h += `<div class="sec"><h3>자주 되물음을 부른 말</h3>${top.length ? `<div class="habit">${top.map(([k, n]) => `<span class="chip">${esc(k)}<small>${n}</small></span>`).join('')}</div><p class="hint" style="margin-top:10px">자주 나오는 말은 생각이 기울어지는 곳일 수 있어요.</p>` : '<p class="hint">아직 없어요.</p>'}</div>`;
+  if (full) h += `<div class="sec"><h3>자주 쓴 틀</h3><div class="slist">${topFw.map(([id, n]) => { const f = allFw().find(x => x.id === id) || SS.find(s => s.fw === id)?.fwDef; return f ? `<div class="sitem"><span>${esc(f.em || '📝')}</span><div class="tx"><b>${esc(f.name)}</b></div><span class="r">${n}번</span></div>` : ''; }).join('')}</div></div>`;
+  return h;
+}
+
+/* ----- Dialogs ----- */
+let edCtx = null;
+function openEdit(s, i, pi) {
+  const st = steps(s)[i]; const a = A(s, st.id); edCtx = { s, i, pi };
+  const isProbe = pi != null; const textual = isProbe || ['text', 'why'].includes(st.t || 'text');
+  $('#edT').firstChild.textContent = isProbe ? '되물음 답 고치기' : `${st.l} 고치기`;
+  $('#edQ').textContent = isProbe ? a.probes[pi].q : (a.q || qOf(s, st, i));
+  const ta = $('#edA'); ta.hidden = !textual; $('#edSave').hidden = !textual;
+  ta.value = isProbe ? a.probes[pi].a : (a.skipped ? '' : a.t || '');
+  $('#edGo').innerHTML = `${icon('left')}${textual ? '이 질문으로 돌아가기' : '이 질문으로 돌아가서 고치기'}`;
+  $('#edDlg').showModal(); if (textual && !matchMedia('(pointer: coarse)').matches) setTimeout(() => ta.focus(), 30);
+}
+function openRename(s) { $('#rnA').value = s.topic; $('#rnDlg').showModal(); $('#rnSave').onclick = () => { const v = $('#rnA').value.trim(); if (!v) return; s.topic = v; touch(s); $('#rnDlg').close(); renderAll(); }; }
+let cfwEdit = null;
+function stepsToLines(steps) { return steps.map(x => `${x.t === 'list' ? '목록: ' : x.t === 'scale' ? '점수: ' : ''}${x.l} | ${x.q.replace(/\{topic\}/g, '{주제}').replace(/\{prev\}/g, '{앞}').replace(/\{best\}/g, '1위 선택지').replace(/\{pick\}/g, '고른 것').replace(/\{a:[\w-]+\}/g, '앞 답')}`).join('\n'); }
+function linesToSteps(txt) {
+  return txt.split('\n').map(l => l.trim()).filter(Boolean).map((l, i) => {
+    let t = 'text'; const m = l.match(/^(목록|점수)\s*[:：]\s*/); if (m) { t = m[1] === '목록' ? 'list' : 'scale'; l = l.slice(m[0].length); }
+    let lab = '', q = l; const p = l.indexOf('|'); if (p > 0) { lab = l.slice(0, p).trim(); q = l.slice(p + 1).trim(); }
+    if (!lab) lab = q.replace(/[‘’'"{}?]/g, '').slice(0, 12) || `질문 ${i + 1}`;
+    const st = { id: 'q' + (i + 1), l: lab, q, t };
+    if (t === 'list') st.min = 1; if (t === 'scale') { st.lo = '낮음'; st.hi = '높음'; }
+    if (/^(결론|정리|한 문장|다짐|결정)/.test(lab)) st.id = 'concl';
+    return st;
+  });
+}
+function openCustom(f, from) {
+  cfwEdit = f || null;
+  $('#cfwT').firstChild.textContent = f ? '나만의 틀 고치기' : '나만의 틀';
+  const src = f || from;
+  $('#cfwName').value = f ? f.name : from ? from.name + ' (내 버전)' : '';
+  $('#cfwEm').value = src ? src.em || '' : '📝';
+  $('#cfwDesc').value = src ? src.desc || '' : '';
+  $('#cfwQ').value = src ? stepsToLines(src.steps) : '무엇이 고민인가요? {주제}에 대해 적어 보세요.\n목록: 떠오르는 생각을 하나씩 적어 보세요.\n그중 가장 마음에 걸리는 것은 무엇인가요?\n점수: 지금 마음은 얼마나 편한가요?\n정리 | 지금 생각을 한 문장으로 적어 보세요.';
+  $('#cfwDel').hidden = !f; $('#cfwExport').hidden = !f;
+  const upd = () => $('#cfwN').textContent = `${linesToSteps($('#cfwQ').value).length}개`; $('#cfwQ').oninput = upd; upd();
+  $('#cfwDlg').showModal();
+}
+
+/* ----- Misc ----- */
+function startNew() { activeId = null; store.set('active', null); mode = 'home'; setTab('think'); setTimeout(() => $('#hTopic')?.focus(), 30); }
+function settingsUI() {
+  segSet($('#depthSeg'), 'v', S.depth); $('#depthV').textContent = S.depth ? `${S.depth}번까지` : '되묻지 않아요';
+  numSet($('#minLen'), S.minLen); $('#swEnter').checked = !!S.enter; $('#swHint').checked = !!S.hint;
+  $('#detSw').innerHTML = DET_TOGGLES.map(([k, n, d]) => `<label class="switch">${n}<small>${d}</small><input type="checkbox" data-det="${k}" ${S.det[k] ? 'checked' : ''} /></label>`).join('');
+  $$('[data-det]').forEach(c => c.onchange = () => { S.det[c.dataset.det] = c.checked; save.settings(); });
+}
+function importData(obj) {
+  if (!obj || typeof obj !== 'object') throw new Error('bad');
+  if (obj.kind === 'thinker-framework' && obj.framework) { const f = normCustom(obj.framework); CF = CF.filter(x => x.id !== f.id); CF.push(f); save.custom(); return `틀 ‘${f.name}’을(를) 가져왔어요`; }
+  if (obj.app !== 'thinker' || !Array.isArray(obj.sessions)) throw new Error('bad');
+  let n = 0; obj.sessions.forEach(s => { if (!s || !s.id || !s.ans) return; const i = SS.findIndex(x => x.id === s.id); if (i >= 0) { if ((s.updated || 0) > (SS[i].updated || 0)) { SS[i] = s; n++; } } else { SS.push(s); n++; } });
+  (obj.custom || []).forEach(f => { if (!f || !f.id || !Array.isArray(f.steps)) return; f = normCustom(f); const i = CF.findIndex(x => x.id === f.id); if (i >= 0) CF[i] = f; else CF.push(f); });
+  if (obj.settings) S = merge(DEF, obj.settings);
+  save.sessions(); save.custom(); save.settings();
+  return `생각 ${n}개를 불러왔어요`;
+}
+function normCustom(f) { return { id: f.id && String(f.id).startsWith('c_') ? f.id : 'c_' + uid(), em: String(f.em || '📝').slice(0, 4), name: String(f.name || '나만의 틀').slice(0, 30), desc: String(f.desc || '').slice(0, 120), short: '', steps: (f.steps || []).filter(x => x && x.q).map((x, i) => ({ id: String(x.id || 'q' + (i + 1)), l: String(x.l || `질문 ${i + 1}`), q: String(x.q), t: ['text', 'list', 'scale', 'why'].includes(x.t) ? x.t : 'text', min: x.min, lo: x.lo, hi: x.hi })) }; }
+
+/* ----- Sample (first open) ----- */
+function seedSample() {
+  const t0 = Date.now() - 864e5 * 2;
+  const s = { id: uid(), sample: true, fw: 'proscons', topic: '아침 운동을 시작할까', created: t0, updated: t0 + 18 * 6e4, doneAt: t0 + 18 * 6e4, done: true, cur: 8, skip: {}, alt: {}, pending: null, draft: '', ans: {} };
+  const put = (id, a) => s.ans[id] = { probes: [], at: t0 + 6e4, ...a };
+  put('option', { t: '다음 달부터 출근 전에 30분씩 달리기를 한다.' });
+  put('pros', { items: [{ t: '하루를 개운하게 시작한다', w: 2 }, { t: '건강검진 수치가 좋아질 수 있다', w: 3 }, { t: '저녁 시간이 자유로워진다', w: 1 }] });
+  put('cons', { items: [{ t: '30분 일찍 일어나야 한다', w: 2 }, { t: '겨울엔 춥고 어둡다', w: 1 }] });
+  put('unknown', { t: '아침에 달리면 오히려 낮에 피곤해질지 잘 모르겠다.', probes: [{ k: 'unknown', q: '‘모르겠다’도 좋은 출발이에요. 그래도 짐작해 본다면 무엇일까요?', a: '처음 2주는 피곤하다가 익숙해질 것 같다. 2주 해 보고 판단하면 된다.', w: '모르겠다' }] });
+  put('heavy', { t: '건강검진 수치. 작년보다 나빠졌고 미루면 더 나빠질 것 같다.' });
+  put('regret', { t: '나는 항상 작심삼일이라 해도 소용없을 것 같다.', probes: [{ k: 'abs', q: '‘항상’이라고 했어요. 정말 항상 그런가요? 그렇지 않았던 때를 하나 떠올려 볼 수 있나요?', a: '작년에 석 달 동안 수영을 꾸준히 다닌 적이 있다. 친구와 같이 다녀서 가능했다.', w: '항상' }] });
+  put('gut', { v: 7 });
+  put('concl', { t: '한다. 친구 한 명과 같이 시작하고, 2주 뒤 피곤하면 저녁으로 옮긴다.' });
+  s.rot = {};
+  return s;
+}
+
+/* =========================================================================
+   Wiring
+   ========================================================================= */
+function init() {
+  hydrateIcons();
+  if (firstRun) { SS = [seedSample()]; save.sessions(); }
+  const a = getS(); if (a && tab === 'think') mode = store.get('mode', 'talk') === 'sum' || a.done ? 'sum' : 'talk';
+  $('#tabs').onclick = e => { const b = e.target.closest('.tab'); if (b) setTab(b.dataset.tab); };
+  $('#newBtn').onclick = startNew;
+  $('#helpBtn').onclick = () => $('#helpDlg').showModal();
+  $('#setBtn').onclick = () => { settingsUI(); $('#setDlg').showModal(); };
+  $$('dialog').forEach(d => d.addEventListener('click', e => { if (e.target.closest('[data-close]') || e.target === d) d.close(); }));
+  $('#sideToggle').onclick = () => $('#side').classList.toggle('closed');
+  if (matchMedia('(max-width: 999px)').matches) $('#side').classList.add('closed');
+  // Settings
+  $('#depthSeg').onclick = e => { const b = e.target.closest('button[data-v]'); if (!b) return; S.depth = +b.dataset.v; save.settings(); settingsUI(); };
+  numBind($('#minLen'), v => { S.minLen = v; save.settings(); });
+  $('#swEnter').onchange = e => { S.enter = e.target.checked; save.settings(); };
+  $('#swHint').onchange = e => { S.hint = e.target.checked; save.settings(); renderAll(); };
+  $('#bkOut').onclick = () => { const d = new Date(); download(`thinker-backup-${d.getFullYear()}${pad2(d.getMonth() + 1)}${pad2(d.getDate())}.json`, JSON.stringify({ app: 'thinker', version: 1, exported: d.toISOString(), settings: S, sessions: SS, custom: CF }, null, 2), 'application/json'); toast('백업 파일을 받았어요'); };
+  $('#bkIn').onclick = $('#fwImport').onclick = () => $('#fileIn').click();
+  $('#fileIn').onchange = async e => { const f = e.target.files[0]; e.target.value = ''; if (!f) return; try { const msg = importData(JSON.parse(await f.text())); $('#setDlg').close(); renderAll(); toast(msg); } catch { toast('Thinker 백업이나 틀 파일이 아니에요', { err: true }); } };
+  $('#wipe').onclick = async () => { if (!await confirmDlg('모든 기록을 지울까요?', '생각 기록과 나만의 틀이 모두 지워져요. 먼저 백업을 받아 두세요.', '모두 지우기', true)) return; SS = []; CF = []; activeId = null; save.sessions(); save.custom(); store.set('active', null); mode = 'home'; $('#setDlg').close(); renderAll(); toast('모두 지웠어요'); };
+  // Log
+  $('#logQ').oninput = e => { logQ = e.target.value; renderLog(); };
+  $('#logSeg').onclick = e => { const b = e.target.closest('button[data-f]'); if (!b) return; logF = b.dataset.f; segSet($('#logSeg'), 'f', logF); renderLog(); };
+  $('#logFw').onchange = e => { logFw = e.target.value; renderLog(); };
+  // Frameworks
+  $('#fwNew').onclick = () => openCustom(null);
+  $('#cfwSave').onclick = () => {
+    const name = $('#cfwName').value.trim(); const st = linesToSteps($('#cfwQ').value);
+    if (!name) { toast('틀 이름을 적어 주세요'); return; } if (!st.length) { toast('질문을 하나 이상 적어 주세요'); return; }
+    const ids = new Set(); st.forEach((x, i) => { if (ids.has(x.id)) x.id = 'q' + (i + 1) + '_' + i; ids.add(x.id); });
+    const f = { id: cfwEdit ? cfwEdit.id : 'c_' + uid(), em: $('#cfwEm').value.trim() || '📝', name, desc: $('#cfwDesc').value.trim(), short: '', steps: st };
+    if (cfwEdit) CF[CF.findIndex(x => x.id === cfwEdit.id)] = f; else CF.push(f);
+    SS.forEach(s => { if (s.fw === f.id) s.fwDef = JSON.parse(JSON.stringify(f)); });
+    save.custom(); save.sessions(); fwSel = f.id; $('#cfwDlg').close(); setTab('fw'); toast('틀을 저장했어요');
+  };
+  $('#cfwDel').onclick = async () => { if (!cfwEdit) return; if (!await confirmDlg('이 틀을 지울까요?', '이 틀로 한 생각 기록은 그대로 남아요.', '지우기', true)) return; SS.forEach(s => { if (s.fw === cfwEdit.id) s.fwDef = JSON.parse(JSON.stringify(cfwEdit)); }); CF = CF.filter(x => x.id !== cfwEdit.id); save.custom(); save.sessions(); fwSel = null; $('#cfwDlg').close(); renderAll(); toast('틀을 지웠어요'); };
+  $('#cfwExport').onclick = () => { if (!cfwEdit) return; download(`${fileSafe(cfwEdit.name)}.thinker.json`, JSON.stringify({ kind: 'thinker-framework', framework: cfwEdit }, null, 2), 'application/json'); };
+  // Edit dialog
+  $('#edSave').onclick = () => {
+    const { s, i, pi } = edCtx; const st = steps(s)[i]; const a = A(s, st.id); const v = $('#edA').value.trim();
+    if (pi != null) { a.probes[pi].a = v; } else { if (!v) { toast('비워 둘 수는 없어요. 건너뛰려면 질문으로 돌아가세요'); return; } a.t = v; a.skipped = false; }
+    touch(s); $('#edDlg').close(); renderAll(); toast('고쳤어요');
+  };
+  $('#edGo').onclick = () => { const { s, i } = edCtx; $('#edDlg').close(); jumpTo(s, i); renderAll(); focusComposer(); };
+  // Keys
+  document.addEventListener('keydown', e => {
+    if ($('dialog[open]')) return;
+    const typing = /INPUT|TEXTAREA|SELECT/.test(document.activeElement?.tagName || '');
+    if (e.altKey && e.key === 'ArrowLeft' && tab === 'think' && mode === 'talk') { e.preventDefault(); const s = getS(); if (s) { goBack(s); renderAll(); focusComposer(); } return; }
+    if (typing || e.ctrlKey || e.metaKey || e.altKey) return;
+    if (e.key === 'n' || e.key === 'N') { e.preventDefault(); startNew(); }
+    else if (e.key === '1') setTab('think'); else if (e.key === '2') setTab('log'); else if (e.key === '3') setTab('fw');
+    else if (e.key === '?') $('#helpDlg').showModal();
+  });
+  addEventListener('storage', e => { if (e.key === 'thinker.sessions') { SS = store.get('sessions', []); renderAll(); } });
+  renderAll();
+}
+init();
+</script>
+</body>
+</html>
