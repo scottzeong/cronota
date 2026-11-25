@@ -1,0 +1,1820 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#F5F1E8" />
+<title>Photoer · 아웃그리드 사진 정리</title>
+<meta name="description" content="흐린 사진, 비슷한 사진, 똑같은 중복 사진을 찾아 정리하고 날짜·장소별로 묶어 주는 사진 정리 도구. 사진은 기기 안에서만 읽고 어디에도 올리지 않아요." />
+<!-- Fonts: outgrid's own files first (fonts/ next to this page), public CDN as a fallback. -->
+<style>
+  @font-face { font-family: "wantedSans"; src: url("fonts/WantedSansVariable.woff2") format("woff2"); font-weight: 100 800; font-style: normal; font-display: swap; }
+  @font-face { font-family: "maruBuri"; src: url("fonts/MaruBuri-Regular.woff2") format("woff2"); font-weight: 400; font-style: normal; font-display: swap; }
+  @font-face { font-family: "maruBuri"; src: url("fonts/MaruBuri-SemiBold.woff2") format("woff2"); font-weight: 600; font-style: normal; font-display: swap; }
+</style>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/wanteddev/wanted-sans@v1.0.3/packages/wanted-sans/fonts/webfonts/variable/split/WantedSansVariable.min.css" />
+<link rel="stylesheet" href="https://hangeul.pstatic.net/hangeul_static/css/maru-buri.css" />
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23244D3A'/%3E%3Crect x='13' y='17' width='38' height='30' rx='5' fill='none' stroke='%23F5F1E8' stroke-width='3.5'/%3E%3Ccircle cx='24' cy='27' r='3.5' fill='%23D9C8A9'/%3E%3Cpath d='M15 43l11-10 8 7 5-4 10 8' fill='none' stroke='%23F5F1E8' stroke-width='3.5' stroke-linejoin='round'/%3E%3C/svg%3E" />
+<style>
+  :root {
+    --bg: #F5F1E8;
+    --surface: #FCFAF5;
+    --paper: #FFFDF8;
+    --ink: #1C2824;
+    --ink-2: #33403A;
+    --muted: #5E665F;
+    --faint: #9A9F95;
+    --hair: #E3DCCB;
+    --hover: #F0EADD;
+    --press: #E7DFCD;
+    --dark: #244D3A;
+    --dark-2: #1B3B2C;
+    --river: #3E6F73;
+    --clay: #8A5A3B;
+    --sand: #D9C8A9;
+    --focus: #8A5A3B;
+    --danger: #963F3B;
+    --rec: #B5443B;
+    --mint: #E8EFE8;
+    --shadow: 0 1px 0 rgba(28,40,36,.03), 0 18px 40px -30px rgba(28,40,36,.30);
+    --sans: "wantedSans", "Wanted Sans Variable", "Wanted Sans", -apple-system, BlinkMacSystemFont, "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+    --serif: "maruBuri", "MaruBuri", "Batang", "Noto Serif KR", serif;
+    --r-sm: 10px;
+    --r-md: 13px;
+    --r-lg: 20px;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    font-family: var(--sans); word-break: keep-all; background: var(--bg); color: var(--ink);
+    font-size: 14px; letter-spacing: -0.005em; -webkit-font-smoothing: antialiased;
+    min-height: 100dvh; display: flex; flex-direction: column;
+  }
+  [hidden] { display: none !important; }
+  button { font: inherit; color: inherit; cursor: pointer; border: 0; background: none; padding: 0; -webkit-tap-highlight-color: transparent; }
+  button:disabled { cursor: default; opacity: .35; }
+  input, select, textarea { font: inherit; color: inherit; }
+  :focus-visible { outline: 2.5px solid var(--focus); outline-offset: 3px; }
+  ::selection { background: rgba(36,77,58,.16); }
+  svg.i { width: 19px; height: 19px; stroke: currentColor; fill: none; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+  svg.i.sm { width: 16px; height: 16px; }
+  .muted { color: var(--faint); }
+  .tnum { font-variant-numeric: tabular-nums; }
+
+  /* ---------- Header ---------- */
+  .top { position: sticky; top: 0; z-index: 40; background: var(--bg); }
+  .top-inner { max-width: 1440px; margin: 0 auto; padding: 14px 24px 8px; display: flex; align-items: center; gap: 14px; }
+  .brand { display: flex; align-items: center; gap: 12px; flex: none; text-decoration: none; color: inherit; }
+  .logo { display: block; height: 34px; width: auto; flex: none; }
+  .app-name { font-family: var(--serif); font-weight: 600; font-size: 23px; letter-spacing: -.02em; color: var(--dark); line-height: 1; padding-left: 12px; border-left: 1.5px solid var(--hair); }
+  .app-name small { display: block; font-family: var(--sans); font-size: 11px; font-weight: 500; color: var(--faint); letter-spacing: 0; margin-top: 4px; }
+  .head-actions { margin-left: auto; display: flex; align-items: center; gap: 6px; min-width: 0; }
+  .icon-btn { width: 38px; height: 38px; border-radius: 999px; display: grid; place-items: center; color: var(--ink-2); transition: background .15s, color .15s; flex: none; }
+  .icon-btn:hover:not(:disabled) { background: var(--hover); color: var(--ink); }
+
+  /* ---------- Buttons ---------- */
+  .btn { height: 38px; padding: 0 16px; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; font-weight: 600; font-size: 13.5px; background: var(--hover); color: var(--ink-2); white-space: nowrap; transition: background .15s, box-shadow .15s; flex: none; }
+  .btn:hover:not(:disabled) { background: var(--press); }
+  .btn.primary { background: var(--dark); color: var(--surface); box-shadow: 0 8px 18px -10px rgba(36,77,58,.7); }
+  .btn.primary:hover:not(:disabled) { background: var(--dark-2); }
+  .btn.clay { background: var(--clay); color: var(--surface); }
+  .btn.clay:hover:not(:disabled) { background: #74492F; }
+  .btn.ghost { background: none; color: var(--muted); }
+  .btn.ghost:hover:not(:disabled) { background: var(--hover); color: var(--ink); }
+  .btn.line { background: var(--surface); box-shadow: inset 0 0 0 1px var(--hair); }
+  .btn.line:hover:not(:disabled) { background: var(--hover); }
+  .btn.sm { height: 32px; padding: 0 12px; font-size: 12.5px; gap: 5px; }
+  .btn.block { width: 100%; }
+  .btn.danger { color: var(--danger); }
+  .btn.rec { background: var(--rec); color: #fff; }
+
+  /* ---------- Tabs ---------- */
+  .tabs-wrap { max-width: 1440px; margin: 0 auto; padding: 4px 24px 10px; display: flex; align-items: center; gap: 12px; }
+  .tabs { display: flex; gap: 2px; padding: 4px; background: var(--press); border-radius: 999px; overflow-x: auto; scrollbar-width: none; flex: none; max-width: 100%; }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab { height: 34px; padding: 0 15px; border-radius: 999px; font-weight: 600; font-size: 13px; color: var(--muted); white-space: nowrap; display: inline-flex; align-items: center; gap: 6px; transition: background .15s, color .15s; flex: none; }
+  .tab svg.i { width: 16px; height: 16px; }
+  .tab:hover { color: var(--ink); }
+  .tab[aria-selected="true"] { background: var(--dark); color: var(--surface); box-shadow: 0 6px 14px -8px rgba(36,77,58,.6); }
+  .tab .n { font-size: 11px; font-weight: 700; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px; background: rgba(28,40,36,.08); display: inline-grid; place-items: center; font-variant-numeric: tabular-nums; }
+  .tab .n.warn { background: var(--rec); color: #fff; }
+  .tab[aria-selected="true"] .n:not(.warn) { background: rgba(255,255,255,.18); }
+  .applied { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; min-width: 0; align-items: center; }
+  .applied::-webkit-scrollbar { display: none; }
+  .achip { height: 28px; padding: 0 11px; border-radius: 999px; font-size: 12px; font-weight: 600; background: var(--mint); color: var(--dark); white-space: nowrap; display: inline-flex; align-items: center; gap: 5px; flex: none; font-variant-numeric: tabular-nums; }
+  .achip.warn { background: #F3E7DC; color: var(--clay); }
+  .achip.bad { background: #F6E1DC; color: var(--rec); }
+  .achip svg.i { width: 14px; height: 14px; }
+
+  /* ---------- Layout ---------- */
+  main { flex: 1; width: 100%; max-width: 1440px; margin: 0 auto; padding: 0 24px 24px; display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 16px; height: calc(100dvh - 122px); min-height: 520px; }
+  .panel { background: var(--surface); border-radius: var(--r-lg); display: flex; flex-direction: column; min-height: 0; overflow: hidden; box-shadow: 0 0 0 1px var(--hair), var(--shadow); }
+  .view { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+  .wbar { display: flex; align-items: center; gap: 6px; padding: 10px 12px; border-bottom: 1px solid var(--hair); flex-wrap: wrap; row-gap: 8px; min-height: 59px; }
+  .wbar .count { font-size: 13px; color: var(--muted); margin: 0 6px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .wbar .count b { color: var(--ink); font-weight: 600; }
+  .grow { flex: 1; }
+  .sep { width: 1px; height: 20px; background: var(--hair); margin: 0 4px; flex: none; }
+  .tool { height: 36px; min-width: 36px; padding: 0 9px; border-radius: var(--r-sm); display: inline-flex; align-items: center; justify-content: center; gap: 6px; color: var(--ink-2); font-size: 12.5px; font-weight: 600; transition: background .15s, color .15s; flex: none; white-space: nowrap; }
+  .tool:hover:not(:disabled) { background: var(--hover); color: var(--ink); }
+  .tool[aria-pressed="true"] { background: var(--dark); color: var(--surface); }
+  .tool.danger:hover:not(:disabled) { color: var(--danger); }
+  .tool.prim { background: var(--dark); color: var(--surface); padding: 0 13px; border-radius: 999px; }
+  .tool.prim:hover:not(:disabled) { background: var(--dark-2); color: var(--surface); }
+  .scroll { flex: 1; min-height: 0; overflow: auto; overscroll-behavior: contain; position: relative; }
+  .wk-nav { display: flex; align-items: center; gap: 2px; }
+  .wk-lbl { font-weight: 700; font-size: 14px; color: var(--ink); padding: 0 8px; white-space: nowrap; font-variant-numeric: tabular-nums; min-width: 0; }
+  .wk-lbl small { font-weight: 600; font-size: 11.5px; color: var(--clay); margin-left: 6px; }
+  .search { position: relative; flex: 1 1 180px; max-width: 280px; min-width: 140px; }
+  .search svg { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--faint); width: 16px; height: 16px; pointer-events: none; }
+  .search .inp { padding-left: 36px; height: 36px; }
+  /* ---------- Generic list rows / cards ---------- */
+  .pad { padding: 14px 18px 20px; }
+  .grp { margin-bottom: 16px; }
+  .grp-h { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 700; color: var(--clay); letter-spacing: .04em; margin: 4px 2px 8px; }
+  .grp-h .v { color: var(--faint); font-weight: 600; letter-spacing: 0; font-variant-numeric: tabular-nums; }
+  .grp-h .grow { flex: 1; height: 1px; background: var(--hair); }
+  .grp-h button { font-size: 12px; font-weight: 600; color: var(--muted); letter-spacing: 0; padding: 4px 8px; border-radius: 999px; }
+  .grp-h button:hover { background: var(--hover); color: var(--ink); }
+  .rows { border-radius: 16px; background: #fff; box-shadow: 0 0 0 1px var(--hair); overflow: hidden; }
+  .si { display: flex; align-items: center; gap: 10px; padding: 9px 10px 9px 12px; border-bottom: 1px solid var(--hover); cursor: pointer; min-height: 52px; }
+  .si:last-child { border-bottom: 0; }
+  .si:hover { background: var(--paper); }
+  .ck { width: 24px; height: 24px; border-radius: 999px; box-shadow: inset 0 0 0 1.6px var(--sand); display: grid; place-items: center; flex: none; color: transparent; }
+  .ck svg { width: 15px; height: 15px; stroke-width: 2.4; }
+  .si.done .ck { background: var(--dark); box-shadow: none; color: #fff; }
+  .si .tx { flex: 1; min-width: 0; }
+  .si .nm { font-weight: 600; font-size: 14px; display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+  .si .q { font-weight: 700; color: var(--dark); font-variant-numeric: tabular-nums; font-size: 13px; }
+  .si .mt { font-size: 11.5px; color: var(--faint); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .si.done .nm { text-decoration: line-through; color: var(--faint); }
+  .si.done .q { color: var(--faint); }
+  .si.dim { cursor: default; }
+  .si.dim .nm { color: var(--muted); }
+  .mini { width: 32px; height: 32px; border-radius: 999px; display: grid; place-items: center; color: var(--faint); flex: none; }
+  .mini:hover { background: var(--hover); color: var(--ink); }
+  .mini.danger:hover { color: var(--danger); }
+  .mini svg { width: 16px; height: 16px; }
+  .tagb { font-size: 10.5px; font-weight: 700; padding: 2px 7px; border-radius: 999px; background: var(--mint); color: var(--dark); white-space: nowrap; }
+  .tagb.warn { background: #F3E7DC; color: var(--clay); }
+  .tagb.bad { background: #F6E1DC; color: var(--rec); }
+  .tagb.gray { background: var(--hover); color: var(--muted); }
+  .addline { display: grid; grid-template-columns: minmax(0, 1fr) 96px auto; gap: 6px; margin-bottom: 14px; }
+  .progress { display: flex; align-items: center; gap: 10px; font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums; margin-bottom: 14px; }
+  .progress .bar { flex: 1; }
+  .progress b { color: var(--ink); }
+  .bar { height: 8px; border-radius: 8px; background: var(--press); overflow: hidden; }
+  .bar i { display: block; height: 100%; width: 0; background: var(--dark); border-radius: 8px; transition: width .2s; }
+  .linkbtn { font-size: 12px; font-weight: 600; color: var(--dark); padding: 6px 10px; border-radius: 999px; background: var(--mint); white-space: nowrap; flex: none; }
+  .linkbtn:hover { background: #DCE7DD; }
+  .empty { padding: 50px 24px; text-align: center; color: var(--faint); font-size: 13px; line-height: 1.7; }
+  .empty b { display: block; font-family: var(--serif); color: var(--dark); font-size: 18px; font-weight: 600; margin-bottom: 4px; }
+  .empty .btn { margin-top: 14px; }
+  .seg { display: flex; padding: 3px; gap: 2px; background: var(--press); border-radius: 999px; flex-wrap: wrap; }
+  .seg button { flex: 1; height: 30px; border-radius: 999px; font-size: 12.5px; font-weight: 600; color: var(--muted); padding: 0 10px; white-space: nowrap; }
+  .seg button[aria-pressed="true"] { background: var(--surface); color: var(--dark); box-shadow: 0 2px 6px -3px rgba(28,40,36,.3); }
+  .seg button .n { font-size: 11px; color: var(--faint); margin-left: 3px; font-variant-numeric: tabular-nums; }
+  /* ---------- Side panel ---------- */
+  #side .ph { padding: 16px 20px 12px; border-bottom: 1px solid var(--hair); display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  #side .ph h2 { margin: 0; font-family: var(--serif); font-size: 19px; font-weight: 600; color: var(--dark); letter-spacing: -.02em; }
+  #side .ph p { margin: 3px 0 0; font-size: 12px; color: var(--faint); }
+  #side .collapse { display: none; }
+  .pbody { flex: 1; min-height: 0; overflow-y: auto; padding: 6px 20px 20px; overscroll-behavior: contain; }
+  .sec { padding: 16px 0; border-bottom: 1px solid var(--hair); }
+  .sec:last-child { border-bottom: 0; }
+  .sec h3 { margin: 0 0 10px; font-size: 12px; font-weight: 700; color: var(--clay); letter-spacing: .04em; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .sec h3 .v { color: var(--faint); font-weight: 600; letter-spacing: 0; font-variant-numeric: tabular-nums; }
+  .sec p.hint { margin: 0 0 10px; font-size: 12.5px; color: var(--muted); line-height: 1.6; }
+  .btns { display: flex; flex-wrap: wrap; gap: 6px; }
+  .btns.g2 { display: grid; grid-template-columns: 1fr 1fr; }
+  .btns.g2 .btn { width: 100%; }
+  .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+  .field:last-child { margin-bottom: 0; }
+  .field > label, .field > .lbl { font-size: 12px; font-weight: 600; color: var(--ink-2); display: flex; justify-content: space-between; gap: 6px; }
+  .field > label .v, .field > .lbl .v { color: var(--faint); font-weight: 500; font-variant-numeric: tabular-nums; }
+  .inp, select.inp { width: 100%; height: 40px; border: 0; background: #fff; box-shadow: inset 0 0 0 1px var(--hair); border-radius: 999px; padding: 0 14px; font-size: 13.5px; outline: none; transition: box-shadow .15s; min-width: 0; }
+  textarea.inp { height: auto; border-radius: 16px; padding: 10px 14px; line-height: 1.6; resize: vertical; }
+  select.inp { appearance: none; -webkit-appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235E665F' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; background-size: 16px; padding-right: 34px; }
+  .inp:focus { box-shadow: inset 0 0 0 1.5px var(--dark), 0 0 0 4px rgba(36,77,58,.08); }
+  .inp.tc { text-align: center; font-variant-numeric: tabular-nums; padding: 0 6px; }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+  .num { display: grid; grid-template-columns: 34px 1fr 34px; align-items: center; background: #fff; box-shadow: inset 0 0 0 1px var(--hair); border-radius: 999px; height: 40px; }
+  .num button { height: 34px; width: 34px; border-radius: 999px; display: grid; place-items: center; color: var(--muted); margin: 3px; }
+  .num button:hover { background: var(--hover); color: var(--ink); }
+  .num input { border: 0; background: none; text-align: center; width: 100%; height: 100%; outline: none; font-weight: 600; font-variant-numeric: tabular-nums; min-width: 0; -moz-appearance: textfield; }
+  .num input::-webkit-inner-spin-button { -webkit-appearance: none; }
+  .num svg.i { width: 15px; height: 15px; }
+  .switch { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 13px; font-weight: 600; color: var(--ink-2); cursor: pointer; padding: 6px 0; }
+  .switch small { display: block; font-size: 11.5px; font-weight: 500; color: var(--faint); margin-top: 2px; line-height: 1.45; }
+  .switch input { appearance: none; -webkit-appearance: none; width: 40px; height: 24px; border-radius: 999px; background: var(--sand); position: relative; cursor: pointer; transition: background .15s; flex: none; margin: 0; }
+  .switch input::after { content: ''; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 999px; background: #fff; transition: transform .15s; box-shadow: 0 1px 3px rgba(0,0,0,.2); }
+  .switch input:checked { background: var(--dark); }
+  .switch input:checked::after { transform: translateX(16px); }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip { height: 32px; padding: 0 12px; border-radius: 999px; background: #fff; box-shadow: inset 0 0 0 1px var(--hair); font-size: 12.5px; font-weight: 600; color: var(--ink-2); display: inline-flex; align-items: center; gap: 6px; }
+  .chip:hover { background: var(--hover); }
+  .chip[aria-pressed="true"] { background: var(--dark); color: var(--surface); box-shadow: none; }
+  .chip small { color: var(--faint); font-weight: 500; font-variant-numeric: tabular-nums; }
+  .chip.warn { background: #FBF3EA; box-shadow: inset 0 0 0 1px #E5C9AE; color: var(--clay); }
+  .chip .x { width: 18px; height: 18px; border-radius: 999px; display: grid; place-items: center; color: var(--faint); margin-right: -6px; }
+  .chip .x:hover { background: var(--press); color: var(--danger); }
+  .chip .x svg { width: 12px; height: 12px; }
+  .note { font-size: 12px; padding: 10px 12px; border-radius: var(--r-md); background: var(--hover); color: var(--muted); line-height: 1.6; margin-top: 10px; }
+  .note.ok { background: #E8F0E9; color: var(--dark); }
+  .note.warn { background: #F3E7DC; color: #6E4429; }
+  .kpis { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  .kpi { border-radius: 14px; background: #fff; box-shadow: 0 0 0 1px var(--hair); padding: 10px 12px; min-width: 0; cursor: default; text-align: left; }
+  button.kpi { cursor: pointer; }
+  button.kpi:hover { background: var(--paper); }
+  .kpi .k { font-size: 11.5px; font-weight: 600; color: var(--muted); white-space: nowrap; }
+  .kpi .v { font-size: 22px; font-weight: 700; letter-spacing: -.03em; margin-top: 3px; font-variant-numeric: tabular-nums; color: var(--ink); white-space: nowrap; }
+  .kpi .v small { font-size: 12px; font-weight: 600; color: var(--muted); margin-left: 2px; letter-spacing: 0; }
+  .slist { display: flex; flex-direction: column; gap: 6px; }
+  .sitem { display: flex; align-items: center; gap: 8px; padding: 8px 8px 8px 12px; border-radius: var(--r-md); background: #fff; box-shadow: inset 0 0 0 1px var(--hair); font-size: 13px; text-align: left; width: 100%; }
+  button.sitem:hover { background: var(--paper); }
+  .sitem .tx { flex: 1; min-width: 0; }
+  .sitem .tx b { font-weight: 600; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .sitem .tx small { display: block; font-size: 11.5px; color: var(--faint); margin-top: 1px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .sitem .r { font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; font-size: 12.5px; color: var(--ink-2); }
+  .mbars { display: flex; align-items: flex-end; gap: 6px; height: 90px; margin: 6px 0 4px; }
+  .mbars div { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; height: 100%; justify-content: flex-end; font-size: 10.5px; color: var(--faint); font-variant-numeric: tabular-nums; }
+  .mbars i { width: 100%; max-width: 34px; background: var(--sand); border-radius: 5px 5px 2px 2px; min-height: 2px; }
+  .mbars div.cur i { background: var(--dark); }
+  /* ---------- Dialogs ---------- */
+  dialog { border: 0; border-radius: 22px; padding: 0; width: min(520px, calc(100vw - 32px)); background: var(--surface); box-shadow: 0 0 0 1px var(--hair), 0 30px 70px -30px rgba(28,40,36,.45); color: var(--ink); }
+  dialog.wide { width: min(640px, calc(100vw - 32px)); }
+  dialog::backdrop { background: rgba(28,40,36,.32); backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px); }
+  .dlg-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 20px 22px 8px; }
+  .dlg-head h2 { margin: 0; font-family: var(--serif); font-size: 20px; font-weight: 600; letter-spacing: -.02em; color: var(--dark); min-width: 0; }
+  .dlg-head h2 small { display: block; font-family: var(--sans); font-size: 12px; font-weight: 500; color: var(--faint); margin-top: 4px; letter-spacing: 0; }
+  .dlg-body { padding: 8px 22px 22px; display: flex; flex-direction: column; gap: 14px; max-height: 76vh; overflow-y: auto; }
+  .dlg-body p { margin: 0; font-size: 13px; color: var(--muted); line-height: 1.65; }
+  .dlg-body .sec { padding: 12px 0; }
+  .btn-row { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; align-items: center; }
+  .btn-row .grow { flex: 1; }
+  .help h4 { margin: 4px 0 6px; font-size: 12px; font-weight: 700; color: var(--clay); letter-spacing: .04em; }
+  .help ul { margin: 0; padding-left: 18px; font-size: 13px; color: var(--ink-2); line-height: 1.75; }
+  .keys { display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; font-size: 13px; align-items: center; }
+  kbd { font-family: var(--sans); font-size: 11.5px; font-weight: 700; padding: 3px 7px; border-radius: 6px; background: #fff; box-shadow: inset 0 0 0 1px var(--hair), 0 1px 0 var(--hair); color: var(--ink-2); white-space: nowrap; }
+  .plist { display: flex; flex-direction: column; border-radius: 16px; background: #fff; box-shadow: 0 0 0 1px var(--hair); overflow: hidden; max-height: 42vh; overflow-y: auto; }
+  .prow { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-bottom: 1px solid var(--hover); text-align: left; width: 100%; min-height: 50px; }
+  .prow:last-child { border-bottom: 0; }
+  .prow:hover { background: var(--paper); }
+  .prow .tx { flex: 1; min-width: 0; }
+  .prow .tx b { font-weight: 600; font-size: 14px; }
+  .prow .tx small { display: block; font-size: 11.5px; color: var(--faint); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .prow .add { width: 32px; height: 32px; border-radius: 999px; display: grid; place-items: center; background: var(--mint); color: var(--dark); flex: none; }
+  .prow.in .add { background: var(--dark); color: #fff; }
+  .cur-dishes { display: flex; flex-wrap: wrap; gap: 6px; min-height: 32px; align-items: center; }
+  .cur-dishes .empty-t { font-size: 12.5px; color: var(--faint); }
+  .ings { list-style: none; margin: 0; padding: 0; border-radius: 16px; background: #fff; box-shadow: 0 0 0 1px var(--hair); overflow: hidden; }
+  .ings li { display: flex; align-items: center; gap: 10px; padding: 9px 14px; border-bottom: 1px solid var(--hover); font-size: 13.5px; }
+  .ings li:last-child { border-bottom: 0; }
+  .ings li .nm { flex: 1; font-weight: 600; }
+  .ings li .q { font-weight: 700; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+  .ings li .st { width: 20px; height: 20px; border-radius: 999px; display: grid; place-items: center; flex: none; }
+  .ings li .st svg { width: 13px; height: 13px; stroke-width: 2.4; }
+  .ings li.have .st { background: var(--dark); color: #fff; }
+  .ings li.miss .st { box-shadow: inset 0 0 0 1.6px var(--sand); }
+  .ings li.pan .st { background: var(--hover); color: var(--faint); }
+  .steps { margin: 0; padding-left: 22px; font-size: 13.5px; line-height: 1.75; color: var(--ink-2); }
+  .steps li { padding-left: 4px; margin-bottom: 4px; }
+  .rmeta { display: flex; gap: 6px; flex-wrap: wrap; }
+  .inline-add { display: grid; grid-template-columns: 1fr 1fr auto; gap: 6px; align-items: center; }
+  .checks { display: flex; flex-direction: column; gap: 2px; }
+  .checks label { display: flex; align-items: center; gap: 10px; padding: 7px 4px; font-size: 13.5px; cursor: pointer; border-radius: 10px; }
+  .checks label:hover { background: var(--hover); }
+  .checks input { width: 18px; height: 18px; accent-color: var(--dark); }
+  .checks small { color: var(--faint); margin-left: auto; font-size: 12px; }
+  /* ---------- Toast ---------- */
+  #toast { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom)); transform: translateX(-50%); background: var(--dark); color: var(--surface); padding: 11px 18px; border-radius: 999px; box-shadow: 0 14px 30px -14px rgba(28,40,36,.55); font-size: 13px; font-weight: 600; z-index: 200; display: none; align-items: center; gap: 14px; max-width: calc(100vw - 32px); }
+  #toast.show { display: flex; }
+  #toast.err { background: var(--danger); }
+  #toast button { color: var(--sand); font-weight: 600; white-space: nowrap; text-decoration: underline; text-underline-offset: 3px; }
+
+  .foot { max-width: 1440px; margin: 0 auto; padding: 0 24px 16px; font-size: 11.5px; color: var(--faint); display: flex; gap: 6px; align-items: center; }
+  .foot svg { width: 13px; height: 13px; }
+  #printArea { display: none; }
+  /* ---------- Photoer ---------- */
+  #work .view { overflow: hidden; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(var(--ts, 132px), 1fr)); gap: 6px; }
+  .tile { position: relative; aspect-ratio: 1; border-radius: 12px; overflow: hidden; background: var(--press); cursor: pointer; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; touch-action: manipulation; }
+  .tile img { width: 100%; height: 100%; object-fit: cover; display: block; transition: opacity .15s, filter .15s, transform .15s, border-radius .15s; -webkit-user-drag: none; pointer-events: none; }
+  .tile::after { content: ''; position: absolute; inset: 0; border-radius: inherit; box-shadow: inset 0 0 0 1px rgba(28,40,36,.08); pointer-events: none; transition: box-shadow .15s; }
+  .tile:hover::after { box-shadow: inset 0 0 0 2px rgba(36,77,58,.45); }
+  .tile.del { background: #F3E2DD; }
+  .tile.del img { opacity: .38; filter: grayscale(.85); transform: scale(.9); border-radius: 8px; }
+  .tile.del::after { box-shadow: inset 0 0 0 2px var(--rec); }
+  .tile .mk { position: absolute; top: 6px; left: 6px; width: 24px; height: 24px; border-radius: 999px; display: grid; place-items: center; background: rgba(255,253,248,.88); box-shadow: inset 0 0 0 1.5px rgba(28,40,36,.25); color: transparent; opacity: 0; transition: opacity .15s; }
+  .tile .mk svg { width: 14px; height: 14px; stroke-width: 2.6; }
+  .tile:hover .mk { opacity: 1; }
+  .tile.del .mk { opacity: 1; background: var(--rec); color: #fff; box-shadow: none; }
+  .tile .zm { position: absolute; top: 4px; right: 4px; width: 30px; height: 30px; border-radius: 999px; display: grid; place-items: center; background: rgba(28,40,36,.55); color: #fff; opacity: 0; transition: opacity .15s; }
+  .tile .zm svg { width: 15px; height: 15px; }
+  .tile:hover .zm { opacity: 1; }
+  @media (hover: none) { .tile .zm { opacity: .9; width: 28px; height: 28px; } .tile .mk { opacity: 0; } .tile.del .mk { opacity: 1; } }
+  .tile .bd { position: absolute; left: 5px; bottom: 5px; right: 5px; display: flex; gap: 3px; flex-wrap: wrap; pointer-events: none; }
+  .b { font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 999px; background: rgba(28,40,36,.72); color: #fff; white-space: nowrap; line-height: 1.35; font-variant-numeric: tabular-nums; }
+  .b.best { background: var(--dark); }
+  .b.blur { background: var(--clay); }
+  .b.dup { background: var(--river); }
+  .tile.bad { display: grid; place-items: center; background: var(--hover); }
+  .tile.bad .ext { font-size: 12px; font-weight: 700; color: var(--faint); text-align: center; line-height: 1.4; padding: 6px; word-break: break-all; }
+  .tile.pend img { opacity: 0; }
+  .tile.pend { background: linear-gradient(110deg, var(--press) 30%, var(--hover) 50%, var(--press) 70%); background-size: 300% 100%; animation: shimmer 1.4s linear infinite; }
+  @keyframes shimmer { to { background-position: -100% 0; } }
+
+  .drop { border: 2px dashed var(--sand); border-radius: 24px; padding: 44px 24px 40px; text-align: center; margin: 22px; background: var(--paper); transition: border-color .15s, background .15s; }
+  .drop.over, body.dragging .drop { border-color: var(--dark); background: var(--mint); }
+  .drop .big { width: 64px; height: 64px; border-radius: 20px; background: var(--mint); color: var(--dark); display: grid; place-items: center; margin: 0 auto 14px; }
+  .drop .big svg { width: 32px; height: 32px; }
+  .drop h1 { margin: 0 0 6px; font-family: var(--serif); font-weight: 600; font-size: 25px; color: var(--dark); letter-spacing: -.02em; }
+  .drop p { margin: 0 auto; max-width: 520px; color: var(--muted); line-height: 1.7; font-size: 13.5px; }
+  .drop .btns { justify-content: center; margin-top: 18px; }
+  .feat { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin: 0 22px 22px; }
+  .feat div { background: #fff; border-radius: 16px; box-shadow: 0 0 0 1px var(--hair); padding: 14px 16px; }
+  .feat b { display: flex; align-items: center; gap: 8px; font-size: 13.5px; color: var(--dark); margin-bottom: 4px; }
+  .feat p { margin: 0; font-size: 12.5px; color: var(--muted); line-height: 1.6; }
+
+  .gcard { background: #fff; border-radius: 18px; box-shadow: 0 0 0 1px var(--hair); padding: 12px; margin-bottom: 12px; content-visibility: auto; contain-intrinsic-size: auto 260px; }
+  .gcard.clean { background: var(--paper); }
+  .gcard-h { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 0 2px 10px; }
+  .gcard-h .tt { font-weight: 700; font-size: 13.5px; }
+  .gcard-h .mt { font-size: 12px; color: var(--faint); font-variant-numeric: tabular-nums; }
+  .gcard .grid { --ts: calc(var(--gts, 150px)); }
+  .gitem { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+  .cap { font-size: 11px; color: var(--muted); display: flex; align-items: center; gap: 6px; font-variant-numeric: tabular-nums; padding: 0 2px; min-width: 0; }
+  .cap .bar { flex: 1; height: 5px; min-width: 24px; }
+  .cap .bar i { background: var(--dark); }
+  .cap.lo .bar i { background: var(--clay); }
+  .cap span { white-space: nowrap; }
+
+  .day { margin-bottom: 18px; content-visibility: auto; contain-intrinsic-size: auto 320px; }
+  .month-h { font-family: var(--serif); font-weight: 600; font-size: 20px; color: var(--dark); margin: 6px 2px 12px; letter-spacing: -.02em; display: flex; align-items: baseline; gap: 10px; }
+  .month-h small { font-family: var(--sans); font-size: 12px; color: var(--faint); font-weight: 600; letter-spacing: 0; }
+  .chart { display: flex; align-items: flex-end; gap: 4px; height: 96px; overflow-x: auto; padding: 4px 2px 0; margin-bottom: 16px; scrollbar-width: thin; }
+  .chart button { flex: 1 0 22px; max-width: 46px; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; gap: 4px; font-size: 10px; color: var(--faint); font-variant-numeric: tabular-nums; }
+  .chart button i { width: 100%; background: var(--sand); border-radius: 5px 5px 2px 2px; min-height: 2px; transition: background .15s; }
+  .chart button:hover i { background: var(--dark); }
+  .chart button span { white-space: nowrap; }
+
+  .map { width: 100%; height: 280px; display: block; background: #EBEEE6; border-radius: 16px; box-shadow: inset 0 0 0 1px var(--hair); margin-bottom: 14px; touch-action: pan-y; }
+  .map .gr { stroke: rgba(28,40,36,.07); stroke-width: 1; }
+  .map circle.pt { fill: var(--dark); fill-opacity: .78; stroke: #fff; stroke-width: 1.5; cursor: pointer; }
+  .map circle.pt.sel { fill: var(--clay); fill-opacity: 1; }
+  .map text { font-family: var(--sans); font-size: 11px; font-weight: 700; fill: var(--ink-2); paint-order: stroke; stroke: #EBEEE6; stroke-width: 3px; pointer-events: none; }
+  .places { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px; margin-bottom: 16px; }
+  .pcard { display: flex; gap: 10px; align-items: center; padding: 8px; border-radius: 16px; background: #fff; box-shadow: 0 0 0 1px var(--hair); text-align: left; width: 100%; min-width: 0; }
+  .pcard:hover { background: var(--paper); }
+  .pcard.sel { box-shadow: 0 0 0 2px var(--dark); }
+  .pcard .mos { width: 58px; height: 58px; border-radius: 12px; overflow: hidden; display: grid; grid-template-columns: 1fr 1fr; gap: 1px; flex: none; background: var(--press); }
+  .pcard .mos img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .pcard .mos.one { grid-template-columns: 1fr; }
+  .pcard .tx { flex: 1; min-width: 0; }
+  .pcard .tx b { display: block; font-size: 14px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .pcard .tx small { display: block; font-size: 11.5px; color: var(--faint); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-variant-numeric: tabular-nums; }
+
+  .zoomr { display: flex; align-items: center; gap: 6px; color: var(--faint); }
+  .zoomr input { width: 96px; accent-color: var(--dark); }
+  input[type=range].rng { width: 100%; accent-color: var(--dark); height: 22px; margin: 0; }
+  .rlab { display: flex; justify-content: space-between; font-size: 11px; color: var(--faint); margin-top: 2px; }
+  .prog { margin-bottom: 4px; }
+  .prog .row { display: flex; justify-content: space-between; font-size: 12.5px; color: var(--muted); margin-bottom: 6px; font-variant-numeric: tabular-nums; }
+  .prog .row b { color: var(--ink); }
+  .save { margin-top: 10px; }
+  .save .bar { height: 10px; }
+  .save .bar i { background: var(--rec); }
+  .save .row { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); margin-top: 6px; font-variant-numeric: tabular-nums; }
+  .save .row b { color: var(--rec); }
+  .checks label.dis { opacity: .45; }
+
+  /* Viewer */
+  #viewer { position: fixed; inset: 0; z-index: 90; background: #141B18; color: #F5F1E8; display: flex; flex-direction: column; }
+  #viewer .vtop { display: flex; align-items: center; gap: 8px; padding: 10px 12px; padding-top: calc(10px + env(safe-area-inset-top)); }
+  #viewer .vtop .t { flex: 1; min-width: 0; }
+  #viewer .vtop .t b { display: block; font-size: 14px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #viewer .vtop .t small { display: block; font-size: 11.5px; color: #A9B0A6; font-variant-numeric: tabular-nums; }
+  #viewer .icon-btn { color: #E6E1D5; }
+  #viewer .icon-btn:hover:not(:disabled) { background: rgba(255,255,255,.1); color: #fff; }
+  #viewer .icon-btn[aria-pressed="true"] { background: rgba(255,255,255,.16); }
+  #viewer .vmid { flex: 1; min-height: 0; display: flex; }
+  #vStage { flex: 1; min-width: 0; min-height: 0; overflow: hidden; position: relative; touch-action: pan-y pinch-zoom; }
+  #vStage.zoom { overflow: auto; touch-action: auto; }
+  #vImg { position: absolute; inset: 0; margin: auto; max-width: 100%; max-height: 100%; display: block; cursor: zoom-in; user-select: none; -webkit-user-drag: none; }
+  #vStage.zoom #vImg { position: static; max-width: none; max-height: none; cursor: zoom-out; margin: 0; }
+  #vStage .vmsg { position: absolute; inset: 0; display: grid; place-items: center; }
+  body.viewing #toast { bottom: calc(84px + env(safe-area-inset-bottom)); z-index: 100; }
+  #vStage .vmsg { color: #A9B0A6; font-size: 14px; text-align: center; line-height: 1.7; padding: 20px; }
+  #vStage .nav { position: absolute; top: 50%; transform: translateY(-50%); width: 46px; height: 46px; border-radius: 999px; background: rgba(0,0,0,.35); color: #fff; display: grid; place-items: center; }
+  #vStage .nav:hover { background: rgba(0,0,0,.55); }
+  #vStage .nav.l { left: 10px; } #vStage .nav.r { right: 10px; }
+  #vStage.zoom .nav { display: none; }
+  #vStage.isdel #vImg { opacity: .45; filter: grayscale(.7); }
+  #vInfo { width: 300px; flex: none; overflow-y: auto; padding: 4px 16px 16px; border-left: 1px solid rgba(255,255,255,.08); font-size: 12.5px; }
+  #vInfo dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 7px 12px; }
+  #vInfo dt { color: #A9B0A6; white-space: nowrap; }
+  #vInfo dd { margin: 0; min-width: 0; overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
+  #vInfo a { color: #D9C8A9; }
+  #vInfo h4 { margin: 14px 0 8px; font-size: 11.5px; color: #D9C8A9; letter-spacing: .04em; }
+  #vInfo .bar { background: rgba(255,255,255,.12); height: 6px; margin-top: 4px; }
+  #vInfo .bar i { background: #9CC2A8; }
+  #vInfo .strip { display: flex; gap: 4px; overflow-x: auto; padding-bottom: 4px; }
+  #vInfo .strip img { width: 54px; height: 54px; object-fit: cover; border-radius: 8px; cursor: pointer; opacity: .75; flex: none; }
+  #vInfo .strip img.cur { opacity: 1; outline: 2px solid #D9C8A9; }
+  #vInfo .strip img.del { filter: grayscale(.9); opacity: .35; }
+  #viewer .vbot { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 10px 12px; padding-bottom: calc(12px + env(safe-area-inset-bottom)); }
+  #viewer .vbot .btn { background: rgba(255,255,255,.1); color: #F5F1E8; }
+  #viewer .vbot .btn:hover:not(:disabled) { background: rgba(255,255,255,.18); }
+  #viewer .vbot .btn.on-keep { background: var(--dark); }
+  #viewer .vbot .btn.on-del { background: var(--rec); }
+  #viewer.noinfo #vInfo { display: none; }
+  #busyDlg .bar { height: 10px; }
+  #busyDlg #bsT2 { font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums; min-height: 18px; word-break: break-all; }
+  .codehelp { font-size: 12px; color: var(--muted); line-height: 1.7; }
+
+  @media (max-width: 1100px) { main { grid-template-columns: minmax(0, 1fr) 320px; } }
+  @media (max-width: 999px) {
+    main { display: flex; flex-direction: column; height: auto; min-height: 0; padding: 0 12px 16px; }
+    #side .collapse { display: grid; }
+    #side.closed .pbody { display: none; }
+    #side.closed .ph { border-bottom: 0; }
+    .pbody { overflow: visible; }
+    .scroll { overflow: visible; }
+    .tabs-wrap { padding: 2px 12px 10px; }
+    .top-inner { padding: 12px 12px 6px; gap: 8px; }
+    .foot { padding: 0 12px 12px; }
+    .pad { padding: 12px; }
+    #work { min-height: 72vh; }
+    #work .view { overflow: visible; }
+  }
+  @media (max-width: 760px) {
+    .logo { height: 27px; }
+    .app-name { font-size: 19px; padding-left: 10px; }
+    .app-name small { display: none; }
+    .tool .t { display: none; }
+    .tabs-wrap { flex-direction: column; align-items: stretch; gap: 8px; }
+    .brand { min-width: 0; overflow: hidden; }
+    .app-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .head-actions { gap: 0; }
+    .icon-btn { width: 34px; height: 34px; }
+  }
+  @media (max-width: 430px) {
+    .logo { height: 23px; }
+    .app-name { font-size: 17px; padding-left: 8px; }
+    .icon-btn { width: 31px; height: 31px; }
+    .icon-btn svg.i { width: 17px; height: 17px; }
+    .top-inner { gap: 6px; }
+  }
+  @media print {
+    body { background: #fff; display: block; }
+    @page { size: A4; margin: 16mm; }
+  }
+  @media (max-width: 999px) { #viewer .vmid { flex-direction: column; } #vInfo { width: auto; max-height: 38vh; border-left: 0; border-top: 1px solid rgba(255,255,255,.08); padding-top: 10px; } .drop { margin: 14px; padding: 32px 16px; } .feat { margin: 0 14px 14px; } }
+  @media (max-width: 760px) { .zoomr input { width: 70px; } .drop h1 { font-size: 21px; } .gcard { padding: 10px; } .map { height: 200px; } #vStage .nav { width: 38px; height: 38px; } .wbar .search { max-width: none; } }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="top-inner">
+    <a class="brand" href="./" aria-label="Photoer">
+      <img class="logo" alt="OUTGRID" src="data:image/png;base64,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" />
+      <span class="app-name">Photoer<small>내 기기에서 하는 사진 정리</small></span>
+    </a>
+    <div class="head-actions">
+      <button class="icon-btn" id="addBtn" title="사진 더하기"><i data-icon="plus"></i></button>
+      <button class="icon-btn" id="dirBtn" title="폴더 더하기"><i data-icon="folder"></i></button>
+      <button class="icon-btn" id="helpBtn" title="도움말"><i data-icon="help"></i></button>
+      <button class="icon-btn" id="clearBtn" title="모두 비우기"><i data-icon="trash"></i></button>
+    </div>
+  </div>
+  <div class="tabs-wrap">
+    <nav class="tabs" id="tabs" role="tablist">
+      <button class="tab" role="tab" data-tab="all" aria-selected="true"><i data-icon="grid"></i>사진<span class="n" id="nAll">0</span></button>
+      <button class="tab" role="tab" data-tab="sim"><i data-icon="similar"></i>비슷한 사진<span class="n" id="nSim">0</span></button>
+      <button class="tab" role="tab" data-tab="prob"><i data-icon="blur"></i>흐림·문제<span class="n" id="nProb">0</span></button>
+      <button class="tab" role="tab" data-tab="date"><i data-icon="calendar"></i>날짜<span class="n" id="nDate">0</span></button>
+      <button class="tab" role="tab" data-tab="place"><i data-icon="pin"></i>장소<span class="n" id="nPlace">0</span></button>
+    </nav>
+    <div class="applied" id="applied"></div>
+  </div>
+</header>
+
+<main>
+  <section class="panel" id="work">
+    <div class="view" data-view="home" id="vHome">
+      <div class="scroll">
+        <div class="drop" id="drop">
+          <div class="big"><i data-icon="image"></i></div>
+          <h1>사진을 불러와 정리를 시작해요</h1>
+          <p>흐린 사진, 비슷하게 여러 장 찍힌 사진, 똑같은 중복 사진을 찾아 주고 날짜와 장소로 묶어 줘요. 사진은 이 기기 안에서만 읽고, 어디에도 올리지 않아요.</p>
+          <div class="btns">
+            <button class="btn primary" id="hPick"><i data-icon="image"></i>사진 고르기</button>
+            <button class="btn line" id="hFiles"><i data-icon="doc"></i>파일에서 고르기</button>
+            <button class="btn line" id="hDir"><i data-icon="folder"></i>폴더 고르기</button>
+            <button class="btn line" id="hOpen" hidden><i data-icon="folderOpen"></i>폴더 열어 바로 정리</button>
+          </div>
+          <p class="muted" style="font-size:12px;margin-top:14px">여기로 사진이나 폴더를 끌어다 놓아도 돼요. JPG·PNG·WebP·GIF·AVIF를 읽어요.</p>
+        </div>
+        <div class="feat">
+          <div><b><i data-icon="similar"></i>비슷한 사진</b><p>연속 촬영처럼 거의 같은 사진을 묶고, 가장 선명하고 밝기가 좋은 한 장을 추천해요.</p></div>
+          <div><b><i data-icon="blur"></i>흐린 사진</b><p>초점이 나가거나 흔들린 사진, 너무 어둡거나 하얗게 날아간 사진을 골라내요.</p></div>
+          <div><b><i data-icon="calendar"></i>날짜·장소</b><p>촬영 정보(EXIF)의 날짜와 위치로 날짜별, 장소별로 묶어 봐요. 위치 이름은 기기 안의 도시 목록으로 붙여요.</p></div>
+          <div><b><i data-icon="download"></i>남길 사진만 받기</b><p>남길 사진을 날짜·장소별 폴더로 나눈 ZIP으로 받거나, 지울 사진 목록을 받아 갤러리에서 지워요.</p></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="view" data-view="all" hidden>
+      <div class="wbar">
+        <div class="search"><i data-icon="search"></i><input class="inp" id="aQ" type="search" placeholder="파일 이름 찾기" /></div>
+        <div class="seg" id="aSeg" style="flex:none"><button data-f="all" aria-pressed="true">전체</button><button data-f="keep">남김</button><button data-f="del">지움</button></div>
+        <select class="inp" id="aSort" style="width:auto;flex:none;height:36px">
+          <option value="old">오래된 순</option><option value="new">최신 순</option><option value="name">이름 순</option><option value="big">큰 파일 순</option><option value="sharp">덜 선명한 순</option><option value="folder">폴더 순</option>
+        </select>
+        <span class="grow"></span>
+        <label class="zoomr" title="사진 크기"><i data-icon="grid"></i><input type="range" min="80" max="260" step="4" class="tsz" /></label>
+      </div>
+      <div class="chips" id="aChips" style="padding:10px 14px 0"></div>
+      <div class="scroll"><div class="pad" id="allList" data-ctx="all"></div></div>
+    </div>
+
+    <div class="view" data-view="sim" hidden>
+      <div class="wbar">
+        <span class="count" id="simCount"></span>
+        <div class="seg" id="simSeg" style="flex:none"><button data-f="all" aria-pressed="true">전체</button><button data-f="todo">안 고른 묶음</button><button data-f="dup">똑같은 중복</button></div>
+        <span class="grow"></span>
+        <button class="tool" id="simAllKeep" title="모든 묶음을 다시 모두 남김으로"><i data-icon="undo"></i><span class="t">모두 남김으로</span></button>
+        <button class="tool prim" id="simAllBest"><i data-icon="wand"></i><span class="t">모든 묶음에서 한 장씩만</span></button>
+      </div>
+      <div class="scroll"><div class="pad" id="simList"></div></div>
+    </div>
+
+    <div class="view" data-view="prob" hidden>
+      <div class="wbar">
+        <span class="count" id="probCount"></span><span class="grow"></span>
+        <label class="zoomr" title="사진 크기"><i data-icon="grid"></i><input type="range" min="80" max="260" step="4" class="tsz" /></label>
+      </div>
+      <div class="scroll"><div class="pad" id="probList"></div></div>
+    </div>
+
+    <div class="view" data-view="date" hidden>
+      <div class="wbar">
+        <span class="count" id="dateCount"></span>
+        <div class="seg" id="dateSeg" style="flex:none"><button data-f="new" aria-pressed="true">최신 순</button><button data-f="old">오래된 순</button></div>
+        <span class="grow"></span>
+        <label class="zoomr" title="사진 크기"><i data-icon="grid"></i><input type="range" min="80" max="260" step="4" class="tsz" /></label>
+      </div>
+      <div class="scroll" id="dateScroll"><div class="pad" id="dateList"></div></div>
+    </div>
+
+    <div class="view" data-view="place" hidden>
+      <div class="wbar">
+        <span class="count" id="placeCount"></span>
+        <span class="grow"></span>
+        <label class="zoomr" title="사진 크기"><i data-icon="grid"></i><input type="range" min="80" max="260" step="4" class="tsz" /></label>
+      </div>
+      <div class="scroll"><div class="pad" id="placeList"></div></div>
+    </div>
+  </section>
+
+  <aside class="panel" id="side">
+    <div class="ph">
+      <div><h2 id="sideT">정리 현황</h2><p id="sideS">사진을 불러오면 여기에 정리 현황이 나와요</p></div>
+      <button class="icon-btn collapse" id="sideToggle" title="접기·펼치기"><i data-icon="chevron"></i></button>
+    </div>
+    <div class="pbody" id="sideBody">
+      <div class="sec" id="sProg" hidden>
+        <h3>살펴보는 중 <span class="v" id="progV"></span></h3>
+        <div class="prog"><div class="row"><span id="progT"></span><span id="progE"></span></div><div class="bar"><i id="progBar"></i></div></div>
+      </div>
+      <div class="sec">
+        <h3>한눈에</h3>
+        <div class="kpis">
+          <button class="kpi" data-go="all"><div class="k">사진</div><div class="v" id="kAll">0</div></button>
+          <button class="kpi" data-go="keep"><div class="k">남김</div><div class="v" id="kKeep">0</div></button>
+          <button class="kpi" data-go="del"><div class="k">지움</div><div class="v" id="kDel" style="color:var(--rec)">0</div></button>
+        </div>
+        <div class="save"><div class="bar"><i id="saveBar"></i></div><div class="row"><span id="saveL">전체 0 B</span><span>줄어드는 용량 <b id="saveV">0 B</b></span></div></div>
+        <div class="btns g2" style="margin-top:12px"><button class="btn line sm" id="undoBtn" disabled><i data-icon="undo"></i>되돌리기</button><button class="btn line sm" id="resetBtn"><i data-icon="refresh"></i>모두 남김으로</button></div>
+      </div>
+      <div class="sec">
+        <h3>추천대로 표시</h3>
+        <p class="hint">고른 기준에 맞는 사진을 한 번에 ‘지움’으로 표시해요. 표시만 하고 실제로 지우지는 않아요.</p>
+        <div class="checks" id="autoChecks"></div>
+        <button class="btn primary block" id="autoGo" style="margin-top:8px"><i data-icon="wand"></i>추천대로 표시하기</button>
+      </div>
+      <div class="sec">
+        <h3>기준</h3>
+        <div class="field"><div class="lbl">비슷한 사진으로 볼 기준 <span class="v" id="simV"></span></div>
+          <input type="range" class="rng" id="simR" min="2" max="18" step="1" /><div class="rlab"><span>거의 같을 때만</span><span>대충 비슷해도</span></div></div>
+        <div class="field"><div class="lbl">흐린 사진으로 볼 기준 <span class="v" id="blurV"></span></div>
+          <input type="range" class="rng" id="blurR" min="5" max="70" step="1" /><div class="rlab"><span>아주 흐릴 때만</span><span>조금만 흐려도</span></div></div>
+        <label class="switch">같은 날 찍은 것끼리만 묶기<small>날짜가 다른 비슷한 풍경은 따로 둬요</small><input type="checkbox" id="swSameDay" /></label>
+        <div class="field" style="margin-top:8px"><div class="lbl">장소로 묶는 거리</div>
+          <div class="seg" id="radSeg"><button data-v="300">300m</button><button data-v="1000">1km</button><button data-v="3000">3km</button><button data-v="10000">10km</button><button data-v="30000">30km</button></div></div>
+        <div class="field"><div class="lbl">사진을 누르면</div>
+          <div class="seg" id="tapSeg"><button data-v="mark">지움 표시</button><button data-v="view">크게 보기</button></div></div>
+        <p class="hint" style="margin:0">길게 누르거나 오른쪽 위 확대 단추를 누르면 크게 봐요.</p>
+      </div>
+      <div class="sec">
+        <h3>받기</h3>
+        <div class="field"><div class="lbl">무엇을</div>
+          <div class="seg" id="exWhat"><button data-v="keep">남길 사진</button><button data-v="del">지울 사진</button><button data-v="all">전체</button></div></div>
+        <div class="field"><div class="lbl">폴더 나누기</div>
+          <select class="inp" id="exLayout"><option value="flat">한 폴더에 모두</option><option value="keep">원래 폴더 그대로</option><option value="day">날짜별 (2024-10-05)</option><option value="month">달별 (2024-10)</option><option value="ym">연도/달 (2024/10)</option><option value="place">장소별</option></select></div>
+        <label class="switch">촬영 일시로 이름 바꾸기<small>예: 20241005_143012.jpg</small><input type="checkbox" id="swRename" /></label>
+        <div class="btns g2" style="margin-top:8px"><button class="btn primary" id="exZip"><i data-icon="zip"></i>ZIP으로 받기</button><button class="btn line" id="exDir"><i data-icon="folder"></i>폴더에 저장</button></div>
+        <div class="btns g2" style="margin-top:6px"><button class="btn ghost sm" id="exList"><i data-icon="doc"></i>지울 사진 목록</button><button class="btn ghost sm" id="exCsv"><i data-icon="list"></i>정리 결과 CSV</button></div>
+        <p class="hint" id="exHint" style="margin:8px 0 0"></p>
+      </div>
+      <div class="sec" id="sDir" hidden>
+        <h3>열어 둔 폴더에서 정리</h3>
+        <p class="hint" id="dirHint"></p>
+        <div class="btns g2"><button class="btn clay" id="dirMove"><i data-icon="folderOpen"></i>‘지울 사진’ 폴더로 옮기기</button><button class="btn ghost danger" id="dirDel"><i data-icon="trash"></i>바로 지우기</button></div>
+      </div>
+      <div class="sec">
+        <h3>기기 저장</h3>
+        <p class="hint">한 번 살펴본 사진의 분석 결과와 지움 표시는 이 브라우저에 기억해 둬요. 같은 사진을 다시 불러오면 바로 이어서 정리해요.</p>
+        <button class="btn ghost sm danger" id="cacheClr"><i data-icon="trash"></i>기억한 분석 결과 지우기</button>
+      </div>
+    </div>
+  </aside>
+</main>
+
+<div class="foot"><i data-icon="shield"></i>Photoer는 사진을 이 기기 안에서만 읽어요. 어떤 사진도 서버로 올리지 않고, 인공지능도 쓰지 않아요.</div>
+
+<input type="file" id="fPick" accept="image/*" multiple hidden />
+<input type="file" id="fFiles" multiple hidden />
+<input type="file" id="fDir" webkitdirectory multiple hidden />
+
+<div id="viewer" hidden>
+  <div class="vtop">
+    <button class="icon-btn" id="vClose" title="닫기 (Esc)"><i data-icon="x"></i></button>
+    <div class="t"><b id="vName"></b><small id="vSub"></small></div>
+    <button class="icon-btn" id="vZoom" title="원래 크기 (Z)"><i data-icon="zoom"></i></button>
+    <button class="icon-btn" id="vInfoBtn" title="정보 (I)"><i data-icon="info"></i></button>
+  </div>
+  <div class="vmid">
+    <div id="vStage"><img id="vImg" alt="" /><div class="vmsg" id="vMsg" hidden></div>
+      <button class="nav l" id="vPrev" title="이전 (←)"><i data-icon="left"></i></button><button class="nav r" id="vNext" title="다음 (→)"><i data-icon="right"></i></button></div>
+    <div id="vInfo"></div>
+  </div>
+  <div class="vbot">
+    <button class="btn" id="vKeep"><i data-icon="check"></i>남기기</button>
+    <button class="btn" id="vDel"><i data-icon="x"></i>지우기</button>
+  </div>
+</div>
+
+<!-- Name a place -->
+<dialog id="nmDlg">
+  <div class="dlg-head"><h2>장소 이름<small id="nmS"></small></h2><button class="icon-btn" data-close><i data-icon="x"></i></button></div>
+  <div class="dlg-body">
+    <input class="inp" id="nmA" maxlength="40" placeholder="예: 제주 여행" />
+    <div class="btn-row"><button class="btn ghost" id="nmReset">자동 이름으로</button><span class="grow"></span><button class="btn ghost" data-close>취소</button><button class="btn primary" id="nmSave">저장</button></div>
+  </div>
+</dialog>
+
+<!-- Busy -->
+<dialog id="busyDlg">
+  <div class="dlg-head"><h2 id="bsT">준비 중</h2></div>
+  <div class="dlg-body">
+    <div class="bar"><i id="bsBar"></i></div>
+    <div id="bsT2"></div>
+    <div class="btn-row"><button class="btn ghost" id="bsCancel">멈추기</button></div>
+  </div>
+</dialog>
+
+<!-- Help -->
+<dialog id="helpDlg" class="wide">
+  <div class="dlg-head"><h2>Photoer는 이렇게 써요<small>사진은 이 기기 밖으로 나가지 않아요</small></h2><button class="icon-btn" data-close><i data-icon="x"></i></button></div>
+  <div class="dlg-body help">
+    <div><h4>흐름</h4><ul>
+      <li>사진이나 폴더를 불러오면 한 장씩 살펴보며 선명도, 밝기, 모양(지문), 촬영 날짜와 위치를 읽어요.</li>
+      <li>‘비슷한 사진’에서 묶음마다 남길 사진을 골라요. 별표(추천)는 가장 선명하고 밝기가 알맞은 사진이에요.</li>
+      <li>‘흐림·문제’에서 흐리거나 어둡거나 너무 밝은 사진, 스크린샷, 아주 작은 사진을 모아 봐요.</li>
+      <li>사진을 누르면 ‘지움’ 표시가 켜지고 꺼져요. 길게 누르거나 확대 단추로 크게 볼 수 있어요.</li>
+      <li>다 고르면 ‘받기’에서 남길 사진만 ZIP이나 폴더로 받아요. 지울 사진 목록도 받을 수 있어요.</li>
+    </ul></div>
+    <div><h4>지우기에 대해</h4><ul>
+      <li>웹 페이지는 휴대폰·태블릿 갤러리의 사진을 직접 지울 수 없어요. 남길 사진만 받아 두거나, 지울 사진 목록을 보고 갤러리에서 지워 주세요.</li>
+      <li>컴퓨터의 크롬·엣지에서는 ‘폴더 열어 바로 정리’로 연 폴더에 한해, 지울 사진을 ‘지울 사진’ 폴더로 옮기거나 바로 지울 수 있어요.</li>
+    </ul></div>
+    <div><h4>알아 두기</h4><ul>
+      <li>흐림 판단은 사진의 윤곽선이 얼마나 또렷한지로 재요. 하늘이나 벽처럼 무늬가 없는 사진은 흐리다고 나올 수 있으니 한 번 확인해 주세요.</li>
+      <li>장소가 안 나오면 ‘파일에서 고르기’나 ‘폴더 고르기’로 불러와 보세요. 일부 안드로이드 사진 선택기는 위치 정보를 지우고 넘겨줘요.</li>
+      <li>위치 이름은 기기 안에 든 도시 목록으로 붙여요. 장소 이름은 직접 바꿀 수 있어요. ‘지도에서 보기’를 누를 때만 해당 좌표로 지도 사이트가 열려요.</li>
+      <li>얼굴로 사람을 묶는 기능은 인공지능 모델이 필요해서 넣지 않았어요.</li>
+      <li>HEIC 사진은 이 브라우저가 읽지 못하면 살펴보지 못하지만, 받기에는 그대로 들어가요.</li>
+    </ul></div>
+    <div><h4>단축키</h4>
+      <div class="keys"><kbd>1 ~ 5</kbd><span>탭 바꾸기</span><kbd>Ctrl Z</kbd><span>되돌리기</span><kbd>← →</kbd><span>크게 보기에서 이전·다음</span><kbd>X / Delete</kbd><span>크게 보기에서 지움 표시</span><kbd>K</kbd><span>크게 보기에서 남기기</span><kbd>Z · I</kbd><span>원래 크기 · 정보</span></div>
+    </div>
+  </div>
+</dialog>
+
+<!-- Confirm -->
+<dialog id="cfDlg">
+  <div class="dlg-head"><h2 id="cfT"></h2></div>
+  <div class="dlg-body"><p id="cfM"></p><div class="btn-row"><button class="btn ghost" id="cfNo">취소</button><button class="btn primary" id="cfOk">확인</button></div></div>
+</dialog>
+
+<div id="toast" role="status" aria-live="polite"><span id="toastMsg"></span><button id="toastAct" hidden></button></div>
+<script>
+'use strict';
+/* =========================================================================
+   Photoer · outgrid — on-device photo organizer
+   Reads photos in the browser only (nothing is uploaded, no AI).
+   Per photo: EXIF date/GPS/camera, a 64-bit perceptual hash (DCT), a tiny
+   colour layout, Laplacian-variance sharpness, brightness and clipping.
+   From that: near-duplicate groups (union-find on hash + colour distance),
+   blurry / dark / blown-out / screenshot / tiny lists, day and place
+   groups (greedy radius clustering + offline city list). Marks (keep/del)
+   and analysis results are cached in IndexedDB keyed by name|size|mtime.
+   Export: store-only ZIP (split under 2 GB), folder save, lists, CSV, and
+   — for folders opened with the File System Access API — move/delete.
+   ========================================================================= */
+
+/* ---------- Icons ---------- */
+const ICONS = {
+  plus: '<path d="M12 5v14M5 12h14"/>',
+  left: '<path d="m14.5 6-6 6 6 6"/>',
+  right: '<path d="m9.5 6 6 6-6 6"/>',
+  check: '<path d="m5 12.5 4.5 4.5L19 7.5"/>',
+  x: '<path d="M6 6l12 12M18 6 6 18"/>',
+  trash: '<path d="M4.5 7h15"/><path d="M9.5 7V5.2a1.2 1.2 0 0 1 1.2-1.2h2.6a1.2 1.2 0 0 1 1.2 1.2V7"/><path d="m6.5 7 .9 11.3a2 2 0 0 0 2 1.7h5.2a2 2 0 0 0 2-1.7L17.5 7"/>',
+  help: '<circle cx="12" cy="12" r="8.5"/><path d="M9.6 9.5a2.5 2.5 0 0 1 4.8.9c0 1.7-2.4 2-2.4 3.6M12 16.8v.1"/>',
+  download: '<path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/>',
+  list: '<path d="M9 6.5h11M9 12h11M9 17.5h11"/><circle cx="4.8" cy="6.5" r=".9" fill="currentColor"/><circle cx="4.8" cy="12" r=".9" fill="currentColor"/><circle cx="4.8" cy="17.5" r=".9" fill="currentColor"/>',
+  shield: '<path d="M12 3.5 5 6.2v5.3c0 4.3 3 7.6 7 9 4-1.4 7-4.7 7-9V6.2z"/><path d="m9.2 12 2 2 3.8-4"/>',
+  chevron: '<path d="m6 9 6 6 6-6"/>',
+  search: '<circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5"/>',
+  doc: '<path d="M6.5 3.5h7l4 4v13h-11z"/><path d="M13.5 3.5v4h4M9 12.5h6M9 16h6"/>',
+  image: '<rect x="3.5" y="5" width="17" height="14" rx="2.5"/><circle cx="9" cy="10" r="1.6"/><path d="m20.5 16-5-5-8 8"/>',
+  refresh: '<path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3"/><path d="M19.5 4.5v4h-4"/>',
+  folder: '<path d="M3.5 7.5a2 2 0 0 1 2-2h4l2 2.2h7a2 2 0 0 1 2 2v7.8a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2z"/>',
+  folderOpen: '<path d="M3.5 17.5V7.5a2 2 0 0 1 2-2h4l2 2.2h6a2 2 0 0 1 2 2V11"/><path d="M3.5 17.5 6 11.8a1.5 1.5 0 0 1 1.4-.9h13l-2.6 6.8a1.5 1.5 0 0 1-1.4.9H5a1.5 1.5 0 0 1-1.5-1.1z"/>',
+  grid: '<rect x="4" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.5"/>',
+  similar: '<rect x="3.5" y="6.5" width="11" height="11" rx="2"/><path d="M17.5 6.5h1a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-1" opacity=".55"/><path d="m3.5 15 3.5-3.5 3 3 1.5-1.5 3 3"/>',
+  blur: '<circle cx="12" cy="12" r="7.5" stroke-dasharray="2.2 2.6"/><circle cx="12" cy="12" r="3.2"/>',
+  calendar: '<rect x="4" y="5.5" width="16" height="14.5" rx="2.5"/><path d="M4 10h16M8.5 3.5v4M15.5 3.5v4"/>',
+  pin: '<path d="M12 20.5s6.5-5.6 6.5-11a6.5 6.5 0 0 0-13 0c0 5.4 6.5 11 6.5 11z"/><circle cx="12" cy="9.5" r="2.4"/>',
+  zoom: '<circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5M11 8.5v5M8.5 11h5"/>',
+  expand: '<path d="M14 4.5h5.5V10M10 19.5H4.5V14M19.5 4.5 13.5 10.5M4.5 19.5l6-6"/>',
+  info: '<circle cx="12" cy="12" r="8.5"/><path d="M12 11v5.5M12 7.8v.1"/>',
+  undo: '<path d="M8.5 5.5 4.5 9.5l4 4"/><path d="M4.5 9.5H14a5.5 5.5 0 0 1 0 11h-3"/>',
+  wand: '<path d="m4 20 10.5-10.5M14.5 9.5l2-2a1.4 1.4 0 0 0 0-2 1.4 1.4 0 0 0-2 0l-2 2"/><path d="M19 3v3M17.5 4.5h3M20 11v2.5M18.8 12.2h2.5M9 3v2.5M7.8 4.2h2.5"/>',
+  zip: '<path d="M6.5 3.5h11v17h-11z"/><path d="M12 3.5v2M12 7.5v2M12 11.5v2"/><rect x="10.5" y="14.5" width="3" height="3" rx=".8"/>',
+  star: '<path d="m12 4 2.4 4.9 5.4.8-3.9 3.8.9 5.4L12 16.4l-4.8 2.5.9-5.4-3.9-3.8 5.4-.8z"/>',
+  camera: '<path d="M4 8.5a2 2 0 0 1 2-2h2l1.5-2h5L16 6.5h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><circle cx="12" cy="13" r="3.5"/>',
+  face: '<circle cx="12" cy="12" r="8.5"/><path d="M8.8 14.5a4 4 0 0 0 6.4 0M9.3 10v.1M14.7 10v.1"/>',
+  phone: '<rect x="7" y="3.5" width="10" height="17" rx="2.2"/><path d="M11 17.5h2"/>',
+};
+function icon(n, cls = '') { return `<svg class="i ${cls}" viewBox="0 0 24 24" aria-hidden="true">${ICONS[n] || ''}</svg>`; }
+function hydrateIcons(root = document) { root.querySelectorAll('i[data-icon]').forEach(el => { const t = document.createElement('template'); t.innerHTML = icon(el.dataset.icon, el.className); el.replaceWith(t.content.firstChild); }); }
+
+/* ---------- Helpers ---------- */
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const pad2 = n => String(n).padStart(2, '0');
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const WD = ['일', '월', '화', '수', '목', '금', '토'];
+const store = {
+  get(k, d) { try { const v = localStorage.getItem('photoer.' + k); return v == null ? d : JSON.parse(v); } catch { return d; } },
+  set(k, v) { try { localStorage.setItem('photoer.' + k, JSON.stringify(v)); } catch {} },
+};
+function merge(d, s) { const o = { ...d }; if (s && typeof s === 'object') for (const k in s) o[k] = (d[k] && typeof d[k] === 'object' && !Array.isArray(d[k])) ? merge(d[k], s[k]) : s[k]; return o; }
+function fmtSize(b) { if (!b) return '0 B'; const u = ['B', 'KB', 'MB', 'GB', 'TB']; let i = 0; while (b >= 1024 && i < 4) { b /= 1024; i++; } return (i >= 2 ? b.toFixed(b < 10 ? 2 : 1) : Math.round(b)) + ' ' + u[i]; }
+const fmtN = n => Number(n || 0).toLocaleString('ko-KR');
+function dkey(t) { const d = new Date(t); return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`; }
+function fmtDay(t, year = true) { const d = new Date(t); return `${year ? d.getFullYear() + '년 ' : ''}${d.getMonth() + 1}월 ${d.getDate()}일 (${WD[d.getDay()]})`; }
+function fmtDT(t) { const d = new Date(t); return `${d.getFullYear()}.${pad2(d.getMonth() + 1)}.${pad2(d.getDate())} ${pad2(d.getHours())}:${pad2(d.getMinutes())}`; }
+function fmtRange(a, b) { if (dkey(a) === dkey(b)) return fmtDT(a).slice(0, 10); const A = fmtDT(a).slice(0, 10), B = fmtDT(b).slice(0, 10); return A.slice(0, 4) === B.slice(0, 4) ? `${A} – ${B.slice(5)}` : `${A} – ${B}`; }
+function download(name, data, type) {
+  const blob = data instanceof Blob ? data : new Blob([data], { type });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name;
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 60000);
+}
+function safeSeg(s) { return String(s || '').replace(/[\\/:*?"<>|\u0000-\u001f]+/g, '_').replace(/^\.+/, '_').trim().slice(0, 80) || '_'; }
+let toastTimer;
+function toast(msg, { err = false, action, onAction, ms = 3200 } = {}) {
+  const t = $('#toast'); $('#toastMsg').textContent = msg; t.classList.toggle('err', err);
+  const b = $('#toastAct'); b.hidden = !action; b.textContent = action || ''; b.onclick = () => { t.classList.remove('show'); onAction && onAction(); };
+  t.classList.add('show'); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), action ? Math.max(ms, 6000) : ms);
+}
+function confirmDlg(title, msg, okLabel = '확인', danger = false) {
+  return new Promise(res => {
+    const d = $('#cfDlg'); $('#cfT').textContent = title; $('#cfM').textContent = msg;
+    const ok = $('#cfOk'); ok.textContent = okLabel; ok.className = 'btn ' + (danger ? 'rec' : 'primary');
+    const done = v => { d.close(); res(v); };
+    ok.onclick = () => done(true); $('#cfNo').onclick = () => done(false); d.oncancel = e => { e.preventDefault(); done(false); };
+    d.showModal();
+  });
+}
+function segSet(el, attr, v) { $$('button', el).forEach(b => b.setAttribute('aria-pressed', String(b.dataset[attr] === String(v)))); }
+const busy = {
+  stop: false,
+  open(t) { this.stop = false; $('#bsT').textContent = t; $('#bsT2').textContent = ''; $('#bsBar').style.width = '0%'; $('#bsCancel').onclick = () => { this.stop = true; $('#bsT2').textContent = '멈추는 중…'; }; const d = $('#busyDlg'); d.oncancel = e => e.preventDefault(); if (!d.open) d.showModal(); },
+  set(p, txt) { $('#bsBar').style.width = clamp(p * 100, 0, 100).toFixed(1) + '%'; if (txt != null) $('#bsT2').textContent = txt; },
+  close() { const d = $('#busyDlg'); if (d.open) d.close(); },
+};
+
+/* =========================================================================
+   Analysis core — runs inside Web Workers (OffscreenCanvas), or on the main
+   thread as a fallback. Must stay self-contained: it is stringified.
+   ========================================================================= */
+function photoerCore() {
+  const CRC = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+  function crc32(u, c = 0xFFFFFFFF) { for (let i = 0; i < u.length; i++) c = CRC[(c ^ u[i]) & 255] ^ (c >>> 8); return c; }
+  const crcEnd = c => (c ^ 0xFFFFFFFF) >>> 0;
+
+  /* --- EXIF --- */
+  const TAGS = { 0x010F: 'make', 0x0110: 'model', 0x0112: 'orient', 0x0132: 'dt', 0x829A: 'exp', 0x829D: 'fnum', 0x8827: 'iso', 0x9003: 'dto', 0x9011: 'off', 0x920A: 'focal', 0xA434: 'lens', 0xA002: 'pxw', 0xA003: 'pxh' };
+  const GPST = { 1: 'latRef', 2: 'lat', 3: 'lonRef', 4: 'lon', 6: 'alt' };
+  function parseTiff(dv, base) {
+    const le = dv.getUint16(base) === 0x4949; const u16 = o => dv.getUint16(base + o, le), u32 = o => dv.getUint32(base + o, le);
+    if (u16(2) !== 42) return null;
+    const SZ = { 1: 1, 2: 1, 3: 2, 4: 4, 5: 8, 7: 1, 9: 4, 10: 8 };
+    const out = { gps: {} };
+    function val(type, count, vo) {
+      const sz = SZ[type] || 1; const at = sz * count > 4 ? u32(vo) : vo;
+      const one = i => { const o = at + i * sz; switch (type) { case 1: case 7: return dv.getUint8(base + o); case 3: return u16(o); case 4: return u32(o); case 9: return dv.getInt32(base + o, le); case 5: { const d = u32(o + 4); return d ? u32(o) / d : 0; } case 10: { const d = dv.getInt32(base + o + 4, le); return d ? dv.getInt32(base + o, le) / d : 0; } } return null; };
+      if (type === 2) { let s = ''; for (let i = 0; i < count && i < 200; i++) { const c = dv.getUint8(base + at + i); if (!c) break; s += String.fromCharCode(c); } try { return decodeURIComponent(escape(s)).trim(); } catch { return s.trim(); } }
+      if (type === 7) return null;
+      if (count === 1) return one(0);
+      const a = []; for (let i = 0; i < Math.min(count, 4); i++) a.push(one(i)); return a;
+    }
+    const seen = new Set();
+    function ifd(off, kind) {
+      if (!off || seen.has(off) || base + off + 2 > dv.byteLength) return; seen.add(off);
+      const n = u16(off);
+      for (let i = 0; i < n && i < 400; i++) {
+        const e = off + 2 + i * 12; if (base + e + 12 > dv.byteLength) break;
+        const tag = u16(e), type = u16(e + 2), count = u32(e + 4);
+        try {
+          if (kind === 'gps') { if (GPST[tag]) out.gps[GPST[tag]] = val(type, count, e + 8); continue; }
+          if (tag === 0x8769) { ifd(u32(e + 8), 'exif'); continue; }
+          if (tag === 0x8825) { ifd(u32(e + 8), 'gps'); continue; }
+          if (TAGS[tag]) out[TAGS[tag]] = val(type, count, e + 8);
+        } catch {}
+      }
+    }
+    ifd(u32(4), 'ifd0');
+    return out;
+  }
+  function parseMeta(buf) {
+    const dv = new DataView(buf); const u8 = new Uint8Array(buf);
+    try {
+      if (dv.getUint16(0) === 0xFFD8) {
+        let o = 2;
+        while (o + 4 < dv.byteLength) {
+          if (dv.getUint8(o) !== 0xFF) { o++; continue; }
+          const m = dv.getUint8(o + 1); if (m === 0xFF) { o++; continue; }
+          const len = dv.getUint16(o + 2);
+          if (m === 0xE1 && o + 10 < dv.byteLength && dv.getUint32(o + 4) === 0x45786966) return parseTiff(dv, o + 10);
+          if (m === 0xDA) break;
+          o += 2 + len;
+        }
+      } else if (dv.getUint32(0) === 0x89504E47) {
+        let o = 8;
+        while (o + 8 < dv.byteLength) { const len = dv.getUint32(o); const type = String.fromCharCode(u8[o + 4], u8[o + 5], u8[o + 6], u8[o + 7]); if (type === 'eXIf') return parseTiff(dv, o + 8); if (type === 'IEND' || type === 'IDAT') break; o += 12 + len; }
+      } else if (dv.getUint32(0) === 0x52494646 && dv.getUint32(8) === 0x57454250) {
+        let o = 12;
+        while (o + 8 < dv.byteLength) { const type = String.fromCharCode(u8[o], u8[o + 1], u8[o + 2], u8[o + 3]); const len = dv.getUint32(o + 4, true); if (type === 'EXIF') { let b = o + 8; if (dv.getUint32(b) === 0x45786966) b += 6; return parseTiff(dv, b); } o += 8 + len + (len & 1); }
+      } else if (dv.getUint32(4) === 0x66747970) { // HEIC/AVIF (ISO-BMFF): find "Exif\0\0" then the TIFF header
+        for (let i = 8; i < Math.min(u8.length - 12, 400000); i++) if (u8[i] === 0x45 && u8[i + 1] === 0x78 && u8[i + 2] === 0x69 && u8[i + 3] === 0x66 && u8[i + 4] === 0 && u8[i + 5] === 0 && (u8[i + 6] === 0x49 || u8[i + 6] === 0x4D)) return parseTiff(dv, i + 6);
+      }
+    } catch {}
+    return null;
+  }
+  function exifTime(s) {
+    const m = /^(\d{4})[:\-](\d\d)[:\-](\d\d)[ T](\d\d):(\d\d):?(\d\d)?/.exec(String(s || '')); if (!m) return 0;
+    const y = +m[1]; if (y < 1980 || y > 2100) return 0;
+    return new Date(y, +m[2] - 1, +m[3], +m[4], +m[5], +(m[6] || 0)).getTime();
+  }
+  function coord(a, ref) { if (Array.isArray(a) && a.length >= 3) { const d = a[0] + a[1] / 60 + a[2] / 3600; return (ref === 'S' || ref === 'W') ? -d : d; } if (typeof a === 'number') return (ref === 'S' || ref === 'W') ? -a : a; return null; }
+
+  /* --- pixels --- */
+  function mk(w, h) { if (typeof OffscreenCanvas !== 'undefined') return new OffscreenCanvas(w, h); const c = document.createElement('canvas'); c.width = w; c.height = h; return c; }
+  function toJpeg(c, q) { if (c.convertToBlob) return c.convertToBlob({ type: 'image/jpeg', quality: q }); return new Promise(r => c.toBlob(r, 'image/jpeg', q)); }
+  async function decode(file) {
+    if (typeof createImageBitmap === 'function') {
+      try { return await createImageBitmap(file, { imageOrientation: 'from-image' }); } catch (e) {
+        try { return await createImageBitmap(file); } catch (e2) { if (typeof document === 'undefined') throw e2; }
+      }
+    }
+    const url = URL.createObjectURL(file);
+    try { const img = new Image(); img.decoding = 'async'; img.src = url; await img.decode(); return img; } finally { setTimeout(() => URL.revokeObjectURL(url), 1000); }
+  }
+  // 1-D DCT basis (32 samples → first 8 coefficients)
+  const COS = (() => { const c = new Float32Array(8 * 32); for (let u = 0; u < 8; u++) for (let x = 0; x < 32; x++) c[u * 32 + x] = Math.cos((2 * x + 1) * u * Math.PI / 64); return c; })();
+  function phash(g32) {
+    const tmp = new Float32Array(32 * 8);
+    for (let y = 0; y < 32; y++) for (let u = 0; u < 8; u++) { let s = 0; for (let x = 0; x < 32; x++) s += g32[y * 32 + x] * COS[u * 32 + x]; tmp[y * 8 + u] = s; }
+    const co = new Float32Array(64);
+    for (let v = 0; v < 8; v++) for (let u = 0; u < 8; u++) { let s = 0; for (let y = 0; y < 32; y++) s += tmp[y * 8 + u] * COS[v * 32 + y]; co[v * 8 + u] = s; }
+    const ac = Array.from(co.slice(1)).sort((a, b) => a - b); const med = (ac[31] + ac[32]) / 2;
+    let h0 = 0, h1 = 0;
+    for (let i = 0; i < 64; i++) if (co[i] > med) { if (i < 32) h0 |= (1 << i); else h1 |= (1 << (i - 32)); }
+    return [h0 >>> 0, h1 >>> 0];
+  }
+
+  async function analyze(file, o = {}) {
+    const r = {}; const size = file.size;
+    const head = await file.slice(0, Math.min(size, 393216)).arrayBuffer();
+    const m = parseMeta(head);
+    if (m) {
+      const t = exifTime(m.dto) || exifTime(m.dt); if (t) { r.t = t; r.tSrc = 'exif'; }
+      if (m.make) r.make = String(m.make).slice(0, 40); if (m.model) r.model = String(m.model).slice(0, 60); if (m.lens) r.lens = String(m.lens).slice(0, 60);
+      if (m.iso) r.iso = Array.isArray(m.iso) ? m.iso[0] : m.iso; if (m.fnum) r.fnum = +(+m.fnum).toFixed(1); if (m.exp) r.exp = m.exp; if (m.focal) r.focal = +(+m.focal).toFixed(1);
+      const la = coord(m.gps.lat, m.gps.latRef), lo = coord(m.gps.lon, m.gps.lonRef);
+      if (la != null && lo != null && isFinite(la) && isFinite(lo) && !(Math.abs(la) < 1e-6 && Math.abs(lo) < 1e-6) && Math.abs(la) <= 90 && Math.abs(lo) <= 180) { r.lat = +la.toFixed(6); r.lon = +lo.toFixed(6); if (typeof m.gps.alt === 'number') r.alt = Math.round(m.gps.alt); }
+      r.exif = 1;
+    }
+    const h8 = new Uint8Array(head, 0, Math.min(65536, head.byteLength));
+    const tail = size > 65536 ? new Uint8Array(await file.slice(size - 65536).arrayBuffer()) : h8;
+    r.fp = size.toString(36) + '-' + crcEnd(crc32(h8)).toString(36) + '-' + crcEnd(crc32(tail)).toString(36);
+
+    const bmp = await decode(file);
+    const W = bmp.naturalWidth || bmp.width, H = bmp.naturalHeight || bmp.height;
+    if (!W || !H) throw new Error('empty');
+    r.w = W; r.h = H;
+    // analysis canvas (long side 640)
+    const as = Math.min(1, 640 / Math.max(W, H)); const aw = Math.max(8, Math.round(W * as)), ah = Math.max(8, Math.round(H * as));
+    const ac = mk(aw, ah); const ax = ac.getContext('2d', { willReadFrequently: true }); ax.imageSmoothingQuality = 'high'; ax.drawImage(bmp, 0, 0, aw, ah);
+    // thumbnail
+    const ts = Math.min(1, (o.thumb || 360) / Math.max(W, H)); const tw = Math.max(1, Math.round(W * ts)), th = Math.max(1, Math.round(H * ts));
+    const tc = mk(tw, th); const tx = tc.getContext('2d'); tx.imageSmoothingQuality = 'high';
+    tx.drawImage(ts * Math.max(W, H) <= 640 ? ac : bmp, 0, 0, tw, th);
+    if (bmp.close) bmp.close();
+
+    const d = ax.getImageData(0, 0, aw, ah).data; const n = aw * ah;
+    const g = new Float32Array(n); let bs = 0, lo0 = 0, hi0 = 0;
+    for (let i = 0, j = 0; i < n; i++, j += 4) { const v = 0.299 * d[j] + 0.587 * d[j + 1] + 0.114 * d[j + 2]; g[i] = v; bs += v; if (v < 10) lo0++; else if (v > 245) hi0++; }
+    r.bright = Math.round(bs / n); r.clipLo = +(lo0 / n).toFixed(3); r.clipHi = +(hi0 / n).toFixed(3);
+    // Laplacian variance, global + 4x4 tiles
+    const T = 4, ts1 = new Float64Array(T * T), ts2 = new Float64Array(T * T), tn = new Float64Array(T * T);
+    let s1 = 0, s2 = 0, cnt = 0;
+    for (let y = 1; y < ah - 1; y++) {
+      const ty = Math.min(T - 1, (y * T / ah) | 0) * T, row = y * aw;
+      for (let x = 1; x < aw - 1; x++) {
+        const i = row + x; const L = 4 * g[i] - g[i - 1] - g[i + 1] - g[i - aw] - g[i + aw];
+        s1 += L; s2 += L * L; cnt++;
+        const k = ty + Math.min(T - 1, (x * T / aw) | 0); ts1[k] += L; ts2[k] += L * L; tn[k]++;
+      }
+    }
+    const gv = cnt ? s2 / cnt - (s1 / cnt) ** 2 : 0;
+    const tv = []; for (let k = 0; k < T * T; k++) if (tn[k]) tv.push(ts2[k] / tn[k] - (ts1[k] / tn[k]) ** 2);
+    tv.sort((a, b) => b - a); const top = tv.slice(0, 3).reduce((a, b) => a + b, 0) / Math.max(1, Math.min(3, tv.length));
+    r.lap = Math.round(gv); r.lapT = Math.round(top);
+    const f = Math.sqrt(Math.max(1, gv) * Math.max(1, top));
+    r.sharp = clampN(Math.round((Math.log10(f + 1) - 1.2) * 45), 0, 100);
+    // perceptual hash on 32x32
+    const pc = mk(32, 32); const px = pc.getContext('2d', { willReadFrequently: true }); px.imageSmoothingQuality = 'high'; px.drawImage(ac, 0, 0, 32, 32);
+    const pd = px.getImageData(0, 0, 32, 32).data; const g32 = new Float32Array(1024);
+    for (let i = 0, j = 0; i < 1024; i++, j += 4) g32[i] = 0.299 * pd[j] + 0.587 * pd[j + 1] + 0.114 * pd[j + 2];
+    [r.ph0, r.ph1] = phash(g32);
+    // colour layout 4x4
+    const cc = mk(4, 4); const cx = cc.getContext('2d', { willReadFrequently: true }); cx.imageSmoothingQuality = 'high'; cx.drawImage(ac, 0, 0, 4, 4);
+    const cd = cx.getImageData(0, 0, 4, 4).data; const col = []; for (let i = 0; i < 64; i += 4) col.push(cd[i], cd[i + 1], cd[i + 2]); r.col = col;
+    // faces (only where the browser has a built-in FaceDetector)
+    if (o.faces && typeof FaceDetector !== 'undefined') { try { const fd = new FaceDetector({ fastMode: true, maxDetectedFaces: 20 }); r.faces = (await fd.detect(ac)).length; } catch {} }
+    r.thumb = await toJpeg(tc, 0.8);
+    return r;
+  }
+  function clampN(v, a, b) { return Math.max(a, Math.min(b, v)); }
+  return { analyze, crc32, crcEnd };
+}
+const CORE = photoerCore();
+
+/* ---------- Worker pool ---------- */
+const POOL = { workers: [], ok: false, cb: new Map(), seq: 0 };
+function initPool() {
+  if (typeof Worker === 'undefined' || typeof OffscreenCanvas === 'undefined') return;
+  try {
+    const src = `${photoerCore.toString()}\nconst C = photoerCore();\nself.onmessage = async e => { const { id, file, o } = e.data; try { const r = await C.analyze(file, o); self.postMessage({ id, r }); } catch (err) { self.postMessage({ id, err: String(err && err.message || err) }); } };`;
+    const url = URL.createObjectURL(new Blob([src], { type: 'text/javascript' }));
+    const mem = navigator.deviceMemory || 4; const hc = navigator.hardwareConcurrency || 4;
+    const n = clamp(Math.min(hc - 1, mem >= 6 ? 4 : mem >= 3 ? 3 : 2), 1, 4);
+    for (let i = 0; i < n; i++) {
+      const w = new Worker(url); w.busy = false;
+      w.onmessage = e => { const c = POOL.cb.get(e.data.id); if (c) { POOL.cb.delete(e.data.id); w.busy = false; c(e.data); } };
+      w.onerror = () => {};
+      POOL.workers.push(w);
+    }
+    POOL.ok = true;
+  } catch { POOL.ok = false; }
+}
+function runOn(w, file, o) { return new Promise(res => { const id = ++POOL.seq; w.busy = true; POOL.cb.set(id, res); w.postMessage({ id, file, o }); }); }
+
+/* ---------- IndexedDB cache ---------- */
+const CV = 'v1|';
+const DB = {
+  db: undefined,
+  open() {
+    if (this.db !== undefined) return Promise.resolve(this.db);
+    return new Promise(res => {
+      try {
+        const r = indexedDB.open('photoer', 1);
+        r.onupgradeneeded = () => { const d = r.result; if (!d.objectStoreNames.contains('a')) d.createObjectStore('a'); if (!d.objectStoreNames.contains('m')) d.createObjectStore('m'); };
+        r.onsuccess = () => { this.db = r.result; res(this.db); }; r.onerror = () => { this.db = null; res(null); };
+      } catch { this.db = null; res(null); }
+    });
+  },
+  async getMany(st, keys) {
+    const db = await this.open(); if (!db || !keys.length) return [];
+    return new Promise(res => { const out = new Array(keys.length); try { const tx = db.transaction(st); const os = tx.objectStore(st); keys.forEach((k, i) => { const q = os.get(k); q.onsuccess = () => { out[i] = q.result; }; }); tx.oncomplete = () => res(out); tx.onerror = tx.onabort = () => res(out); } catch { res(out); } });
+  },
+  async putMany(st, entries) {
+    const db = await this.open(); if (!db || !entries.length) return;
+    return new Promise(res => { try { const tx = db.transaction(st, 'readwrite'); const os = tx.objectStore(st); for (const [k, v] of entries) v == null ? os.delete(k) : os.put(v, k); tx.oncomplete = tx.onerror = tx.onabort = () => res(); } catch { res(); } });
+  },
+  async clear() { const db = await this.open(); if (!db) return; return new Promise(res => { try { const tx = db.transaction(['a', 'm'], 'readwrite'); tx.objectStore('a').clear(); tx.objectStore('m').clear(); tx.oncomplete = tx.onerror = () => res(); } catch { res(); } }); },
+};
+const pendA = new Map(), pendM = new Map(); let flushT = 0;
+function queueFlush() { clearTimeout(flushT); flushT = setTimeout(flush, 900); }
+async function flush() { const a = [...pendA]; pendA.clear(); const m = [...pendM]; pendM.clear(); await DB.putMany('a', a); await DB.putMany('m', m); }
+window.addEventListener('pagehide', () => { if (pendA.size || pendM.size) flush(); });
+
+/* ---------- Offline place names ---------- */
+const CITIES = `서울 37.5665 126.978|부산 35.1796 129.0756|인천 37.4563 126.7052|대구 35.8714 128.6014|대전 36.3504 127.3845|광주 35.1595 126.8526|울산 35.5384 129.3114|세종 36.48 127.289|수원 37.2636 127.0286|성남 37.42 127.1267|고양 37.6584 126.832|용인 37.2411 127.1776|부천 37.5034 126.766|안산 37.3219 126.8309|안양 37.3943 126.9568|남양주 37.636 127.2165|화성 37.1995 126.8312|평택 36.9921 127.1129|의정부 37.7381 127.0337|파주 37.7599 126.7802|김포 37.6153 126.7156|광명 37.4786 126.8646|하남 37.5393 127.2149|이천 37.2722 127.435|가평 37.8315 127.5105|양평 37.4917 127.4875|강화 37.7466 126.4878|춘천 37.8813 127.7298|원주 37.3422 127.9202|강릉 37.7519 128.8761|속초 38.207 128.5918|양양 38.0754 128.6189|동해 37.5247 129.1143|삼척 37.4499 129.1652|평창 37.3705 128.3903|정선 37.3807 128.6608|청주 36.6424 127.489|충주 36.991 127.9259|제천 37.1326 128.191|단양 36.9845 128.3655|천안 36.8151 127.1139|아산 36.7898 127.0018|공주 36.4465 127.119|부여 36.2757 126.9098|보령 36.3333 126.6127|태안 36.7456 126.2979|당진 36.8898 126.6459|서산 36.7848 126.4503|전주 35.8242 127.148|군산 35.9676 126.7368|익산 35.9483 126.9577|남원 35.4164 127.3904|정읍 35.5699 126.856|목포 34.8118 126.3922|여수 34.7604 127.6622|순천 34.9507 127.4872|담양 35.3211 126.9882|보성 34.7714 127.0801|완도 34.311 126.755|해남 34.5734 126.5991|포항 36.019 129.3435|경주 35.8562 129.2247|안동 36.5684 128.7294|구미 36.1195 128.3446|김천 36.1398 128.1136|영주 36.8057 128.624|문경 36.5866 128.1867|울진 36.993 129.4004|창원 35.228 128.6811|진주 35.18 128.1076|김해 35.2285 128.8894|통영 34.8544 128.4331|거제 34.8806 128.6211|남해 34.8375 127.8924|양산 35.335 129.0373|밀양 35.5038 128.7467|하동 35.0674 127.7514|제주 33.4996 126.5312|서귀포 33.2541 126.56|성산 33.4587 126.9425|애월 33.4636 126.3313|울릉도 37.4844 130.9057|도쿄 35.6762 139.6503|요코하마 35.4437 139.638|오사카 34.6937 135.5023|교토 35.0116 135.7681|나라 34.6851 135.8048|고베 34.6901 135.1955|후쿠오카 33.5904 130.4017|삿포로 43.0618 141.3545|나고야 35.1815 136.9066|오키나와 26.2124 127.6809|히로시마 34.3853 132.4553|가고시마 31.5966 130.5571|베이징 39.9042 116.4074|상하이 31.2304 121.4737|칭다오 36.0671 120.3826|홍콩 22.3193 114.1694|마카오 22.1987 113.5439|타이베이 25.033 121.5654|가오슝 22.6273 120.3014|방콕 13.7563 100.5018|치앙마이 18.7883 98.9853|푸껫 7.8804 98.3923|파타야 12.9236 100.8825|하노이 21.0278 105.8342|호찌민 10.8231 106.6297|다낭 16.0544 108.2022|나트랑 12.2388 109.1967|푸꾸옥 10.2899 103.984|싱가포르 1.3521 103.8198|쿠알라룸푸르 3.139 101.6869|코타키나발루 5.9804 116.0735|발리 -8.4095 115.1889|자카르타 -6.2088 106.8456|마닐라 14.5995 120.9842|세부 10.3157 123.8854|보라카이 11.9674 121.9248|괌 13.4443 144.7937|사이판 15.1778 145.751|시드니 -33.8688 151.2093|멜버른 -37.8136 144.9631|브리즈번 -27.4698 153.0251|오클랜드 -36.8485 174.7633|뉴욕 40.7128 -74.006|워싱턴 38.9072 -77.0369|보스턴 42.3601 -71.0589|로스앤젤레스 34.0522 -118.2437|샌프란시스코 37.7749 -122.4194|시애틀 47.6062 -122.3321|라스베이거스 36.1699 -115.1398|호놀룰루 21.3069 -157.8583|시카고 41.8781 -87.6298|올랜도 28.5383 -81.3792|밴쿠버 49.2827 -123.1207|토론토 43.6532 -79.3832|칸쿤 21.1619 -86.8515|런던 51.5074 -0.1278|파리 48.8566 2.3522|니스 43.7102 7.262|로마 41.9028 12.4964|피렌체 43.7696 11.2558|베네치아 45.4408 12.3155|밀라노 45.4642 9.19|바르셀로나 41.3874 2.1686|마드리드 40.4168 -3.7038|리스본 38.7223 -9.1393|베를린 52.52 13.405|뮌헨 48.1351 11.582|프랑크푸르트 50.1109 8.6821|프라하 50.0755 14.4378|빈 48.2082 16.3738|잘츠부르크 47.8095 13.055|부다페스트 47.4979 19.0402|취리히 47.3769 8.5417|인터라켄 46.6863 7.8632|암스테르담 52.3676 4.9041|브뤼셀 50.8503 4.3517|코펜하겐 55.6761 12.5683|스톡홀름 59.3293 18.0686|헬싱키 60.1699 24.9384|오슬로 59.9139 10.7522|레이캬비크 64.1466 -21.9426|더블린 53.3498 -6.2603|에든버러 55.9533 -3.1883|아테네 37.9838 23.7275|산토리니 36.3932 25.4615|이스탄불 41.0082 28.9784|두바이 25.2048 55.2708|카이로 30.0444 31.2357|모스크바 55.7558 37.6173|블라디보스토크 43.1198 131.8869|울란바토르 47.8864 106.9057|델리 28.6139 77.209|몰디브 4.1755 73.5093`.split('|').map(s => { const [n, a, b] = s.split(' '); return { n, lat: +a, lon: +b }; });
+function haversine(a, b, c, d) { const R = 6371000, r = Math.PI / 180; const x = Math.sin((c - a) * r / 2) ** 2 + Math.cos(a * r) * Math.cos(c * r) * Math.sin((d - b) * r / 2) ** 2; return 2 * R * Math.asin(Math.min(1, Math.sqrt(x))); }
+function nearCity(lat, lon) {
+  let best = null, bd = Infinity;
+  for (const c of CITIES) { if (Math.abs(c.lat - lat) > 1.2) continue; const d = haversine(lat, lon, c.lat, c.lon); if (d < bd) { bd = d; best = c; } }
+  if (!best || bd > 45000) return null;
+  return bd < 9000 ? best.n : best.n + ' 근처';
+}
+
+/* ---------- State ---------- */
+const DEF = { sim: 9, blur: 30, sameDay: false, radius: 1000, ts: 132, tap: 'mark', exWhat: 'keep', exLayout: 'flat', exRename: false, auto: { sim: true, dup: true, blur: true, dark: false, shot: false, small: false }, names: {}, allSort: 'old', dateSort: 'new' };
+let SET = merge(DEF, store.get('settings', {}));
+const saveSet = () => store.set('settings', SET);
+const S = {
+  items: [], bySig: new Map(), tab: 'home', groups: [], prob: { blur: [], dark: [], bright: [], shot: [], small: [], bad: [] }, days: [], places: [], noGps: [],
+  undo: [], q: [], running: false, total: 0, done: 0, t0: 0, root: null,
+  af: { mark: 'all', chip: '', q: '' }, simF: 'all', place: -1, ctx: {}, hasFaces: false,
+};
+const IMG_RE = /\.(jpe?g|jfif|png|webp|gif|avif|bmp|heic|heif|tiff?)$/i;
+const isImg = f => (f.type && f.type.startsWith('image/')) || IMG_RE.test(f.name);
+const live = () => S.items;
+
+/* ---------- Loading ---------- */
+function pickInput(id) { const el = $(id); el.value = ''; el.click(); }
+async function addEntries(list) {
+  let skipped = 0, again = 0; const fresh = [];
+  for (const e of list) {
+    const f = e.file; if (!f) continue;
+    if (!isImg(f)) { skipped++; continue; }
+    const path = (e.path || f.webkitRelativePath || f.name).replace(/^\/+/, '');
+    if (/(^|\/)(\.|_지울 사진\/)/.test(path) && e.handle) continue;
+    const sig = CV + f.name + '|' + f.size + '|' + f.lastModified;
+    if (S.bySig.has(sig)) { again++; continue; }
+    const it = { id: S.items.length, sig, file: f, path, name: f.name, size: f.size, type: f.type, lm: f.lastModified, t: f.lastModified || Date.now(), tSrc: 'file', mark: 'keep', done: false, handle: e.handle || null, dir: e.dir || null };
+    S.items.push(it); S.bySig.set(sig, it); fresh.push(it);
+  }
+  if (!fresh.length) { toast(again ? '이미 불러온 사진이에요' : skipped ? '사진 파일이 없어요' : '불러온 사진이 없어요'); return; }
+  // cache lookup
+  const keys = fresh.map(it => it.sig);
+  const [ca, cm] = await Promise.all([DB.getMany('a', keys), DB.getMany('m', keys)]);
+  let hit = 0;
+  fresh.forEach((it, i) => {
+    if (cm[i]) it.mark = 'del';
+    const c = ca[i];
+    if (c && c.r) { applyResult(it, c.r, c.thumb); hit++; }
+    else S.q.push(it);
+  });
+  S.total += S.q.length;
+  const msg = [`${fmtN(fresh.length)}장을 불러왔어요`]; if (hit) msg.push(`${fmtN(hit)}장은 기억해 둔 결과로 바로`); if (skipped) msg.push(`사진이 아닌 파일 ${fmtN(skipped)}개는 뺐어요`); if (again) msg.push(`이미 있는 ${fmtN(again)}장은 건너뛰었어요`);
+  toast(msg.join(' · '), { ms: 4200 });
+  if (S.tab === 'home') setTab('all');
+  regroup(); renderAll();
+  runQueue();
+}
+function applyResult(it, r, thumb) {
+  for (const k in r) if (k !== 'thumb') it[k] = r[k];
+  if (!r.t) { it.t = it.lm || it.t; it.tSrc = 'file'; }
+  if (thumb) { if (it.thumb) URL.revokeObjectURL(it.thumb); it.thumb = URL.createObjectURL(thumb); }
+  it.shot = /screenshot|screen ?shot|스크린샷|캡처|capture|screen_?record/i.test(it.path) || (/png$/i.test(it.name) && !it.exif && it.w && (it.h / it.w > 1.9 || it.w / it.h > 1.9));
+  if (it.faces) S.hasFaces = true;
+  it.done = true;
+}
+async function runQueue() {
+  if (S.running) return; S.running = true; S.t0 = Date.now(); S.done = 0;
+  if (!POOL.workers.length) initPool();
+  updateProgress();
+  const opts = { thumb: 360, faces: typeof FaceDetector !== 'undefined' };
+  let lastRender = Date.now();
+  const handle = async (it, res) => {
+    if (res && res.r) { applyResult(it, res.r, res.r.thumb); const r = { ...res.r }; delete r.thumb; pendA.set(it.sig, { r, thumb: res.r.thumb }); }
+    else {
+      // retry on the main thread (some formats decode via <img> but not createImageBitmap)
+      try { const r = await CORE.analyze(it.file, opts); applyResult(it, r, r.thumb); const rr = { ...r }; delete rr.thumb; pendA.set(it.sig, { r: rr, thumb: r.thumb }); }
+      catch { it.bad = true; it.done = true; pendA.set(it.sig, { r: { bad: true } }); }
+    }
+    S.done++; queueFlush(); updateProgress(); refreshTile(it);
+    if (Date.now() - lastRender > 2500) { lastRender = Date.now(); regroup(); renderAll(true); }
+  };
+  const worker = async (w) => {
+    while (S.q.length) {
+      const it = S.q.shift(); if (!S.bySig.has(it.sig)) continue;
+      let res = null;
+      if (w) res = await runOn(w, it.file, opts);
+      else { try { res = { r: await CORE.analyze(it.file, opts) }; } catch { res = null; } await sleep(0); }
+      await handle(it, res);
+    }
+  };
+  await Promise.all(POOL.ok ? POOL.workers.map(w => worker(w)) : [worker(null)]);
+  S.running = false; S.total = 0; S.done = 0;
+  updateProgress(); regroup(); renderAll(true);
+  const nb = S.items.filter(i => i.bad).length;
+  if (nb) toast(`${fmtN(nb)}장은 이 브라우저가 읽지 못했어요 (HEIC 등). 받기에는 그대로 들어가요.`, { ms: 5000 });
+}
+function updateProgress() {
+  const on = S.running && S.total > 0; $('#sProg').hidden = !on;
+  const ap = $('#applied');
+  if (on) {
+    const p = S.done / S.total; $('#progBar').style.width = (p * 100).toFixed(1) + '%';
+    $('#progV').textContent = `${fmtN(S.done)} / ${fmtN(S.total)}`;
+    $('#progT').innerHTML = `선명도·모양·촬영 정보를 읽고 있어요`;
+    const el = (Date.now() - S.t0) / 1000; const rem = S.done > 3 ? el / S.done * (S.total - S.done) : 0;
+    $('#progE').textContent = rem ? (rem > 90 ? `약 ${Math.round(rem / 60)}분 남음` : `약 ${Math.max(1, Math.round(rem))}초 남음`) : '';
+    ap.innerHTML = `<span class="achip warn">${icon('refresh')}살펴보는 중 ${Math.round(p * 100)}%</span>`;
+  } else renderApplied();
+}
+function renderApplied() {
+  const ap = $('#applied'); if (S.running) return;
+  const n = S.items.length; if (!n) { ap.innerHTML = ''; return; }
+  const del = S.items.filter(i => i.mark === 'del');
+  ap.innerHTML = `<span class="achip">${icon('image')}${fmtN(n)}장</span>` + (del.length ? `<span class="achip bad">${icon('trash')}지움 ${fmtN(del.length)}장 · ${fmtSize(del.reduce((a, i) => a + i.size, 0))}</span>` : '') + (S.groups.length ? `<span class="achip warn">${icon('similar')}비슷한 묶음 ${fmtN(S.groups.length)}</span>` : '');
+}
+
+/* drag & drop (files and folders) */
+async function readDropped(dt) {
+  const out = [];
+  const items = dt.items ? [...dt.items] : [];
+  const entries = items.map(i => i.webkitGetAsEntry && i.webkitGetAsEntry()).filter(Boolean);
+  if (!entries.length) { for (const f of dt.files || []) out.push({ file: f, path: f.name }); return out; }
+  const walk = async (en, pre) => {
+    if (en.isFile) { const f = await new Promise((res, rej) => en.file(res, rej)).catch(() => null); if (f) out.push({ file: f, path: pre + f.name }); }
+    else if (en.isDirectory) {
+      const rd = en.createReader(); let batch;
+      do { batch = await new Promise(res => rd.readEntries(res, () => res([]))); for (const c of batch) await walk(c, pre + en.name + '/'); } while (batch.length);
+    }
+  };
+  for (const en of entries) await walk(en, '');
+  return out;
+}
+/* File System Access: open a folder read/write (desktop Chrome/Edge) */
+async function openDirRW() {
+  try {
+    const root = await window.showDirectoryPicker({ mode: 'readwrite', id: 'photoer' });
+    busy.open('폴더를 읽는 중'); const out = [];
+    const walk = async (dir, pre, depth) => {
+      for await (const [name, h] of dir.entries()) {
+        if (busy.stop) return;
+        if (h.kind === 'file') { if (IMG_RE.test(name)) { const f = await h.getFile(); out.push({ file: f, path: pre + name, handle: h, dir }); if (out.length % 50 === 0) busy.set(0, `${fmtN(out.length)}장 찾음`); } }
+        else if (depth < 8 && !name.startsWith('.') && name !== '_지울 사진') await walk(h, pre + name + '/', depth + 1);
+      }
+    };
+    await walk(root, '', 0); busy.close();
+    S.root = root; $('#sDir').hidden = false; updateDirHint();
+    await addEntries(out);
+  } catch (e) { busy.close(); if (e && e.name !== 'AbortError') toast('폴더를 열지 못했어요', { err: true }); }
+}
+
+/* ---------- Grouping ---------- */
+function pop32(x) { x -= (x >>> 1) & 0x55555555; x = (x & 0x33333333) + ((x >>> 2) & 0x33333333); return (((x + (x >>> 4)) & 0x0F0F0F0F) * 0x01010101) >>> 24; }
+function hdist(a, b) { return pop32((a.ph0 ^ b.ph0) >>> 0) + pop32((a.ph1 ^ b.ph1) >>> 0); }
+function cdist(a, b) { let s = 0; for (let i = 0; i < 48; i++) s += Math.abs(a.col[i] - b.col[i]); return s / 48; }
+function quality(it) {
+  let q = it.sharp - Math.abs(it.bright - 128) / 128 * 18 - (it.clipHi || 0) * 40 - (it.clipLo || 0) * 25 + Math.log2(it.w * it.h / 1e6 + 1) * 5 + (it.faces || 0) * 2;
+  if (/\(\d+\)|copy|복사본|사본|-\d{1,2}\.\w+$/i.test(it.name)) q -= 6;
+  return q;
+}
+function regroup() {
+  const L = S.items.filter(it => it.done && !it.bad && it.ph0 != null);
+  for (const it of S.items) { it.g = -1; it.best = false; it.soft = false; it.blur = it.done && !it.bad && it.sharp != null && it.sharp < SET.blur; }
+  // similar
+  const n = L.length, par = new Int32Array(n); for (let i = 0; i < n; i++) par[i] = i;
+  const find = i => { while (par[i] !== i) { par[i] = par[par[i]]; i = par[i]; } return i; };
+  const thr = SET.sim, cthr = 8 + SET.sim * 2.2;
+  const day = L.map(it => dkey(it.t)), ar = L.map(it => it.w / it.h);
+  for (let i = 0; i < n; i++) {
+    const a = L[i];
+    for (let j = i + 1; j < n; j++) {
+      const b = L[j];
+      let link = a.fp === b.fp;
+      if (!link) {
+        if (SET.sameDay && day[i] !== day[j]) continue;
+        if (Math.abs(ar[i] - ar[j]) > 0.08) continue;
+        if (hdist(a, b) <= thr && cdist(a, b) <= cthr) link = true;
+      }
+      if (link) { const x = find(i), y = find(j); if (x !== y) par[y] = x; }
+    }
+  }
+  const map = new Map();
+  for (let i = 0; i < n; i++) { const r = find(i); if (!map.has(r)) map.set(r, []); map.get(r).push(L[i]); }
+  const groups = [];
+  for (const arr of map.values()) {
+    if (arr.length < 2) continue;
+    arr.sort((a, b) => a.t - b.t || a.name.localeCompare(b.name));
+    const dup = arr.every(x => x.fp === arr[0].fp) || arr.every(x => hdist(x, arr[0]) === 0 && x.w === arr[0].w && x.h === arr[0].h);
+    let best = arr[0]; for (const x of arr) if (quality(x) > quality(best) || (dup && x.size > best.size)) best = x;
+    if (dup) { best = arr.reduce((p, x) => (quality(x) > quality(p) + 0.01 ? x : p), arr[0]); }
+    groups.push({ ids: arr.map(x => x.id), dup, best: best.id, t: arr[0].t });
+  }
+  groups.sort((a, b) => a.t - b.t);
+  groups.forEach((g, gi) => { const bs = S.items[g.best].sharp; for (const id of g.ids) { const it = S.items[id]; it.g = gi; if (!g.dup && it.sharp < bs - 18) it.soft = true; } S.items[g.best].best = true; });
+  S.groups = groups;
+  // problems
+  const P = { blur: [], dark: [], bright: [], shot: [], small: [], bad: [] };
+  for (const it of S.items) {
+    if (it.bad) { P.bad.push(it.id); continue; }
+    if (!it.done) continue;
+    if (it.blur) P.blur.push(it.id);
+    if (it.bright < 42 || it.clipLo > 0.55) P.dark.push(it.id);
+    if (it.bright > 218 || it.clipHi > 0.35) P.bright.push(it.id);
+    if (it.shot) P.shot.push(it.id);
+    if (it.w * it.h < 400000) P.small.push(it.id);
+  }
+  P.blur.sort((a, b) => S.items[a].sharp - S.items[b].sharp);
+  S.prob = P;
+  // days
+  const dm = new Map();
+  for (const it of S.items) { const k = dkey(it.t); if (!dm.has(k)) dm.set(k, []); dm.get(k).push(it.id); }
+  S.days = [...dm].map(([k, ids]) => ({ k, ids: ids.sort((a, b) => S.items[a].t - S.items[b].t), t: S.items[ids[0]].t })).sort((a, b) => a.t - b.t);
+  // places
+  const G = S.items.filter(it => it.lat != null).sort((a, b) => a.t - b.t);
+  const cl = [];
+  for (const it of G) {
+    let best = null, bd = Infinity;
+    for (const c of cl) { const d = haversine(it.lat, it.lon, c.lat, c.lon); if (d < bd) { bd = d; best = c; } }
+    if (best && bd <= SET.radius) { best.ids.push(it.id); best.sl += it.lat; best.so += it.lon; best.lat = best.sl / best.ids.length; best.lon = best.so / best.ids.length; best.t1 = it.t; }
+    else cl.push({ ids: [it.id], lat: it.lat, lon: it.lon, sl: it.lat, so: it.lon, t0: it.t, t1: it.t });
+  }
+  cl.sort((a, b) => b.ids.length - a.ids.length);
+  const used = {};
+  cl.forEach((c, i) => {
+    c.key = c.lat.toFixed(2) + ',' + c.lon.toFixed(2);
+    c.auto = nearCity(c.lat, c.lon) || `장소 ${i + 1}`;
+    c.name = SET.names[c.key] || c.auto;
+    for (const id of c.ids) S.items[id].pl = i;
+  });
+  for (const it of S.items) if (it.lat == null) it.pl = -1;
+  S.places = cl; S.noGps = S.items.filter(it => it.lat == null).map(it => it.id);
+  if (S.place >= cl.length) S.place = -1;
+}
+const placeName = it => it.pl >= 0 && S.places[it.pl] ? S.places[it.pl].name : '';
+
+/* ---------- Marks & undo ---------- */
+function setMarks(ids, mark, { undo = true } = {}) {
+  const ch = [];
+  for (const id of ids) { const it = S.items[id]; if (!it || it.mark === mark) continue; ch.push([id, it.mark]); it.mark = mark; pendM.set(it.sig, mark === 'del' ? 1 : null); }
+  if (!ch.length) return 0;
+  if (undo) { S.undo.push(ch); if (S.undo.length > 60) S.undo.shift(); }
+  queueFlush();
+  for (const [id] of ch) refreshTile(S.items[id]);
+  afterMarks();
+  return ch.length;
+}
+function undo() {
+  const ch = S.undo.pop(); if (!ch) return;
+  for (const [id, m] of ch) { const it = S.items[id]; if (!it) continue; it.mark = m; pendM.set(it.sig, m === 'del' ? 1 : null); refreshTile(it); }
+  queueFlush(); afterMarks(); toast(`${fmtN(ch.length)}장을 되돌렸어요`);
+}
+let amT = 0;
+function afterMarks() {
+  renderSide(); renderApplied(); renderTabCounts();
+  if (!$('#viewer').hidden) renderViewer();
+  clearTimeout(amT);
+  // views where membership depends on marks
+  amT = setTimeout(() => { if ((S.tab === 'all' && S.af.mark !== 'all') || (S.tab === 'sim')) renderTab(true); }, 450);
+}
+function toggle(id) { const it = S.items[id]; setMarks([id], it.mark === 'del' ? 'keep' : 'del'); }
+
+/* ---------- Tiles ---------- */
+function tileHTML(it, o = {}) {
+  const cls = ['tile']; if (it.mark === 'del') cls.push('del'); if (it.bad) cls.push('bad'); else if (!it.done) cls.push('pend');
+  const bd = [];
+  if (o.best !== false && it.best) bd.push(`<span class="b best">추천</span>`);
+  if (it.blur) bd.push(`<span class="b blur">흐림</span>`); else if (it.soft) bd.push(`<span class="b blur">덜 선명</span>`);
+  if (it.g >= 0 && S.groups[it.g] && !S.groups[it.g].dup && S.groups[it.g].ids.some(id => id !== it.id && S.items[id].fp === it.fp)) bd.push(`<span class="b dup">중복</span>`);
+  if (o.extra) bd.push(o.extra);
+  const inner = it.bad ? `<span class="ext">${esc((/\.([^.]+)$/.exec(it.name) || ['', '?'])[1].toUpperCase())}<br>${esc(it.name.length > 24 ? it.name.slice(0, 22) + '…' : it.name)}</span>`
+    : `<img loading="lazy" decoding="async" alt="" ${it.thumb ? `src="${it.thumb}"` : ''} />`;
+  return `<div class="${cls.join(' ')}" data-id="${it.id}" title="${esc(it.name)}">${inner}<span class="mk">${icon('x')}</span><button class="zm" data-zoom="${it.id}" aria-label="크게 보기">${icon('expand')}</button><div class="bd">${bd.join('')}</div></div>`;
+}
+function refreshTile(it) {
+  for (const el of document.querySelectorAll(`.tile[data-id="${it.id}"]`)) {
+    el.classList.toggle('del', it.mark === 'del'); el.classList.toggle('pend', !it.done && !it.bad); el.classList.toggle('bad', !!it.bad);
+    const img = el.querySelector('img'); if (img && it.thumb && img.getAttribute('src') !== it.thumb) img.src = it.thumb;
+  }
+  for (const el of document.querySelectorAll(`.cap[data-cid="${it.id}"]`)) el.classList.toggle('del', it.mark === 'del');
+}
+function gridHTML(ids, ctx, o) { S.ctx[ctx] = ids; return `<div class="grid" data-ctx="${ctx}">${ids.map(id => tileHTML(S.items[id], o)).join('')}</div>`; }
+
+/* ---------- Tabs & render ---------- */
+function setTab(t) {
+  if (!S.items.length) t = 'home';
+  S.tab = t;
+  $$('#tabs .tab').forEach(b => b.setAttribute('aria-selected', String(b.dataset.tab === t)));
+  $$('#work .view').forEach(v => v.hidden = v.dataset.view !== t);
+  renderTab();
+}
+function renderTabCounts() {
+  $('#nAll').textContent = fmtN(S.items.length);
+  $('#nSim').textContent = fmtN(S.groups.length);
+  const P = S.prob; $('#nProb').textContent = fmtN(new Set([...P.blur, ...P.dark, ...P.bright, ...P.shot, ...P.small, ...P.bad]).size);
+  $('#nDate').textContent = fmtN(S.days.length);
+  $('#nPlace').textContent = fmtN(S.places.length);
+  const todo = S.groups.filter(g => g.ids.every(id => S.items[id].mark !== 'del')).length;
+  $('#nSim').classList.toggle('warn', todo > 0 && S.tab !== 'sim');
+}
+function renderAll(soft) { renderTabCounts(); renderSide(); renderApplied(); renderTab(soft); }
+function renderTab(soft) {
+  document.documentElement.style.setProperty('--ts', SET.ts + 'px');
+  document.documentElement.style.setProperty('--gts', Math.round(SET.ts * 1.25) + 'px');
+  $$('.tsz').forEach(r => r.value = SET.ts);
+  if (S.tab === 'home' || !S.items.length) { $$('#work .view').forEach(v => v.hidden = v.dataset.view !== 'home'); return; }
+  ({ all: renderAllTab, sim: renderSim, prob: renderProb, date: renderDate, place: renderPlace })[S.tab]?.(soft);
+}
+
+function renderAllTab() {
+  const f = S.af; const q = f.q.trim().toLowerCase();
+  let L = S.items.filter(it => (f.mark === 'all' || (f.mark === 'del' ? it.mark === 'del' : it.mark !== 'del')) && (!q || it.path.toLowerCase().includes(q)));
+  if (f.chip === 'gps') L = L.filter(it => it.lat != null); else if (f.chip === 'nogps') L = L.filter(it => it.lat == null && it.done);
+  else if (f.chip === 'face') L = L.filter(it => it.faces > 0); else if (f.chip === 'shot') L = L.filter(it => it.shot);
+  else if (f.chip === 'cam') L = L.filter(it => it.exif && it.model); else if (f.chip === 'big') L = L.filter(it => it.size > 8 * 1048576);
+  const s = SET.allSort;
+  const cmp = { old: (a, b) => a.t - b.t, new: (a, b) => b.t - a.t, name: (a, b) => a.name.localeCompare(b.name, 'ko', { numeric: true }), big: (a, b) => b.size - a.size, sharp: (a, b) => (a.sharp ?? 999) - (b.sharp ?? 999), folder: (a, b) => a.path.localeCompare(b.path, 'ko', { numeric: true }) }[s];
+  L.sort(cmp);
+  const chips = [['', '모두'], ['gps', '위치 있음'], ['nogps', '위치 없음'], ['cam', '카메라 사진'], ['shot', '스크린샷'], ['big', '8MB 넘는 사진']];
+  if (S.hasFaces) chips.splice(3, 0, ['face', '얼굴 있음']);
+  $('#aChips').innerHTML = chips.map(([k, l]) => `<button class="chip" data-chip="${k}" aria-pressed="${f.chip === k}">${l}</button>`).join('');
+  const box = $('#allList');
+  if (!L.length) { box.innerHTML = `<div class="empty"><b>보여 줄 사진이 없어요</b>조건을 바꿔 보세요.</div>`; S.ctx.all = []; return; }
+  const sz = L.reduce((a, i) => a + i.size, 0);
+  box.innerHTML = `<div class="grp-h">${fmtN(L.length)}장 <span class="v">${fmtSize(sz)}</span><span class="grow"></span><button data-bulk="del">보이는 사진 모두 지움</button><button data-bulk="keep">모두 남김</button></div>` + gridHTML(L.map(i => i.id), 'all');
+}
+
+function capHTML(it, best) {
+  const lo = it.sharp < SET.blur || it.soft;
+  return `<div class="cap ${lo ? 'lo' : ''}" data-cid="${it.id}" title="선명도 ${it.sharp}"><span>${it.sharp ?? '–'}</span><div class="bar"><i style="width:${clamp(it.sharp || 0, 2, 100)}%"></i></div><span>${it.w && it.h ? (it.w * it.h / 1e6).toFixed(1) + 'MP' : ''}</span><span>${fmtSize(it.size)}</span></div>`;
+}
+function renderSim() {
+  const box = $('#simList');
+  let G = S.groups.map((g, i) => ({ ...g, i }));
+  const todo = g => g.ids.every(id => S.items[id].mark !== 'del');
+  if (S.simF === 'todo') G = G.filter(todo); else if (S.simF === 'dup') G = G.filter(g => g.dup);
+  const total = S.groups.reduce((a, g) => a + g.ids.length, 0);
+  $('#simCount').innerHTML = `<b>${fmtN(S.groups.length)}</b>묶음 · ${fmtN(total)}장`;
+  if (!S.groups.length) { box.innerHTML = `<div class="empty"><b>${S.running ? '살펴보는 중이에요' : '비슷한 사진이 없어요'}</b>${S.running ? '다 살펴보면 비슷한 사진을 묶어 보여 줘요.' : '오른쪽 ‘기준’에서 비슷함 기준을 느슨하게 하면 더 많이 묶여요.'}</div>`; return; }
+  if (!G.length) { box.innerHTML = `<div class="empty"><b>여기에 해당하는 묶음이 없어요</b>${S.simF === 'todo' ? '모든 묶음에서 고르기를 마쳤어요.' : ''}</div>`; return; }
+  const LIM = 400; const more = G.length > LIM; G = G.slice(0, LIM);
+  box.innerHTML = G.map(g => {
+    const its = g.ids.map(id => S.items[id]); const del = its.filter(x => x.mark === 'del').length;
+    const sz = its.reduce((a, x) => a + x.size, 0);
+    S.ctx['g' + g.i] = g.ids;
+    return `<div class="gcard ${del ? 'clean' : ''}" data-g="${g.i}">
+      <div class="gcard-h"><span class="tt">${g.dup ? '똑같은 사진' : '비슷한 사진'} ${its.length}장</span>${g.dup ? '<span class="tagb">중복</span>' : ''}${del ? `<span class="tagb bad">${del}장 지움</span>` : ''}
+        <span class="mt">${fmtDT(its[0].t)}${placeName(its[0]) ? ' · ' + esc(placeName(its[0])) : ''} · ${fmtSize(sz)}</span><span class="grow"></span>
+        <button class="linkbtn" data-gbest="${g.i}">${icon('star', 'sm')} 추천 한 장만 남기기</button><button class="btn ghost sm" data-gkeep="${g.i}">모두 남김</button></div>
+      <div class="grid" data-ctx="g${g.i}">${its.map(x => `<div class="gitem">${tileHTML(x)}${capHTML(x)}</div>`).join('')}</div></div>`;
+  }).join('') + (more ? `<div class="empty">묶음이 많아 앞의 ${LIM}개만 보여요. 고르기를 마친 묶음은 ‘안 고른 묶음’으로 걸러 보세요.</div>` : '');
+}
+function sectionHTML(key, title, sub, ids) {
+  if (!ids.length) return '';
+  const sz = ids.reduce((a, id) => a + S.items[id].size, 0);
+  return `<div class="grp" data-sec="${key}"><div class="grp-h">${title} <span class="v">${fmtN(ids.length)}장 · ${fmtSize(sz)}</span><span class="grow"></span><button data-sdel="${key}">모두 지움</button><button data-skeep="${key}">모두 남김</button></div>
+    ${sub ? `<p class="hint" style="margin:-2px 2px 10px;font-size:12px;color:var(--faint)">${sub}</p>` : ''}${gridHTML(ids, 'p_' + key)}</div>`;
+}
+function renderProb() {
+  const P = S.prob; const box = $('#probList');
+  const n = new Set([...P.blur, ...P.dark, ...P.bright, ...P.shot, ...P.small, ...P.bad]).size;
+  $('#probCount').innerHTML = `<b>${fmtN(n)}</b>장 확인해 볼 사진`;
+  const html = sectionHTML('blur', '흐린 사진', `선명도가 ${SET.blur}보다 낮아요. 덜 선명한 순서예요. 무늬 없는 하늘·벽 사진도 섞일 수 있어요.`, P.blur)
+    + sectionHTML('dark', '너무 어두운 사진', '대부분이 검게 나온 사진이에요.', P.dark)
+    + sectionHTML('bright', '너무 밝은 사진', '하얗게 날아간 부분이 많은 사진이에요.', P.bright)
+    + sectionHTML('shot', '스크린샷', '파일 이름이나 모양으로 찾은 화면 캡처예요.', P.shot)
+    + sectionHTML('small', '아주 작은 사진', '0.4MP보다 작아요. 메신저로 받은 미리보기일 수 있어요.', P.small)
+    + sectionHTML('bad', '읽지 못한 파일', '이 브라우저가 열 수 없는 형식이에요. 받기에는 그대로 들어가요.', P.bad);
+  box.innerHTML = html || `<div class="empty"><b>${S.running ? '살펴보는 중이에요' : '문제 있는 사진이 없어요'}</b>${S.running ? '' : '흐림 기준은 오른쪽 ‘기준’에서 바꿀 수 있어요.'}</div>`;
+}
+function renderDate() {
+  const box = $('#dateList'); const days = SET.dateSort === 'new' ? [...S.days].reverse() : S.days;
+  $('#dateCount').innerHTML = `<b>${fmtN(S.days.length)}</b>일`;
+  // month chart
+  const mm = new Map(); for (const d of S.days) { const k = d.k.slice(0, 7); mm.set(k, (mm.get(k) || 0) + d.ids.length); }
+  const months = [...mm]; const mx = Math.max(1, ...months.map(m => m[1]));
+  let html = months.length > 1 ? `<div class="chart">${months.map(([k, v]) => `<button data-month="${k}" title="${k} · ${v}장"><i style="height:${Math.max(3, v / mx * 70)}px"></i><span>${k.slice(2, 4)}.${+k.slice(5)}</span></button>`).join('')}</div>` : '';
+  let curM = '';
+  const noExif = S.items.filter(i => i.done && i.tSrc !== 'exif').length;
+  if (noExif) html += `<div class="note" style="margin:0 0 14px">${fmtN(noExif)}장은 촬영 정보가 없어 파일 수정 날짜로 묶었어요.</div>`;
+  for (const d of days) {
+    const m = d.k.slice(0, 7);
+    if (m !== curM) { curM = m; const cnt = mm.get(m); html += `<div class="month-h" id="m-${m}">${+m.slice(0, 4)}년 ${+m.slice(5)}월<small>${fmtN(cnt)}장</small></div>`; }
+    const pls = [...new Set(d.ids.map(id => placeName(S.items[id])).filter(Boolean))].slice(0, 3);
+    const del = d.ids.filter(id => S.items[id].mark === 'del').length;
+    S.ctx['d' + d.k] = d.ids;
+    html += `<div class="day"><div class="grp-h">${fmtDay(d.t, false)} <span class="v">${fmtN(d.ids.length)}장${del ? ` · 지움 ${del}` : ''}${pls.length ? ' · ' + esc(pls.join(', ')) : ''}</span><span class="grow"></span><button data-ddel="${d.k}">모두 지움</button><button data-dkeep="${d.k}">모두 남김</button></div>${gridHTML(d.ids, 'd' + d.k)}</div>`;
+  }
+  box.innerHTML = html;
+}
+function mapSVG() {
+  const C = S.places; if (!C.length) return '';
+  let la0 = Infinity, la1 = -Infinity, lo0 = Infinity, lo1 = -Infinity;
+  for (const c of C) { la0 = Math.min(la0, c.lat); la1 = Math.max(la1, c.lat); lo0 = Math.min(lo0, c.lon); lo1 = Math.max(lo1, c.lon); }
+  const W = 1000, H = 280, P = 36; const k = Math.cos((la0 + la1) / 2 * Math.PI / 180) || 1;
+  let dx = (lo1 - lo0) * k, dy = la1 - la0; if (dx < 0.01) dx = 0.01; if (dy < 0.01) dy = 0.01;
+  const sc = Math.min((W - 2 * P) / dx, (H - 2 * P) / dy);
+  const ox = (W - dx * sc) / 2, oy = (H - dy * sc) / 2;
+  const X = lo => ox + (lo - lo0) * k * sc, Y = la => H - (oy + (la - la0) * sc);
+  const mx = Math.max(...C.map(c => c.ids.length));
+  // graticule
+  const span = Math.max(dx / k, dy); const step = [0.01, 0.05, 0.1, 0.5, 1, 2, 5, 10, 20, 45].find(s => span / s < 8) || 45;
+  let gr = '';
+  for (let v = Math.ceil((lo0 - span) / step) * step; v <= lo1 + span; v += step) { const x = X(v); if (x > -5 && x < W + 5) gr += `<line class="gr" x1="${x.toFixed(1)}" y1="0" x2="${x.toFixed(1)}" y2="${H}"/>`; }
+  for (let v = Math.ceil((la0 - span) / step) * step; v <= la1 + span; v += step) { const y = Y(v); if (y > -5 && y < H + 5) gr += `<line class="gr" x1="0" y1="${y.toFixed(1)}" x2="${W}" y2="${y.toFixed(1)}"/>`; }
+  const order = C.map((c, i) => i).sort((a, b) => C[b].ids.length - C[a].ids.length);
+  const pts = order.map(i => { const c = C[i]; const r = 5 + Math.sqrt(c.ids.length / mx) * 16; return `<circle class="pt ${S.place === i ? 'sel' : ''}" data-pl="${i}" cx="${X(c.lon).toFixed(1)}" cy="${Y(c.lat).toFixed(1)}" r="${r.toFixed(1)}"><title>${esc(c.name)} · ${c.ids.length}장</title></circle>`; }).join('');
+  const labels = order.slice(0, 8).map(i => { const c = C[i]; const r = 5 + Math.sqrt(c.ids.length / mx) * 16; return `<text x="${(X(c.lon) + r + 4).toFixed(1)}" y="${(Y(c.lat) + 4).toFixed(1)}">${esc(c.name.replace(/ 근처$/, ''))}</text>`; }).join('');
+  return `<svg class="map" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="사진 찍은 곳">${gr}${pts}${labels}</svg>`;
+}
+function renderPlace() {
+  const box = $('#placeList'); const C = S.places;
+  $('#placeCount').innerHTML = `<b>${fmtN(C.length)}</b>곳 · 위치 있는 사진 ${fmtN(S.items.length - S.noGps.length)}장`;
+  if (!C.length) { box.innerHTML = `<div class="empty"><b>${S.running ? '살펴보는 중이에요' : '위치 정보가 있는 사진이 없어요'}</b>${S.running ? '' : '카메라 설정에서 위치 태그를 켜고 찍은 사진만 장소로 묶여요.<br>안드로이드에서 ‘사진 고르기’로 불러오면 위치가 지워질 수 있어요. ‘파일에서 고르기’나 ‘폴더 고르기’를 써 보세요.'}</div>`; return; }
+  let html = mapSVG() + `<div class="places">` + C.map((c, i) => {
+    const th = c.ids.slice(0, 4).map(id => S.items[id].thumb).filter(Boolean);
+    return `<button class="pcard ${S.place === i ? 'sel' : ''}" data-pl="${i}"><div class="mos ${th.length < 4 ? 'one' : ''}">${(th.length < 4 ? th.slice(0, 1) : th).map(u => `<img src="${u}" alt="" loading="lazy">`).join('')}</div><div class="tx"><b>${esc(c.name)}</b><small>${fmtN(c.ids.length)}장 · ${fmtRange(c.t0, c.t1)}</small></div></button>`;
+  }).join('') + (S.noGps.length ? `<button class="pcard ${S.place === -2 ? 'sel' : ''}" data-pl="-2"><div class="mos one" style="display:grid;place-items:center;color:var(--faint)">${icon('pin')}</div><div class="tx"><b>위치 없음</b><small>${fmtN(S.noGps.length)}장</small></div></button>` : '') + `</div>`;
+  const sel = S.place >= 0 ? C[S.place] : S.place === -2 ? { name: '위치 없음', ids: S.noGps } : null;
+  if (sel) {
+    const ids = [...sel.ids].sort((a, b) => S.items[a].t - S.items[b].t);
+    html += `<div class="grp"><div class="grp-h">${esc(sel.name)} <span class="v">${fmtN(ids.length)}장${sel.lat != null ? ` · ${sel.lat.toFixed(4)}, ${sel.lon.toFixed(4)}` : ''}</span><span class="grow"></span>
+      ${sel.lat != null ? `<button data-plrename="${S.place}">이름 바꾸기</button><a class="linkbtn" href="https://www.openstreetmap.org/?mlat=${sel.lat.toFixed(5)}&mlon=${sel.lon.toFixed(5)}#map=14/${sel.lat.toFixed(5)}/${sel.lon.toFixed(5)}" target="_blank" rel="noopener noreferrer" title="누르면 이 좌표로 OpenStreetMap이 열려요">지도에서 보기</a>` : ''}
+      <button data-pldel="1">모두 지움</button><button data-plkeep="1">모두 남김</button></div>${gridHTML(ids, 'pl')}</div>`;
+  } else html += `<p class="hint" style="color:var(--faint);font-size:12.5px;margin:0 2px">장소를 누르면 그곳에서 찍은 사진을 보여 줘요.</p>`;
+  box.innerHTML = html;
+}
+
+/* ---------- Side panel ---------- */
+const AUTO = [
+  ['sim', '비슷한 사진은 추천 한 장만 남기기', () => S.groups.filter(g => !g.dup).flatMap(g => g.ids.filter(id => id !== g.best))],
+  ['dup', '똑같은 중복은 한 장만 남기기', () => S.groups.filter(g => g.dup).flatMap(g => g.ids.filter(id => id !== g.best))],
+  ['blur', '흐린 사진 지우기', () => S.prob.blur.filter(id => !(S.items[id].g >= 0 && S.items[id].best))],
+  ['dark', '너무 어둡거나 밝은 사진 지우기', () => [...S.prob.dark, ...S.prob.bright]],
+  ['shot', '스크린샷 지우기', () => S.prob.shot],
+  ['small', '아주 작은 사진 지우기', () => S.prob.small],
+];
+function renderSide() {
+  const N = S.items.length; const del = S.items.filter(i => i.mark === 'del');
+  const total = S.items.reduce((a, i) => a + i.size, 0), ds = del.reduce((a, i) => a + i.size, 0);
+  $('#kAll').textContent = fmtN(N); $('#kKeep').textContent = fmtN(N - del.length); $('#kDel').textContent = fmtN(del.length);
+  $('#saveBar').style.width = total ? (ds / total * 100).toFixed(1) + '%' : '0%';
+  $('#saveL').textContent = `전체 ${fmtSize(total)}`; $('#saveV').textContent = fmtSize(ds) + (total && ds ? ` (${Math.round(ds / total * 100)}%)` : '');
+  $('#sideS').textContent = N ? `${fmtN(N)}장 · ${fmtSize(total)}` : '사진을 불러오면 여기에 정리 현황이 나와요';
+  $('#undoBtn').disabled = !S.undo.length;
+  $('#autoChecks').innerHTML = AUTO.map(([k, l, fn]) => { const c = N ? fn().filter(id => S.items[id].mark !== 'del').length : 0; return `<label class="${c ? '' : 'dis'}"><input type="checkbox" data-auto="${k}" ${SET.auto[k] ? 'checked' : ''}>${l}<small>${fmtN(c)}장</small></label>`; }).join('');
+  const what = SET.exWhat; const L = exportList(what);
+  $('#exHint').textContent = N ? `${what === 'keep' ? '남길' : what === 'del' ? '지울' : '모든'} 사진 ${fmtN(L.length)}장 · ${fmtSize(L.reduce((a, i) => a + i.size, 0))}${L.reduce((a, i) => a + i.size, 0) > 1.9e9 ? ' · 2GB씩 나눠 여러 ZIP으로 받아요' : ''}` : '';
+  $('#exDir').disabled = !window.showDirectoryPicker; if (!window.showDirectoryPicker) $('#exDir').title = '이 브라우저는 폴더에 바로 저장할 수 없어요 (컴퓨터용 크롬·엣지에서 돼요)';
+  updateDirHint();
+}
+function updateDirHint() {
+  if (!S.root) return;
+  const n = S.items.filter(i => i.mark === 'del' && i.handle).length;
+  $('#dirHint').innerHTML = `‘${esc(S.root.name)}’ 폴더를 열어 두었어요. 지움 표시한 사진 ${fmtN(n)}장을 그 폴더 안 ‘_지울 사진’ 폴더로 옮기거나 바로 지울 수 있어요.`;
+  $('#dirMove').disabled = $('#dirDel').disabled = !n;
+}
+
+/* ---------- Viewer ---------- */
+const V = { list: [], i: 0, url: '' };
+function openViewer(id, ctx) {
+  const list = (ctx && S.ctx[ctx]) || [id];
+  V.list = list.slice(); V.i = Math.max(0, V.list.indexOf(id));
+  $('#viewer').hidden = false; document.body.style.overflow = 'hidden'; document.body.classList.add('viewing');
+  if (innerWidth < 760) $('#viewer').classList.add('noinfo');
+  renderViewer(true);
+}
+function closeViewer() { $('#viewer').hidden = true; document.body.style.overflow = ''; document.body.classList.remove('viewing'); if (V.url) { URL.revokeObjectURL(V.url); V.url = ''; } $('#vImg').removeAttribute('src'); $('#vStage').classList.remove('zoom'); }
+function renderViewer(load) {
+  const it = S.items[V.list[V.i]]; if (!it) { closeViewer(); return; }
+  if (load) {
+    $('#vStage').classList.remove('zoom');
+    if (V.url) URL.revokeObjectURL(V.url); V.url = '';
+    const img = $('#vImg'), msg = $('#vMsg');
+    if (it.bad) { img.hidden = true; img.removeAttribute('src'); msg.hidden = false; msg.innerHTML = `이 브라우저는 이 사진을 열 수 없어요<br><small>${esc(it.name)}</small>`; }
+    else { msg.hidden = true; img.hidden = false; if (it.thumb) img.src = it.thumb; V.url = URL.createObjectURL(it.file); const u = V.url; const pre = new Image(); pre.onload = () => { if (V.url === u) img.src = u; }; pre.onerror = () => {}; pre.src = u; }
+  }
+  $('#vName').textContent = it.name;
+  $('#vSub').textContent = `${V.i + 1} / ${V.list.length} · ${fmtDT(it.t)}${placeName(it) ? ' · ' + placeName(it) : ''}`;
+  $('#vStage').classList.toggle('isdel', it.mark === 'del');
+  $('#vKeep').className = 'btn' + (it.mark !== 'del' ? ' on-keep' : ''); $('#vDel').className = 'btn' + (it.mark === 'del' ? ' on-del' : '');
+  $('#vPrev').disabled = V.i <= 0; $('#vNext').disabled = V.i >= V.list.length - 1;
+  $('#vInfoBtn').setAttribute('aria-pressed', String(!$('#viewer').classList.contains('noinfo')));
+  // info
+  const rows = [];
+  rows.push(['촬영', fmtDT(it.t) + (it.tSrc === 'exif' ? '' : ' (파일 날짜)')]);
+  if (it.w) rows.push(['크기', `${it.w} × ${it.h} · ${(it.w * it.h / 1e6).toFixed(1)}MP`]);
+  rows.push(['용량', fmtSize(it.size)]);
+  if (it.model || it.make) rows.push(['카메라', esc([it.make && !String(it.model || '').toLowerCase().startsWith(String(it.make).toLowerCase().split(' ')[0]) ? it.make : '', it.model].filter(Boolean).join(' '))]);
+  const ex = []; if (it.fnum) ex.push('f/' + it.fnum); if (it.exp) ex.push(it.exp >= 1 ? it.exp + '초' : '1/' + Math.round(1 / it.exp) + '초'); if (it.iso) ex.push('ISO ' + it.iso); if (it.focal) ex.push(it.focal + 'mm');
+  if (ex.length) rows.push(['설정', ex.join(' · ')]);
+  if (it.lat != null) rows.push(['위치', `${esc(placeName(it))}<br>${it.lat.toFixed(5)}, ${it.lon.toFixed(5)}${it.alt != null ? ` · ${it.alt}m` : ''}<br><a href="https://www.openstreetmap.org/?mlat=${it.lat}&mlon=${it.lon}#map=16/${it.lat}/${it.lon}" target="_blank" rel="noopener noreferrer">지도에서 보기</a>`]);
+  if (it.path !== it.name) rows.push(['폴더', esc(it.path.split('/').slice(0, -1).join('/'))]);
+  if (it.faces != null) rows.push(['얼굴', it.faces + '개']);
+  let html = `<dl>${rows.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('')}</dl>`;
+  if (it.done && !it.bad) html += `<h4>사진 상태</h4><dl><dt>선명도</dt><dd>${it.sharp}${it.blur ? ' · 흐림' : it.soft ? ' · 묶음에서 덜 선명' : ''}<div class="bar"><i style="width:${clamp(it.sharp, 2, 100)}%"></i></div></dd><dt>밝기</dt><dd>${Math.round(it.bright / 255 * 100)}%${it.bright < 42 ? ' · 어두움' : it.bright > 218 ? ' · 밝음' : ''}<div class="bar"><i style="width:${clamp(it.bright / 255 * 100, 2, 100)}%"></i></div></dd></dl>`;
+  if (it.g >= 0) { const g = S.groups[it.g]; html += `<h4>${g.dup ? '똑같은' : '비슷한'} 사진 ${g.ids.length}장</h4><div class="strip">${g.ids.map(id => { const x = S.items[id]; return `<img src="${x.thumb || ''}" data-vgo="${id}" class="${id === it.id ? 'cur' : ''} ${x.mark === 'del' ? 'del' : ''}" title="${esc(x.name)} · 선명도 ${x.sharp}${x.best ? ' · 추천' : ''}">`; }).join('')}</div>`; }
+  $('#vInfo').innerHTML = html;
+}
+function vNav(d) { const n = V.i + d; if (n < 0 || n >= V.list.length) return; V.i = n; renderViewer(true); }
+
+/* ---------- Export ---------- */
+function exportList(what) { return S.items.filter(it => what === 'all' || (what === 'keep' ? it.mark !== 'del' : it.mark === 'del')).sort((a, b) => a.t - b.t); }
+function outPath(it, used) {
+  const d = new Date(it.t), y = d.getFullYear(), m = pad2(d.getMonth() + 1), dd = pad2(d.getDate());
+  let dir = '';
+  switch (SET.exLayout) {
+    case 'keep': dir = it.path.split('/').slice(0, -1).map(safeSeg).join('/'); break;
+    case 'day': dir = `${y}-${m}-${dd}`; break;
+    case 'month': dir = `${y}-${m}`; break;
+    case 'ym': dir = `${y}/${m}`; break;
+    case 'place': dir = safeSeg(placeName(it) || '위치 없음'); break;
+  }
+  let base = safeSeg(it.name);
+  if (SET.exRename) { const ext = ((/\.[^.]+$/.exec(it.name) || ['.jpg'])[0]).toLowerCase().replace('.jpeg', '.jpg'); base = `${y}${m}${dd}_${pad2(d.getHours())}${pad2(d.getMinutes())}${pad2(d.getSeconds())}${ext}`; }
+  let p = (dir ? dir + '/' : '') + base, k = 2;
+  while (used.has(p.toLowerCase())) { p = (dir ? dir + '/' : '') + base.replace(/(\.[^.]+)?$/, `_${k++}$1`); }
+  used.add(p.toLowerCase()); return p;
+}
+const exLabel = () => ({ keep: '남길사진', del: '지울사진', all: '전체' })[SET.exWhat];
+async function exportZip() {
+  const L = exportList(SET.exWhat); if (!L.length) { toast('받을 사진이 없어요'); return; }
+  const enc = new TextEncoder(); const used = new Set(); const LIMIT = 1.9e9;
+  const stamp = (() => { const d = new Date(); return `${d.getFullYear()}${pad2(d.getMonth() + 1)}${pad2(d.getDate())}`; })();
+  busy.open('ZIP 만드는 중');
+  const zips = []; let z = null;
+  const nz = () => { z = { parts: [], central: [], off: 0, n: 0 }; zips.push(z); };
+  nz();
+  const tot = L.reduce((a, i) => a + i.size, 0); let doneB = 0;
+  try {
+    for (let i = 0; i < L.length; i++) {
+      if (busy.stop) { busy.close(); toast('ZIP 만들기를 멈췄어요'); return; }
+      const it = L[i]; const path = outPath(it, used);
+      if (z.n && z.off + it.size + 200 > LIMIT) nz();
+      busy.set(doneB / tot, `${i + 1} / ${L.length} · ${path}`);
+      let crc = 0xFFFFFFFF; const CH = 8 * 1048576;
+      for (let o = 0; o < it.size; o += CH) { const u = new Uint8Array(await it.file.slice(o, o + CH).arrayBuffer()); crc = CORE.crc32(u, crc); }
+      crc = CORE.crcEnd(crc);
+      const name = enc.encode(path), sz = it.size, d = new Date(it.t);
+      const time = (d.getHours() << 11) | (d.getMinutes() << 5) | (d.getSeconds() >> 1), date = (Math.max(0, d.getFullYear() - 1980) << 9) | ((d.getMonth() + 1) << 5) | d.getDate();
+      const lh = new DataView(new ArrayBuffer(30)); lh.setUint32(0, 0x04034b50, true); lh.setUint16(4, 20, true); lh.setUint16(6, 0x0800, true); lh.setUint16(10, time, true); lh.setUint16(12, date, true); lh.setUint32(14, crc, true); lh.setUint32(18, sz, true); lh.setUint32(22, sz, true); lh.setUint16(26, name.length, true);
+      z.parts.push(lh.buffer, name, it.file);
+      const ch = new DataView(new ArrayBuffer(46)); ch.setUint32(0, 0x02014b50, true); ch.setUint16(4, 20, true); ch.setUint16(6, 20, true); ch.setUint16(8, 0x0800, true); ch.setUint16(12, time, true); ch.setUint16(14, date, true); ch.setUint32(16, crc, true); ch.setUint32(20, sz, true); ch.setUint32(24, sz, true); ch.setUint16(28, name.length, true); ch.setUint32(42, z.off, true);
+      z.central.push(ch.buffer, name);
+      z.off += 30 + name.length + sz; z.n++; doneB += sz;
+    }
+  } catch (e) { busy.close(); toast('사진을 읽지 못해 ZIP을 만들지 못했어요. 사진을 다시 불러와 주세요.', { err: true, ms: 5000 }); return; }
+  busy.set(1, '내려받기를 준비해요');
+  for (let k = 0; k < zips.length; k++) {
+    const q = zips[k]; const cd = q.central.reduce((a, p) => a + (p.byteLength ?? p.length), 0);
+    const end = new DataView(new ArrayBuffer(22)); end.setUint32(0, 0x06054b50, true); end.setUint16(8, q.n, true); end.setUint16(10, q.n, true); end.setUint32(12, cd, true); end.setUint32(16, q.off, true);
+    const blob = new Blob([...q.parts, ...q.central, end.buffer], { type: 'application/zip' });
+    download(`Photoer_${exLabel()}_${stamp}${zips.length > 1 ? '_' + (k + 1) : ''}.zip`, blob);
+    if (k < zips.length - 1) await sleep(1200);
+  }
+  busy.close();
+  toast(`${fmtN(L.length)}장을 ZIP${zips.length > 1 ? ` ${zips.length}개` : ''}으로 받았어요`);
+}
+async function exportDir() {
+  const L = exportList(SET.exWhat); if (!L.length) { toast('받을 사진이 없어요'); return; }
+  let root; try { root = await window.showDirectoryPicker({ mode: 'readwrite', id: 'photoer-out' }); } catch (e) { return; }
+  const used = new Set(); busy.open('폴더에 저장하는 중'); let ok = 0, fail = 0;
+  const dirs = new Map();
+  const getDir = async (p) => { if (!p) return root; if (dirs.has(p)) return dirs.get(p); const parts = p.split('/'); let d = root; for (const s of parts) d = await d.getDirectoryHandle(s, { create: true }); dirs.set(p, d); return d; };
+  for (let i = 0; i < L.length; i++) {
+    if (busy.stop) break;
+    const it = L[i]; const p = outPath(it, used); busy.set(i / L.length, `${i + 1} / ${L.length} · ${p}`);
+    try {
+      const parts = p.split('/'); const fn = parts.pop(); const d = await getDir(parts.join('/'));
+      const fh = await d.getFileHandle(fn, { create: true }); const w = await fh.createWritable(); await w.write(it.file); await w.close(); ok++;
+    } catch { fail++; }
+  }
+  busy.close(); toast(`${fmtN(ok)}장을 ‘${root.name}’에 저장했어요${fail ? ` · ${fail}장 실패` : ''}`, { err: !!fail && !ok });
+}
+function exportDelList() {
+  const L = exportList('del'); if (!L.length) { toast('지움 표시한 사진이 없어요'); return; }
+  const txt = `Photoer · 지울 사진 목록 (${L.length}장, ${fmtSize(L.reduce((a, i) => a + i.size, 0))})\n만든 때: ${fmtDT(Date.now())}\n갤러리나 파일 앱에서 아래 사진을 찾아 지우세요.\n\n` + L.map(it => `${it.path}\t${fmtDT(it.t)}\t${fmtSize(it.size)}`).join('\n') + '\n';
+  download(`Photoer_지울사진_목록.txt`, '﻿' + txt, 'text/plain;charset=utf-8');
+}
+function exportCsv() {
+  if (!S.items.length) return;
+  const q = v => { const s = String(v ?? ''); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
+  const head = ['파일', '경로', '표시', '촬영일시', '날짜출처', '장소', '위도', '경도', '가로', '세로', '용량(byte)', '선명도', '밝기', '흐림', '비슷한묶음', '추천', '카메라'];
+  const rows = [...S.items].sort((a, b) => a.t - b.t).map(it => [it.name, it.path, it.mark === 'del' ? '지움' : '남김', fmtDT(it.t), it.tSrc === 'exif' ? 'EXIF' : '파일', placeName(it), it.lat ?? '', it.lon ?? '', it.w || '', it.h || '', it.size, it.sharp ?? '', it.bright ?? '', it.blur ? 'Y' : '', it.g >= 0 ? it.g + 1 : '', it.best ? 'Y' : '', [it.make, it.model].filter(Boolean).join(' ')].map(q).join(','));
+  download('Photoer_정리결과.csv', '﻿' + [head.join(','), ...rows].join('\n'), 'text/csv;charset=utf-8');
+}
+/* folder opened read/write: move or delete marked photos */
+async function dirApply(mode) {
+  const L = S.items.filter(i => i.mark === 'del' && i.handle && i.dir); if (!L.length) return;
+  const sz = fmtSize(L.reduce((a, i) => a + i.size, 0));
+  const ok = await confirmDlg(mode === 'move' ? '‘_지울 사진’ 폴더로 옮길까요?' : '정말 바로 지울까요?',
+    mode === 'move' ? `지움 표시한 ${fmtN(L.length)}장(${sz})을 ‘${S.root.name}/_지울 사진’ 폴더로 옮겨요. 나중에 그 폴더를 확인하고 직접 지우면 돼요.` : `지움 표시한 ${fmtN(L.length)}장(${sz})을 폴더에서 바로 지워요. 휴지통으로 가지 않아서 되돌릴 수 없어요.`,
+    mode === 'move' ? '옮기기' : '지우기', mode !== 'move');
+  if (!ok) return;
+  try { if ((await S.root.queryPermission({ mode: 'readwrite' })) !== 'granted' && (await S.root.requestPermission({ mode: 'readwrite' })) !== 'granted') { toast('폴더를 바꿀 권한이 없어요', { err: true }); return; } } catch {}
+  busy.open(mode === 'move' ? '옮기는 중' : '지우는 중');
+  let target = null; if (mode === 'move') target = await S.root.getDirectoryHandle('_지울 사진', { create: true });
+  const gone = new Set(); let fail = 0;
+  for (let i = 0; i < L.length; i++) {
+    if (busy.stop) break;
+    const it = L[i]; busy.set(i / L.length, it.path);
+    try {
+      if (mode === 'move') {
+        let nm = it.name, k = 2;
+        while (true) { try { await target.getFileHandle(nm); nm = it.name.replace(/(\.[^.]+)?$/, `_${k++}$1`); } catch { break; } }
+        let moved = false;
+        if (typeof it.handle.move === 'function') { try { await it.handle.move(target, nm); moved = true; } catch {} }
+        if (!moved) { const fh = await target.getFileHandle(nm, { create: true }); const w = await fh.createWritable(); await w.write(it.file); await w.close(); await it.dir.removeEntry(it.name); }
+      } else await it.dir.removeEntry(it.name);
+      gone.add(it.id); pendM.set(it.sig, null);
+    } catch { fail++; }
+  }
+  busy.close(); queueFlush();
+  removeItems(gone);
+  toast(`${fmtN(gone.size)}장을 ${mode === 'move' ? '‘_지울 사진’ 폴더로 옮겼어요' : '지웠어요'}${fail ? ` · ${fail}장은 실패했어요` : ''}`, { err: !!fail && !gone.size, ms: 4500 });
+}
+function removeItems(ids) {
+  if (!ids.size) return;
+  for (const id of ids) { const it = S.items[id]; if (it.thumb) URL.revokeObjectURL(it.thumb); S.bySig.delete(it.sig); }
+  S.items = S.items.filter(it => !ids.has(it.id)); S.items.forEach((it, i) => it.id = i);
+  S.undo = []; S.ctx = {};
+  regroup(); if (!S.items.length) setTab('home'); renderAll();
+}
+async function clearAll() {
+  if (!S.items.length) return;
+  if (!(await confirmDlg('모두 비울까요?', '불러온 사진을 화면에서 모두 내려요. 원본 사진과 기억해 둔 지움 표시는 그대로예요.', '비우기'))) return;
+  for (const it of S.items) if (it.thumb) URL.revokeObjectURL(it.thumb);
+  S.q.length = 0; S.items = []; S.bySig.clear(); S.undo = []; S.ctx = {}; S.root = null; S.place = -1; $('#sDir').hidden = true; S.hasFaces = false;
+  regroup(); setTab('home'); renderAll();
+}
+
+/* ---------- Events ---------- */
+function bind() {
+  hydrateIcons();
+  $$('dialog').forEach(d => d.addEventListener('click', e => { if (d.id !== 'busyDlg' && (e.target.closest('[data-close]') || e.target === d)) d.close(); }));
+  $('#tabs').onclick = e => { const b = e.target.closest('.tab'); if (b) setTab(b.dataset.tab); };
+  // loading
+  $('#addBtn').onclick = $('#hPick').onclick = () => pickInput('#fPick');
+  $('#hFiles').onclick = () => pickInput('#fFiles');
+  $('#dirBtn').onclick = $('#hDir').onclick = () => pickInput('#fDir');
+  if (window.showDirectoryPicker) { $('#hOpen').hidden = false; $('#hOpen').onclick = openDirRW; }
+  for (const id of ['#fPick', '#fFiles', '#fDir']) $(id).onchange = e => { const fs = [...e.target.files]; if (fs.length) addEntries(fs.map(f => ({ file: f, path: f.webkitRelativePath || f.name }))); };
+  let dragN = 0;
+  document.addEventListener('dragenter', e => { if (e.dataTransfer && [...e.dataTransfer.types].includes('Files')) { dragN++; document.body.classList.add('dragging'); } });
+  document.addEventListener('dragleave', () => { dragN = Math.max(0, dragN - 1); if (!dragN) document.body.classList.remove('dragging'); });
+  document.addEventListener('dragover', e => { if (e.dataTransfer && [...e.dataTransfer.types].includes('Files')) e.preventDefault(); });
+  document.addEventListener('drop', async e => { if (!e.dataTransfer || !e.dataTransfer.files.length) return; e.preventDefault(); dragN = 0; document.body.classList.remove('dragging'); const list = await readDropped(e.dataTransfer); addEntries(list); });
+  $('#helpBtn').onclick = () => $('#helpDlg').showModal();
+  $('#clearBtn').onclick = clearAll;
+
+  // tiles: tap = mark (or view), long-press / zoom button = view
+  const work = $('#work'); let lp = 0, lpFired = false, lpXY = null;
+  work.addEventListener('pointerdown', e => {
+    const t = e.target.closest('.tile'); if (!t || e.target.closest('.zm') || e.button > 0) return;
+    lpFired = false; lpXY = [e.clientX, e.clientY]; clearTimeout(lp);
+    lp = setTimeout(() => { lpFired = true; const g = t.closest('[data-ctx]'); openViewer(+t.dataset.id, g && g.dataset.ctx); }, 520);
+  });
+  work.addEventListener('pointermove', e => { if (lpXY && Math.hypot(e.clientX - lpXY[0], e.clientY - lpXY[1]) > 10) clearTimeout(lp); });
+  ['pointerup', 'pointercancel', 'pointerleave'].forEach(ev => work.addEventListener(ev, () => clearTimeout(lp)));
+  work.addEventListener('contextmenu', e => { if (e.target.closest('.tile')) e.preventDefault(); });
+  work.addEventListener('click', e => {
+    const zb = e.target.closest('[data-zoom]');
+    if (zb) { const g = zb.closest('[data-ctx]'); openViewer(+zb.dataset.zoom, g && g.dataset.ctx); return; }
+    const t = e.target.closest('.tile');
+    if (t) { if (lpFired) { lpFired = false; return; } const id = +t.dataset.id; if (SET.tap === 'view') { const g = t.closest('[data-ctx]'); openViewer(id, g && g.dataset.ctx); } else toggle(id); return; }
+    const b = e.target.closest('button, a'); if (!b) return;
+    const ds = b.dataset;
+    if (ds.chip != null) { S.af.chip = ds.chip; renderAllTab(); }
+    else if (ds.bulk) { const n = setMarks(S.ctx.all || [], ds.bulk); if (n) toast(`${fmtN(n)}장을 ${ds.bulk === 'del' ? '지움으로' : '남김으로'} 표시했어요`, { action: '되돌리기', onAction: undo }); }
+    else if (ds.gbest != null) { const g = S.groups[+ds.gbest]; setPlan(g.ids.map(id => [id, id === g.best ? 'keep' : 'del'])); }
+    else if (ds.gkeep != null) setMarks(S.groups[+ds.gkeep].ids, 'keep');
+    else if (ds.sdel || ds.skeep) { const k = ds.sdel || ds.skeep; const n = setMarks(S.prob[k], ds.sdel ? 'del' : 'keep'); if (n) toast(`${fmtN(n)}장을 ${ds.sdel ? '지움으로' : '남김으로'} 표시했어요`, { action: '되돌리기', onAction: undo }); }
+    else if (ds.ddel || ds.dkeep) { const k = ds.ddel || ds.dkeep; setMarks(S.ctx['d' + k] || [], ds.ddel ? 'del' : 'keep'); renderDate(); }
+    else if (ds.month) { const el = document.getElementById('m-' + ds.month); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+    else if (ds.pl != null) { const i = +ds.pl; S.place = S.place === i ? -1 : i; renderPlace(); }
+    else if (ds.plrename != null) renamePlace(+ds.plrename);
+    else if (ds.pldel || ds.plkeep) { setMarks(S.ctx.pl || [], ds.pldel ? 'del' : 'keep'); }
+  });
+  $('#placeList').addEventListener('click', e => { const c = e.target.closest('circle[data-pl]'); if (c) { const i = +c.dataset.pl; S.place = S.place === i ? -1 : i; renderPlace(); } });
+
+  // all-tab filters
+  $('#aQ').addEventListener('input', () => { S.af.q = $('#aQ').value; clearTimeout(bind.qt); bind.qt = setTimeout(renderAllTab, 200); });
+  $('#aSeg').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.af.mark = b.dataset.f; segSet($('#aSeg'), 'f', b.dataset.f); renderAllTab(); };
+  $('#aSort').value = SET.allSort; $('#aSort').onchange = () => { SET.allSort = $('#aSort').value; saveSet(); renderAllTab(); };
+  $('#simSeg').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.simF = b.dataset.f; segSet($('#simSeg'), 'f', b.dataset.f); renderSim(); };
+  segSet($('#dateSeg'), 'f', SET.dateSort);
+  $('#dateSeg').onclick = e => { const b = e.target.closest('button'); if (!b) return; SET.dateSort = b.dataset.f; saveSet(); segSet($('#dateSeg'), 'f', b.dataset.f); renderDate(); };
+  $$('.tsz').forEach(r => r.addEventListener('input', () => { SET.ts = +r.value; saveSet(); document.documentElement.style.setProperty('--ts', SET.ts + 'px'); document.documentElement.style.setProperty('--gts', Math.round(SET.ts * 1.25) + 'px'); $$('.tsz').forEach(x => x.value = SET.ts); }));
+  $('#simAllBest').onclick = () => {
+    const n = setPlan(S.groups.flatMap(g => g.ids.map(id => [id, id === g.best ? 'keep' : 'del'])));
+    if (!n) { toast('이미 모든 묶음에서 한 장씩만 남겼어요'); return; }
+    renderSim(); toast(`${fmtN(S.groups.length)}묶음에서 추천 사진만 남겼어요`, { action: '되돌리기', onAction: () => { undo(); renderSim(); } });
+  };
+  $('#simAllKeep').onclick = () => { const n = setMarks(S.groups.flatMap(g => g.ids), 'keep'); renderSim(); if (n) toast(`${fmtN(n)}장을 다시 남김으로 바꿨어요`, { action: '되돌리기', onAction: () => { undo(); renderSim(); } }); };
+
+  // side
+  $('#sideToggle').onclick = () => $('#side').classList.toggle('closed');
+  $$('#side .kpi').forEach(k => k.onclick = () => { if (!S.items.length) return; S.af.mark = k.dataset.go; segSet($('#aSeg'), 'f', S.af.mark); setTab('all'); });
+  $('#undoBtn').onclick = () => { undo(); renderTab(true); };
+  $('#resetBtn').onclick = async () => { const ids = S.items.filter(i => i.mark === 'del').map(i => i.id); if (!ids.length) return; if (await confirmDlg('모두 남김으로 바꿀까요?', `지움 표시한 ${fmtN(ids.length)}장을 모두 남김으로 바꿔요. 되돌리기로 다시 돌릴 수 있어요.`, '바꾸기')) { setMarks(ids, 'keep'); renderTab(true); } };
+  $('#autoChecks').addEventListener('change', e => { const c = e.target.closest('[data-auto]'); if (c) { SET.auto[c.dataset.auto] = c.checked; saveSet(); } });
+  $('#autoGo').onclick = () => {
+    if (!S.items.length) { toast('먼저 사진을 불러와 주세요'); return; }
+    const ids = new Set(); for (const [k, , fn] of AUTO) if (SET.auto[k]) fn().forEach(id => ids.add(id));
+    const n = setMarks([...ids], 'del');
+    if (!n) { toast(S.running ? '아직 살펴보는 중이에요. 끝난 뒤 다시 눌러 보세요.' : '새로 지움 표시할 사진이 없어요'); return; }
+    renderTab(true); toast(`${fmtN(n)}장을 지움으로 표시했어요`, { action: '되돌리기', onAction: () => { undo(); renderTab(true); } });
+  };
+  const rs = () => { $('#simV').textContent = SET.sim <= 5 ? '엄격' : SET.sim <= 11 ? '보통' : '느슨'; $('#blurV').textContent = `선명도 ${SET.blur} 미만`; };
+  $('#simR').value = SET.sim; $('#blurR').value = SET.blur; rs();
+  let rgT = 0; const reg = () => { clearTimeout(rgT); rgT = setTimeout(() => { regroup(); renderAll(true); }, 250); };
+  $('#simR').oninput = () => { SET.sim = +$('#simR').value; saveSet(); rs(); reg(); };
+  $('#blurR').oninput = () => { SET.blur = +$('#blurR').value; saveSet(); rs(); reg(); };
+  $('#swSameDay').checked = SET.sameDay; $('#swSameDay').onchange = () => { SET.sameDay = $('#swSameDay').checked; saveSet(); reg(); };
+  segSet($('#radSeg'), 'v', SET.radius); $('#radSeg').onclick = e => { const b = e.target.closest('button'); if (!b) return; SET.radius = +b.dataset.v; saveSet(); segSet($('#radSeg'), 'v', SET.radius); S.place = -1; reg(); };
+  segSet($('#tapSeg'), 'v', SET.tap); $('#tapSeg').onclick = e => { const b = e.target.closest('button'); if (!b) return; SET.tap = b.dataset.v; saveSet(); segSet($('#tapSeg'), 'v', SET.tap); };
+  segSet($('#exWhat'), 'v', SET.exWhat); $('#exWhat').onclick = e => { const b = e.target.closest('button'); if (!b) return; SET.exWhat = b.dataset.v; saveSet(); segSet($('#exWhat'), 'v', SET.exWhat); renderSide(); };
+  $('#exLayout').value = SET.exLayout; $('#exLayout').onchange = () => { SET.exLayout = $('#exLayout').value; saveSet(); };
+  $('#swRename').checked = SET.exRename; $('#swRename').onchange = () => { SET.exRename = $('#swRename').checked; saveSet(); };
+  $('#exZip').onclick = exportZip; $('#exDir').onclick = exportDir; $('#exList').onclick = exportDelList; $('#exCsv').onclick = exportCsv;
+  $('#dirMove').onclick = () => dirApply('move'); $('#dirDel').onclick = () => dirApply('del');
+  $('#cacheClr').onclick = async () => { if (await confirmDlg('기억한 결과를 지울까요?', '이 브라우저에 저장한 분석 결과와 지움 표시를 모두 지워요. 지금 화면의 사진은 그대로예요.', '지우기', true)) { await DB.clear(); toast('기억한 분석 결과를 지웠어요'); } };
+
+  // viewer
+  $('#vClose').onclick = closeViewer;
+  $('#vPrev').onclick = () => vNav(-1); $('#vNext').onclick = () => vNav(1);
+  $('#vKeep').onclick = () => setMarks([V.list[V.i]], 'keep');
+  $('#vDel').onclick = () => { const id = V.list[V.i]; const was = S.items[id].mark; setMarks([id], 'del'); if (was !== 'del' && V.i < V.list.length - 1) setTimeout(() => vNav(1), 160); };
+  $('#vInfoBtn').onclick = () => { $('#viewer').classList.toggle('noinfo'); renderViewer(); };
+  const zoomAt = (cx, cy) => {
+    const st = $('#vStage'), img = $('#vImg'); if (img.hidden) return;
+    if (st.classList.contains('zoom')) { st.classList.remove('zoom'); return; }
+    const r = img.getBoundingClientRect(); const fx = cx != null ? (cx - r.left) / r.width : .5, fy = cy != null ? (cy - r.top) / r.height : .5;
+    st.classList.add('zoom'); requestAnimationFrame(() => { st.scrollLeft = fx * img.naturalWidth - st.clientWidth / 2; st.scrollTop = fy * img.naturalHeight - st.clientHeight / 2; });
+  };
+  $('#vZoom').onclick = () => zoomAt();
+  $('#vImg').addEventListener('click', e => zoomAt(e.clientX, e.clientY));
+  $('#vInfo').addEventListener('click', e => { const g = e.target.closest('[data-vgo]'); if (!g) return; const id = +g.dataset.vgo; let i = V.list.indexOf(id); if (i < 0) { V.list = S.groups[S.items[id].g].ids.slice(); i = V.list.indexOf(id); } V.i = i; renderViewer(true); });
+  let sx = null;
+  $('#vStage').addEventListener('pointerdown', e => { if (!$('#vStage').classList.contains('zoom') && e.pointerType !== 'mouse') sx = [e.clientX, e.clientY]; });
+  $('#vStage').addEventListener('pointerup', e => { if (!sx) return; const dx = e.clientX - sx[0], dy = e.clientY - sx[1]; sx = null; if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) vNav(dx < 0 ? 1 : -1); else if (dy > 110 && Math.abs(dy) > Math.abs(dx) * 1.5) closeViewer(); });
+
+  // place rename
+  $('#nmSave').onclick = () => { const c = S.places[renamePlace.i]; if (!c) return; const v = $('#nmA').value.trim(); if (v) SET.names[c.key] = v; else delete SET.names[c.key]; saveSet(); $('#nmDlg').close(); regroup(); renderAll(true); };
+  $('#nmReset').onclick = () => { $('#nmA').value = ''; $('#nmSave').click(); };
+  $('#nmA').addEventListener('keydown', e => { if (e.key === 'Enter' && !e.isComposing) $('#nmSave').click(); });
+
+  document.addEventListener('keydown', e => {
+    const typing = /INPUT|TEXTAREA|SELECT/.test(document.activeElement?.tagName) && document.activeElement.type !== 'range' && document.activeElement.type !== 'checkbox';
+    if (!$('#viewer').hidden) {
+      if (e.key === 'Escape') { e.preventDefault(); closeViewer(); }
+      else if (e.key === 'ArrowLeft') vNav(-1); else if (e.key === 'ArrowRight') vNav(1);
+      else if (e.key === 'x' || e.key === 'X' || e.key === 'Delete' || e.key === 'Backspace') { e.preventDefault(); $('#vDel').click(); }
+      else if (e.key === 'k' || e.key === 'K') $('#vKeep').click();
+      else if (e.key === 'z' || e.key === 'Z') { if (e.ctrlKey || e.metaKey) { e.preventDefault(); undo(); } else zoomAt(); }
+      else if (e.key === 'i' || e.key === 'I') $('#vInfoBtn').click();
+      return;
+    }
+    if (document.querySelector('dialog[open]') || typing) return;
+    if ((e.ctrlKey || e.metaKey) && (e.key === 'z' || e.key === 'Z')) { e.preventDefault(); undo(); renderTab(true); return; }
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    const tabs = ['all', 'sim', 'prob', 'date', 'place']; const n = +e.key;
+    if (n >= 1 && n <= 5 && S.items.length) setTab(tabs[n - 1]);
+  });
+  window.addEventListener('beforeunload', e => { if (S.running || S.items.some(i => i.mark === 'del')) { flush(); } });
+}
+function setPlan(pairs) {
+  const before = [];
+  for (const [id, m] of pairs) { const it = S.items[id]; if (it && it.mark !== m) { before.push([id, it.mark]); it.mark = m; pendM.set(it.sig, m === 'del' ? 1 : null); refreshTile(it); } }
+  if (!before.length) return 0;
+  S.undo.push(before); if (S.undo.length > 60) S.undo.shift();
+  queueFlush(); afterMarks(); return before.length;
+}
+function renamePlace(i) {
+  const c = S.places[i]; if (!c) return; renamePlace.i = i;
+  $('#nmS').textContent = `${c.ids.length}장 · ${c.lat.toFixed(4)}, ${c.lon.toFixed(4)} · 자동 이름: ${c.auto}`;
+  $('#nmA').value = SET.names[c.key] || ''; $('#nmA').placeholder = c.auto; $('#nmDlg').showModal(); setTimeout(() => $('#nmA').focus(), 50);
+}
+
+bind();
+regroup(); renderAll(); setTab('home');
+</script>
+</body>
+</html>
