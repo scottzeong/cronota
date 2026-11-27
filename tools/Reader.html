@@ -1,0 +1,1946 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#F5F1E8" />
+<title>Reader · 아웃그리드 읽어 주기</title>
+<meta name="description" content="글을 붙여 넣거나 PDF·DOCX·HWPX·EPUB 같은 파일을 넣으면 기기의 목소리로 소리 내어 읽어 주는 도구. 문장 강조, 이어 읽기, 책갈피, 속도·목소리 선택, 보관함. 서버 없이 브라우저에서만 동작해요." />
+<!-- Fonts: outgrid's own files first (fonts/ next to this page), public CDN as a fallback. -->
+<style>
+  @font-face { font-family: "wantedSans"; src: url("fonts/WantedSansVariable.woff2") format("woff2"); font-weight: 100 800; font-style: normal; font-display: swap; }
+  @font-face { font-family: "maruBuri"; src: url("fonts/MaruBuri-Regular.woff2") format("woff2"); font-weight: 400; font-style: normal; font-display: swap; }
+  @font-face { font-family: "maruBuri"; src: url("fonts/MaruBuri-SemiBold.woff2") format("woff2"); font-weight: 600; font-style: normal; font-display: swap; }
+</style>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/wanteddev/wanted-sans@v1.0.3/packages/wanted-sans/fonts/webfonts/variable/split/WantedSansVariable.min.css" />
+<link rel="stylesheet" href="https://hangeul.pstatic.net/hangeul_static/css/maru-buri.css" />
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23244D3A'/%3E%3Cpath d='M14 27h7l9-8v26l-9-8h-7z' fill='%23F5F1E8'/%3E%3Cpath d='M37 25a9 9 0 0 1 0 14M43 19a17 17 0 0 1 0 26' fill='none' stroke='%23D9C8A9' stroke-width='3.5' stroke-linecap='round'/%3E%3C/svg%3E" />
+<style>
+  :root {
+    --bg: #F5F1E8;
+    --surface: #FCFAF5;
+    --paper: #FFFDF8;
+    --ink: #1C2824;
+    --ink-2: #33403A;
+    --muted: #5E665F;
+    --faint: #9A9F95;
+    --hair: #E3DCCB;
+    --hover: #F0EADD;
+    --press: #E7DFCD;
+    --dark: #244D3A;
+    --dark-2: #1B3B2C;
+    --river: #3E6F73;
+    --clay: #8A5A3B;
+    --sand: #D9C8A9;
+    --focus: #8A5A3B;
+    --danger: #963F3B;
+    --rec: #B5443B;
+    --mint: #E8EFE8;
+    --shadow: 0 1px 0 rgba(28,40,36,.03), 0 18px 40px -30px rgba(28,40,36,.30);
+    --sans: "wantedSans", "Wanted Sans Variable", "Wanted Sans", -apple-system, BlinkMacSystemFont, "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+    --serif: "maruBuri", "MaruBuri", "Batang", "Noto Serif KR", serif;
+    --r-sm: 10px;
+    --r-md: 13px;
+    --r-lg: 20px;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    font-family: var(--sans); word-break: keep-all; background: var(--bg); color: var(--ink);
+    font-size: 14px; letter-spacing: -0.005em; -webkit-font-smoothing: antialiased;
+    min-height: 100dvh; display: flex; flex-direction: column;
+  }
+  [hidden] { display: none !important; }
+  button { font: inherit; color: inherit; cursor: pointer; border: 0; background: none; padding: 0; -webkit-tap-highlight-color: transparent; }
+  button:disabled { cursor: default; opacity: .35; }
+  input, select, textarea { font: inherit; color: inherit; }
+  :focus-visible { outline: 2.5px solid var(--focus); outline-offset: 3px; }
+  ::selection { background: rgba(36,77,58,.16); }
+  svg.i { width: 19px; height: 19px; stroke: currentColor; fill: none; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+  svg.i.sm { width: 16px; height: 16px; }
+  .muted { color: var(--faint); }
+  .tnum { font-variant-numeric: tabular-nums; }
+
+  /* ---------- Header ---------- */
+  .top { position: sticky; top: 0; z-index: 40; background: var(--bg); }
+  .top-inner { max-width: 1440px; margin: 0 auto; padding: 14px 24px 8px; display: flex; align-items: center; gap: 14px; }
+  .brand { display: flex; align-items: center; gap: 12px; flex: none; text-decoration: none; color: inherit; }
+  .logo { display: block; height: 34px; width: auto; flex: none; }
+  .app-name { font-family: var(--serif); font-weight: 600; font-size: 23px; letter-spacing: -.02em; color: var(--dark); line-height: 1; padding-left: 12px; border-left: 1.5px solid var(--hair); }
+  .app-name small { display: block; font-family: var(--sans); font-size: 11px; font-weight: 500; color: var(--faint); letter-spacing: 0; margin-top: 4px; }
+  .head-actions { margin-left: auto; display: flex; align-items: center; gap: 6px; min-width: 0; }
+  .icon-btn { width: 38px; height: 38px; border-radius: 999px; display: grid; place-items: center; color: var(--ink-2); transition: background .15s, color .15s; flex: none; }
+  .icon-btn:hover:not(:disabled) { background: var(--hover); color: var(--ink); }
+
+  /* ---------- Buttons ---------- */
+  .btn { height: 38px; padding: 0 16px; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; font-weight: 600; font-size: 13.5px; background: var(--hover); color: var(--ink-2); white-space: nowrap; transition: background .15s, box-shadow .15s; flex: none; }
+  .btn:hover:not(:disabled) { background: var(--press); }
+  .btn.primary { background: var(--dark); color: var(--surface); box-shadow: 0 8px 18px -10px rgba(36,77,58,.7); }
+  .btn.primary:hover:not(:disabled) { background: var(--dark-2); }
+  .btn.clay { background: var(--clay); color: var(--surface); }
+  .btn.clay:hover:not(:disabled) { background: #74492F; }
+  .btn.ghost { background: none; color: var(--muted); }
+  .btn.ghost:hover:not(:disabled) { background: var(--hover); color: var(--ink); }
+  .btn.line { background: var(--surface); box-shadow: inset 0 0 0 1px var(--hair); }
+  .btn.line:hover:not(:disabled) { background: var(--hover); }
+  .btn.sm { height: 32px; padding: 0 12px; font-size: 12.5px; gap: 5px; }
+  .btn.block { width: 100%; }
+  .btn.danger { color: var(--danger); }
+  .btn.rec { background: var(--rec); color: #fff; }
+
+  /* ---------- Tabs ---------- */
+  .tabs-wrap { max-width: 1440px; margin: 0 auto; padding: 4px 24px 10px; display: flex; align-items: center; gap: 12px; }
+  .tabs { display: flex; gap: 2px; padding: 4px; background: var(--press); border-radius: 999px; overflow-x: auto; scrollbar-width: none; flex: none; max-width: 100%; }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab { height: 34px; padding: 0 15px; border-radius: 999px; font-weight: 600; font-size: 13px; color: var(--muted); white-space: nowrap; display: inline-flex; align-items: center; gap: 6px; transition: background .15s, color .15s; flex: none; }
+  .tab svg.i { width: 16px; height: 16px; }
+  .tab:hover { color: var(--ink); }
+  .tab[aria-selected="true"] { background: var(--dark); color: var(--surface); box-shadow: 0 6px 14px -8px rgba(36,77,58,.6); }
+  .tab .n { font-size: 11px; font-weight: 700; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px; background: rgba(28,40,36,.08); display: inline-grid; place-items: center; font-variant-numeric: tabular-nums; }
+  .tab .n.warn { background: var(--rec); color: #fff; }
+  .tab[aria-selected="true"] .n:not(.warn) { background: rgba(255,255,255,.18); }
+  .applied { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; min-width: 0; align-items: center; }
+  .applied::-webkit-scrollbar { display: none; }
+  .achip { height: 28px; padding: 0 11px; border-radius: 999px; font-size: 12px; font-weight: 600; background: var(--mint); color: var(--dark); white-space: nowrap; display: inline-flex; align-items: center; gap: 5px; flex: none; font-variant-numeric: tabular-nums; }
+  .achip.warn { background: #F3E7DC; color: var(--clay); }
+  .achip.bad { background: #F6E1DC; color: var(--rec); }
+  .achip svg.i { width: 14px; height: 14px; }
+
+  /* ---------- Layout ---------- */
+  main { flex: 1; width: 100%; max-width: 1440px; margin: 0 auto; padding: 0 24px 24px; display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 16px; height: calc(100dvh - 122px); min-height: 520px; }
+  .panel { background: var(--surface); border-radius: var(--r-lg); display: flex; flex-direction: column; min-height: 0; overflow: hidden; box-shadow: 0 0 0 1px var(--hair), var(--shadow); }
+  .view { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+  .wbar { display: flex; align-items: center; gap: 6px; padding: 10px 12px; border-bottom: 1px solid var(--hair); flex-wrap: wrap; row-gap: 8px; min-height: 59px; }
+  .wbar .count { font-size: 13px; color: var(--muted); margin: 0 6px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .wbar .count b { color: var(--ink); font-weight: 600; }
+  .grow { flex: 1; }
+  .sep { width: 1px; height: 20px; background: var(--hair); margin: 0 4px; flex: none; }
+  .tool { height: 36px; min-width: 36px; padding: 0 9px; border-radius: var(--r-sm); display: inline-flex; align-items: center; justify-content: center; gap: 6px; color: var(--ink-2); font-size: 12.5px; font-weight: 600; transition: background .15s, color .15s; flex: none; white-space: nowrap; }
+  .tool:hover:not(:disabled) { background: var(--hover); color: var(--ink); }
+  .tool[aria-pressed="true"] { background: var(--dark); color: var(--surface); }
+  .tool.danger:hover:not(:disabled) { color: var(--danger); }
+  .tool.prim { background: var(--dark); color: var(--surface); padding: 0 13px; border-radius: 999px; }
+  .tool.prim:hover:not(:disabled) { background: var(--dark-2); color: var(--surface); }
+  .scroll { flex: 1; min-height: 0; overflow: auto; overscroll-behavior: contain; position: relative; }
+  .wk-nav { display: flex; align-items: center; gap: 2px; }
+  .wk-lbl { font-weight: 700; font-size: 14px; color: var(--ink); padding: 0 8px; white-space: nowrap; font-variant-numeric: tabular-nums; min-width: 0; }
+  .wk-lbl small { font-weight: 600; font-size: 11.5px; color: var(--clay); margin-left: 6px; }
+  .search { position: relative; flex: 1 1 180px; max-width: 280px; min-width: 140px; }
+  .search svg { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--faint); width: 16px; height: 16px; pointer-events: none; }
+  .search .inp { padding-left: 36px; height: 36px; }
+  /* ---------- Generic list rows / cards ---------- */
+  .pad { padding: 14px 18px 20px; }
+  .grp { margin-bottom: 16px; }
+  .grp-h { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 700; color: var(--clay); letter-spacing: .04em; margin: 4px 2px 8px; }
+  .grp-h .v { color: var(--faint); font-weight: 600; letter-spacing: 0; font-variant-numeric: tabular-nums; }
+  .grp-h .grow { flex: 1; height: 1px; background: var(--hair); }
+  .grp-h button { font-size: 12px; font-weight: 600; color: var(--muted); letter-spacing: 0; padding: 4px 8px; border-radius: 999px; }
+  .grp-h button:hover { background: var(--hover); color: var(--ink); }
+  .rows { border-radius: 16px; background: #fff; box-shadow: 0 0 0 1px var(--hair); overflow: hidden; }
+  .si { display: flex; align-items: center; gap: 10px; padding: 9px 10px 9px 12px; border-bottom: 1px solid var(--hover); cursor: pointer; min-height: 52px; }
+  .si:last-child { border-bottom: 0; }
+  .si:hover { background: var(--paper); }
+  .ck { width: 24px; height: 24px; border-radius: 999px; box-shadow: inset 0 0 0 1.6px var(--sand); display: grid; place-items: center; flex: none; color: transparent; }
+  .ck svg { width: 15px; height: 15px; stroke-width: 2.4; }
+  .si.done .ck { background: var(--dark); box-shadow: none; color: #fff; }
+  .si .tx { flex: 1; min-width: 0; }
+  .si .nm { font-weight: 600; font-size: 14px; display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+  .si .q { font-weight: 700; color: var(--dark); font-variant-numeric: tabular-nums; font-size: 13px; }
+  .si .mt { font-size: 11.5px; color: var(--faint); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .si.done .nm { text-decoration: line-through; color: var(--faint); }
+  .si.done .q { color: var(--faint); }
+  .si.dim { cursor: default; }
+  .si.dim .nm { color: var(--muted); }
+  .mini { width: 32px; height: 32px; border-radius: 999px; display: grid; place-items: center; color: var(--faint); flex: none; }
+  .mini:hover { background: var(--hover); color: var(--ink); }
+  .mini.danger:hover { color: var(--danger); }
+  .mini svg { width: 16px; height: 16px; }
+  .tagb { font-size: 10.5px; font-weight: 700; padding: 2px 7px; border-radius: 999px; background: var(--mint); color: var(--dark); white-space: nowrap; }
+  .tagb.warn { background: #F3E7DC; color: var(--clay); }
+  .tagb.bad { background: #F6E1DC; color: var(--rec); }
+  .tagb.gray { background: var(--hover); color: var(--muted); }
+  .addline { display: grid; grid-template-columns: minmax(0, 1fr) 96px auto; gap: 6px; margin-bottom: 14px; }
+  .progress { display: flex; align-items: center; gap: 10px; font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums; margin-bottom: 14px; }
+  .progress .bar { flex: 1; }
+  .progress b { color: var(--ink); }
+  .bar { height: 8px; border-radius: 8px; background: var(--press); overflow: hidden; }
+  .bar i { display: block; height: 100%; width: 0; background: var(--dark); border-radius: 8px; transition: width .2s; }
+  .linkbtn { font-size: 12px; font-weight: 600; color: var(--dark); padding: 6px 10px; border-radius: 999px; background: var(--mint); white-space: nowrap; flex: none; }
+  .linkbtn:hover { background: #DCE7DD; }
+  .empty { padding: 50px 24px; text-align: center; color: var(--faint); font-size: 13px; line-height: 1.7; }
+  .empty b { display: block; font-family: var(--serif); color: var(--dark); font-size: 18px; font-weight: 600; margin-bottom: 4px; }
+  .empty .btn { margin-top: 14px; }
+  .seg { display: flex; padding: 3px; gap: 2px; background: var(--press); border-radius: 999px; flex-wrap: wrap; }
+  .seg button { flex: 1; height: 30px; border-radius: 999px; font-size: 12.5px; font-weight: 600; color: var(--muted); padding: 0 10px; white-space: nowrap; }
+  .seg button[aria-pressed="true"] { background: var(--surface); color: var(--dark); box-shadow: 0 2px 6px -3px rgba(28,40,36,.3); }
+  .seg button .n { font-size: 11px; color: var(--faint); margin-left: 3px; font-variant-numeric: tabular-nums; }
+  /* ---------- Side panel ---------- */
+  #side .ph { padding: 16px 20px 12px; border-bottom: 1px solid var(--hair); display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  #side .ph h2 { margin: 0; font-family: var(--serif); font-size: 19px; font-weight: 600; color: var(--dark); letter-spacing: -.02em; }
+  #side .ph p { margin: 3px 0 0; font-size: 12px; color: var(--faint); }
+  #side .collapse { display: none; }
+  .pbody { flex: 1; min-height: 0; overflow-y: auto; padding: 6px 20px 20px; overscroll-behavior: contain; }
+  .sec { padding: 16px 0; border-bottom: 1px solid var(--hair); }
+  .sec:last-child { border-bottom: 0; }
+  .sec h3 { margin: 0 0 10px; font-size: 12px; font-weight: 700; color: var(--clay); letter-spacing: .04em; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .sec h3 .v { color: var(--faint); font-weight: 600; letter-spacing: 0; font-variant-numeric: tabular-nums; }
+  .sec p.hint { margin: 0 0 10px; font-size: 12.5px; color: var(--muted); line-height: 1.6; }
+  .btns { display: flex; flex-wrap: wrap; gap: 6px; }
+  .btns.g2 { display: grid; grid-template-columns: 1fr 1fr; }
+  .btns.g2 .btn { width: 100%; }
+  .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+  .field:last-child { margin-bottom: 0; }
+  .field > label, .field > .lbl { font-size: 12px; font-weight: 600; color: var(--ink-2); display: flex; justify-content: space-between; gap: 6px; }
+  .field > label .v, .field > .lbl .v { color: var(--faint); font-weight: 500; font-variant-numeric: tabular-nums; }
+  .inp, select.inp { width: 100%; height: 40px; border: 0; background: #fff; box-shadow: inset 0 0 0 1px var(--hair); border-radius: 999px; padding: 0 14px; font-size: 13.5px; outline: none; transition: box-shadow .15s; min-width: 0; }
+  textarea.inp { height: auto; border-radius: 16px; padding: 10px 14px; line-height: 1.6; resize: vertical; }
+  select.inp { appearance: none; -webkit-appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235E665F' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; background-size: 16px; padding-right: 34px; }
+  .inp:focus { box-shadow: inset 0 0 0 1.5px var(--dark), 0 0 0 4px rgba(36,77,58,.08); }
+  .inp.tc { text-align: center; font-variant-numeric: tabular-nums; padding: 0 6px; }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+  .num { display: grid; grid-template-columns: 34px 1fr 34px; align-items: center; background: #fff; box-shadow: inset 0 0 0 1px var(--hair); border-radius: 999px; height: 40px; }
+  .num button { height: 34px; width: 34px; border-radius: 999px; display: grid; place-items: center; color: var(--muted); margin: 3px; }
+  .num button:hover { background: var(--hover); color: var(--ink); }
+  .num input { border: 0; background: none; text-align: center; width: 100%; height: 100%; outline: none; font-weight: 600; font-variant-numeric: tabular-nums; min-width: 0; -moz-appearance: textfield; }
+  .num input::-webkit-inner-spin-button { -webkit-appearance: none; }
+  .num svg.i { width: 15px; height: 15px; }
+  .switch { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 13px; font-weight: 600; color: var(--ink-2); cursor: pointer; padding: 6px 0; }
+  .switch small { display: block; font-size: 11.5px; font-weight: 500; color: var(--faint); margin-top: 2px; line-height: 1.45; }
+  .switch input { appearance: none; -webkit-appearance: none; width: 40px; height: 24px; border-radius: 999px; background: var(--sand); position: relative; cursor: pointer; transition: background .15s; flex: none; margin: 0; }
+  .switch input::after { content: ''; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 999px; background: #fff; transition: transform .15s; box-shadow: 0 1px 3px rgba(0,0,0,.2); }
+  .switch input:checked { background: var(--dark); }
+  .switch input:checked::after { transform: translateX(16px); }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip { height: 32px; padding: 0 12px; border-radius: 999px; background: #fff; box-shadow: inset 0 0 0 1px var(--hair); font-size: 12.5px; font-weight: 600; color: var(--ink-2); display: inline-flex; align-items: center; gap: 6px; }
+  .chip:hover { background: var(--hover); }
+  .chip[aria-pressed="true"] { background: var(--dark); color: var(--surface); box-shadow: none; }
+  .chip small { color: var(--faint); font-weight: 500; font-variant-numeric: tabular-nums; }
+  .chip.warn { background: #FBF3EA; box-shadow: inset 0 0 0 1px #E5C9AE; color: var(--clay); }
+  .chip .x { width: 18px; height: 18px; border-radius: 999px; display: grid; place-items: center; color: var(--faint); margin-right: -6px; }
+  .chip .x:hover { background: var(--press); color: var(--danger); }
+  .chip .x svg { width: 12px; height: 12px; }
+  .note { font-size: 12px; padding: 10px 12px; border-radius: var(--r-md); background: var(--hover); color: var(--muted); line-height: 1.6; margin-top: 10px; }
+  .note.ok { background: #E8F0E9; color: var(--dark); }
+  .note.warn { background: #F3E7DC; color: #6E4429; }
+  .kpis { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  .kpi { border-radius: 14px; background: #fff; box-shadow: 0 0 0 1px var(--hair); padding: 10px 12px; min-width: 0; cursor: default; text-align: left; }
+  button.kpi { cursor: pointer; }
+  button.kpi:hover { background: var(--paper); }
+  .kpi .k { font-size: 11.5px; font-weight: 600; color: var(--muted); white-space: nowrap; }
+  .kpi .v { font-size: 22px; font-weight: 700; letter-spacing: -.03em; margin-top: 3px; font-variant-numeric: tabular-nums; color: var(--ink); white-space: nowrap; }
+  .kpi .v small { font-size: 12px; font-weight: 600; color: var(--muted); margin-left: 2px; letter-spacing: 0; }
+  .slist { display: flex; flex-direction: column; gap: 6px; }
+  .sitem { display: flex; align-items: center; gap: 8px; padding: 8px 8px 8px 12px; border-radius: var(--r-md); background: #fff; box-shadow: inset 0 0 0 1px var(--hair); font-size: 13px; text-align: left; width: 100%; }
+  button.sitem:hover { background: var(--paper); }
+  .sitem .tx { flex: 1; min-width: 0; }
+  .sitem .tx b { font-weight: 600; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .sitem .tx small { display: block; font-size: 11.5px; color: var(--faint); margin-top: 1px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .sitem .r { font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; font-size: 12.5px; color: var(--ink-2); }
+  .mbars { display: flex; align-items: flex-end; gap: 6px; height: 90px; margin: 6px 0 4px; }
+  .mbars div { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; height: 100%; justify-content: flex-end; font-size: 10.5px; color: var(--faint); font-variant-numeric: tabular-nums; }
+  .mbars i { width: 100%; max-width: 34px; background: var(--sand); border-radius: 5px 5px 2px 2px; min-height: 2px; }
+  .mbars div.cur i { background: var(--dark); }
+  /* ---------- Dialogs ---------- */
+  dialog { border: 0; border-radius: 22px; padding: 0; width: min(520px, calc(100vw - 32px)); background: var(--surface); box-shadow: 0 0 0 1px var(--hair), 0 30px 70px -30px rgba(28,40,36,.45); color: var(--ink); }
+  dialog.wide { width: min(640px, calc(100vw - 32px)); }
+  dialog::backdrop { background: rgba(28,40,36,.32); backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px); }
+  .dlg-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 20px 22px 8px; }
+  .dlg-head h2 { margin: 0; font-family: var(--serif); font-size: 20px; font-weight: 600; letter-spacing: -.02em; color: var(--dark); min-width: 0; }
+  .dlg-head h2 small { display: block; font-family: var(--sans); font-size: 12px; font-weight: 500; color: var(--faint); margin-top: 4px; letter-spacing: 0; }
+  .dlg-body { padding: 8px 22px 22px; display: flex; flex-direction: column; gap: 14px; max-height: 76vh; overflow-y: auto; }
+  .dlg-body p { margin: 0; font-size: 13px; color: var(--muted); line-height: 1.65; }
+  .dlg-body .sec { padding: 12px 0; }
+  .btn-row { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; align-items: center; }
+  .btn-row .grow { flex: 1; }
+  .help h4 { margin: 4px 0 6px; font-size: 12px; font-weight: 700; color: var(--clay); letter-spacing: .04em; }
+  .help ul { margin: 0; padding-left: 18px; font-size: 13px; color: var(--ink-2); line-height: 1.75; }
+  .keys { display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; font-size: 13px; align-items: center; }
+  kbd { font-family: var(--sans); font-size: 11.5px; font-weight: 700; padding: 3px 7px; border-radius: 6px; background: #fff; box-shadow: inset 0 0 0 1px var(--hair), 0 1px 0 var(--hair); color: var(--ink-2); white-space: nowrap; }
+  .plist { display: flex; flex-direction: column; border-radius: 16px; background: #fff; box-shadow: 0 0 0 1px var(--hair); overflow: hidden; max-height: 42vh; overflow-y: auto; }
+  .prow { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-bottom: 1px solid var(--hover); text-align: left; width: 100%; min-height: 50px; }
+  .prow:last-child { border-bottom: 0; }
+  .prow:hover { background: var(--paper); }
+  .prow .tx { flex: 1; min-width: 0; }
+  .prow .tx b { font-weight: 600; font-size: 14px; }
+  .prow .tx small { display: block; font-size: 11.5px; color: var(--faint); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .prow .add { width: 32px; height: 32px; border-radius: 999px; display: grid; place-items: center; background: var(--mint); color: var(--dark); flex: none; }
+  .prow.in .add { background: var(--dark); color: #fff; }
+  .cur-dishes { display: flex; flex-wrap: wrap; gap: 6px; min-height: 32px; align-items: center; }
+  .cur-dishes .empty-t { font-size: 12.5px; color: var(--faint); }
+  .ings { list-style: none; margin: 0; padding: 0; border-radius: 16px; background: #fff; box-shadow: 0 0 0 1px var(--hair); overflow: hidden; }
+  .ings li { display: flex; align-items: center; gap: 10px; padding: 9px 14px; border-bottom: 1px solid var(--hover); font-size: 13.5px; }
+  .ings li:last-child { border-bottom: 0; }
+  .ings li .nm { flex: 1; font-weight: 600; }
+  .ings li .q { font-weight: 700; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+  .ings li .st { width: 20px; height: 20px; border-radius: 999px; display: grid; place-items: center; flex: none; }
+  .ings li .st svg { width: 13px; height: 13px; stroke-width: 2.4; }
+  .ings li.have .st { background: var(--dark); color: #fff; }
+  .ings li.miss .st { box-shadow: inset 0 0 0 1.6px var(--sand); }
+  .ings li.pan .st { background: var(--hover); color: var(--faint); }
+  .steps { margin: 0; padding-left: 22px; font-size: 13.5px; line-height: 1.75; color: var(--ink-2); }
+  .steps li { padding-left: 4px; margin-bottom: 4px; }
+  .rmeta { display: flex; gap: 6px; flex-wrap: wrap; }
+  .inline-add { display: grid; grid-template-columns: 1fr 1fr auto; gap: 6px; align-items: center; }
+  .checks { display: flex; flex-direction: column; gap: 2px; }
+  .checks label { display: flex; align-items: center; gap: 10px; padding: 7px 4px; font-size: 13.5px; cursor: pointer; border-radius: 10px; }
+  .checks label:hover { background: var(--hover); }
+  .checks input { width: 18px; height: 18px; accent-color: var(--dark); }
+  .checks small { color: var(--faint); margin-left: auto; font-size: 12px; }
+  /* ---------- Toast ---------- */
+  #toast { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom)); transform: translateX(-50%); background: var(--dark); color: var(--surface); padding: 11px 18px; border-radius: 999px; box-shadow: 0 14px 30px -14px rgba(28,40,36,.55); font-size: 13px; font-weight: 600; z-index: 200; display: none; align-items: center; gap: 14px; max-width: calc(100vw - 32px); }
+  #toast.show { display: flex; }
+  #toast.err { background: var(--danger); }
+  #toast button { color: var(--sand); font-weight: 600; white-space: nowrap; text-decoration: underline; text-underline-offset: 3px; }
+
+  .foot { max-width: 1440px; margin: 0 auto; padding: 0 24px 16px; font-size: 11.5px; color: var(--faint); display: flex; gap: 6px; align-items: center; }
+  .foot svg { width: 13px; height: 13px; }
+  #printArea { display: none; }
+  /* ---------- Reader ---------- */
+  #work .view { overflow: hidden; }
+  main { flex: none; grid-template-rows: minmax(0, 1fr); }
+  .addw { max-width: 760px; margin: 0 auto; padding: 26px 26px 30px; }
+  .addw h1 { font-family: var(--serif); font-weight: 600; font-size: 26px; letter-spacing: -.02em; color: var(--dark); margin: 0 0 6px; }
+  .addw .lead { margin: 0 0 18px; color: var(--muted); font-size: 13.5px; line-height: 1.65; }
+  .drop { border-radius: 18px; border: 1.5px dashed var(--sand); background: var(--paper); padding: 22px 18px; display: flex; align-items: center; gap: 16px; margin-bottom: 18px; transition: background .15s, border-color .15s; }
+  .drop .ic { width: 48px; height: 48px; border-radius: 14px; background: var(--mint); color: var(--dark); display: grid; place-items: center; flex: none; }
+  .drop .ic svg { width: 24px; height: 24px; }
+  .drop .tx { flex: 1; min-width: 0; }
+  .drop .tx b { display: block; font-size: 14.5px; font-weight: 700; }
+  .drop .tx small { display: block; color: var(--faint); font-size: 11.5px; margin-top: 3px; line-height: 1.5; }
+  body.dragging .drop, .drop.over { background: var(--mint); border-color: var(--dark); }
+  #dragCover { position: fixed; inset: 0; z-index: 150; background: rgba(36,77,58,.18); display: none; place-items: center; pointer-events: none; }
+  body.dragging #dragCover { display: grid; }
+  #dragCover div { background: var(--dark); color: var(--surface); padding: 16px 24px; border-radius: 999px; font-weight: 700; font-size: 15px; box-shadow: var(--shadow); }
+  #inText { min-height: 260px; font-size: 15px; line-height: 1.75; }
+  .optrow { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 4px 0 16px; font-size: 12.5px; color: var(--ink-2); font-weight: 600; }
+  .optrow .seg { flex: none; }
+  .resume { margin-top: 26px; }
+  .rcard { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 16px; background: #fff; box-shadow: 0 0 0 1px var(--hair); width: 100%; text-align: left; }
+  .rcard:hover { background: var(--paper); }
+  .rcard .pp { width: 40px; height: 40px; border-radius: 999px; background: var(--dark); color: var(--surface); display: grid; place-items: center; flex: none; }
+  .rcard .tx { flex: 1; min-width: 0; }
+  .rcard .tx b { display: block; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .rcard .tx small { display: block; color: var(--faint); font-size: 11.5px; margin-top: 2px; }
+  .rcard .bar { margin-top: 7px; height: 5px; }
+
+  .rd-title { font-weight: 700; font-size: 14px; max-width: 46vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 0 8px; height: 36px; border-radius: var(--r-sm); text-align: left; }
+  .rd-title:hover { background: var(--hover); }
+  .findbar { display: flex; align-items: center; gap: 6px; padding: 8px 12px; border-bottom: 1px solid var(--hair); background: var(--paper); }
+  .findbar .inp { height: 34px; flex: 1; max-width: 340px; }
+  .findbar .count { font-size: 12.5px; color: var(--muted); min-width: 56px; text-align: center; font-variant-numeric: tabular-nums; }
+  .rt { --fs: 19px; --lh: 1.9; max-width: 740px; margin: 0 auto; padding: 30px 34px 60px; font-size: var(--fs); line-height: var(--lh); color: var(--ink); }
+  .rt.serif { font-family: var(--serif); }
+  .rt p, .rt .li, .rt blockquote, .rt pre { margin: 0 0 .85em; }
+  .rt h1, .rt h2, .rt h3 { font-family: var(--serif); color: var(--dark); letter-spacing: -.02em; line-height: 1.4; margin: 1.1em 0 .55em; font-weight: 600; }
+  .rt h1 { font-size: 1.45em; } .rt h2 { font-size: 1.25em; } .rt h3 { font-size: 1.1em; }
+  .rt > :first-child { margin-top: 0; }
+  .rt .li { position: relative; padding-left: 1.2em; }
+  .rt .li::before { content: '•'; position: absolute; left: .25em; color: var(--clay); }
+  .rt blockquote { padding-left: 1em; border-left: 3px solid var(--sand); color: var(--ink-2); }
+  .rt pre { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .78em; line-height: 1.6; background: var(--hover); padding: 12px 14px; border-radius: 12px; white-space: pre-wrap; word-break: break-all; }
+  .rt pre.skip { color: var(--faint); }
+  .s { border-radius: 6px; cursor: pointer; transition: background .15s, color .15s, opacity .2s; -webkit-box-decoration-break: clone; box-decoration-break: clone; }
+  .s:hover { background: var(--hover); }
+  .s.cur { background: #DCE9DE; color: #12301F; box-shadow: 0 0 0 2px #DCE9DE; }
+  .s.bm { text-decoration: underline; text-decoration-color: var(--clay); text-decoration-thickness: 2px; text-underline-offset: 5px; }
+  .s.hit { background: #F3E2CF; }
+  .s.hit.on { background: var(--clay); color: #fff; }
+  .rt.focus .s:not(.cur) { opacity: .36; }
+  .rt.focus .s:not(.cur):hover { opacity: .7; }
+  ::highlight(rword) { background-color: var(--dark); color: #fff; }
+  .rd-empty { margin: auto; }
+
+  .player { border-top: 1px solid var(--hair); background: var(--surface); padding: 6px 14px 12px; flex: none; }
+  .seek { width: 100%; margin: 0; height: 22px; accent-color: var(--dark); cursor: pointer; display: block; }
+  .pl-row { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 10px; }
+  .pl-info { min-width: 0; font-variant-numeric: tabular-nums; }
+  .pl-info b { display: block; font-size: 13px; font-weight: 700; white-space: nowrap; }
+  .pl-info small { display: block; font-size: 11.5px; color: var(--faint); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .pl-ctl { display: flex; align-items: center; gap: 4px; }
+  .pbtn { width: 42px; height: 42px; border-radius: 999px; display: grid; place-items: center; color: var(--ink-2); flex: none; }
+  .pbtn:hover:not(:disabled) { background: var(--hover); color: var(--ink); }
+  .pbtn.big { width: 58px; height: 58px; background: var(--dark); color: var(--surface); box-shadow: 0 10px 22px -12px rgba(36,77,58,.8); margin: 0 6px; }
+  .pbtn.big:hover:not(:disabled) { background: var(--dark-2); color: var(--surface); }
+  .pbtn.big svg.i { width: 26px; height: 26px; }
+  .pbtn.big svg.i.fill { fill: currentColor; }
+  .pl-opt { display: flex; justify-content: flex-end; gap: 6px; flex-wrap: wrap; }
+  .pl-opt .chip { height: 32px; font-variant-numeric: tabular-nums; }
+  .pl-opt .chip.on { background: var(--clay); color: #fff; box-shadow: none; }
+  input[type=range].rng { width: 100%; accent-color: var(--dark); margin: 2px 0; height: 24px; }
+  .vlabel { font-size: 11.5px; color: var(--faint); margin-top: -4px; }
+  .lib-row { display: flex; align-items: center; gap: 12px; padding: 12px 10px 12px 14px; border-bottom: 1px solid var(--hover); }
+  .lib-row:last-child { border-bottom: 0; }
+  .lib-row:hover { background: var(--paper); }
+  .lib-row .kind { width: 40px; height: 40px; border-radius: 12px; background: var(--hover); color: var(--clay); display: grid; place-items: center; flex: none; font-size: 10px; font-weight: 800; letter-spacing: .02em; }
+  .lib-row.cur .kind { background: var(--dark); color: var(--surface); }
+  .lib-row .tx { flex: 1; min-width: 0; cursor: pointer; }
+  .lib-row .tx b { display: block; font-weight: 700; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .lib-row .tx small { display: block; color: var(--faint); font-size: 11.5px; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .lib-row .bar { height: 4px; margin-top: 7px; max-width: 320px; }
+  .lib-row .mini.on { color: var(--clay); }
+  .lib-row .mini.on svg { fill: currentColor; }
+  .toc-i { padding: 7px 10px; border-radius: 10px; font-size: 13px; text-align: left; width: 100%; display: flex; gap: 8px; align-items: baseline; color: var(--ink-2); }
+  .toc-i:hover { background: var(--hover); }
+  .toc-i.l2 { padding-left: 22px; } .toc-i.l3 { padding-left: 34px; font-size: 12.5px; }
+  .toc-i.on { background: var(--mint); color: var(--dark); font-weight: 700; }
+  .toc-i span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .toc-i small { color: var(--faint); font-variant-numeric: tabular-nums; font-size: 11px; }
+  .toc-box { max-height: 300px; overflow-y: auto; margin: 0 -4px; }
+  .dict-row { display: grid; grid-template-columns: 1fr auto 1fr auto; gap: 6px; align-items: center; }
+  .dict-row .arrow { color: var(--faint); }
+  .dlist { display: flex; flex-direction: column; gap: 6px; max-height: 40vh; overflow-y: auto; }
+  #edText { min-height: 50vh; font-size: 14px; }
+  .voice-help ol { margin: 6px 0 0; padding-left: 20px; font-size: 13px; color: var(--ink-2); line-height: 1.75; }
+
+  @media (max-width: 1100px) { main { grid-template-columns: minmax(0, 1fr) 320px; } }
+  @media (max-width: 999px) {
+    main { display: flex; flex-direction: column; height: auto; min-height: 0; padding: 0 12px 16px; }
+    #side .collapse { display: grid; }
+    #side.closed .pbody { display: none; }
+    #side.closed .ph { border-bottom: 0; }
+    .pbody { overflow: visible; }
+    .scroll { overflow: visible; }
+    .tabs-wrap { padding: 2px 12px 10px; }
+    .top-inner { padding: 12px 12px 6px; gap: 8px; }
+    .foot { padding: 0 12px 12px; }
+    .pad { padding: 12px; }
+    #work { min-height: 72vh; overflow: visible; }
+    #work .view { overflow: visible; }
+    .player { position: sticky; bottom: 0; z-index: 6; border-radius: 0 0 var(--r-lg) var(--r-lg); box-shadow: 0 -12px 24px -20px rgba(28,40,36,.5); padding-bottom: calc(12px + env(safe-area-inset-bottom)); }
+    .top { position: static; }
+  }
+  @media (max-width: 760px) {
+    .logo { height: 27px; }
+    .app-name { font-size: 19px; padding-left: 10px; }
+    .app-name small { display: none; }
+    .tool .t { display: none; }
+    .tabs-wrap { flex-direction: column; align-items: stretch; gap: 8px; }
+    .brand { min-width: 0; overflow: hidden; }
+    .app-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .head-actions { gap: 0; }
+    .icon-btn { width: 34px; height: 34px; }
+    .addw { padding: 18px 14px 24px; }
+    .addw h1 { font-size: 22px; }
+    .rt { padding: 20px 16px 40px; }
+    .pl-row { grid-template-columns: 1fr auto; grid-template-areas: "info opt" "ctl ctl"; row-gap: 6px; }
+    .pl-info { grid-area: info; } .pl-opt { grid-area: opt; } .pl-ctl { grid-area: ctl; justify-content: center; }
+    .drop { flex-wrap: wrap; }
+    .rd-title { max-width: 40vw; }
+  }
+  @media (max-width: 430px) {
+    .logo { height: 23px; }
+    .app-name { font-size: 17px; padding-left: 8px; }
+    .icon-btn { width: 31px; height: 31px; }
+    .icon-btn svg.i { width: 17px; height: 17px; }
+    .top-inner { gap: 6px; }
+    .pbtn { width: 38px; height: 38px; }
+    .pbtn.big { width: 54px; height: 54px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="top-inner">
+    <a class="brand" href="./" aria-label="Reader">
+      <img class="logo" alt="OUTGRID" src="data:image/png;base64,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" />
+      <span class="app-name">Reader<small>넣은 글을 소리 내어 읽어 줘요</small></span>
+    </a>
+    <div class="head-actions">
+      <button class="icon-btn" id="newBtn" title="새 자료 넣기 (N)"><i data-icon="plus"></i></button>
+      <button class="icon-btn" id="helpBtn" title="도움말"><i data-icon="help"></i></button>
+      <button class="icon-btn" id="setBtn" title="설정·백업"><i data-icon="gear"></i></button>
+    </div>
+  </div>
+  <div class="tabs-wrap">
+    <nav class="tabs" id="tabs" role="tablist">
+      <button class="tab" role="tab" data-tab="add"><i data-icon="plus"></i>넣기</button>
+      <button class="tab" role="tab" data-tab="read" aria-selected="true"><i data-icon="speaker"></i>읽기</button>
+      <button class="tab" role="tab" data-tab="lib"><i data-icon="book"></i>보관함<span class="n" id="nLib">0</span></button>
+    </nav>
+    <div class="applied" id="applied"></div>
+  </div>
+</header>
+
+<main>
+  <section class="panel" id="work">
+    <!-- 넣기 -->
+    <div class="view" data-view="add" hidden>
+      <div class="scroll"><div class="addw">
+        <h1>무엇을 읽어 드릴까요?</h1>
+        <p class="lead">글을 붙여 넣거나 파일을 넣으면, 이 기기에 있는 목소리로 소리 내어 읽어 드려요. 넣은 자료는 보관함에 남고, 멈춘 곳부터 이어 읽어요.</p>
+        <div class="drop" id="drop">
+          <div class="ic"><i data-icon="folder"></i></div>
+          <div class="tx"><b>파일을 여기에 끌어 놓거나 골라 주세요</b><small>TXT · MD · PDF · DOCX · HWPX · EPUB · PPTX · ODT · HTML · SRT · VTT · CSV — 여러 개를 한 번에 넣을 수 있어요</small></div>
+          <button class="btn primary" id="pickBtn"><i data-icon="upload"></i>파일 고르기</button>
+          <input type="file" id="fileIn" multiple hidden accept=".txt,.text,.md,.markdown,.pdf,.docx,.hwpx,.epub,.pptx,.odt,.odp,.html,.htm,.xhtml,.srt,.vtt,.csv,.tsv,.json,.log,.xml,.rtf,text/*,application/pdf" />
+        </div>
+        <div class="field"><label for="inTitle">제목 <span class="v">비워 두면 첫 줄로 정해요</span></label><input class="inp" id="inTitle" placeholder="예: 오늘 읽을 기사" /></div>
+        <div class="field"><label for="inText">글 <span class="v" id="inCount">0자</span></label><textarea class="inp" id="inText" placeholder="여기에 읽을 글을 붙여 넣으세요"></textarea></div>
+        <div class="optrow"><span>줄바꿈</span>
+          <div class="seg" id="joinSeg"><button data-v="auto">알아서</button><button data-v="lines">줄마다 나누기</button><button data-v="join">이어 붙이기</button></div>
+          <span class="muted" style="font-weight:500">PDF에서 복사한 글처럼 줄이 끊겨 있으면 ‘이어 붙이기’</span>
+        </div>
+        <div class="btn-row">
+          <button class="btn ghost" id="inPaste"><i data-icon="clip"></i>붙여넣기</button>
+          <button class="btn ghost" id="inClear"><i data-icon="x"></i>비우기</button>
+          <span class="grow"></span>
+          <button class="btn line" id="inSave"><i data-icon="book"></i>보관함에 넣기</button>
+          <button class="btn primary" id="inRead"><i data-icon="play"></i>바로 읽기</button>
+        </div>
+        <div class="resume" id="resume"></div>
+      </div></div>
+    </div>
+
+    <!-- 읽기 -->
+    <div class="view" data-view="read">
+      <div class="wbar" id="rdBar">
+        <button class="rd-title" id="rdTitle" title="제목 바꾸기"></button>
+        <span class="grow"></span>
+        <button class="tool" id="findBtn" title="글 안에서 찾기 (Ctrl F)"><i data-icon="search"></i><span class="t">찾기</span></button>
+        <button class="tool" id="goCur" title="읽는 곳으로"><i data-icon="target"></i><span class="t">읽는 곳</span></button>
+        <button class="tool" id="bmBtn" title="책갈피 (B)"><i data-icon="bookmark"></i><span class="t">책갈피</span></button>
+        <button class="tool" id="edBtn" title="글 고치기"><i data-icon="pen"></i><span class="t">고치기</span></button>
+        <button class="tool" id="txtBtn" title="글을 TXT로 받기"><i data-icon="download"></i></button>
+      </div>
+      <div class="findbar" id="findBar" hidden>
+        <input class="inp" id="findQ" type="search" placeholder="찾을 말" />
+        <span class="count" id="findN">0 / 0</span>
+        <button class="mini" id="findPrev" title="이전"><i data-icon="up"></i></button>
+        <button class="mini" id="findNext" title="다음"><i data-icon="chevron"></i></button>
+        <button class="btn sm ghost" id="findRead"><i data-icon="play"></i>여기부터 읽기</button>
+        <span class="grow"></span>
+        <button class="mini" id="findClose" title="닫기"><i data-icon="x"></i></button>
+      </div>
+      <div class="scroll" id="rdScroll"><article class="rt serif" id="rt"></article></div>
+      <div class="player" id="player">
+        <input type="range" class="seek" id="seek" min="0" max="0" value="0" aria-label="읽는 위치" />
+        <div class="pl-row">
+          <div class="pl-info"><b id="plPos">0 / 0 문장</b><small id="plLeft">자료를 넣어 주세요</small></div>
+          <div class="pl-ctl">
+            <button class="pbtn" id="pPrevP" title="이전 단락 (↑)"><i data-icon="sprev"></i></button>
+            <button class="pbtn" id="pPrev" title="이전 문장 (←)"><i data-icon="left"></i></button>
+            <button class="pbtn big" id="pPlay" title="읽기 / 멈춤 (Space)"><i data-icon="play"></i></button>
+            <button class="pbtn" id="pNext" title="다음 문장 (→)"><i data-icon="right"></i></button>
+            <button class="pbtn" id="pNextP" title="다음 단락 (↓)"><i data-icon="snext"></i></button>
+          </div>
+          <div class="pl-opt">
+            <button class="chip" id="spdChip" title="속도 바꾸기 (+ / −)">1.0×</button>
+            <button class="chip" id="sleepChip" title="잠자기 타이머"><i data-icon="moon"></i><span id="sleepT">끔</span></button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 보관함 -->
+    <div class="view" data-view="lib" hidden>
+      <div class="wbar">
+        <div class="search"><i data-icon="search"></i><input class="inp" id="libQ" type="search" placeholder="제목이나 내용 찾기" /></div>
+        <div class="seg" id="libSeg" style="flex:none">
+          <button data-f="all" aria-pressed="true">전체</button><button data-f="open">읽는 중</button><button data-f="done">다 읽음</button><button data-f="fav">별표</button>
+        </div>
+        <select class="inp" id="libSort" style="width:auto;flex:none;height:36px">
+          <option value="opened">최근 읽은 순</option><option value="created">넣은 순</option><option value="title">제목 순</option><option value="left">남은 시간 짧은 순</option>
+        </select>
+        <span class="grow"></span>
+        <button class="tool prim" id="libAdd"><i data-icon="plus"></i><span class="t">새 자료</span></button>
+      </div>
+      <div class="scroll"><div class="pad" id="libList"></div></div>
+    </div>
+  </section>
+
+  <aside class="panel" id="side">
+    <div class="ph"><div><h2>목소리와 읽기</h2><p id="sideSub">이 기기에 있는 목소리로 읽어요</p></div><button class="icon-btn collapse" id="sideTog" title="접기·펼치기"><i data-icon="chevron"></i></button></div>
+    <div class="pbody">
+      <div class="sec">
+        <h3>목소리 <span class="v" id="vCount"></span></h3>
+        <div class="seg" id="vFilter"><button data-f="ko">한국어</button><button data-f="en">영어</button><button data-f="all">모두</button></div>
+        <div class="field" style="margin-top:10px"><select class="inp" id="vSel" aria-label="목소리"></select></div>
+        <label class="switch"><span>영어 문장은 영어 목소리로<small>한글 없이 영어만 있는 문장을 영어 목소리로 바꿔 읽어요</small></span><input type="checkbox" id="autoEn" /></label>
+        <div class="field" id="enRow"><select class="inp" id="vSelEn" aria-label="영어 목소리"></select></div>
+        <div class="field"><label for="rate">속도 <span class="v" id="rateV"></span></label><input type="range" class="rng" id="rate" min="0.5" max="3" step="0.05" /></div>
+        <div class="field"><label for="pitch">높낮이 <span class="v" id="pitchV"></span></label><input type="range" class="rng" id="pitch" min="0.5" max="2" step="0.05" /></div>
+        <div class="field"><label for="vol">크기 <span class="v" id="volV"></span></label><input type="range" class="rng" id="vol" min="0" max="1" step="0.05" /></div>
+        <div class="btns g2"><button class="btn line" id="vTest"><i data-icon="speaker"></i>들어보기</button><button class="btn line" id="vReset"><i data-icon="refresh"></i>기본값</button></div>
+        <div class="note warn" id="vNote" hidden></div>
+      </div>
+      <div class="sec" id="tocSec">
+        <h3>목차 <span class="v" id="tocN"></span></h3>
+        <div class="toc-box" id="toc"></div>
+      </div>
+      <div class="sec" id="bmSec">
+        <h3>책갈피 <span class="v" id="bmN"></span></h3>
+        <div class="slist" id="bmList"></div>
+      </div>
+      <div class="sec">
+        <h3>읽는 방법</h3>
+        <div class="field"><label for="gap">문장 사이 쉼 <span class="v" id="gapV"></span></label><input type="range" class="rng" id="gap" min="0" max="2000" step="50" /></div>
+        <div class="field"><label for="paraGap">단락 사이 쉼 <span class="v" id="paraGapV"></span></label><input type="range" class="rng" id="paraGap" min="0" max="3000" step="50" /></div>
+        <div class="field"><span class="lbl">문장마다 반복 <span class="v">따라 읽기·외우기용</span></span><div class="seg" id="repSeg"><button data-v="1">한 번</button><button data-v="2">두 번</button><button data-v="3">세 번</button></div></div>
+        <div class="field"><span class="lbl">다 읽으면</span><div class="seg" id="endSeg"><button data-v="stop">멈추기</button><button data-v="next">다음 자료</button><button data-v="loop">처음부터</button></div></div>
+        <label class="switch"><span>괄호 안은 건너뛰기<small>(이런 부분)을 읽지 않아요</small></span><input type="checkbox" id="skipParen" /></label>
+        <label class="switch"><span>링크 주소는 ‘링크’라고만<small>긴 https 주소를 한 단어로 읽어요</small></span><input type="checkbox" id="skipUrl" /></label>
+        <label class="switch"><span>각주 번호 건너뛰기<small>[1], [2-3] 같은 표시</small></span><input type="checkbox" id="skipCite" /></label>
+        <label class="switch"><span>코드 블록 건너뛰기</span><input type="checkbox" id="skipCode" /></label>
+        <label class="switch"><span>이모지 건너뛰기</span><input type="checkbox" id="skipEmoji" /></label>
+        <button class="btn line block" id="dictBtn" style="margin-top:8px"><i data-icon="pen"></i>발음 사전 <span class="muted" id="dictN"></span></button>
+      </div>
+      <div class="sec">
+        <h3>화면</h3>
+        <div class="field"><span class="lbl">글꼴</span><div class="seg" id="fontSeg"><button data-v="serif">명조</button><button data-v="sans">고딕</button></div></div>
+        <div class="field"><label for="fs">글자 크기 <span class="v" id="fsV"></span></label><input type="range" class="rng" id="fs" min="14" max="34" step="1" /></div>
+        <div class="field"><label for="lh">줄 간격 <span class="v" id="lhV"></span></label><input type="range" class="rng" id="lh" min="1.4" max="2.6" step="0.1" /></div>
+        <label class="switch"><span>읽는 곳 따라가기<small>읽는 문장이 늘 화면 가운데 오도록 넘겨요</small></span><input type="checkbox" id="follow" /></label>
+        <label class="switch"><span>집중 모드<small>읽는 문장만 진하게 보여요</small></span><input type="checkbox" id="focusMode" /></label>
+        <label class="switch"><span>읽는 동안 화면 켜 두기<small>화면이 꺼지면 읽기가 멈추는 기기가 많아요</small></span><input type="checkbox" id="wake" /></label>
+      </div>
+    </div>
+  </aside>
+</main>
+
+<footer class="foot"><i data-icon="shield"></i>글은 이 기기 밖으로 나가지 않아요. 읽기는 브라우저에 들어 있는 음성 합성으로만 해요.</footer>
+
+<!-- Rename -->
+<dialog id="rnDlg">
+  <div class="dlg-head"><h2>제목 바꾸기</h2><button class="icon-btn" data-close><i data-icon="x"></i></button></div>
+  <div class="dlg-body"><input class="inp" id="rnIn" /><div class="btn-row"><button class="btn ghost" data-close>취소</button><button class="btn primary" id="rnSave">저장</button></div></div>
+</dialog>
+
+<!-- Edit -->
+<dialog id="edDlg" class="wide">
+  <div class="dlg-head"><h2>글 고치기<small># 제목, - 목록, 빈 줄로 단락을 나눠요</small></h2><button class="icon-btn" data-close><i data-icon="x"></i></button></div>
+  <div class="dlg-body"><textarea class="inp" id="edText"></textarea><div class="btn-row"><button class="btn ghost" data-close>취소</button><button class="btn primary" id="edSave">저장</button></div></div>
+</dialog>
+
+<!-- Dictionary -->
+<dialog id="dictDlg" class="wide">
+  <div class="dlg-head"><h2>발음 사전<small>글에 적힌 말을 다르게 읽게 해요 · 모든 자료에 적용</small></h2><button class="icon-btn" data-close><i data-icon="x"></i></button></div>
+  <div class="dlg-body">
+    <div class="dict-row"><input class="inp" id="dA" placeholder="글에 적힌 말 (예: AI)" /><span class="arrow"><i data-icon="right"></i></span><input class="inp" id="dB" placeholder="읽을 소리 (예: 에이아이)" /><button class="btn primary" id="dAdd"><i data-icon="plus"></i>더하기</button></div>
+    <div class="dlist" id="dList"></div>
+    <p>대소문자를 가려요. 읽을 소리를 비워 두면 그 말을 읽지 않고 건너뛰어요.</p>
+  </div>
+</dialog>
+
+<!-- Settings -->
+<dialog id="setDlg" class="wide">
+  <div class="dlg-head"><h2>설정·백업</h2><button class="icon-btn" data-close><i data-icon="x"></i></button></div>
+  <div class="dlg-body">
+    <div class="sec voice-help">
+      <h3>목소리가 없거나 어색할 때</h3>
+      <p class="hint">Reader는 기기에 설치된 음성 합성(TTS) 목소리를 그대로 써요. 목소리를 바꾸거나 더 받으려면:</p>
+      <ol>
+        <li>갤럭시: 설정 → 일반 → 글자 읽어주기(TTS) → 기본 엔진에서 삼성 TTS 또는 Google 음성 엔진을 고르고, 언어 데이터를 내려받아요.</li>
+        <li>윈도우: 설정 → 시간 및 언어 → 음성 → 음성 추가에서 한국어를 더해요. Edge 브라우저는 자연스러운 온라인 목소리를 더 많이 보여 줘요.</li>
+        <li>맥·아이패드: 손쉬운 사용 → 콘텐츠 말하기 → 음성에서 ‘유나’ 같은 한국어 목소리를 내려받아요.</li>
+      </ol>
+      <p class="hint" style="margin-top:8px">목소리를 새로 받았다면 이 페이지를 새로 고쳐 주세요.</p>
+    </div>
+    <div class="sec">
+      <h3>문장 나누기</h3>
+      <div class="field"><label for="maxLen">한 번에 읽는 가장 긴 길이 <span class="v" id="maxLenV"></span></label><input type="range" class="rng" id="maxLen" min="60" max="400" step="10" /></div>
+      <p class="hint">긴 문장은 쉼표나 띄어쓰기에서 잘라 읽어요. 읽다가 혼자 멈추는 기기라면 더 짧게 해 보세요.</p>
+    </div>
+    <div class="sec">
+      <h3>백업</h3>
+      <p class="hint">보관함의 모든 자료와 설정, 발음 사전을 JSON 파일 하나로 받거나, 받은 파일을 다시 불러와요. 불러오면 지금 보관함에 더해져요.</p>
+      <div class="btns g2"><button class="btn line" id="bkOut"><i data-icon="download"></i>백업 받기</button><button class="btn line" id="bkIn"><i data-icon="upload"></i>백업 불러오기</button></div>
+      <input type="file" id="bkFile" accept=".json,application/json" hidden />
+      <div class="btns" style="margin-top:8px"><button class="btn ghost danger" id="wipe"><i data-icon="trash"></i>보관함 모두 지우기</button></div>
+    </div>
+  </div>
+</dialog>
+
+<!-- Help -->
+<dialog id="helpDlg" class="wide">
+  <div class="dlg-head"><h2>Reader는 이렇게 써요<small>글을 넣으면 소리 내어 읽어 줘요</small></h2><button class="icon-btn" data-close><i data-icon="x"></i></button></div>
+  <div class="dlg-body help">
+    <div><h4>흐름</h4><ul>
+      <li>‘넣기’에서 글을 붙여 넣거나 파일을 고르면 보관함에 저장되고 읽기 화면이 열려요.</li>
+      <li>재생 버튼을 누르면 문장 하나씩 읽고, 읽는 문장에 색이 칠해져요. 기기가 지원하면 지금 읽는 단어도 표시돼요.</li>
+      <li>아무 문장이나 누르면 거기서부터 읽어요. 멈춘 자리는 저장되어 다음에 이어 읽어요.</li>
+      <li>책갈피, 목차, 찾기로 원하는 곳으로 바로 갈 수 있어요.</li>
+      <li>속도·높낮이·목소리를 바꾸면 지금 읽는 문장부터 바로 바뀌어요.</li>
+    </ul></div>
+    <div><h4>약속</h4><ul>
+      <li>소리 파일을 만들지 않아요. 기기의 음성 합성으로 그 자리에서 읽어요.</li>
+      <li>글은 이 브라우저에만 저장돼요. PDF를 처음 열 때만 PDF 도구를 인터넷에서 한 번 받아요.</li>
+      <li>화면이 꺼지거나 다른 앱으로 가면 기기에 따라 읽기가 멈출 수 있어요. ‘화면 켜 두기’를 켜 두세요.</li>
+    </ul></div>
+    <div><h4>단축키</h4>
+      <div class="keys"><kbd>Space</kbd><span>읽기 / 멈춤</span><kbd>← →</kbd><span>이전 / 다음 문장</span><kbd>↑ ↓</kbd><span>이전 / 다음 단락</span><kbd>+ −</kbd><span>속도</span><kbd>B</kbd><span>책갈피</span><kbd>Ctrl F</kbd><span>찾기</span><kbd>N</kbd><span>새 자료</span><kbd>1 2 3</kbd><span>탭 바꾸기</span></div>
+    </div>
+  </div>
+</dialog>
+
+<!-- Confirm -->
+<dialog id="cfDlg">
+  <div class="dlg-head"><h2 id="cfT"></h2></div>
+  <div class="dlg-body"><p id="cfM"></p><div class="btn-row"><button class="btn ghost" id="cfNo">취소</button><button class="btn primary" id="cfOk">확인</button></div></div>
+</dialog>
+
+<div id="dragCover"><div>여기에 놓으면 읽을 자료로 넣어요</div></div>
+<div id="toast" role="status" aria-live="polite"><span id="toastMsg"></span><button id="toastAct" hidden></button></div>
+<script>
+'use strict';
+/* =========================================================================
+   Reader · outgrid — reads pasted text and documents aloud
+   Uses only the browser's built-in speechSynthesis with the device's own
+   voices (Samsung / Google TTS on Android, system voices on desktop).
+   No audio files are produced, nothing leaves the device. Documents live in
+   IndexedDB 'reader', settings in localStorage 'reader.*'.
+   ========================================================================= */
+
+const ICONS = {
+  plus: '<path d="M12 5v14M5 12h14"/>',
+  minus: '<path d="M5 12h14"/>',
+  left: '<path d="m14.5 6-6 6 6 6"/>',
+  right: '<path d="m9.5 6 6 6-6 6"/>',
+  check: '<path d="m5 12.5 4.5 4.5L19 7.5"/>',
+  x: '<path d="M6 6l12 12M18 6 6 18"/>',
+  pen: '<path d="M14.5 5.5 18.5 9.5"/><path d="M4 20l1-4.5L15.8 4.7a2 2 0 0 1 2.8 0l.7.7a2 2 0 0 1 0 2.8L8.5 19 4 20z"/>',
+  trash: '<path d="M4.5 7h15"/><path d="M9.5 7V5.2a1.2 1.2 0 0 1 1.2-1.2h2.6a1.2 1.2 0 0 1 1.2 1.2V7"/><path d="m6.5 7 .9 11.3a2 2 0 0 0 2 1.7h5.2a2 2 0 0 0 2-1.7L17.5 7"/>',
+  help: '<circle cx="12" cy="12" r="8.5"/><path d="M9.6 9.5a2.5 2.5 0 0 1 4.8.9c0 1.7-2.4 2-2.4 3.6M12 16.8v.1"/>',
+  gear: '<circle cx="12" cy="12" r="3"/><path d="M19.4 13.5a7.6 7.6 0 0 0 0-3l2-1.5-2-3.4-2.3.9a7.5 7.5 0 0 0-2.6-1.5L14 2.5h-4l-.5 2.5A7.5 7.5 0 0 0 6.9 6.5l-2.3-.9-2 3.4 2 1.5a7.6 7.6 0 0 0 0 3l-2 1.5 2 3.4 2.3-.9a7.5 7.5 0 0 0 2.6 1.5l.5 2.5h4l.5-2.5a7.5 7.5 0 0 0 2.6-1.5l2.3.9 2-3.4z"/>',
+  download: '<path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/>',
+  upload: '<path d="M12 16V5"/><path d="m7 9.5 5-5 5 5"/><path d="M5 20h14"/>',
+  list: '<path d="M9 6.5h11M9 12h11M9 17.5h11"/><circle cx="4.8" cy="6.5" r=".9" fill="currentColor"/><circle cx="4.8" cy="12" r=".9" fill="currentColor"/><circle cx="4.8" cy="17.5" r=".9" fill="currentColor"/>',
+  shield: '<path d="M12 3.5 5 6.2v5.3c0 4.3 3 7.6 7 9 4-1.4 7-4.7 7-9V6.2z"/><path d="m9.2 12 2 2 3.8-4"/>',
+  chevron: '<path d="m6 9 6 6 6-6"/>',
+  bulb: '<path d="M9 17.5h6M10 20.5h4"/><path d="M12 3.5a6 6 0 0 0-3.6 10.8c.7.6 1.1 1.3 1.1 2.2v1h5v-1c0-.9.4-1.6 1.1-2.2A6 6 0 0 0 12 3.5z"/>',
+  layers: '<path d="m12 3.5 8.5 4.5-8.5 4.5L3.5 8z"/><path d="m3.5 12 8.5 4.5 8.5-4.5"/><path d="m3.5 16 8.5 4.5 8.5-4.5"/>',
+  search: '<circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5"/>',
+  map: '<circle cx="12" cy="12" r="2.6"/><circle cx="4.8" cy="6" r="1.8"/><circle cx="19.2" cy="6" r="1.8"/><circle cx="4.8" cy="18" r="1.8"/><circle cx="19.2" cy="18" r="1.8"/><path d="M6.3 7.1 9.9 10.4M17.7 7.1l-3.6 3.3M6.3 16.9l3.6-3.3M17.7 16.9l-3.6-3.3"/>',
+  doc: '<path d="M6.5 3.5h7l4 4v13h-11z"/><path d="M13.5 3.5v4h4M9 12.5h6M9 16h6"/>',
+  copy: '<rect x="8.5" y="8.5" width="11" height="11" rx="2"/><path d="M15.5 8.5V6a1.5 1.5 0 0 0-1.5-1.5H6A1.5 1.5 0 0 0 4.5 6v8A1.5 1.5 0 0 0 6 15.5h2.5"/>',
+  image: '<rect x="3.5" y="5" width="17" height="14" rx="2.5"/><circle cx="9" cy="10" r="1.6"/><path d="m20.5 16-5-5-8 8"/>',
+  print: '<path d="M7 9V3.5h10V9"/><rect x="3.5" y="9" width="17" height="7.5" rx="2"/><path d="M7 14h10v6.5H7z"/>',
+  skip: '<path d="m6 6 7 6-7 6zM16.5 6v12"/>',
+  send: '<path d="M5 12h13M13 6.5l5.5 5.5-5.5 5.5"/>',
+  dig: '<path d="M12 4v10"/><path d="m8 10 4 4 4-4"/><path d="M5 19.5h14"/><path d="M8 17h8" opacity=".5"/>',
+  root: '<path d="M12 3.5v8"/><path d="M12 11.5c-2 2-5 2.5-6.5 5M12 11.5c2 2 5 2.5 6.5 5M12 11.5v9"/>',
+  refresh: '<path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3"/><path d="M19.5 4.5v4h-4"/>',
+  dup: '<rect x="8.5" y="8.5" width="11" height="11" rx="2"/><path d="M14 11.5v5M11.5 14h5"/><path d="M15.5 8.5V6a1.5 1.5 0 0 0-1.5-1.5H6A1.5 1.5 0 0 0 4.5 6v8A1.5 1.5 0 0 0 6 15.5h2.5"/>',
+  play: '<path d="M7.5 5.5v13l11-6.5z"/>',
+  more: '<circle cx="5.5" cy="12" r="1.3" fill="currentColor"/><circle cx="12" cy="12" r="1.3" fill="currentColor"/><circle cx="18.5" cy="12" r="1.3" fill="currentColor"/>',
+  eye: '<path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3"/>',
+};
+function icon(n, cls = '') { return `<svg class="i ${cls}" viewBox="0 0 24 24" aria-hidden="true">${ICONS[n] || ''}</svg>`; }
+function hydrateIcons(root = document) { root.querySelectorAll('i[data-icon]').forEach(el => { const t = document.createElement('template'); t.innerHTML = icon(el.dataset.icon, el.className); el.replaceWith(t.content.firstChild); }); }
+
+/* ---------- Helpers ---------- */
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const pad2 = n => String(n).padStart(2, '0');
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+const store = {
+  get(k, d) { try { const v = localStorage.getItem('reader.' + k); return v == null ? d : JSON.parse(v); } catch { return d; } },
+  set(k, v) { try { localStorage.setItem('reader.' + k, JSON.stringify(v)); } catch { toast('저장 공간이 부족해서 저장하지 못했어요', { err: true }); } },
+};
+function merge(d, s) { const o = { ...d }; if (s && typeof s === 'object') for (const k in s) o[k] = (d[k] && typeof d[k] === 'object' && !Array.isArray(d[k])) ? merge(d[k], s[k]) : s[k]; return o; }
+function fmtDate(t, time = true) {
+  const d = new Date(t), now = new Date();
+  const same = d.toDateString() === now.toDateString();
+  const y = new Date(now); y.setDate(now.getDate() - 1);
+  const hm = `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+  if (same) return time ? `오늘 ${hm}` : '오늘';
+  if (d.toDateString() === y.toDateString()) return time ? `어제 ${hm}` : '어제';
+  const base = d.getFullYear() === now.getFullYear() ? `${d.getMonth() + 1}월 ${d.getDate()}일` : `${d.getFullYear()}.${d.getMonth() + 1}.${d.getDate()}`;
+  return time ? `${base} ${hm}` : base;
+}
+function fmtDur(ms) { const m = Math.round(ms / 60000); if (m < 1) return '1분 안'; if (m < 60) return `${m}분`; const h = Math.floor(m / 60); return `${h}시간 ${m % 60}분`; }
+function download(name, data, type) {
+  const blob = data instanceof Blob ? data : new Blob([data], { type });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name;
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+}
+function fileSafe(s) { return String(s || 'reader').replace(/[\\/:*?"<>|\n\r]+/g, ' ').trim().slice(0, 40) || 'reader'; }
+async function copyText(t) {
+  try { await navigator.clipboard.writeText(t); return true; } catch {
+    const ta = document.createElement('textarea'); ta.value = t; ta.style.position = 'fixed'; ta.style.opacity = '0'; document.body.appendChild(ta); ta.select();
+    let ok = false; try { ok = document.execCommand('copy'); } catch {} ta.remove(); return ok;
+  }
+}
+const chars = t => String(t || '').replace(/\s/g, '').length;
+const oneLine = (t, n = 40) => { const s = String(t || '').replace(/\s+/g, ' ').trim(); return s.length > n ? s.slice(0, n - 1) + '…' : s; };
+
+let toastTimer;
+function toast(msg, { err = false, action, onAction, ms = 3200 } = {}) {
+  const t = $('#toast'); $('#toastMsg').textContent = msg; t.classList.toggle('err', err);
+  const b = $('#toastAct'); b.hidden = !action; b.textContent = action || ''; b.onclick = () => { t.classList.remove('show'); onAction && onAction(); };
+  t.classList.add('show'); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), action ? Math.max(ms, 6000) : ms);
+}
+function confirmDlg(title, msg, okLabel = '확인', danger = false) {
+  return new Promise(res => {
+    const d = $('#cfDlg'); $('#cfT').textContent = title; $('#cfM').textContent = msg;
+    const ok = $('#cfOk'); ok.textContent = okLabel; ok.className = 'btn ' + (danger ? 'rec' : 'primary');
+    const done = v => { d.close(); res(v); };
+    ok.onclick = () => done(true); $('#cfNo').onclick = () => done(false); d.oncancel = e => { e.preventDefault(); done(false); };
+    d.showModal();
+  });
+}
+function numGet(el) { const i = $('input', el); return clamp(Math.round(+i.value || 0), +i.min || 0, +i.max || 99); }
+
+Object.assign(ICONS, {
+  pause: '<path d="M8.5 5.5v13M15.5 5.5v13" stroke-width="2.6"/>',
+  speaker: '<path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11"/>',
+  book: '<path d="M4 5.5A1.5 1.5 0 0 1 5.5 4H11v15.5H5.5A1.5 1.5 0 0 1 4 18z"/><path d="M20 5.5A1.5 1.5 0 0 0 18.5 4H13v15.5h5.5A1.5 1.5 0 0 0 20 18z"/>',
+  folder: '<path d="M3.5 7a2 2 0 0 1 2-2h4l2 2h7a2 2 0 0 1 2 2v8.5a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2z"/>',
+  clip: '<rect x="6" y="4.5" width="12" height="16" rx="2"/><path d="M9.5 4.5V3.5h5v1"/><path d="M9 10h6M9 14h6"/>',
+  target: '<circle cx="12" cy="12" r="7.5"/><circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3"/>',
+  bookmark: '<path d="M7 4h10v16.5l-5-3.8-5 3.8z"/>',
+  up: '<path d="m6 15 6-6 6 6"/>',
+  sprev: '<path d="M6.5 5.5v13"/><path d="m18 6-8.5 6 8.5 6z"/>',
+  snext: '<path d="M17.5 5.5v13"/><path d="m6 6 8.5 6L6 18z"/>',
+  moon: '<path d="M19.5 14.5A8 8 0 0 1 9.5 4.5a8 8 0 1 0 10 10z"/>',
+  star: '<path d="m12 4 2.4 5 5.4.6-4 3.7 1.1 5.4L12 16l-4.9 2.7 1.1-5.4-4-3.7 5.4-.6z"/>',
+});
+
+/* ---------- Settings ---------- */
+const DEF = {
+  voice: '', voiceEn: '', autoEn: true, vfilter: 'ko', rate: 1, pitch: 1, vol: 1,
+  gap: 0, paraGap: 350, repeat: 1, atEnd: 'stop',
+  skipParen: false, skipUrl: true, skipCite: true, skipCode: true, skipEmoji: true,
+  font: 'serif', fs: 19, lh: 1.9, follow: true, focus: false, wake: true, maxLen: 160,
+  join: 'auto', sideClosed: false,
+};
+const S = merge(DEF, store.get('settings', {}));
+let dict = store.get('dict', []);
+const saveS = () => store.set('settings', S);
+
+/* ---------- IndexedDB library ---------- */
+const DB = {
+  db: null, ok: true,
+  open() {
+    if (this.db) return Promise.resolve(this.db);
+    return new Promise((res, rej) => {
+      let r; try { r = indexedDB.open('reader', 1); } catch (e) { return rej(e); }
+      r.onupgradeneeded = () => r.result.createObjectStore('docs', { keyPath: 'id' });
+      r.onsuccess = () => { this.db = r.result; res(this.db); };
+      r.onerror = () => rej(r.error);
+    });
+  },
+  async tx(mode, fn) {
+    if (!this.ok) return;
+    const db = await this.open();
+    return new Promise((res, rej) => {
+      const t = db.transaction('docs', mode), st = t.objectStore('docs'); let out;
+      const r = fn(st); if (r) r.onsuccess = () => { out = r.result; };
+      t.oncomplete = () => res(out); t.onerror = () => rej(t.error); t.onabort = () => rej(t.error);
+    });
+  },
+  all() { return this.tx('readonly', s => s.getAll()); },
+  put(d) { return this.tx('readwrite', s => s.put(d)).catch(() => toast('저장 공간이 부족해서 저장하지 못했어요', { err: true })); },
+  del(id) { return this.tx('readwrite', s => s.delete(id)); },
+  clear() { return this.tx('readwrite', s => s.clear()); },
+};
+let docs = [];
+let doc = null;          // open document
+let sents = [];          // sentences of open doc: {b, x, el, code, h, sec}
+let prefix = [0];        // cumulative est. seconds
+let docLang = 'ko';
+
+/* ---------- Text → blocks ---------- */
+const ENT = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ', middot: '·', hellip: '…', ndash: '–', mdash: '—', lsquo: '‘', rsquo: '’', ldquo: '“', rdquo: '”' };
+function decodeEnt(s) { return s.replace(/&(#x[0-9a-f]+|#\d+|[a-z]+);/gi, (m, e) => e[0] === '#' ? String.fromCodePoint(e[1] === 'x' || e[1] === 'X' ? parseInt(e.slice(2), 16) : +e.slice(1)) : (ENT[e.toLowerCase()] ?? m)); }
+function cleanInline(s) {
+  return decodeEnt(s
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, '')
+    .replace(/\[([^\]]+)\]\((?:[^()]|\([^)]*\))*\)/g, '$1')
+    .replace(/<\/?[a-z][^>]*>/gi, '')
+    .replace(/(\*\*|__|~~|`)/g, '')
+    .replace(/(^|[\s(“"'])[*_]([^*_\s][^*_]*?)[*_](?=[\s).,!?:;”"']|$)/g, '$1$2'))
+    .replace(/[ \t]+/g, ' ').trim();
+}
+function joinLines(lines) {
+  let out = '';
+  for (const l0 of lines) {
+    const l = l0.trim(); if (!l) continue;
+    if (!out) { out = l; continue; }
+    if (/[A-Za-z]-$/.test(out) && /^[a-z]/.test(l)) out = out.slice(0, -1) + l;
+    else out += ' ' + l;
+  }
+  return out;
+}
+function decideJoin(lines, mode) {
+  if (mode === 'join') return true;
+  if (mode === 'lines') return false;
+  const ne = lines.map(l => l.trim()).filter(l => l && !/^(#|[-*+•·]\s|\d+[.)]\s|>|\||```)/.test(l));
+  if (ne.length < 4) return false;
+  const avg = ne.reduce((a, l) => a + l.length, 0) / ne.length;
+  const open = ne.filter(l => !/[.!?。！？…:;"'”’」』)\]>]$/.test(l)).length / ne.length;
+  return avg > 22 && open > 0.45;
+}
+function parseText(raw, { md = true, join = 'auto' } = {}) {
+  const lines = String(raw).replace(/\r\n?/g, '\n').replace(/ /g, ' ').replace(/\t/g, '  ').split('\n');
+  const doJoin = decideJoin(lines, join);
+  const B = []; let para = []; let code = null;
+  const push = (t, x) => { x = md && t !== 'code' ? cleanInline(x) : String(x).trim(); if (x) B.push({ t, x }); };
+  const flush = () => { if (!para.length) return; if (doJoin) push('p', joinLines(para)); else para.forEach(l => push('p', l)); para = []; };
+  for (const line of lines) {
+    if (code) { if (/^\s*(```|~~~)/.test(line)) { const x = code.join('\n').replace(/\s+$/, ''); if (x.trim()) B.push({ t: 'code', x }); code = null; } else code.push(line); continue; }
+    if (!line.trim()) { flush(); continue; }
+    if (md) {
+      let m;
+      if (/^\s*(```|~~~)/.test(line)) { flush(); code = []; continue; }
+      if ((m = /^\s{0,3}(#{1,6})\s+(.*?)\s*#*\s*$/.exec(line))) { flush(); push('h' + Math.min(3, m[1].length), m[2]); continue; }
+      if (/^\s*([-*_=])(\s*\1){2,}\s*$/.test(line)) { flush(); continue; }
+      if ((m = /^\s*>\s?(.*)$/.exec(line))) { flush(); push('q', m[1]); continue; }
+      if ((m = /^\s*(?:[-*+•·▪◦●○■□※]|\d{1,3}[.)])\s+(.*)$/.exec(line))) { flush(); push('li', m[1]); continue; }
+      if (/^\s*\|.*\|\s*$/.test(line)) {
+        flush(); if (/^\s*\|[\s:|-]+\|\s*$/.test(line)) continue;
+        push('p', line.trim().replace(/^\||\|$/g, '').split('|').map(c => c.trim()).filter(Boolean).join(', ')); continue;
+      }
+    } else if (/^\s*[•·▪◦●○■□※]\s+/.test(line)) { flush(); push('li', line.replace(/^\s*[•·▪◦●○■□※]\s+/, '')); continue; }
+    para.push(line);
+  }
+  if (code && code.join('').trim()) B.push({ t: 'code', x: code.join('\n') });
+  flush();
+  return B;
+}
+function blocksToText(blocks) {
+  return blocks.map(b => b.t === 'h1' ? '# ' + b.x : b.t === 'h2' ? '## ' + b.x : b.t === 'h3' ? '### ' + b.x : b.t === 'li' ? '- ' + b.x : b.t === 'q' ? '> ' + b.x : b.t === 'code' ? '```\n' + b.x + '\n```' : b.x).join('\n\n');
+}
+function guessTitle(blocks, fallback = '') {
+  const t = (blocks.find(b => b.t !== 'code') || { x: fallback }).x || fallback;
+  return t.replace(/\s+/g, ' ').trim().slice(0, 60) || '제목 없는 글';
+}
+function countChars(blocks) { return blocks.reduce((a, b) => a + b.x.length, 0); }
+
+/* ---------- Sentences ---------- */
+const END_RE = /[.!?。！？…]+["'”’」』)\]]*(?=\s|$)|\n+/g;
+function splitSent(x, max) {
+  const out = []; let st = 0, m; END_RE.lastIndex = 0;
+  while ((m = END_RE.exec(x))) { let e = m.index + m[0].length; while (e < x.length && /\s/.test(x[e])) e++; if (e > st) out.push(x.slice(st, e)); st = e; END_RE.lastIndex = e; }
+  if (st < x.length) out.push(x.slice(st));
+  const merged = [];
+  for (const p of out) {
+    const last = merged[merged.length - 1];
+    if (last != null && (p.trim().length < 3 || /^\s*(\d{1,3}|[A-Za-z]|[ivxIVX]{1,4})[.)]\s*$/.test(last))) merged[merged.length - 1] += p; else merged.push(p);
+  }
+  const res = [];
+  for (let p of merged) {
+    while (p.length > max) {
+      const win = p.slice(0, max); let cut = -1;
+      const ms = [...win.matchAll(/[,，、;:]\s+|\s+[-–—]\s+|(?:고|며|서|면|데|지만|는데|니까)\s+/g)];
+      if (ms.length) { const l = ms[ms.length - 1]; if (l.index > max * 0.35) cut = l.index + l[0].length; }
+      if (cut < 0) { const sp = win.lastIndexOf(' '); cut = sp > max * 0.35 ? sp + 1 : max; }
+      res.push(p.slice(0, cut)); p = p.slice(cut);
+    }
+    if (p) res.push(p);
+  }
+  return res;
+}
+const HANGUL = /[가-힣ㄱ-ㆎ]/g, LATIN = /[A-Za-z]/g;
+function estSec(t) { const h = (t.match(HANGUL) || []).length, l = (t.match(LATIN) || []).length, o = t.replace(/\s/g, '').length - h - l; return h / 6.8 + l / 13 + Math.max(0, o) / 9 + 0.25; }
+function detectLang(blocks) {
+  const t = blocks.slice(0, 80).map(b => b.x).join(' ').slice(0, 6000);
+  const h = (t.match(HANGUL) || []).length, l = (t.match(LATIN) || []).length;
+  if (h > (h + l) * 0.15) return 'ko';
+  if (l > 20) return 'en';
+  if (/[぀-ヿ]/.test(t)) return 'ja';
+  if (/[一-鿿]/.test(t)) return 'zh';
+  return 'ko';
+}
+function sentLang(t) {
+  if (/[가-힣]/.test(t)) return 'ko';
+  const l = (t.match(LATIN) || []).length;
+  return l >= 6 ? 'en' : docLang;
+}
+function prep(x) {
+  let t = x;
+  for (const d of dict) if (d.a) t = t.split(d.a).join(d.b ? ' ' + d.b + ' ' : ' ');
+  if (S.skipUrl) t = t.replace(/\b(?:https?:\/\/|www\.)[^\s)>\]]+/gi, ' 링크 ');
+  if (S.skipCite) t = t.replace(/\[\d+(?:\s*[,\-–]\s*\d+)*\]/g, '');
+  if (S.skipParen) t = t.replace(/\([^()]*\)|（[^（）]*）/g, '');
+  if (S.skipEmoji) t = t.replace(/\p{Extended_Pictographic}️?/gu, '');
+  t = t.replace(/([─━═=~*#_\-–—·•])\1{2,}/g, ' ').replace(/\s+([.,!?。、])/g, '$1').replace(/\s+/g, ' ').trim();
+  return t;
+}
+function speakable(i) { const s = sents[i]; if (!s) return false; if (s.code && S.skipCode) return false; return /[\p{L}\p{N}]/u.test(prep(s.x)); }
+
+/* ---------- Rendering the reader ---------- */
+const rt = $('#rt');
+function applyLook() {
+  rt.classList.toggle('serif', S.font === 'serif');
+  rt.classList.toggle('focus', !!S.focus);
+  rt.style.setProperty('--fs', S.fs + 'px');
+  rt.style.setProperty('--lh', S.lh);
+}
+function renderDoc() {
+  sents = []; prefix = [0];
+  if (!doc) {
+    rt.innerHTML = `<div class="empty rd-empty"><b>읽을 자료가 없어요</b>글을 붙여 넣거나 파일을 넣으면 여기에서 읽어 드려요.<br><button class="btn primary" data-go="add">${icon('plus')}자료 넣기</button></div>`;
+    $('#rdTitle').textContent = '읽을 자료 없음';
+    updPlayer(); renderToc(); renderBm(); return;
+  }
+  docLang = detectLang(doc.blocks);
+  const html = [];
+  doc.blocks.forEach((b, bi) => {
+    const isCode = b.t === 'code';
+    const parts = isCode ? b.x.split(/(?<=\n)/) : splitSent(b.x, S.maxLen);
+    let inner = '';
+    for (const p of parts) {
+      const i = sents.length; const sec = isCode && S.skipCode ? 0 : estSec(p);
+      sents.push({ b: bi, x: p, code: isCode, h: b.t[0] === 'h' });
+      prefix.push(prefix[prefix.length - 1] + sec);
+      inner += `<span class="s" data-i="${i}">${esc(p)}</span>`;
+    }
+    const tag = b.t === 'h1' ? 'h1' : b.t === 'h2' ? 'h2' : b.t === 'h3' ? 'h3' : b.t === 'q' ? 'blockquote' : isCode ? 'pre' : 'p';
+    const cls = b.t === 'li' ? ' class="li"' : isCode && S.skipCode ? ' class="skip"' : '';
+    html.push(`<${tag}${cls} data-b="${bi}">${inner}</${tag}>`);
+  });
+  rt.innerHTML = html.join('');
+  const els = rt.querySelectorAll('.s'); els.forEach((el, i) => { sents[i].el = el; });
+  $('#rdTitle').textContent = doc.title;
+  E.idx = clamp(doc.pos || 0, 0, Math.max(0, sents.length - 1));
+  if (doc.done && E.idx >= sents.length - 1) E.idx = sents.length - 1;
+  (doc.bookmarks || []).forEach(bm => sents[bm.i] && sents[bm.i].el.classList.add('bm'));
+  setCur(E.idx, false);
+  renderToc(); renderBm(); updPlayer();
+  if (find.q) runFind();
+}
+function setCur(i, scroll = true) {
+  const prev = rt.querySelector('.s.cur'); if (prev) prev.classList.remove('cur');
+  clearWord();
+  const s = sents[i]; if (!s) return;
+  s.el.classList.add('cur');
+  if (scroll && S.follow && Date.now() - E.userScroll > 4000) scrollToEl(s.el, false);
+  markToc();
+}
+function scrollToEl(el, force) {
+  if (!el || !el.isConnected || el.closest('[hidden]')) return;
+  const r = el.getBoundingClientRect();
+  const sc = $('#rdScroll');
+  const inner = getComputedStyle(sc).overflowY !== 'visible';
+  let top, bottom;
+  if (inner) { const sr = sc.getBoundingClientRect(); top = sr.top; bottom = sr.bottom; }
+  else { top = 0; bottom = window.innerHeight - ($('#player').getBoundingClientRect().height || 0); }
+  const h = bottom - top;
+  if (!force && r.top >= top + h * 0.15 && r.bottom <= top + h * 0.75) return;
+  const delta = (r.top + r.height / 2) - (top + h * 0.42);
+  const behavior = force ? 'auto' : 'smooth';
+  if (inner) sc.scrollTo({ top: sc.scrollTop + delta, behavior });
+  else window.scrollTo({ top: window.scrollY + delta, behavior });
+}
+function clearWord() { try { CSS.highlights && CSS.highlights.delete('rword'); } catch {} }
+
+/* ---------- Voices ---------- */
+const synth = 'speechSynthesis' in window ? window.speechSynthesis : null;
+const isAndroid = /Android/i.test(navigator.userAgent);
+let voices = [];
+function normLang(l) { return String(l || '').toLowerCase().replace('_', '-'); }
+function loadVoices() {
+  if (!synth) return;
+  const v = synth.getVoices() || [];
+  if (v.length === voices.length && voices.length) return;
+  voices = v.slice().sort((a, b) => (normLang(a.lang) > normLang(b.lang) ? 1 : normLang(a.lang) < normLang(b.lang) ? -1 : a.name.localeCompare(b.name)));
+  renderVoices();
+}
+function pickVoice(uri, lang) {
+  if (uri) { const v = voices.find(v => v.voiceURI === uri); if (v) return v; }
+  const L = voices.filter(v => normLang(v.lang).startsWith(lang));
+  return L.find(v => v.default) || L.find(v => /google|samsung|natural|online|neural/i.test(v.name)) || L.find(v => v.localService) || L[0] || null;
+}
+function voiceFor(text) {
+  const lang = sentLang(text);
+  if (lang === 'en' && (S.autoEn || docLang === 'en')) {
+    const mainV = pickVoice(S.voice, docLang);
+    if (docLang === 'en' && mainV && normLang(mainV.lang).startsWith('en')) return mainV;
+    return pickVoice(S.voiceEn, 'en') || mainV;
+  }
+  if (docLang !== 'ko' && lang === docLang) {
+    const m = pickVoice(S.voice, docLang); if (m && normLang(m.lang).startsWith(docLang)) return m;
+    return pickVoice('', docLang) || m;
+  }
+  return pickVoice(S.voice, 'ko');
+}
+function vLabel(v) { return `${v.name.replace(/^(Microsoft|Google|Samsung)\s+/, '$1 ')} · ${v.lang}${v.localService ? '' : ' · 온라인'}`; }
+function renderVoices() {
+  const f = S.vfilter;
+  const list = voices.filter(v => f === 'all' || normLang(v.lang).startsWith(f));
+  const sel = $('#vSel');
+  sel.innerHTML = `<option value="">기본 목소리 (자동으로 고르기)</option>` + list.map(v => `<option value="${esc(v.voiceURI)}">${esc(vLabel(v))}</option>`).join('');
+  if (S.voice && !list.some(v => v.voiceURI === S.voice)) { const v = voices.find(v => v.voiceURI === S.voice); if (v) sel.insertAdjacentHTML('beforeend', `<option value="${esc(v.voiceURI)}">${esc(vLabel(v))}</option>`); }
+  sel.value = S.voice;
+  const en = voices.filter(v => normLang(v.lang).startsWith('en'));
+  $('#vSelEn').innerHTML = `<option value="">영어 기본 목소리</option>` + en.map(v => `<option value="${esc(v.voiceURI)}">${esc(vLabel(v))}</option>`).join('');
+  $('#vSelEn').value = S.voiceEn;
+  const ko = voices.filter(v => normLang(v.lang).startsWith('ko')).length;
+  $('#vCount').textContent = voices.length ? `한국어 ${ko} · 전체 ${voices.length}` : '';
+  const note = $('#vNote');
+  if (!synth) { note.hidden = false; note.textContent = '이 브라우저는 소리 내어 읽기(음성 합성)를 지원하지 않아요. 크롬, 삼성 인터넷, 엣지, 사파리에서 열어 주세요.'; }
+  else if (voicesTried && !voices.length) { note.hidden = false; note.innerHTML = '이 기기에서 목소리를 찾지 못했어요. 그래도 기본 엔진으로 읽어 볼게요. 목소리 설치 방법은 오른쪽 위 설정에 있어요.'; }
+  else if (voicesTried && !ko && voices.length) { note.hidden = false; note.textContent = '한국어 목소리가 없어요. 기기 설정에서 한국어 음성 데이터를 내려받으면 더 자연스럽게 읽어요.'; }
+  else note.hidden = true;
+}
+let voicesTried = false;
+if (synth) {
+  if (synth.addEventListener) synth.addEventListener('voiceschanged', loadVoices); else synth.onvoiceschanged = loadVoices;
+  loadVoices(); [300, 1000, 2500].forEach(t => setTimeout(loadVoices, t));
+  setTimeout(() => { voicesTried = true; renderVoices(); }, 3000);
+}
+
+/* ---------- Speech engine ---------- */
+const E = { playing: false, idx: 0, gen: 0, rep: 0, timer: 0, keep: 0, wd: 0, errs: 0, userScroll: 0, sleep: { mode: 'off' }, utt: null, started: 0 };
+function speakCur() {
+  const g = ++E.gen;
+  clearTimeout(E.timer); clearInterval(E.keep); clearTimeout(E.wd);
+  while (E.idx < sents.length && !speakable(E.idx)) E.idx++;
+  if (E.idx >= sents.length) return docEnd();
+  const s = sents[E.idx]; setCur(E.idx); updPlayer();
+  const text = prep(s.x);
+  const busy = synth.speaking || synth.pending;
+  if (busy) synth.cancel();
+  E.timer = setTimeout(() => {
+    if (g !== E.gen || !E.playing) return;
+    const u = new SpeechSynthesisUtterance(text);
+    const v = voiceFor(text);
+    if (v) { u.voice = v; u.lang = v.lang; } else u.lang = docLang === 'en' ? 'en-US' : docLang === 'ja' ? 'ja-JP' : docLang === 'zh' ? 'zh-CN' : 'ko-KR';
+    u.rate = S.rate; u.pitch = S.pitch; u.volume = S.vol;
+    u.onstart = () => { if (g === E.gen) E.started = Date.now(); };
+    u.onend = () => { if (g !== E.gen || !E.playing) return; E.errs = 0; advance(); };
+    u.onerror = e => {
+      if (g !== E.gen || !E.playing) return;
+      if (e.error === 'interrupted' || e.error === 'canceled') return;
+      if (e.error === 'not-allowed') { pause(); toast('브라우저가 소리를 막았어요. 재생 버튼을 한 번 더 눌러 주세요'); return; }
+      if (++E.errs > 3) { pause(); toast('목소리 엔진이 응답하지 않아요. 다른 목소리를 골라 보세요', { err: true }); return; }
+      advance();
+    };
+    const wh = wordHL(s, text, g); if (wh) u.onboundary = wh;
+    E.utt = u;
+    synth.speak(u);
+    if (synth.paused) synth.resume();
+    // Chrome desktop stops long online-voice utterances after ~15s unless poked.
+    if (!isAndroid && v && !v.localService) E.keep = setInterval(() => { if (g === E.gen && synth.speaking && !synth.paused) { synth.pause(); synth.resume(); } }, 9000);
+    // Watchdog: some engines never fire onend.
+    E.wd = setTimeout(() => { if (g === E.gen && E.playing) { synth.cancel(); advance(); } }, (estSec(text) / Math.max(.3, S.rate)) * 2600 + 9000);
+  }, busy ? 90 : 0);
+}
+function later(fn, d) {
+  const g = E.gen;
+  if (d <= 0) return fn();
+  E.timer = setTimeout(() => { if (g === E.gen && E.playing) fn(); }, d);
+}
+function advance() {
+  clearInterval(E.keep); clearTimeout(E.wd); clearWord();
+  if (++E.rep < S.repeat) return later(speakCur, Math.max(400, S.gap + 300));
+  E.rep = 0;
+  const prevB = sents[E.idx] ? sents[E.idx].b : -1;
+  E.idx++;
+  savePos();
+  const sl = E.sleep;
+  if (sl.mode === 'min' && Date.now() >= sl.until) { sleepStop(); return; }
+  if (E.idx >= sents.length) return docEnd();
+  const nb = sents[E.idx].b;
+  if (sl.mode === 'para' && nb !== prevB) { sleepStop(); return; }
+  if (sl.mode === 'chap' && sents[E.idx].h && nb !== sl.b) { sleepStop(); return; }
+  const d = S.gap + (nb !== prevB ? S.paraGap + (sents[E.idx].h ? 250 : 0) : 0);
+  later(speakCur, d);
+}
+function wordHL(s, text, g) {
+  if (!window.CSS || !CSS.highlights || typeof Highlight === 'undefined') return null;
+  const orig = s.x.trim(); if (orig !== text) return null;
+  const lead = s.x.length - s.x.trimStart().length;
+  return e => {
+    if (g !== E.gen || (e.name && e.name !== 'word')) return;
+    const node = s.el && s.el.firstChild; if (!node) return;
+    const st = e.charIndex + lead;
+    let len = e.charLength;
+    if (!len) { const m = /^[\p{L}\p{N}'’-]+/u.exec(text.slice(e.charIndex)); len = m ? m[0].length : 1; }
+    try { const r = new Range(); r.setStart(node, Math.min(st, node.length)); r.setEnd(node, Math.min(st + len, node.length)); CSS.highlights.set('rword', new Highlight(r)); } catch {}
+  };
+}
+function play(from) {
+  if (!synth) { toast('이 브라우저는 소리 내어 읽기를 지원하지 않아요', { err: true }); return; }
+  if (!doc || !sents.length) { toast('먼저 읽을 자료를 넣어 주세요'); setTab('add'); return; }
+  if (from != null) E.idx = clamp(from, 0, sents.length - 1);
+  else if (doc.done && E.idx >= sents.length - 1) { E.idx = 0; doc.done = false; }
+  E.playing = true; E.rep = 0; E.errs = 0;
+  if (E.sleep.mode === 'chap') E.sleep.b = sents[E.idx].b;
+  wakeOn(); speakCur(); updPlayer(); renderApplied();
+}
+function haltSpeech() { E.gen++; clearTimeout(E.timer); clearInterval(E.keep); clearTimeout(E.wd); try { synth && synth.cancel(); } catch {} clearWord(); }
+function pause() {
+  const was = E.playing; E.playing = false; haltSpeech();
+  if (was) savePos(true);
+  wakeOff(); updPlayer(); renderApplied();
+}
+function toggle() { E.playing ? pause() : play(); }
+function jump(i, keepPlaying = true) {
+  if (!sents.length) return;
+  E.idx = clamp(i, 0, sents.length - 1); E.rep = 0; E.userScroll = 0;
+  if (doc.done) doc.done = false;
+  if (E.playing && keepPlaying) speakCur(); else { setCur(E.idx); scrollToEl(sents[E.idx].el, false); updPlayer(); }
+  savePos();
+}
+function stepSent(d) {
+  let i = E.idx + d;
+  while (i > 0 && i < sents.length - 1 && !speakable(i)) i += d;
+  jump(i);
+}
+function stepPara(d) {
+  if (!sents.length) return;
+  const b = sents[E.idx].b; let i = E.idx;
+  if (d > 0) { while (i < sents.length && sents[i].b === b) i++; if (i >= sents.length) i = sents.length - 1; }
+  else {
+    while (i > 0 && sents[i - 1].b === b) i--;
+    if (i === E.idx || (E.playing && Date.now() - E.started < 1500 && i === E.idx)) { if (i > 0) { const pb = sents[i - 1].b; i--; while (i > 0 && sents[i - 1].b === pb) i--; } }
+  }
+  jump(i);
+}
+function docEnd() {
+  E.idx = Math.max(0, sents.length - 1);
+  doc.done = true; doc.pos = E.idx; doc.finished = Date.now(); persist(doc);
+  if (S.atEnd === 'loop' && E.playing) { E.idx = 0; doc.done = false; setCur(0); later(speakCur, 900); return; }
+  if (S.atEnd === 'next' && E.playing) {
+    const nx = libSorted().find(d => d.id !== doc.id && !d.done);
+    if (nx) { toast(`다 읽었어요. 다음 자료 ‘${nx.title}’로 넘어가요`); const keep = true; openDoc(nx.id, { play: keep }); return; }
+  }
+  pause(); updPlayer(); renderLib();
+  toast('끝까지 다 읽었어요');
+}
+let saveT = 0;
+function savePos(now = false) {
+  if (!doc) return;
+  doc.pos = E.idx; doc.total = sents.length; doc.opened = Date.now();
+  clearTimeout(saveT);
+  if (now) persist(doc); else saveT = setTimeout(() => persist(doc), 1500);
+  updLibRowLite();
+}
+function persist(d) { if (!d) return; d.updated = d.updated || Date.now(); return DB.put(d); }
+
+/* Sleep timer */
+const SLEEP = [{ mode: 'off', t: '끔' }, { mode: 'min', m: 10, t: '10분' }, { mode: 'min', m: 20, t: '20분' }, { mode: 'min', m: 30, t: '30분' }, { mode: 'min', m: 60, t: '1시간' }, { mode: 'para', t: '이 단락까지' }, { mode: 'chap', t: '이 장까지' }];
+let sleepI = 0;
+function cycleSleep() {
+  sleepI = (sleepI + 1) % SLEEP.length; const o = SLEEP[sleepI];
+  E.sleep = { mode: o.mode };
+  if (o.mode === 'min') E.sleep.until = Date.now() + o.m * 60000;
+  if (o.mode === 'chap') E.sleep.b = sents[E.idx] ? sents[E.idx].b : 0;
+  updSleep();
+  toast(o.mode === 'off' ? '잠자기 타이머를 껐어요' : `잠자기 타이머: ${o.t} 읽고 멈춰요`);
+}
+function sleepStop() { E.sleep = { mode: 'off' }; sleepI = 0; updSleep(); pause(); toast('잠자기 타이머로 읽기를 멈췄어요'); }
+function updSleep() {
+  const c = $('#sleepChip'), o = SLEEP[sleepI];
+  c.classList.toggle('on', E.sleep.mode !== 'off');
+  let t = o.t;
+  if (E.sleep.mode === 'min') { const left = Math.max(0, E.sleep.until - Date.now()); t = `${Math.floor(left / 60000)}:${pad2(Math.floor(left / 1000) % 60)}`; }
+  $('#sleepT').textContent = t;
+}
+setInterval(() => {
+  if (E.sleep.mode === 'min') { updSleep(); if (E.playing && Date.now() > E.sleep.until + 45000) sleepStop(); }
+}, 1000);
+
+/* Wake lock */
+let wl = null;
+async function wakeOn() { if (!S.wake || !('wakeLock' in navigator) || wl) return; try { wl = await navigator.wakeLock.request('screen'); wl.addEventListener('release', () => { wl = null; }); } catch {} }
+function wakeOff() { try { wl && wl.release(); } catch {} wl = null; }
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && E.playing) wakeOn();
+  if (document.visibilityState === 'hidden' && doc) savePos(true);
+});
+window.addEventListener('pagehide', () => { if (doc) { doc.pos = E.idx; persist(doc); } try { synth && synth.cancel(); } catch {} });
+
+/* ---------- Player UI ---------- */
+function updPlayer() {
+  const n = sents.length, i = Math.min(E.idx, Math.max(0, n - 1));
+  const pb = $('#pPlay');
+  pb.innerHTML = icon(E.playing ? 'pause' : 'play', E.playing ? '' : 'fill'); pb.title = E.playing ? '멈춤 (Space)' : '읽기 (Space)';
+  const seek = $('#seek'); seek.max = Math.max(0, n - 1); if (!seeking) seek.value = i;
+  seek.style.setProperty('--p', n ? (i / Math.max(1, n - 1)) : 0);
+  $('#plPos').textContent = n ? `${i + 1} / ${n} 문장` : '0 / 0 문장';
+  if (n) {
+    const left = (prefix[n] - prefix[i]) / Math.max(.3, S.rate) + (S.gap / 1000) * (n - i);
+    const pct = doc.done ? 100 : Math.round(i / Math.max(1, n - 1) * 100);
+    $('#plLeft').textContent = doc.done ? `다 읽음 · 전체 약 ${fmtDur(prefix[n] / Math.max(.3, S.rate) * 1000)}` : `${pct}% · 남은 시간 약 ${fmtDur(left * 1000)}`;
+  } else $('#plLeft').textContent = '자료를 넣어 주세요';
+  ['pPrev', 'pNext', 'pPrevP', 'pNextP', 'pPlay'].forEach(id => $('#' + id).disabled = !n);
+  $('#spdChip').textContent = (+S.rate).toFixed(S.rate * 100 % 10 ? 2 : 1) + '×';
+}
+function renderApplied() {
+  const a = $('#applied');
+  if (doc && E.playing) a.innerHTML = `<span class="achip">${icon('speaker')}읽는 중 · ${esc(doc.title.slice(0, 24))}</span>`;
+  else if (doc && sents.length) a.innerHTML = `<span class="achip warn">${icon('pause')}멈춤 · ${esc(doc.title.slice(0, 24))}</span>`;
+  else a.innerHTML = '';
+}
+
+/* ---------- TOC & bookmarks ---------- */
+function renderToc() {
+  const box = $('#toc');
+  const hs = []; if (doc) sents.forEach((s, i) => { if (s.h && (i === 0 || sents[i - 1].b !== s.b)) hs.push(i); });
+  $('#tocSec').hidden = !hs.length;
+  $('#tocN').textContent = hs.length || '';
+  box.innerHTML = hs.map(i => { const b = doc.blocks[sents[i].b]; return `<button class="toc-i l${b.t[1]}" data-i="${i}"><span>${esc(b.x)}</span><small>${Math.round(i / Math.max(1, sents.length - 1) * 100)}%</small></button>`; }).join('');
+  markToc();
+}
+function markToc() {
+  const items = $$('#toc .toc-i'); if (!items.length) return;
+  let on = null; for (const it of items) { if (+it.dataset.i <= E.idx) on = it; }
+  items.forEach(it => it.classList.toggle('on', it === on));
+}
+function renderBm() {
+  const list = $('#bmList'); const bms = doc ? (doc.bookmarks || []) : [];
+  $('#bmN').textContent = bms.length || '';
+  $('#bmSec').hidden = !doc;
+  list.innerHTML = bms.length ? bms.slice().sort((a, b) => a.i - b.i).map(bm => `<div class="sitem"><button class="tx" data-bm="${bm.i}" style="text-align:left"><b>${esc(bm.snip)}</b><small>${Math.round(bm.i / Math.max(1, sents.length - 1) * 100)}% · ${fmtDate(bm.at)}</small></button><button class="mini danger" data-bmdel="${bm.i}" title="책갈피 지우기">${icon('x')}</button></div>`).join('')
+    : `<p class="hint" style="margin:0">읽다가 <b>책갈피</b>를 누르면 지금 문장이 여기에 남아요.</p>`;
+}
+function toggleBm() {
+  if (!doc || !sents.length) return;
+  doc.bookmarks = doc.bookmarks || [];
+  const i = E.idx, k = doc.bookmarks.findIndex(b => b.i === i);
+  if (k >= 0) { doc.bookmarks.splice(k, 1); sents[i].el.classList.remove('bm'); toast('책갈피를 지웠어요'); }
+  else { doc.bookmarks.push({ i, at: Date.now(), snip: sents[i].x.trim().slice(0, 60) }); sents[i].el.classList.add('bm'); toast('지금 문장에 책갈피를 꽂았어요'); }
+  persist(doc); renderBm();
+}
+
+/* ---------- Find ---------- */
+const find = { q: '', hits: [], k: -1 };
+function runFind() {
+  rt.querySelectorAll('.s.hit').forEach(el => el.classList.remove('hit', 'on'));
+  const q = find.q.trim().toLowerCase(); find.hits = []; find.k = -1;
+  if (q) sents.forEach((s, i) => { if (s.x.toLowerCase().includes(q)) { find.hits.push(i); s.el.classList.add('hit'); } });
+  if (find.hits.length) { find.k = Math.max(0, find.hits.findIndex(i => i >= E.idx)); showHit(); }
+  $('#findN').textContent = find.hits.length ? `${find.k + 1} / ${find.hits.length}` : q ? '없음' : '0 / 0';
+}
+function showHit() {
+  rt.querySelectorAll('.s.hit.on').forEach(el => el.classList.remove('on'));
+  const i = find.hits[find.k]; if (i == null) return;
+  sents[i].el.classList.add('on'); scrollToEl(sents[i].el, true);
+  $('#findN').textContent = `${find.k + 1} / ${find.hits.length}`;
+}
+function openFind() { $('#findBar').hidden = false; $('#findQ').focus(); $('#findQ').select(); }
+function closeFind() { $('#findBar').hidden = true; find.q = ''; $('#findQ').value = ''; runFind(); }
+
+/* ---------- Library ---------- */
+const lib = { q: '', f: 'all', sort: store.get('libSort', 'opened') };
+function pctOf(d) { return d.done ? 1 : d.total ? clamp((d.pos || 0) / Math.max(1, d.total - 1), 0, 1) : 0; }
+function leftOf(d) { const chars = d.chars || countChars(d.blocks); return chars * (1 - pctOf(d)); }
+function libSorted() {
+  const a = docs.slice();
+  if (lib.sort === 'title') a.sort((x, y) => x.title.localeCompare(y.title, 'ko'));
+  else if (lib.sort === 'created') a.sort((x, y) => y.created - x.created);
+  else if (lib.sort === 'left') a.sort((x, y) => leftOf(x) - leftOf(y));
+  else a.sort((x, y) => (y.opened || y.created) - (x.opened || x.created));
+  a.sort((x, y) => (y.fav ? 1 : 0) - (x.fav ? 1 : 0));
+  return a;
+}
+const KIND = { paste: '글', txt: 'TXT', md: 'MD', pdf: 'PDF', docx: 'DOCX', hwpx: 'HWPX', epub: 'EPUB', pptx: 'PPT', odt: 'ODT', html: 'HTML', srt: 'SUB', csv: 'CSV', sample: '안내' };
+function renderLib() {
+  $('#nLib').textContent = docs.length;
+  const box = $('#libList');
+  const q = lib.q.trim().toLowerCase();
+  let list = libSorted().filter(d => {
+    if (lib.f === 'open' && (d.done || !(d.pos > 0))) return false;
+    if (lib.f === 'done' && !d.done) return false;
+    if (lib.f === 'fav' && !d.fav) return false;
+    if (q && !d.title.toLowerCase().includes(q) && !d.blocks.some(b => b.x.toLowerCase().includes(q))) return false;
+    return true;
+  });
+  if (!docs.length) { box.innerHTML = `<div class="empty"><b>보관함이 비어 있어요</b>읽을 글이나 파일을 넣으면 여기에 모여요.<br><button class="btn primary" data-go="add">${icon('plus')}자료 넣기</button></div>`; return; }
+  if (!list.length) { box.innerHTML = `<div class="empty"><b>맞는 자료가 없어요</b>찾는 말이나 거르기를 바꿔 보세요.</div>`; return; }
+  const total = list.reduce((a, d) => a + leftOf(d), 0);
+  box.innerHTML = `<div class="grp-h">자료 ${list.length}개<span class="v">· 남은 분량 약 ${fmtDur(total / 6.8 / S.rate * 1000)}</span><span class="grow"></span></div><div class="rows">` + list.map(d => {
+    const p = pctOf(d), chars = d.chars || countChars(d.blocks);
+    const st = d.done ? '다 읽음' : p > 0 ? `${Math.round(p * 100)}% · 남은 약 ${fmtDur(leftOf(d) / 6.8 / S.rate * 1000)}` : `약 ${fmtDur(chars / 6.8 / S.rate * 1000)}`;
+    return `<div class="lib-row${doc && doc.id === d.id ? ' cur' : ''}" data-id="${d.id}">
+      <div class="kind">${esc(KIND[d.kind] || 'TXT')}</div>
+      <div class="tx" data-open="${d.id}"><b>${esc(d.title)}</b><small>${st} · ${chars.toLocaleString()}자 · ${d.opened ? '읽은 때 ' + fmtDate(d.opened) : '넣은 때 ' + fmtDate(d.created)}${d.fname ? ' · ' + esc(d.fname) : ''}</small><div class="bar"><i style="width:${p * 100}%"></i></div></div>
+      <button class="mini${d.fav ? ' on' : ''}" data-fav="${d.id}" title="별표">${icon('star')}</button>
+      <button class="mini" data-play="${d.id}" title="읽기">${icon('play')}</button>
+      <button class="mini" data-ren="${d.id}" title="제목 바꾸기">${icon('pen')}</button>
+      <button class="mini" data-dl="${d.id}" title="TXT로 받기">${icon('download')}</button>
+      <button class="mini danger" data-del="${d.id}" title="지우기">${icon('trash')}</button>
+    </div>`;
+  }).join('') + '</div>';
+}
+function updLibRowLite() {
+  if (!doc) return;
+  const row = $(`.lib-row[data-id="${doc.id}"] .bar i`); if (row) row.style.width = pctOf(doc) * 100 + '%';
+}
+function renderResume() {
+  const box = $('#resume');
+  const rec = docs.filter(d => d.opened && !d.done).sort((a, b) => b.opened - a.opened).slice(0, 3);
+  box.innerHTML = rec.length ? `<div class="grp-h">이어 읽기<span class="grow"></span></div><div class="slist">` + rec.map(d => `<button class="rcard" data-play="${d.id}"><span class="pp">${icon('play')}</span><span class="tx"><b>${esc(d.title)}</b><small>${Math.round(pctOf(d) * 100)}% · 읽은 때 ${fmtDate(d.opened)}</small><div class="bar"><i style="width:${pctOf(d) * 100}%"></i></div></span></button>`).join('') + '</div>' : '';
+}
+function openDoc(id, { play: autoplay = false, tab = true } = {}) {
+  const d = docs.find(x => x.id === id); if (!d) return;
+  if (E.playing) pause();
+  if (doc && doc.id !== d.id) { doc.pos = E.idx; persist(doc); }
+  doc = d; store.set('cur', d.id);
+  d.opened = Date.now(); persist(d);
+  renderDoc(); renderLib(); renderApplied();
+  if (tab) setTab('read');
+  requestAnimationFrame(() => { if (sents[E.idx]) scrollToEl(sents[E.idx].el, true); });
+  if (autoplay) play();
+}
+async function addDoc({ title, blocks, kind, fname }) {
+  if (!blocks.length) throw new Error('읽을 글자를 찾지 못했어요');
+  const now = Date.now();
+  const d = { id: uid(), title: (title || guessTitle(blocks)).slice(0, 80), blocks, kind, fname: fname || '', created: now, updated: now, opened: 0, pos: 0, total: 0, chars: countChars(blocks), bookmarks: [], fav: false, done: false };
+  docs.push(d); await persist(d); renderLib();
+  return d;
+}
+async function delDoc(id) {
+  const d = docs.find(x => x.id === id); if (!d) return;
+  if (!await confirmDlg('자료 지우기', `‘${d.title}’을(를) 보관함에서 지울까요?`, '지우기', true)) return;
+  docs = docs.filter(x => x !== d); await DB.del(id);
+  if (doc && doc.id === id) { pause(); doc = null; store.set('cur', null); renderDoc(); renderApplied(); }
+  renderLib(); renderResume();
+  toast('지웠어요');
+}
+function renameDoc(id) {
+  const d = docs.find(x => x.id === id); if (!d) return;
+  const dl = $('#rnDlg'); $('#rnIn').value = d.title; dl.showModal(); $('#rnIn').select();
+  $('#rnSave').onclick = () => { const v = $('#rnIn').value.trim(); if (v) { d.title = v.slice(0, 80); d.updated = Date.now(); persist(d); if (doc === d) { $('#rdTitle').textContent = d.title; renderApplied(); } renderLib(); } dl.close(); };
+}
+function dlTxt(d) { download(fileSafe(d.title) + '.txt', blocksToText(d.blocks), 'text/plain;charset=utf-8'); }
+
+/* ---------- Files ---------- */
+function extOf(n) { const m = /\.([a-z0-9]+)$/i.exec(n || ''); return m ? m[1].toLowerCase() : ''; }
+function baseName(n) { return String(n || '').replace(/\.[^.]+$/, ''); }
+function decodeBytes(buf) {
+  const u = new Uint8Array(buf);
+  if (u[0] === 0xFF && u[1] === 0xFE) return new TextDecoder('utf-16le').decode(u);
+  if (u[0] === 0xFE && u[1] === 0xFF) return new TextDecoder('utf-16be').decode(u);
+  try { return new TextDecoder('utf-8', { fatal: true }).decode(u).replace(/^﻿/, ''); }
+  catch { try { return new TextDecoder('euc-kr').decode(u); } catch { return new TextDecoder().decode(u); } }
+}
+async function unzip(buf) {
+  const dv = new DataView(buf), u8 = new Uint8Array(buf); let e = -1;
+  for (let i = buf.byteLength - 22; i >= Math.max(0, buf.byteLength - 65557); i--) if (dv.getUint32(i, true) === 0x06054b50) { e = i; break; }
+  if (e < 0) throw new Error('파일 구조를 읽지 못했어요 (손상되었거나 다른 형식이에요)');
+  const n = dv.getUint16(e + 10, true); let p = dv.getUint32(e + 16, true);
+  const files = {}; const td = new TextDecoder();
+  for (let k = 0; k < n; k++) {
+    if (dv.getUint32(p, true) !== 0x02014b50) break;
+    const method = dv.getUint16(p + 10, true), csize = dv.getUint32(p + 20, true), nl = dv.getUint16(p + 28, true), xl = dv.getUint16(p + 30, true), cl = dv.getUint16(p + 32, true), off = dv.getUint32(p + 42, true);
+    files[td.decode(u8.subarray(p + 46, p + 46 + nl))] = { method, csize, off };
+    p += 46 + nl + xl + cl;
+  }
+  const names = Object.keys(files);
+  return {
+    names,
+    find(name) { const l = name.toLowerCase(); return names.find(x => x.toLowerCase() === l); },
+    async text(name) {
+      const real = this.find(name); const f = real && files[real]; if (!f) return null;
+      const st = f.off + 30 + dv.getUint16(f.off + 26, true) + dv.getUint16(f.off + 28, true);
+      const data = u8.subarray(st, st + f.csize); let out;
+      if (f.method === 0) out = data;
+      else if (f.method === 8) {
+        if (typeof DecompressionStream === 'undefined') throw new Error('이 브라우저는 압축 풀기를 지원하지 않아요. 최신 크롬이나 삼성 인터넷을 써 주세요');
+        const ds = new Blob([data]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
+        out = new Uint8Array(await new Response(ds).arrayBuffer());
+      } else throw new Error('지원하지 않는 압축 방식이에요');
+      return decodeBytes(out.buffer.byteLength === out.length ? out.buffer : out.slice().buffer);
+    },
+  };
+}
+function xmlDoc(s) { return new DOMParser().parseFromString(s, 'application/xml'); }
+function xmlParas(d, pTag, tTag, extra = {}) {
+  const out = [];
+  for (const p of d.getElementsByTagName(pTag)) {
+    let t = '';
+    const walk = n => { for (const c of n.childNodes) { if (c.nodeType !== 1) continue; const nm = c.nodeName; if (nm === pTag) continue; if (nm === tTag) t += c.textContent; else if (extra.sp && extra.sp.includes(nm)) t += ' '; else walk(c); } };
+    walk(p); out.push({ p, t: t.replace(/\s+/g, ' ').trim() });
+  }
+  return out;
+}
+async function parseDocx(z) {
+  const xml = await z.text('word/document.xml'); if (!xml) throw new Error('DOCX 본문을 찾지 못했어요');
+  const B = [];
+  for (const { p, t } of xmlParas(xmlDoc(xml), 'w:p', 'w:t', { sp: ['w:tab', 'w:br', 'w:cr'] })) {
+    if (!t) continue;
+    const st = (p.getElementsByTagName('w:pStyle')[0] || { getAttribute: () => '' }).getAttribute('w:val') || '';
+    let m;
+    if (/^title$|^제목$/i.test(st)) B.push({ t: 'h1', x: t });
+    else if ((m = /(?:heading|제목)\s*(\d)/i.exec(st))) B.push({ t: 'h' + Math.min(3, +m[1]), x: t });
+    else if (p.getElementsByTagName('w:numPr').length) B.push({ t: 'li', x: t });
+    else B.push({ t: 'p', x: t });
+  }
+  let title = '';
+  const core = await z.text('docProps/core.xml'); if (core) { const tt = xmlDoc(core).getElementsByTagName('dc:title')[0]; if (tt) title = tt.textContent.trim(); }
+  return { blocks: B, title };
+}
+async function parseHwpx(z) {
+  const secs = z.names.filter(n => /^Contents\/section\d+\.xml$/i.test(n)).sort((a, b) => +a.match(/(\d+)\.xml/i)[1] - +b.match(/(\d+)\.xml/i)[1]);
+  if (!secs.length) throw new Error('HWPX 본문을 찾지 못했어요');
+  const B = [];
+  for (const s of secs) for (const { t } of xmlParas(xmlDoc(await z.text(s)), 'hp:p', 'hp:t', { sp: ['hp:tab', 'hp:lineBreak'] })) if (t) B.push({ t: 'p', x: t });
+  return { blocks: B };
+}
+async function parsePptx(z) {
+  const sl = z.names.filter(n => /^ppt\/slides\/slide\d+\.xml$/i.test(n)).sort((a, b) => +a.match(/(\d+)\.xml/)[1] - +b.match(/(\d+)\.xml/)[1]);
+  if (!sl.length) throw new Error('슬라이드를 찾지 못했어요');
+  const B = [];
+  for (let k = 0; k < sl.length; k++) {
+    const ps = xmlParas(xmlDoc(await z.text(sl[k])), 'a:p', 'a:t', { sp: ['a:br'] }).map(x => x.t).filter(Boolean);
+    if (!ps.length) continue;
+    B.push({ t: 'h2', x: `슬라이드 ${k + 1}. ${ps[0]}` });
+    ps.slice(1).forEach(x => B.push({ t: 'p', x }));
+  }
+  return { blocks: B };
+}
+async function parseOdt(z) {
+  const xml = await z.text('content.xml'); if (!xml) throw new Error('본문을 찾지 못했어요');
+  const d = xmlDoc(xml); const B = [];
+  const tw = d.createTreeWalker(d.documentElement, NodeFilter.SHOW_ELEMENT);
+  let n; while ((n = tw.nextNode())) {
+    if (n.nodeName === 'text:h') { const x = n.textContent.trim(); if (x) B.push({ t: 'h' + Math.min(3, +(n.getAttribute('text:outline-level') || 2)), x }); }
+    else if (n.nodeName === 'text:p' && !n.parentNode.closest?.('text:p')) { const x = n.textContent.replace(/\s+/g, ' ').trim(); if (x) B.push({ t: n.parentNode.nodeName === 'text:list-item' ? 'li' : 'p', x }); }
+  }
+  return { blocks: B };
+}
+const BLOCK = new Set('ADDRESS ARTICLE ASIDE BLOCKQUOTE DD DIV DL DT FIELDSET FIGCAPTION FIGURE FOOTER FORM H1 H2 H3 H4 H5 H6 HEADER HR LI MAIN OL P PRE SECTION TABLE TBODY THEAD TFOOT TR TD TH UL BODY CAPTION DETAILS SUMMARY'.split(' '));
+const SKIPT = new Set('SCRIPT STYLE NOSCRIPT TEMPLATE SVG HEAD IFRAME OBJECT CANVAS BUTTON SELECT TEXTAREA INPUT NAV MATH'.split(' '));
+function htmlBlocks(root) {
+  const out = []; const push = (t, x) => { x = String(x).replace(/\s+/g, ' ').trim(); if (x) out.push({ t, x }); };
+  const tag = n => n.nodeName.toUpperCase().replace(/^.*:/, '');
+  const hb = new Map();
+  const hasBlock = el => { if (hb.has(el)) return hb.get(el); let r = false; for (const c of el.children) { const T = tag(c); if (SKIPT.has(T)) continue; if (BLOCK.has(T) || hasBlock(c)) { r = true; break; } } hb.set(el, r); return r; };
+  const walk = el => {
+    let buf = ''; const flush = () => { push('p', buf); buf = ''; };
+    for (const c of el.childNodes) {
+      if (c.nodeType === 3) { buf += c.nodeValue; continue; }
+      if (c.nodeType !== 1) continue;
+      const T = tag(c); if (SKIPT.has(T)) continue;
+      if (T === 'BR') { buf += ' '; continue; }
+      if (!BLOCK.has(T) && !hasBlock(c)) { buf += c.textContent; continue; }
+      flush();
+      if (/^H[1-6]$/.test(T)) push('h' + Math.min(3, +T[1]), c.textContent);
+      else if (T === 'PRE') { const x = c.textContent.replace(/\s+$/, ''); if (x.trim()) out.push({ t: 'code', x }); }
+      else if (T === 'TR') push('p', [...c.children].map(td => td.textContent.replace(/\s+/g, ' ').trim()).filter(Boolean).join(', '));
+      else if (T === 'HR') { /* nothing */ }
+      else if (hasBlock(c)) walk(c);
+      else push(T === 'LI' ? 'li' : T === 'BLOCKQUOTE' ? 'q' : 'p', c.textContent);
+    }
+    flush();
+  };
+  walk(root); return out;
+}
+function parseHtmlString(s, xml = false) {
+  let d = xml ? new DOMParser().parseFromString(s, 'application/xhtml+xml') : null;
+  if (!d || d.getElementsByTagName('parsererror').length) d = new DOMParser().parseFromString(s, 'text/html');
+  const body = d.body || d.getElementsByTagName('body')[0] || d.documentElement;
+  const title = (d.getElementsByTagName('title')[0] || {}).textContent || '';
+  return { blocks: htmlBlocks(body), title: title.trim() };
+}
+async function parseEpub(z) {
+  const cont = await z.text('META-INF/container.xml'); if (!cont) throw new Error('EPUB 구조를 읽지 못했어요');
+  const rf = xmlDoc(cont).getElementsByTagName('rootfile')[0]; const opfPath = rf && rf.getAttribute('full-path');
+  const opf = xmlDoc(await z.text(opfPath)); const dir = opfPath.includes('/') ? opfPath.replace(/[^/]+$/, '') : '';
+  const man = {}; for (const it of opf.getElementsByTagName('item')) man[it.getAttribute('id')] = it.getAttribute('href');
+  const resolve = h => { const parts = (dir + decodeURIComponent(h.split('#')[0])).split('/'); const st = []; for (const p of parts) { if (p === '..') st.pop(); else if (p !== '.') st.push(p); } return st.join('/'); };
+  const B = [];
+  for (const ref of opf.getElementsByTagName('itemref')) {
+    const h = man[ref.getAttribute('idref')]; if (!h) continue;
+    const s = await z.text(resolve(h)); if (!s) continue;
+    B.push(...parseHtmlString(s, true).blocks);
+  }
+  const tt = opf.getElementsByTagName('dc:title')[0];
+  return { blocks: B, title: tt ? tt.textContent.trim() : '' };
+}
+function parseSubs(s) {
+  const out = []; let cue = [];
+  const flush = () => { if (cue.length) out.push({ t: 'p', x: cue.join(' ') }); cue = []; };
+  for (const l0 of s.replace(/\r/g, '').split('\n')) {
+    const l = l0.trim();
+    if (!l) { flush(); continue; }
+    if (/^WEBVTT|^NOTE\b|^STYLE\b|^\d+$/.test(l) || /-->/.test(l)) continue;
+    cue.push(decodeEnt(l.replace(/<[^>]+>|\{\\[^}]*\}/g, '')));
+  }
+  flush();
+  const B = []; for (const b of out) if (!B.length || B[B.length - 1].x !== b.x) B.push(b);
+  return B;
+}
+function parseCsv(s, sep) {
+  return s.replace(/\r/g, '').split('\n').filter(l => l.trim()).map(l => ({ t: 'p', x: l.split(sep).map(c => c.replace(/^"|"$/g, '').trim()).filter(Boolean).join(', ') }));
+}
+let pdfjsP = null;
+function loadPdfjs() {
+  if (window.pdfjsLib) return Promise.resolve(window.pdfjsLib);
+  return pdfjsP || (pdfjsP = new Promise((res, rej) => {
+    const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+    s.onload = () => { window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'; res(window.pdfjsLib); };
+    s.onerror = () => { pdfjsP = null; rej(new Error('PDF 도구를 받지 못했어요. 처음 한 번은 인터넷 연결이 필요해요')); };
+    document.head.appendChild(s);
+  }));
+}
+async function parsePdf(buf, onProg) {
+  const lib = await loadPdfjs();
+  const pdf = await lib.getDocument({ data: new Uint8Array(buf) }).promise;
+  const lines = [];
+  for (let pn = 1; pn <= pdf.numPages; pn++) {
+    onProg && onProg(pn, pdf.numPages);
+    const page = await pdf.getPage(pn); const tc = await page.getTextContent();
+    let cur = null;
+    for (const it of tc.items) {
+      if (it.str == null) continue;
+      const x = it.transform[4], y = it.transform[5], h = Math.abs(it.transform[3]) || it.height || 10;
+      if (!cur || Math.abs(y - cur.y) > h * 0.55) { if (cur) lines.push(cur); cur = { t: '', y, h, x, xe: x, page: pn }; }
+      else if (it.str && cur.t && !/\s$/.test(cur.t) && !/^\s/.test(it.str) && x - cur.xe > h * 0.18) cur.t += ' ';
+      cur.t += it.str; cur.xe = x + (it.width || 0); cur.h = Math.max(cur.h, h);
+      if (it.hasEOL) { lines.push(cur); cur = null; }
+    }
+    if (cur) lines.push(cur);
+    lines.push({ brk: true });
+    page.cleanup && page.cleanup();
+  }
+  const real = lines.filter(l => !l.brk && l.t.trim());
+  if (!real.length) throw new Error('글자가 들어 있지 않은 PDF예요 (스캔한 이미지 PDF는 읽을 수 없어요)');
+  const hs = real.map(l => l.h).sort((a, b) => a - b); const med = hs[Math.floor(hs.length / 2)] || 10;
+  // Repeated header/footer lines (same text on 3+ pages) are dropped.
+  const freq = {}; real.forEach(l => { const k = l.t.trim().replace(/\d+/g, '#'); freq[k] = (freq[k] || 0) + 1; });
+  const pages = pdf.numPages;
+  const widths = real.map(l => l.xe - l.x).sort((a, b) => a - b); const maxW = widths[Math.floor(widths.length * 0.9)] || 1;
+  const B = []; let para = []; let prev = null;
+  const flush = () => { if (para.length) B.push({ t: 'p', x: joinLines(para) }); para = []; };
+  for (const l of lines) {
+    if (l.brk) { prev = null; continue; }
+    const t = l.t.replace(/\s+/g, ' ').trim(); if (!t) continue;
+    if (/^[-–—]?\s*\d{1,4}\s*[-–—]?$|^\d{1,4}\s*\/\s*\d{1,4}$|^(page|쪽)\s*\d+/i.test(t)) continue;
+    const key = t.replace(/\d+/g, '#'); if (pages >= 4 && freq[key] >= Math.max(3, pages * 0.5) && t.length < 80) continue;
+    if (l.h > med * 1.3 && t.length < 90) { flush(); B.push({ t: l.h > med * 1.7 ? 'h1' : 'h2', x: t }); prev = l; continue; }
+    if (prev && (prev.y - l.y > Math.max(prev.h, l.h) * 1.75 || (/[.!?。다요]$/.test(para[para.length - 1] || '') && para.length && (prev.xe - prev.x) < maxW * 0.75))) flush();
+    para.push(t); prev = l;
+  }
+  flush();
+  return { blocks: B, title: '' };
+}
+async function parseFile(f, onProg) {
+  const ext = extOf(f.name);
+  const buf = await f.arrayBuffer();
+  const isZip = new Uint8Array(buf.slice(0, 4)).join() === '80,75,3,4';
+  let r, kind = ext;
+  if (ext === 'pdf' || new TextDecoder().decode(buf.slice(0, 5)) === '%PDF-') { kind = 'pdf'; r = await parsePdf(buf, onProg); }
+  else if (isZip && ['docx', 'hwpx', 'pptx', 'epub', 'odt', 'odp'].includes(ext)) {
+    const z = await unzip(buf);
+    r = ext === 'docx' ? await parseDocx(z) : ext === 'hwpx' ? await parseHwpx(z) : ext === 'pptx' ? await parsePptx(z) : ext === 'epub' ? await parseEpub(z) : await parseOdt(z);
+    if (ext === 'odp') kind = 'odt';
+  }
+  else if (ext === 'hwp') throw new Error('HWP 파일은 읽을 수 없어요. 한글에서 HWPX나 PDF로 저장해 넣어 주세요');
+  else if (['doc', 'ppt', 'xls', 'xlsx'].includes(ext)) throw new Error(`${ext.toUpperCase()} 파일은 읽을 수 없어요. PDF나 DOCX로 저장해 넣어 주세요`);
+  else if (/^image\/|^audio\/|^video\//.test(f.type)) throw new Error('사진·소리·영상 파일은 읽을 수 없어요');
+  else {
+    const s = decodeBytes(buf);
+    if (['html', 'htm', 'xhtml'].includes(ext) || /^\s*<(!doctype html|html)/i.test(s)) { kind = 'html'; r = parseHtmlString(s, ext === 'xhtml'); }
+    else if (['srt', 'vtt'].includes(ext)) { kind = 'srt'; r = { blocks: parseSubs(s) }; }
+    else if (['csv', 'tsv'].includes(ext)) { kind = 'csv'; r = { blocks: parseCsv(s, ext === 'tsv' ? '\t' : ',') }; }
+    else if (ext === 'rtf') { kind = 'txt'; r = { blocks: parseText(s.replace(/\\par[d]?/g, '\n').replace(/\{\\\*[^}]*\}|\\[a-z]+-?\d* ?|[{}]/g, ''), { md: false, join: S.join }) }; }
+    else if (ext === 'json') { kind = 'txt'; let t = s; try { t = JSON.stringify(JSON.parse(s), null, 1).replace(/[{}[\]",]/g, ' '); } catch {} r = { blocks: parseText(t, { md: false, join: 'lines' }) }; }
+    else { kind = ['md', 'markdown'].includes(ext) ? 'md' : 'txt'; r = { blocks: parseText(s, { md: true, join: S.join }) }; }
+  }
+  if (!r.blocks.length) throw new Error('읽을 글자를 찾지 못했어요');
+  return { title: r.title || baseName(f.name), blocks: r.blocks, kind, fname: f.name };
+}
+async function importFiles(files) {
+  files = [...files]; if (!files.length) return;
+  const act = navigator.userActivation ? navigator.userActivation.isActive : false;
+  let last = null, ok = 0;
+  for (const f of files) {
+    try {
+      toast(`‘${f.name}’ 여는 중…`, { ms: 60000 });
+      const r = await parseFile(f, (p, n) => n > 3 && toast(`‘${f.name}’ ${p} / ${n}쪽 읽는 중…`, { ms: 60000 }));
+      last = await addDoc(r); ok++;
+    } catch (e) { toast(`${f.name}: ${e.message || e}`, { err: true, ms: 6000 }); await new Promise(r => setTimeout(r, 1200)); }
+  }
+  if (last) {
+    toast(ok > 1 ? `${ok}개 자료를 보관함에 넣었어요` : `‘${last.title}’을(를) 넣었어요. 재생을 누르면 읽어요`);
+    openDoc(last.id, { play: ok === 1 && act && navigator.userActivation && navigator.userActivation.isActive });
+  }
+}
+
+/* ---------- Tabs ---------- */
+function setTab(t) {
+  $$('#tabs .tab').forEach(b => b.setAttribute('aria-selected', b.dataset.tab === t));
+  $$('#work .view').forEach(v => v.hidden = v.dataset.view !== t);
+  store.set('tab', t);
+  if (t === 'lib') renderLib();
+  if (t === 'add') renderResume();
+  if (t === 'read' && doc && sents[E.idx]) requestAnimationFrame(() => scrollToEl(sents[E.idx].el, false));
+}
+
+/* ---------- Side controls ---------- */
+function syncSide() {
+  $$('#vFilter button').forEach(b => b.setAttribute('aria-pressed', b.dataset.f === S.vfilter));
+  $('#autoEn').checked = S.autoEn; $('#enRow').hidden = !S.autoEn;
+  for (const [id, fmt] of [['rate', v => (+v).toFixed(2) + '×'], ['pitch', v => (+v).toFixed(2)], ['vol', v => Math.round(v * 100) + '%'], ['gap', v => (v / 1000).toFixed(2) + '초'], ['paraGap', v => (v / 1000).toFixed(2) + '초'], ['fs', v => v + 'px'], ['lh', v => (+v).toFixed(1)], ['maxLen', v => v + '자']]) {
+    $('#' + id).value = S[id]; $('#' + id + 'V').textContent = fmt(S[id]);
+  }
+  $$('#repSeg button').forEach(b => b.setAttribute('aria-pressed', +b.dataset.v === S.repeat));
+  $$('#endSeg button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === S.atEnd));
+  $$('#fontSeg button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === S.font));
+  $$('#joinSeg button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === S.join));
+  ['skipParen', 'skipUrl', 'skipCite', 'skipCode', 'skipEmoji', 'follow', 'wake'].forEach(k => $('#' + k).checked = !!S[k]);
+  $('#focusMode').checked = !!S.focus;
+  $('#dictN').textContent = dict.length ? `(${dict.length})` : '';
+  $('#side').classList.toggle('closed', !!S.sideClosed);
+}
+let restartT = 0;
+function restartSoon() { if (!E.playing) return; clearTimeout(restartT); restartT = setTimeout(() => { if (E.playing) { E.rep = 0; speakCur(); } }, 350); }
+function setRate(v) { S.rate = clamp(Math.round(v * 100) / 100, 0.5, 3); saveS(); syncSide(); updPlayer(); restartSoon(); }
+
+/* ---------- Dictionary ---------- */
+function renderDict() {
+  $('#dList').innerHTML = dict.length ? dict.map((d, k) => `<div class="sitem"><span class="tx"><b>${esc(d.a)} → ${d.b ? esc(d.b) : '<span class="muted">(읽지 않음)</span>'}</b></span><button class="mini" data-dtest="${k}" title="들어보기">${icon('speaker')}</button><button class="mini danger" data-ddel="${k}" title="지우기">${icon('x')}</button></div>`).join('') : '<p>아직 없어요. 예: ‘AI → 에이아이’, ‘km → 킬로미터’, ‘㈜ → 주식회사’</p>';
+  $('#dictN').textContent = dict.length ? `(${dict.length})` : '';
+}
+function sayOnce(text) {
+  if (!synth) return;
+  if (E.playing) pause();
+  haltSpeech();
+  setTimeout(() => {
+    const u = new SpeechSynthesisUtterance(text); const v = voiceFor(text);
+    if (v) { u.voice = v; u.lang = v.lang; } else u.lang = 'ko-KR';
+    u.rate = S.rate; u.pitch = S.pitch; u.volume = S.vol; synth.speak(u);
+  }, 80);
+}
+
+/* ---------- Backup ---------- */
+async function backupOut() {
+  const data = { app: 'outgrid-reader', v: 1, at: new Date().toISOString(), settings: S, dict, docs };
+  const d = new Date();
+  download(`reader-backup-${d.getFullYear()}${pad2(d.getMonth() + 1)}${pad2(d.getDate())}.json`, JSON.stringify(data), 'application/json');
+}
+async function backupIn(f) {
+  try {
+    const j = JSON.parse(await f.text());
+    if (!j || !Array.isArray(j.docs)) throw new Error('Reader 백업 파일이 아니에요');
+    let n = 0;
+    for (const d of j.docs) {
+      if (!d || !d.id || !Array.isArray(d.blocks)) continue;
+      const ex = docs.find(x => x.id === d.id);
+      if (ex) { if ((d.updated || 0) <= (ex.updated || 0) && (d.opened || 0) <= (ex.opened || 0)) continue; Object.assign(ex, d); await persist(ex); }
+      else { docs.push(d); await persist(d); }
+      n++;
+    }
+    if (Array.isArray(j.dict)) for (const x of j.dict) if (x && x.a && !dict.some(y => y.a === x.a)) dict.push(x);
+    store.set('dict', dict); renderDict(); renderLib(); renderResume();
+    toast(`자료 ${n}개를 불러왔어요`);
+  } catch (e) { toast(e.message || '불러오지 못했어요', { err: true }); }
+}
+
+/* ---------- Sample ---------- */
+const SAMPLE = `# Reader 사용 안내
+
+Reader는 넣은 글을 이 기기의 목소리로 소리 내어 읽어 주는 도구예요. 서버나 인공지능 없이, 브라우저에 들어 있는 음성 합성 기능을 그대로 써요.
+
+## 이렇게 써요
+
+- ‘넣기’에서 글을 붙여 넣거나 파일을 고르면 보관함에 저장돼요.
+- 아래 재생 버튼을 누르면 문장 하나씩 읽고, 읽는 문장에 색이 칠해져요.
+- 아무 문장이나 누르면 거기서부터 읽어요. 멈췄다가 다시 열면 멈춘 곳부터 이어 읽어요.
+- 책갈피를 꽂아 두면 오른쪽 패널에서 바로 찾아갈 수 있어요.
+
+## 목소리 바꾸기
+
+오른쪽 패널에서 목소리, 속도, 높낮이를 고를 수 있어요. 갤럭시 탭에서는 삼성 TTS와 Google 음성 엔진의 목소리가 나와요. 기기 설정의 ‘글자 읽어주기(TTS)’에서 목소리를 더 받을 수 있어요.
+
+## 영어도 읽어요
+
+Sentences written only in English can be read with an English voice. Turn on the option in the side panel and Reader switches voices for you.
+
+## 넣을 수 있는 파일
+
+TXT, Markdown, PDF, Word(DOCX), 한글(HWPX), EPUB 전자책, PowerPoint(PPTX), HTML, 자막(SRT, VTT), CSV를 넣을 수 있어요. 여러 파일을 한 번에 넣어도 돼요.`;
+
+/* ---------- Events ---------- */
+function bind() {
+  $('#tabs').addEventListener('click', e => { const b = e.target.closest('.tab'); if (b) setTab(b.dataset.tab); });
+  document.addEventListener('click', e => {
+    const go = e.target.closest('[data-go]'); if (go) setTab(go.dataset.go);
+    const c = e.target.closest('[data-close]'); if (c) c.closest('dialog').close();
+  });
+  $('#newBtn').onclick = () => { setTab('add'); $('#inText').focus(); };
+  $('#helpBtn').onclick = () => $('#helpDlg').showModal();
+  $('#setBtn').onclick = () => $('#setDlg').showModal();
+  $('#sideTog').onclick = () => { S.sideClosed = !S.sideClosed; saveS(); syncSide(); };
+
+  // Add view
+  const inText = $('#inText');
+  const cnt = () => { $('#inCount').textContent = inText.value.length.toLocaleString() + '자'; };
+  inText.addEventListener('input', cnt);
+  $('#joinSeg').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.join = b.dataset.v; saveS(); syncSide(); };
+  $('#inPaste').onclick = async () => {
+    try { const t = await navigator.clipboard.readText(); if (!t) return toast('클립보드가 비어 있어요'); inText.value = inText.value ? inText.value + '\n\n' + t : t; cnt(); }
+    catch { inText.focus(); toast('붙여넣기 권한이 없어요. 글 칸을 길게 눌러 붙여 넣어 주세요'); }
+  };
+  $('#inClear').onclick = () => { inText.value = ''; $('#inTitle').value = ''; cnt(); inText.focus(); };
+  const fromInput = async readNow => {
+    const raw = inText.value; if (!raw.trim()) { toast('읽을 글을 먼저 넣어 주세요'); inText.focus(); return; }
+    const blocks = parseText(raw, { md: true, join: S.join });
+    try {
+      const d = await addDoc({ title: $('#inTitle').value.trim(), blocks, kind: 'paste' });
+      inText.value = ''; $('#inTitle').value = ''; cnt();
+      if (readNow) openDoc(d.id, { play: true }); else { toast(`‘${d.title}’을(를) 보관함에 넣었어요`); renderResume(); }
+    } catch (e) { toast(e.message, { err: true }); }
+  };
+  $('#inRead').onclick = () => fromInput(true);
+  $('#inSave').onclick = () => fromInput(false);
+  inText.addEventListener('keydown', e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); fromInput(true); } });
+  $('#pickBtn').onclick = () => $('#fileIn').click();
+  $('#drop').addEventListener('click', e => { if (!e.target.closest('button')) $('#fileIn').click(); });
+  $('#fileIn').onchange = e => { importFiles(e.target.files); e.target.value = ''; };
+  let dragN = 0;
+  window.addEventListener('dragenter', e => { if ([...(e.dataTransfer?.types || [])].includes('Files')) { dragN++; document.body.classList.add('dragging'); } });
+  window.addEventListener('dragleave', () => { dragN = Math.max(0, dragN - 1); if (!dragN) document.body.classList.remove('dragging'); });
+  window.addEventListener('dragover', e => { if ([...(e.dataTransfer?.types || [])].includes('Files')) e.preventDefault(); });
+  window.addEventListener('drop', e => { if (!e.dataTransfer?.files?.length) return; e.preventDefault(); dragN = 0; document.body.classList.remove('dragging'); importFiles(e.dataTransfer.files); });
+  $('#resume').addEventListener('click', e => { const b = e.target.closest('[data-play]'); if (b) openDoc(b.dataset.play, { play: true }); });
+
+  // Reader
+  rt.addEventListener('click', e => {
+    const s = e.target.closest('.s'); if (!s) return;
+    const sel = getSelection(); if (sel && String(sel).length > 1) return;
+    const i = +s.dataset.i;
+    if (E.playing) jump(i); else play(i);
+  });
+  const markUser = () => { if (E.playing) E.userScroll = Date.now(); };
+  ['wheel', 'touchmove'].forEach(ev => { $('#rdScroll').addEventListener(ev, markUser, { passive: true }); window.addEventListener(ev, e => { if (e.target.closest && e.target.closest('#rdScroll')) markUser(); }, { passive: true }); });
+  $('#pPlay').onclick = toggle;
+  $('#pPrev').onclick = () => stepSent(-1);
+  $('#pNext').onclick = () => stepSent(1);
+  $('#pPrevP').onclick = () => stepPara(-1);
+  $('#pNextP').onclick = () => stepPara(1);
+  const seek = $('#seek');
+  seek.addEventListener('input', () => { seeking = true; const i = +seek.value; $('#plPos').textContent = `${i + 1} / ${sents.length} 문장`; if (sents[i]) { setCur(i, false); scrollToEl(sents[i].el, false); } });
+  seek.addEventListener('change', () => { seeking = false; jump(+seek.value); });
+  $('#spdChip').onclick = () => { const P = [0.75, 1, 1.25, 1.5, 1.75, 2]; setRate(P.find(p => p > S.rate + 0.01) || P[0]); toast(`속도 ${S.rate}×`); };
+  $('#sleepChip').onclick = cycleSleep;
+  $('#rdTitle').onclick = () => doc && renameDoc(doc.id);
+  $('#findBtn').onclick = () => $('#findBar').hidden ? openFind() : closeFind();
+  $('#goCur').onclick = () => { E.userScroll = 0; if (sents[E.idx]) scrollToEl(sents[E.idx].el, true); };
+  $('#bmBtn').onclick = toggleBm;
+  $('#edBtn').onclick = () => { if (!doc) return; $('#edText').value = blocksToText(doc.blocks); $('#edDlg').showModal(); };
+  $('#edSave').onclick = () => {
+    const blocks = parseText($('#edText').value, { md: true, join: 'join' });
+    if (!blocks.length) return toast('글이 비어 있어요', { err: true });
+    const ratio = sents.length ? E.idx / sents.length : 0;
+    if (E.playing) pause();
+    doc.blocks = blocks; doc.chars = countChars(blocks); doc.updated = Date.now(); doc.bookmarks = [];
+    renderDoc(); E.idx = Math.floor(ratio * sents.length); setCur(E.idx); savePos(true); updPlayer();
+    $('#edDlg').close(); toast('글을 고쳤어요 (책갈피는 지워졌어요)');
+  };
+  $('#txtBtn').onclick = () => doc && dlTxt(doc);
+  $('#findQ').addEventListener('input', () => { find.q = $('#findQ').value; runFind(); });
+  $('#findQ').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); (e.shiftKey ? $('#findPrev') : $('#findNext')).click(); } if (e.key === 'Escape') closeFind(); });
+  $('#findNext').onclick = () => { if (!find.hits.length) return; find.k = (find.k + 1) % find.hits.length; showHit(); };
+  $('#findPrev').onclick = () => { if (!find.hits.length) return; find.k = (find.k - 1 + find.hits.length) % find.hits.length; showHit(); };
+  $('#findRead').onclick = () => { const i = find.hits[find.k]; if (i != null) { E.playing ? jump(i) : play(i); } };
+  $('#findClose').onclick = closeFind;
+  $('#toc').addEventListener('click', e => { const b = e.target.closest('.toc-i'); if (b) { jump(+b.dataset.i); scrollToEl(sents[+b.dataset.i].el, true); } });
+  $('#bmList').addEventListener('click', e => {
+    const d = e.target.closest('[data-bmdel]');
+    if (d) { const i = +d.dataset.bmdel; doc.bookmarks = doc.bookmarks.filter(b => b.i !== i); sents[i] && sents[i].el.classList.remove('bm'); persist(doc); renderBm(); return; }
+    const b = e.target.closest('[data-bm]'); if (b) { const i = +b.dataset.bm; jump(i); scrollToEl(sents[i].el, true); if (window.innerWidth < 1000) setTab('read'); }
+  });
+
+  // Library
+  $('#libQ').addEventListener('input', e => { lib.q = e.target.value; renderLib(); });
+  $('#libSeg').onclick = e => { const b = e.target.closest('button'); if (!b) return; lib.f = b.dataset.f; $$('#libSeg button').forEach(x => x.setAttribute('aria-pressed', x === b)); renderLib(); };
+  $('#libSort').value = lib.sort;
+  $('#libSort').onchange = e => { lib.sort = e.target.value; store.set('libSort', lib.sort); renderLib(); };
+  $('#libAdd').onclick = () => setTab('add');
+  $('#libList').addEventListener('click', e => {
+    const t = e.target.closest('[data-open],[data-play],[data-ren],[data-dl],[data-del],[data-fav]'); if (!t) return;
+    const ds = t.dataset;
+    if (ds.open) openDoc(ds.open);
+    else if (ds.play) openDoc(ds.play, { play: true });
+    else if (ds.ren) renameDoc(ds.ren);
+    else if (ds.dl) dlTxt(docs.find(d => d.id === ds.dl));
+    else if (ds.del) delDoc(ds.del);
+    else if (ds.fav) { const d = docs.find(x => x.id === ds.fav); d.fav = !d.fav; persist(d); renderLib(); }
+  });
+
+  // Side
+  $('#vFilter').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.vfilter = b.dataset.f; saveS(); syncSide(); renderVoices(); };
+  $('#vSel').onchange = e => { S.voice = e.target.value; saveS(); restartSoon(); };
+  $('#vSelEn').onchange = e => { S.voiceEn = e.target.value; saveS(); restartSoon(); };
+  $('#autoEn').onchange = e => { S.autoEn = e.target.checked; saveS(); syncSide(); restartSoon(); };
+  for (const id of ['rate', 'pitch', 'vol', 'gap', 'paraGap', 'fs', 'lh', 'maxLen']) {
+    $('#' + id).addEventListener('input', e => {
+      S[id] = +e.target.value; saveS(); syncSide();
+      if (id === 'fs' || id === 'lh') applyLook();
+      if (['rate', 'pitch', 'vol'].includes(id)) { updPlayer(); restartSoon(); }
+    });
+  }
+  $('#maxLen').addEventListener('change', () => { if (!doc) return; const r = sents.length ? E.idx / sents.length : 0; const was = E.playing; pause(); renderDoc(); E.idx = Math.floor(r * sents.length); setCur(E.idx); savePos(true); updPlayer(); if (was) play(); });
+  $('#vTest').onclick = () => sayOnce(docLang === 'en' && S.autoEn ? 'Hello. This is how I sound.' : '안녕하세요. 지금 고른 목소리와 속도로 읽어 드릴게요.');
+  $('#vReset').onclick = () => { S.rate = 1; S.pitch = 1; S.vol = 1; S.voice = ''; S.voiceEn = ''; saveS(); syncSide(); renderVoices(); updPlayer(); restartSoon(); toast('목소리를 기본값으로 돌렸어요'); };
+  $('#repSeg').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.repeat = +b.dataset.v; saveS(); syncSide(); };
+  $('#endSeg').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.atEnd = b.dataset.v; saveS(); syncSide(); };
+  $('#fontSeg').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.font = b.dataset.v; saveS(); syncSide(); applyLook(); };
+  for (const k of ['skipParen', 'skipUrl', 'skipCite', 'skipEmoji']) $('#' + k).onchange = e => { S[k] = e.target.checked; saveS(); restartSoon(); };
+  $('#skipCode').onchange = e => { S.skipCode = e.target.checked; saveS(); if (doc) { const was = E.playing; pause(); renderDoc(); if (was) play(); } };
+  $('#follow').onchange = e => { S.follow = e.target.checked; saveS(); };
+  $('#focusMode').onchange = e => { S.focus = e.target.checked; saveS(); applyLook(); };
+  $('#wake').onchange = e => { S.wake = e.target.checked; saveS(); if (S.wake && E.playing) wakeOn(); else wakeOff(); };
+  $('#dictBtn').onclick = () => { renderDict(); $('#dictDlg').showModal(); $('#dA').focus(); };
+  const addDict = () => { const a = $('#dA').value.trim(), b = $('#dB').value.trim(); if (!a) return; dict = dict.filter(d => d.a !== a); dict.push({ a, b }); store.set('dict', dict); $('#dA').value = ''; $('#dB').value = ''; renderDict(); $('#dA').focus(); restartSoon(); };
+  $('#dAdd').onclick = addDict;
+  $('#dB').addEventListener('keydown', e => { if (e.key === 'Enter') addDict(); });
+  $('#dA').addEventListener('keydown', e => { if (e.key === 'Enter') $('#dB').focus(); });
+  $('#dList').addEventListener('click', e => {
+    const d = e.target.closest('[data-ddel]'); if (d) { dict.splice(+d.dataset.ddel, 1); store.set('dict', dict); renderDict(); return; }
+    const t = e.target.closest('[data-dtest]'); if (t) { const x = dict[+t.dataset.dtest]; sayOnce(prep(x.a) || '읽지 않아요'); }
+  });
+
+  // Settings
+  $('#bkOut').onclick = backupOut;
+  $('#bkIn').onclick = () => $('#bkFile').click();
+  $('#bkFile').onchange = e => { const f = e.target.files[0]; if (f) backupIn(f); e.target.value = ''; };
+  $('#wipe').onclick = async () => {
+    if (!await confirmDlg('보관함 모두 지우기', '보관함의 모든 자료와 책갈피를 지울까요? 되돌릴 수 없어요. 설정과 발음 사전은 남아요.', '모두 지우기', true)) return;
+    pause(); await DB.clear(); docs = []; doc = null; store.set('cur', null); renderDoc(); renderLib(); renderResume(); renderApplied(); $('#setDlg').close(); toast('보관함을 비웠어요');
+  };
+
+  // Keyboard
+  document.addEventListener('keydown', e => {
+    const tg = e.target; const typing = tg.closest && tg.closest('input, textarea, select, [contenteditable]');
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'f' && !$('#work [data-view="read"]').hidden && doc) { e.preventDefault(); openFind(); return; }
+    if (typing || e.ctrlKey || e.metaKey || e.altKey || document.querySelector('dialog[open]')) return;
+    const k = e.key;
+    if (k === ' ' || k === 'k') { if (tg.closest('button') && k === ' ') return; e.preventDefault(); toggle(); }
+    else if (k === 'ArrowRight') { e.preventDefault(); stepSent(1); }
+    else if (k === 'ArrowLeft') { e.preventDefault(); stepSent(-1); }
+    else if (k === 'ArrowDown' && !$('#work [data-view="read"]').hidden) { e.preventDefault(); stepPara(1); }
+    else if (k === 'ArrowUp' && !$('#work [data-view="read"]').hidden) { e.preventDefault(); stepPara(-1); }
+    else if (k === '+' || k === '=') setRate(S.rate + 0.1);
+    else if (k === '-' || k === '_') setRate(S.rate - 0.1);
+    else if (k === 'b' || k === 'B') toggleBm();
+    else if (k === 'n' || k === 'N') { setTab('add'); $('#inText').focus(); e.preventDefault(); }
+    else if (k === 'Escape' && E.playing) pause();
+    else if (k === '1') setTab('add'); else if (k === '2') setTab('read'); else if (k === '3') setTab('lib');
+  });
+}
+let seeking = false;
+
+/* ---------- Boot ---------- */
+async function boot() {
+  hydrateIcons();
+  bind(); syncSide(); applyLook(); renderVoices(); updSleep();
+  try { docs = (await DB.all()) || []; }
+  catch { DB.ok = false; docs = []; toast('이 브라우저에서는 보관함을 저장할 수 없어요. 닫으면 자료가 사라져요', { err: true, ms: 6000 }); }
+  if (!docs.length && !store.get('seeded', false)) {
+    store.set('seeded', true);
+    const d = await addDoc({ title: 'Reader 사용 안내', blocks: parseText(SAMPLE, { md: true, join: 'join' }), kind: 'sample' });
+    store.set('cur', d.id);
+  }
+  const cur = store.get('cur', null);
+  doc = docs.find(d => d.id === cur) || null;
+  renderDoc(); renderLib(); renderResume(); renderApplied();
+  const t = store.get('tab', doc ? 'read' : 'add');
+  setTab(doc || t !== 'read' ? t : 'add');
+  if (doc && sents[E.idx]) requestAnimationFrame(() => scrollToEl(sents[E.idx].el, true));
+  if ('launchQueue' in window) window.launchQueue.setConsumer(async p => { if (p.files && p.files.length) importFiles(await Promise.all(p.files.map(h => h.getFile()))); });
+}
+boot();
+</script>
+</body>
+</html>
