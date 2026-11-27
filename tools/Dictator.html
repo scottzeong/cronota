@@ -1,0 +1,1382 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#F5F1E8" />
+<title>Dictator · 아웃그리드 받아쓰기</title>
+<meta name="description" content="말하면 글이 되는 받아쓰기. 한국어를 비롯한 여러 언어를 듣고 바로 글로 옮겨요. 음성 명령, 자동 문장부호, 단어장, 노트 저장, 내보내기까지 브라우저 하나로." />
+<!-- Fonts: outgrid's own files first (fonts/ next to this page), public CDN as a fallback. -->
+<style>
+  @font-face { font-family: "wantedSans"; src: url("fonts/WantedSansVariable.woff2") format("woff2"); font-weight: 100 800; font-style: normal; font-display: swap; }
+  @font-face { font-family: "maruBuri"; src: url("fonts/MaruBuri-Regular.woff2") format("woff2"); font-weight: 400; font-style: normal; font-display: swap; }
+  @font-face { font-family: "maruBuri"; src: url("fonts/MaruBuri-SemiBold.woff2") format("woff2"); font-weight: 600; font-style: normal; font-display: swap; }
+</style>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/wanteddev/wanted-sans@v1.0.3/packages/wanted-sans/fonts/webfonts/variable/split/WantedSansVariable.min.css" />
+<link rel="stylesheet" href="https://hangeul.pstatic.net/hangeul_static/css/maru-buri.css" />
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23244D3A'/%3E%3Crect x='25' y='12' width='14' height='26' rx='7' fill='none' stroke='%23F5F1E8' stroke-width='3.5'/%3E%3Cpath d='M17 30a15 15 0 0 0 30 0M32 45v6M25 52h14' fill='none' stroke='%23D9C8A9' stroke-width='3.5' stroke-linecap='round'/%3E%3C/svg%3E" />
+<style>
+  :root {
+    --bg: #F5F1E8;
+    --surface: #FCFAF5;
+    --paper: #FFFDF8;
+    --ink: #1C2824;
+    --ink-2: #33403A;
+    --muted: #5E665F;
+    --faint: #9A9F95;
+    --hair: #E3DCCB;
+    --hover: #F0EADD;
+    --press: #E7DFCD;
+    --dark: #244D3A;
+    --dark-2: #1B3B2C;
+    --river: #3E6F73;
+    --clay: #8A5A3B;
+    --sand: #D9C8A9;
+    --focus: #8A5A3B;
+    --danger: #963F3B;
+    --rec: #B5443B;
+    --mint: #E8EFE8;
+    --shadow: 0 1px 0 rgba(28,40,36,.03), 0 18px 40px -30px rgba(28,40,36,.30);
+    --sans: "wantedSans", "Wanted Sans Variable", "Wanted Sans", -apple-system, BlinkMacSystemFont, "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+    --serif: "maruBuri", "MaruBuri", "Batang", "Noto Serif KR", serif;
+    --r-sm: 10px;
+    --r-md: 13px;
+    --r-lg: 20px;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    font-family: var(--sans); word-break: keep-all; background: var(--bg); color: var(--ink);
+    font-size: 14px; letter-spacing: -0.005em; -webkit-font-smoothing: antialiased;
+    min-height: 100dvh; display: flex; flex-direction: column;
+  }
+  [hidden] { display: none !important; }
+  button { font: inherit; color: inherit; cursor: pointer; border: 0; background: none; padding: 0; -webkit-tap-highlight-color: transparent; }
+  button:disabled { cursor: default; opacity: .35; }
+  input, select, textarea { font: inherit; color: inherit; }
+  :focus-visible { outline: 2.5px solid var(--focus); outline-offset: 3px; }
+  ::selection { background: rgba(36,77,58,.16); }
+  svg.i { width: 19px; height: 19px; stroke: currentColor; fill: none; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+  svg.i.sm { width: 16px; height: 16px; }
+  .muted { color: var(--faint); }
+  .tnum { font-variant-numeric: tabular-nums; }
+
+  /* ---------- Header ---------- */
+  .top { position: sticky; top: 0; z-index: 40; background: var(--bg); }
+  .top-inner { max-width: 1440px; margin: 0 auto; padding: 14px 24px 8px; display: flex; align-items: center; gap: 14px; }
+  .brand { display: flex; align-items: center; gap: 12px; flex: none; text-decoration: none; color: inherit; }
+  .logo { display: block; height: 34px; width: auto; flex: none; }
+  .app-name { font-family: var(--serif); font-weight: 600; font-size: 23px; letter-spacing: -.02em; color: var(--dark); line-height: 1; padding-left: 12px; border-left: 1.5px solid var(--hair); }
+  .app-name small { display: block; font-family: var(--sans); font-size: 11px; font-weight: 500; color: var(--faint); letter-spacing: 0; margin-top: 4px; }
+  .head-actions { margin-left: auto; display: flex; align-items: center; gap: 6px; min-width: 0; }
+  .icon-btn { width: 38px; height: 38px; border-radius: 999px; display: grid; place-items: center; color: var(--ink-2); transition: background .15s, color .15s; flex: none; }
+  .icon-btn:hover:not(:disabled) { background: var(--hover); color: var(--ink); }
+
+  /* ---------- Buttons ---------- */
+  .btn { height: 38px; padding: 0 16px; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; font-weight: 600; font-size: 13.5px; background: var(--hover); color: var(--ink-2); white-space: nowrap; transition: background .15s, box-shadow .15s; flex: none; }
+  .btn:hover:not(:disabled) { background: var(--press); }
+  .btn.primary { background: var(--dark); color: var(--surface); box-shadow: 0 8px 18px -10px rgba(36,77,58,.7); }
+  .btn.primary:hover:not(:disabled) { background: var(--dark-2); }
+  .btn.clay { background: var(--clay); color: var(--surface); }
+  .btn.clay:hover:not(:disabled) { background: #74492F; }
+  .btn.ghost { background: none; color: var(--muted); }
+  .btn.ghost:hover:not(:disabled) { background: var(--hover); color: var(--ink); }
+  .btn.line { background: var(--surface); box-shadow: inset 0 0 0 1px var(--hair); }
+  .btn.line:hover:not(:disabled) { background: var(--hover); }
+  .btn.sm { height: 32px; padding: 0 12px; font-size: 12.5px; gap: 5px; }
+  .btn.block { width: 100%; }
+  .btn.danger { color: var(--danger); }
+  .btn.rec { background: var(--rec); color: #fff; }
+
+  /* ---------- Tabs ---------- */
+  .tabs-wrap { max-width: 1440px; margin: 0 auto; padding: 4px 24px 10px; display: flex; align-items: center; gap: 12px; }
+  .tabs { display: flex; gap: 2px; padding: 4px; background: var(--press); border-radius: 999px; overflow-x: auto; scrollbar-width: none; flex: none; max-width: 100%; }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab { height: 34px; padding: 0 15px; border-radius: 999px; font-weight: 600; font-size: 13px; color: var(--muted); white-space: nowrap; display: inline-flex; align-items: center; gap: 6px; transition: background .15s, color .15s; flex: none; }
+  .tab svg.i { width: 16px; height: 16px; }
+  .tab:hover { color: var(--ink); }
+  .tab[aria-selected="true"] { background: var(--dark); color: var(--surface); box-shadow: 0 6px 14px -8px rgba(36,77,58,.6); }
+  .tab .n { font-size: 11px; font-weight: 700; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px; background: rgba(28,40,36,.08); display: inline-grid; place-items: center; font-variant-numeric: tabular-nums; }
+  .tab .n.warn { background: var(--rec); color: #fff; }
+  .tab[aria-selected="true"] .n:not(.warn) { background: rgba(255,255,255,.18); }
+  .applied { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; min-width: 0; align-items: center; }
+  .applied::-webkit-scrollbar { display: none; }
+  .achip { height: 28px; padding: 0 11px; border-radius: 999px; font-size: 12px; font-weight: 600; background: var(--mint); color: var(--dark); white-space: nowrap; display: inline-flex; align-items: center; gap: 5px; flex: none; font-variant-numeric: tabular-nums; }
+  .achip.warn { background: #F3E7DC; color: var(--clay); }
+  .achip.bad { background: #F6E1DC; color: var(--rec); }
+  .achip svg.i { width: 14px; height: 14px; }
+
+  /* ---------- Layout ---------- */
+  main { flex: 1; width: 100%; max-width: 1440px; margin: 0 auto; padding: 0 24px 24px; display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 16px; height: calc(100dvh - 122px); min-height: 520px; }
+  .panel { background: var(--surface); border-radius: var(--r-lg); display: flex; flex-direction: column; min-height: 0; overflow: hidden; box-shadow: 0 0 0 1px var(--hair), var(--shadow); }
+  .view { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+  .wbar { display: flex; align-items: center; gap: 6px; padding: 10px 12px; border-bottom: 1px solid var(--hair); flex-wrap: wrap; row-gap: 8px; min-height: 59px; }
+  .wbar .count { font-size: 13px; color: var(--muted); margin: 0 6px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .wbar .count b { color: var(--ink); font-weight: 600; }
+  .grow { flex: 1; }
+  .sep { width: 1px; height: 20px; background: var(--hair); margin: 0 4px; flex: none; }
+  .tool { height: 36px; min-width: 36px; padding: 0 9px; border-radius: var(--r-sm); display: inline-flex; align-items: center; justify-content: center; gap: 6px; color: var(--ink-2); font-size: 12.5px; font-weight: 600; transition: background .15s, color .15s; flex: none; white-space: nowrap; }
+  .tool:hover:not(:disabled) { background: var(--hover); color: var(--ink); }
+  .tool[aria-pressed="true"] { background: var(--dark); color: var(--surface); }
+  .tool.danger:hover:not(:disabled) { color: var(--danger); }
+  .tool.prim { background: var(--dark); color: var(--surface); padding: 0 13px; border-radius: 999px; }
+  .tool.prim:hover:not(:disabled) { background: var(--dark-2); color: var(--surface); }
+  .scroll { flex: 1; min-height: 0; overflow: auto; overscroll-behavior: contain; position: relative; }
+  .wk-nav { display: flex; align-items: center; gap: 2px; }
+  .wk-lbl { font-weight: 700; font-size: 14px; color: var(--ink); padding: 0 8px; white-space: nowrap; font-variant-numeric: tabular-nums; min-width: 0; }
+  .wk-lbl small { font-weight: 600; font-size: 11.5px; color: var(--clay); margin-left: 6px; }
+  .search { position: relative; flex: 1 1 180px; max-width: 280px; min-width: 140px; }
+  .search svg { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--faint); width: 16px; height: 16px; pointer-events: none; }
+  .search .inp { padding-left: 36px; height: 36px; }
+  /* ---------- Generic list rows / cards ---------- */
+  .pad { padding: 14px 18px 20px; }
+  .grp { margin-bottom: 16px; }
+  .grp-h { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 700; color: var(--clay); letter-spacing: .04em; margin: 4px 2px 8px; }
+  .grp-h .v { color: var(--faint); font-weight: 600; letter-spacing: 0; font-variant-numeric: tabular-nums; }
+  .grp-h .grow { flex: 1; height: 1px; background: var(--hair); }
+  .grp-h button { font-size: 12px; font-weight: 600; color: var(--muted); letter-spacing: 0; padding: 4px 8px; border-radius: 999px; }
+  .grp-h button:hover { background: var(--hover); color: var(--ink); }
+  .rows { border-radius: 16px; background: #fff; box-shadow: 0 0 0 1px var(--hair); overflow: hidden; }
+  .si { display: flex; align-items: center; gap: 10px; padding: 9px 10px 9px 12px; border-bottom: 1px solid var(--hover); cursor: pointer; min-height: 52px; }
+  .si:last-child { border-bottom: 0; }
+  .si:hover { background: var(--paper); }
+  .ck { width: 24px; height: 24px; border-radius: 999px; box-shadow: inset 0 0 0 1.6px var(--sand); display: grid; place-items: center; flex: none; color: transparent; }
+  .ck svg { width: 15px; height: 15px; stroke-width: 2.4; }
+  .si.done .ck { background: var(--dark); box-shadow: none; color: #fff; }
+  .si .tx { flex: 1; min-width: 0; }
+  .si .nm { font-weight: 600; font-size: 14px; display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+  .si .q { font-weight: 700; color: var(--dark); font-variant-numeric: tabular-nums; font-size: 13px; }
+  .si .mt { font-size: 11.5px; color: var(--faint); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .si.done .nm { text-decoration: line-through; color: var(--faint); }
+  .si.done .q { color: var(--faint); }
+  .si.dim { cursor: default; }
+  .si.dim .nm { color: var(--muted); }
+  .mini { width: 32px; height: 32px; border-radius: 999px; display: grid; place-items: center; color: var(--faint); flex: none; }
+  .mini:hover { background: var(--hover); color: var(--ink); }
+  .mini.danger:hover { color: var(--danger); }
+  .mini svg { width: 16px; height: 16px; }
+  .tagb { font-size: 10.5px; font-weight: 700; padding: 2px 7px; border-radius: 999px; background: var(--mint); color: var(--dark); white-space: nowrap; }
+  .tagb.warn { background: #F3E7DC; color: var(--clay); }
+  .tagb.bad { background: #F6E1DC; color: var(--rec); }
+  .tagb.gray { background: var(--hover); color: var(--muted); }
+  .addline { display: grid; grid-template-columns: minmax(0, 1fr) 96px auto; gap: 6px; margin-bottom: 14px; }
+  .progress { display: flex; align-items: center; gap: 10px; font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums; margin-bottom: 14px; }
+  .progress .bar { flex: 1; }
+  .progress b { color: var(--ink); }
+  .bar { height: 8px; border-radius: 8px; background: var(--press); overflow: hidden; }
+  .bar i { display: block; height: 100%; width: 0; background: var(--dark); border-radius: 8px; transition: width .2s; }
+  .linkbtn { font-size: 12px; font-weight: 600; color: var(--dark); padding: 6px 10px; border-radius: 999px; background: var(--mint); white-space: nowrap; flex: none; }
+  .linkbtn:hover { background: #DCE7DD; }
+  .empty { padding: 50px 24px; text-align: center; color: var(--faint); font-size: 13px; line-height: 1.7; }
+  .empty b { display: block; font-family: var(--serif); color: var(--dark); font-size: 18px; font-weight: 600; margin-bottom: 4px; }
+  .empty .btn { margin-top: 14px; }
+  .seg { display: flex; padding: 3px; gap: 2px; background: var(--press); border-radius: 999px; flex-wrap: wrap; }
+  .seg button { flex: 1; height: 30px; border-radius: 999px; font-size: 12.5px; font-weight: 600; color: var(--muted); padding: 0 10px; white-space: nowrap; }
+  .seg button[aria-pressed="true"] { background: var(--surface); color: var(--dark); box-shadow: 0 2px 6px -3px rgba(28,40,36,.3); }
+  .seg button .n { font-size: 11px; color: var(--faint); margin-left: 3px; font-variant-numeric: tabular-nums; }
+  /* ---------- Side panel ---------- */
+  #side .ph { padding: 16px 20px 12px; border-bottom: 1px solid var(--hair); display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  #side .ph h2 { margin: 0; font-family: var(--serif); font-size: 19px; font-weight: 600; color: var(--dark); letter-spacing: -.02em; }
+  #side .ph p { margin: 3px 0 0; font-size: 12px; color: var(--faint); }
+  #side .collapse { display: none; }
+  .pbody { flex: 1; min-height: 0; overflow-y: auto; padding: 6px 20px 20px; overscroll-behavior: contain; }
+  .sec { padding: 16px 0; border-bottom: 1px solid var(--hair); }
+  .sec:last-child { border-bottom: 0; }
+  .sec h3 { margin: 0 0 10px; font-size: 12px; font-weight: 700; color: var(--clay); letter-spacing: .04em; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .sec h3 .v { color: var(--faint); font-weight: 600; letter-spacing: 0; font-variant-numeric: tabular-nums; }
+  .sec p.hint { margin: 0 0 10px; font-size: 12.5px; color: var(--muted); line-height: 1.6; }
+  .btns { display: flex; flex-wrap: wrap; gap: 6px; }
+  .btns.g2 { display: grid; grid-template-columns: 1fr 1fr; }
+  .btns.g2 .btn { width: 100%; }
+  .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+  .field:last-child { margin-bottom: 0; }
+  .field > label, .field > .lbl { font-size: 12px; font-weight: 600; color: var(--ink-2); display: flex; justify-content: space-between; gap: 6px; }
+  .field > label .v, .field > .lbl .v { color: var(--faint); font-weight: 500; font-variant-numeric: tabular-nums; }
+  .inp, select.inp { width: 100%; height: 40px; border: 0; background: #fff; box-shadow: inset 0 0 0 1px var(--hair); border-radius: 999px; padding: 0 14px; font-size: 13.5px; outline: none; transition: box-shadow .15s; min-width: 0; }
+  textarea.inp { height: auto; border-radius: 16px; padding: 10px 14px; line-height: 1.6; resize: vertical; }
+  select.inp { appearance: none; -webkit-appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235E665F' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; background-size: 16px; padding-right: 34px; }
+  .inp:focus { box-shadow: inset 0 0 0 1.5px var(--dark), 0 0 0 4px rgba(36,77,58,.08); }
+  .inp.tc { text-align: center; font-variant-numeric: tabular-nums; padding: 0 6px; }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+  .num { display: grid; grid-template-columns: 34px 1fr 34px; align-items: center; background: #fff; box-shadow: inset 0 0 0 1px var(--hair); border-radius: 999px; height: 40px; }
+  .num button { height: 34px; width: 34px; border-radius: 999px; display: grid; place-items: center; color: var(--muted); margin: 3px; }
+  .num button:hover { background: var(--hover); color: var(--ink); }
+  .num input { border: 0; background: none; text-align: center; width: 100%; height: 100%; outline: none; font-weight: 600; font-variant-numeric: tabular-nums; min-width: 0; -moz-appearance: textfield; }
+  .num input::-webkit-inner-spin-button { -webkit-appearance: none; }
+  .num svg.i { width: 15px; height: 15px; }
+  .switch { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 13px; font-weight: 600; color: var(--ink-2); cursor: pointer; padding: 6px 0; }
+  .switch small { display: block; font-size: 11.5px; font-weight: 500; color: var(--faint); margin-top: 2px; line-height: 1.45; }
+  .switch input { appearance: none; -webkit-appearance: none; width: 40px; height: 24px; border-radius: 999px; background: var(--sand); position: relative; cursor: pointer; transition: background .15s; flex: none; margin: 0; }
+  .switch input::after { content: ''; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 999px; background: #fff; transition: transform .15s; box-shadow: 0 1px 3px rgba(0,0,0,.2); }
+  .switch input:checked { background: var(--dark); }
+  .switch input:checked::after { transform: translateX(16px); }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip { height: 32px; padding: 0 12px; border-radius: 999px; background: #fff; box-shadow: inset 0 0 0 1px var(--hair); font-size: 12.5px; font-weight: 600; color: var(--ink-2); display: inline-flex; align-items: center; gap: 6px; }
+  .chip:hover { background: var(--hover); }
+  .chip[aria-pressed="true"] { background: var(--dark); color: var(--surface); box-shadow: none; }
+  .chip small { color: var(--faint); font-weight: 500; font-variant-numeric: tabular-nums; }
+  .chip.warn { background: #FBF3EA; box-shadow: inset 0 0 0 1px #E5C9AE; color: var(--clay); }
+  .chip .x { width: 18px; height: 18px; border-radius: 999px; display: grid; place-items: center; color: var(--faint); margin-right: -6px; }
+  .chip .x:hover { background: var(--press); color: var(--danger); }
+  .chip .x svg { width: 12px; height: 12px; }
+  .note { font-size: 12px; padding: 10px 12px; border-radius: var(--r-md); background: var(--hover); color: var(--muted); line-height: 1.6; margin-top: 10px; }
+  .note.ok { background: #E8F0E9; color: var(--dark); }
+  .note.warn { background: #F3E7DC; color: #6E4429; }
+  .kpis { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  .kpi { border-radius: 14px; background: #fff; box-shadow: 0 0 0 1px var(--hair); padding: 10px 12px; min-width: 0; cursor: default; text-align: left; }
+  button.kpi { cursor: pointer; }
+  button.kpi:hover { background: var(--paper); }
+  .kpi .k { font-size: 11.5px; font-weight: 600; color: var(--muted); white-space: nowrap; }
+  .kpi .v { font-size: 22px; font-weight: 700; letter-spacing: -.03em; margin-top: 3px; font-variant-numeric: tabular-nums; color: var(--ink); white-space: nowrap; }
+  .kpi .v small { font-size: 12px; font-weight: 600; color: var(--muted); margin-left: 2px; letter-spacing: 0; }
+  .slist { display: flex; flex-direction: column; gap: 6px; }
+  .sitem { display: flex; align-items: center; gap: 8px; padding: 8px 8px 8px 12px; border-radius: var(--r-md); background: #fff; box-shadow: inset 0 0 0 1px var(--hair); font-size: 13px; text-align: left; width: 100%; }
+  button.sitem:hover { background: var(--paper); }
+  .sitem .tx { flex: 1; min-width: 0; }
+  .sitem .tx b { font-weight: 600; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .sitem .tx small { display: block; font-size: 11.5px; color: var(--faint); margin-top: 1px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .sitem .r { font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; font-size: 12.5px; color: var(--ink-2); }
+  .mbars { display: flex; align-items: flex-end; gap: 6px; height: 90px; margin: 6px 0 4px; }
+  .mbars div { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; height: 100%; justify-content: flex-end; font-size: 10.5px; color: var(--faint); font-variant-numeric: tabular-nums; }
+  .mbars i { width: 100%; max-width: 34px; background: var(--sand); border-radius: 5px 5px 2px 2px; min-height: 2px; }
+  .mbars div.cur i { background: var(--dark); }
+  /* ---------- Dialogs ---------- */
+  dialog { border: 0; border-radius: 22px; padding: 0; width: min(520px, calc(100vw - 32px)); background: var(--surface); box-shadow: 0 0 0 1px var(--hair), 0 30px 70px -30px rgba(28,40,36,.45); color: var(--ink); }
+  dialog.wide { width: min(640px, calc(100vw - 32px)); }
+  dialog::backdrop { background: rgba(28,40,36,.32); backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px); }
+  .dlg-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 20px 22px 8px; }
+  .dlg-head h2 { margin: 0; font-family: var(--serif); font-size: 20px; font-weight: 600; letter-spacing: -.02em; color: var(--dark); min-width: 0; }
+  .dlg-head h2 small { display: block; font-family: var(--sans); font-size: 12px; font-weight: 500; color: var(--faint); margin-top: 4px; letter-spacing: 0; }
+  .dlg-body { padding: 8px 22px 22px; display: flex; flex-direction: column; gap: 14px; max-height: 76vh; overflow-y: auto; }
+  .dlg-body p { margin: 0; font-size: 13px; color: var(--muted); line-height: 1.65; }
+  .dlg-body .sec { padding: 12px 0; }
+  .btn-row { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; align-items: center; }
+  .btn-row .grow { flex: 1; }
+  .help h4 { margin: 4px 0 6px; font-size: 12px; font-weight: 700; color: var(--clay); letter-spacing: .04em; }
+  .help ul { margin: 0; padding-left: 18px; font-size: 13px; color: var(--ink-2); line-height: 1.75; }
+  .keys { display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; font-size: 13px; align-items: center; }
+  kbd { font-family: var(--sans); font-size: 11.5px; font-weight: 700; padding: 3px 7px; border-radius: 6px; background: #fff; box-shadow: inset 0 0 0 1px var(--hair), 0 1px 0 var(--hair); color: var(--ink-2); white-space: nowrap; }
+  .plist { display: flex; flex-direction: column; border-radius: 16px; background: #fff; box-shadow: 0 0 0 1px var(--hair); overflow: hidden; max-height: 42vh; overflow-y: auto; }
+  .prow { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-bottom: 1px solid var(--hover); text-align: left; width: 100%; min-height: 50px; }
+  .prow:last-child { border-bottom: 0; }
+  .prow:hover { background: var(--paper); }
+  .prow .tx { flex: 1; min-width: 0; }
+  .prow .tx b { font-weight: 600; font-size: 14px; }
+  .prow .tx small { display: block; font-size: 11.5px; color: var(--faint); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .prow .add { width: 32px; height: 32px; border-radius: 999px; display: grid; place-items: center; background: var(--mint); color: var(--dark); flex: none; }
+  .prow.in .add { background: var(--dark); color: #fff; }
+  .cur-dishes { display: flex; flex-wrap: wrap; gap: 6px; min-height: 32px; align-items: center; }
+  .cur-dishes .empty-t { font-size: 12.5px; color: var(--faint); }
+  .ings { list-style: none; margin: 0; padding: 0; border-radius: 16px; background: #fff; box-shadow: 0 0 0 1px var(--hair); overflow: hidden; }
+  .ings li { display: flex; align-items: center; gap: 10px; padding: 9px 14px; border-bottom: 1px solid var(--hover); font-size: 13.5px; }
+  .ings li:last-child { border-bottom: 0; }
+  .ings li .nm { flex: 1; font-weight: 600; }
+  .ings li .q { font-weight: 700; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+  .ings li .st { width: 20px; height: 20px; border-radius: 999px; display: grid; place-items: center; flex: none; }
+  .ings li .st svg { width: 13px; height: 13px; stroke-width: 2.4; }
+  .ings li.have .st { background: var(--dark); color: #fff; }
+  .ings li.miss .st { box-shadow: inset 0 0 0 1.6px var(--sand); }
+  .ings li.pan .st { background: var(--hover); color: var(--faint); }
+  .steps { margin: 0; padding-left: 22px; font-size: 13.5px; line-height: 1.75; color: var(--ink-2); }
+  .steps li { padding-left: 4px; margin-bottom: 4px; }
+  .rmeta { display: flex; gap: 6px; flex-wrap: wrap; }
+  .inline-add { display: grid; grid-template-columns: 1fr 1fr auto; gap: 6px; align-items: center; }
+  .checks { display: flex; flex-direction: column; gap: 2px; }
+  .checks label { display: flex; align-items: center; gap: 10px; padding: 7px 4px; font-size: 13.5px; cursor: pointer; border-radius: 10px; }
+  .checks label:hover { background: var(--hover); }
+  .checks input { width: 18px; height: 18px; accent-color: var(--dark); }
+  .checks small { color: var(--faint); margin-left: auto; font-size: 12px; }
+  /* ---------- Toast ---------- */
+  #toast { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom)); transform: translateX(-50%); background: var(--dark); color: var(--surface); padding: 11px 18px; border-radius: 999px; box-shadow: 0 14px 30px -14px rgba(28,40,36,.55); font-size: 13px; font-weight: 600; z-index: 200; display: none; align-items: center; gap: 14px; max-width: calc(100vw - 32px); }
+  #toast.show { display: flex; }
+  #toast.err { background: var(--danger); }
+  #toast button { color: var(--sand); font-weight: 600; white-space: nowrap; text-decoration: underline; text-underline-offset: 3px; }
+
+  .foot { max-width: 1440px; margin: 0 auto; padding: 0 24px 16px; font-size: 11.5px; color: var(--faint); display: flex; gap: 6px; align-items: center; }
+  .foot svg { width: 13px; height: 13px; }
+  #printArea { display: none; }
+  /* ---------- Dictator ---------- */
+  @media (min-width: 1000px) { main { grid-template-rows: minmax(0, 1fr); flex: none; } }
+  #toast { bottom: calc(112px + env(safe-area-inset-bottom)); }
+  #work .view { overflow: hidden; }
+  .titlebox { flex: 1 1 200px; min-width: 120px; }
+  .titlebox input { width: 100%; border: 0; background: none; outline: none; font-family: var(--serif); font-weight: 600; font-size: 18px; color: var(--dark); letter-spacing: -.02em; padding: 6px 6px; border-radius: 10px; }
+  .titlebox input:focus { background: #fff; box-shadow: inset 0 0 0 1px var(--hair); }
+  .titlebox input::placeholder { color: var(--faint); }
+  .editor-wrap { flex: 1; min-height: 0; display: flex; flex-direction: column; position: relative; }
+  #ed { flex: 1; min-height: 0; width: 100%; border: 0; outline: none; resize: none; background: var(--paper); padding: 22px 26px 30px; font-size: var(--ed-size, 17px); line-height: 1.85; color: var(--ink); font-family: var(--sans); }
+  #ed.serif { font-family: var(--serif); }
+  #ed::placeholder { color: var(--faint); }
+  .nosr { margin: 14px 18px 0; }
+  .live-bar { border-top: 1px solid var(--hair); background: var(--surface); flex: none; padding: 12px 16px 14px; }
+  .live-in { max-width: 980px; margin: 0 auto; display: flex; align-items: center; gap: 14px; }
+  .interim { flex: 1; min-width: 0; min-height: 52px; border-radius: 16px; background: #fff; box-shadow: inset 0 0 0 1px var(--hair); padding: 9px 14px; display: flex; flex-direction: column; justify-content: center; }
+  .interim .st { font-size: 11.5px; font-weight: 700; color: var(--faint); letter-spacing: .02em; display: flex; align-items: center; gap: 8px; }
+  .interim .st .lng { color: var(--clay); }
+  .interim .st .tm { margin-left: auto; font-variant-numeric: tabular-nums; }
+  .interim .tx { font-size: 15px; color: var(--muted); line-height: 1.5; margin-top: 2px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; min-height: 1.5em; }
+  .interim .tx:empty::before { content: attr(data-ph); color: var(--faint); }
+  .on .interim { box-shadow: inset 0 0 0 1.5px var(--rec); }
+  .on .interim .st { color: var(--rec); }
+  .dot-live { width: 8px; height: 8px; border-radius: 99px; background: var(--faint); flex: none; }
+  .on .dot-live { background: var(--rec); animation: blink 1.1s infinite; }
+  @keyframes blink { 50% { opacity: .25; } }
+  .mic { width: 68px; height: 68px; border-radius: 999px; background: var(--dark); color: #fff; display: grid; place-items: center; flex: none; position: relative; box-shadow: 0 12px 24px -12px rgba(36,77,58,.8); transition: background .2s, transform .1s; }
+  .mic:active { transform: scale(.96); }
+  .mic svg.i { width: 28px; height: 28px; stroke-width: 1.8; }
+  .mic::before, .mic::after { content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; }
+  .on .mic { background: var(--rec); box-shadow: 0 12px 24px -12px rgba(181,68,59,.8); }
+  .on .mic::before { box-shadow: 0 0 0 0 rgba(181,68,59,.45); animation: ring 1.6s infinite; }
+  .on.speaking .mic::after { box-shadow: 0 0 0 8px rgba(181,68,59,.16); }
+  @keyframes ring { 0% { box-shadow: 0 0 0 0 rgba(181,68,59,.45); } 100% { box-shadow: 0 0 0 18px rgba(181,68,59,0); } }
+  .side-mini { display: flex; flex-direction: column; gap: 6px; flex: none; }
+  .wave { display: flex; align-items: center; gap: 3px; height: 18px; }
+  .wave i { width: 3px; height: 4px; border-radius: 3px; background: var(--sand); transition: height .12s; }
+  .on.speaking .wave i { background: var(--rec); animation: wv .9s infinite ease-in-out; }
+  .on.speaking .wave i:nth-child(2) { animation-delay: .15s; } .on.speaking .wave i:nth-child(3) { animation-delay: .3s; } .on.speaking .wave i:nth-child(4) { animation-delay: .45s; } .on.speaking .wave i:nth-child(5) { animation-delay: .6s; }
+  @keyframes wv { 0%, 100% { height: 4px; } 50% { height: 17px; } }
+  .langsel { height: 36px; border: 0; border-radius: 999px; background: var(--hover); padding: 0 30px 0 12px; font-weight: 600; font-size: 12.5px; appearance: none; -webkit-appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235E665F' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; background-size: 14px; max-width: 150px; }
+  .segs { display: flex; flex-direction: column; gap: 6px; }
+  .segi { display: flex; gap: 10px; align-items: flex-start; padding: 8px 10px; border-radius: 12px; background: #fff; box-shadow: inset 0 0 0 1px var(--hair); font-size: 13px; line-height: 1.55; text-align: left; width: 100%; }
+  .segi:hover { background: var(--paper); }
+  .segi .tm { font-size: 11px; font-weight: 700; color: var(--clay); font-variant-numeric: tabular-nums; flex: none; padding-top: 2px; }
+  .segi .t { flex: 1; min-width: 0; word-break: break-word; }
+  .segi .cf { font-size: 10.5px; color: var(--faint); flex: none; padding-top: 2px; font-variant-numeric: tabular-nums; }
+  .cmdt { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  .cmdt td { padding: 6px 4px; border-bottom: 1px solid var(--hover); vertical-align: top; }
+  .cmdt td:first-child { font-weight: 600; color: var(--ink-2); }
+  .cmdt td:last-child { text-align: right; color: var(--dark); font-weight: 700; white-space: nowrap; }
+  .notes-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; }
+  .ncard { text-align: left; background: #fff; border-radius: 16px; box-shadow: 0 0 0 1px var(--hair); padding: 14px 14px 10px; display: flex; flex-direction: column; gap: 6px; min-height: 150px; position: relative; }
+  .ncard:hover { background: var(--paper); }
+  .ncard.cur { box-shadow: 0 0 0 1.5px var(--dark); }
+  .ncard h4 { margin: 0; font-family: var(--serif); font-weight: 600; font-size: 16px; color: var(--dark); padding-right: 30px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ncard p { margin: 0; font-size: 12.5px; color: var(--muted); line-height: 1.6; flex: 1; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; word-break: break-word; }
+  .ncard .meta { display: flex; gap: 6px; align-items: center; font-size: 11px; color: var(--faint); flex-wrap: wrap; }
+  .ncard .star { position: absolute; right: 8px; top: 8px; }
+  .ncard .star.on { color: var(--clay); }
+  .ncard .star.on svg { fill: var(--clay); }
+  .dict-row { display: grid; grid-template-columns: minmax(0, 1fr) 20px minmax(0, 1fr) 32px; gap: 8px; align-items: center; padding: 6px 10px; border-bottom: 1px solid var(--hover); font-size: 13.5px; }
+  .dict-row:last-child { border-bottom: 0; }
+  .dict-row .a { color: var(--muted); word-break: break-word; }
+  .dict-row .b { font-weight: 600; word-break: break-word; }
+  .dict-row .ar { color: var(--faint); text-align: center; }
+  .dict-add { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; gap: 6px; margin-bottom: 12px; }
+  .inner { max-width: 980px; margin: 0 auto; width: 100%; }
+  .h1 { font-family: var(--serif); font-size: 22px; color: var(--dark); font-weight: 600; margin: 4px 0 4px; letter-spacing: -.02em; }
+  .lead { color: var(--muted); font-size: 13px; margin: 0 0 14px; line-height: 1.65; }
+  mark.hl { background: #F3E2B8; color: inherit; border-radius: 3px; }
+  .fr-count { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  #ed.big-focus { padding: 30px 8vw 40px; }
+  body.focus .top, body.focus #side, body.focus .foot, body.focus .wbar { display: none !important; }
+  body.focus main { grid-template-columns: minmax(0, 1fr); height: 100dvh; padding: 0; }
+  body.focus #work { border-radius: 0; }
+  .focus-exit { position: fixed; top: 10px; right: 10px; z-index: 50; display: none; }
+  body.focus .focus-exit { display: inline-flex; }
+
+  @media (max-width: 1100px) { main { grid-template-columns: minmax(0, 1fr) 320px; } }
+  @media (max-width: 999px) {
+    main { display: flex; flex-direction: column; height: auto; min-height: 0; padding: 0 12px 16px; }
+    #side .collapse { display: grid; }
+    #side.closed .pbody { display: none; }
+    #side.closed .ph { border-bottom: 0; }
+    .pbody { overflow: visible; }
+    .tabs-wrap { padding: 2px 12px 10px; }
+    .top-inner { padding: 12px 12px 6px; gap: 8px; }
+    .foot { padding: 0 12px 12px; }
+    .pad { padding: 12px; }
+    #work { height: calc(100dvh - 130px); min-height: 460px; }
+    #work.list { height: auto; min-height: 60vh; }
+    #work.list .scroll { overflow: visible; }
+    body.focus #work { height: 100dvh; }
+  }
+  @media (max-width: 760px) {
+    .logo { height: 27px; }
+    .app-name { font-size: 19px; padding-left: 10px; }
+    .app-name small { display: none; }
+    .tool .t { display: none; }
+    .tabs-wrap { flex-direction: column; align-items: stretch; gap: 8px; }
+    .brand { min-width: 0; overflow: hidden; }
+    .app-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .head-actions { gap: 0; }
+    .icon-btn { width: 34px; height: 34px; }
+    #ed { padding: 16px 14px 24px; }
+    .live-bar { padding: 10px 10px 12px; }
+    .mic { width: 60px; height: 60px; }
+    .side-mini { display: none; }
+    .langsel { max-width: 110px; }
+    .titlebox input { font-size: 16px; }
+  }
+  @media (max-width: 430px) {
+    .logo { height: 23px; }
+    .app-name { font-size: 17px; padding-left: 8px; }
+    .icon-btn { width: 31px; height: 31px; }
+    .icon-btn svg.i { width: 17px; height: 17px; }
+    .top-inner { gap: 6px; }
+  }
+  @media print {
+    body > *:not(#printArea) { display: none !important; }
+    #printArea { display: block !important; white-space: pre-wrap; font-family: var(--serif); font-size: 12pt; line-height: 1.8; color: #000; }
+    #printArea h1 { font-size: 18pt; margin: 0 0 4pt; white-space: normal; }
+    #printArea .m { font-family: var(--sans); font-size: 9pt; color: #666; margin-bottom: 14pt; white-space: normal; }
+    body { background: #fff; display: block; }
+    @page { size: A4; margin: 18mm; }
+  }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="top-inner">
+    <a class="brand" href="./" aria-label="Dictator">
+      <img class="logo" alt="OUTGRID" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAeEAAABsCAYAAABdEwq8AAABe2lDQ1BJQ0MgUHJvZmlsZQAAeJx1kb9LQlEUxz9aoVlhUENDg4Q1WZhB1NKg9AuqQQ2yWvT5K1B7vGdEtAatQkHU0q+h/oJag+YgKIogmqOxqKXkdZ4KSuS5nHs+93vvOdx7LljDGSWrN3ohm8trwUm/ayGy6LK90YwDJ3bsUUVXZ0MTYera1wMWM971m7Xqn/vXWuIJXQGLXXhMUbW88JTwzHpeNXlXuFNJR+PC58IeTS4ofG/qsTK/mpwq84/JWjgYAGu7sCtVw7EaVtJaVlhejjubWVMq9zFf0prIzYck9oh3oxNkEj8uphknwDCDjMo8TD8+BmRFnXxvKX+OVclVZFbZQGOFFGnyeERdk+oJiUnREzIybJj9/9tXPTnkK1dv9UPTi2F89IJtB4oFw/g+NoziCTQ8w1Wumr96BCOfoheqmvsQnFtwcV3VYntwuQ1dT2pUi5akBnFrMgnvZ9AWgY5bcCyVe1bZ5/QRwpvyVTewfwB9ct65/AsLKWe8wiDFZwAARnJJREFUeNrtnXecXFXZx7/nnHtndja72d1UOhiKEEgIIBhiyKSQBAQUxH1RUbFg5VXkRWyIy6qAvvaCBVBEXrAsKiJISSCZFBJDSSUJPdSQhCTbsmXuPee8f9w7s7MpJDszuzu7ub+PI5uZW0/7Pc9zniLU1JnrkXI01hhAYLEAICwCS+afYLHCZv8ODun+7+D3XX+z4fUIrydy7mFzzic8R2DD43PO7/rNdjvX5twz9xybc92dfrfhOaLb+3Rdr/t1uv7udrztag8R/jv7tLt839UGXW3avT27tdcu7biHNhQ224JYu1O7dt0ntz3tLu1lsabr2tk2ynknkfM8u/1ehNfYqY1M13N2fzazaxuFo8/s3EZCBL91tVHYEpnn3al/DIDJeY5MW+S20U7vKHLawwgLOuyrnOc2O7WbEBZjdm0fYYJriJ361uS2eXiP3OMEFsLrZb4XwXEic30NSBm0BqZRabvRCqGQMjtJI0SIMHAghGcdhKhBiGqQ4be7HLbbP3f7hdiX82T3c2QeD967zVIKD9H/79fjU1UPLrTTsbbrq90Oh56MEWl7+Cy7u5fct2eQcvfvJvflHeRuHlPtpnlk9z9t2A++3aElEoEilFIiRIgwwGBVpwPWxxgTakgiapX8mzNqgsEprJbc0wQztRPEsGjKRogwkFnDCgdLGY6SWPsWdDIA+MX267P2tgBj9/ln2xvXL5Q4RE+v7+zTM1tr8rj2wBeuBIA1WKsR+diSIkSIUCJzWTsgXkXrzmCxsV02aZsllS5yEVZ0Xwq6HQfk/C4y3wuRs5ztemzXcd3vlT02e1zO7znH2p2fKXvLXZ/f7vx8YmdNR+yBRIqgLYlCdCvRo59FcUZH7+mF4q05z/f3hdgFSimkDPrHlqiw2FuP5KUrw4aMVOEIEQayJqxbYqczrFOQTndNZq8q+NtPC4YBvh/82/PCY6pBh9+Vh99pHZ4Tfm8ru45J6O7H6LLgv0Z33TMe/m1M+N9Y938ncv7Wbs75out7gJjJOS/e9Zs1gljXi8eI5dzLdh0DEMucH8NaG7jmZK9jc45xRPYcY4O/XbfrGGuFzZ7nCJzM89vu13KU6HoGK7rOVwInfK7wO2tV8LdDt/tgVfC3Cp83ex3VdZza6dq55zs7Xcdagcp9TtX92RQCVNg+OccpwEqRFZ4souv78DrknoNAii4yMQwTkhsQwtnDFokFscVa86jVZpXw5CtI2wY4WJsA4sE+6U4aeNCPXYKhRSBzniHYcBWBcNatfwRSdv0dyIXZv621AomQO30fCqw5gqoV4Z5ueH3Z9ffOAmvm+6BtAqkl015CyNBpbARCXBRtI0WIMNCV4QgRSgmT3lOpYu1bkDL+lgQj6MCy0QpWYcViKVnku+JJHnigc39oJid51mTrioX4vkYIFQ2cCBEGpCbcWUrmrCI9R11eP/Uq1q4dPMLO5s298y5btkhGjjSY2KFKsW6vJAyBd3LmYwz4/g4Lq4S1i5Es0MSe5JH7Xut2zimnuFRUKBIJy5YthoqKgeVQl0go2tu1kolZKHFfRMIRIgx8Eo4QoRQgAcMZsw5Vyj67TySc65xlrURK2Y2UtW60gpXWikVSsVALs5w5czbvIvwlk4pRoywNDYZS90KsrVU0NGg1dfZsHPlARMIRIgxsEnaiVogwgCGyBCREkIjE93NJuVpImRRSJjEG5dvtdvqsVcKyGGEXae0uJ/XvN0il/AFLyhEiRBjQiEg4wv5EyjVCyiQZUrZ+k502a7XALsbKhdqqJyJSjhAhQkTCESL0DSlXCSknI+RkrPmq8v0mO23WKmFZhLQLNfpJHnlkU0TKESJEiEg4QoS+IeUzEPIMrPm60iI0X4tFWBZqN9xTjkg5QoQIEQlHiNDrpNzdfO3bRjt99iqLXSytXKSNfDIyX++lgYUIPjn/hq5qIEEJDRuGtkfyS4SIhCNEiEh5z6RcLaScIqScgjEovGY7bdYqIewirFr4lqScSunBTsgZwpVCYK1FG4Pv+0EGNG3AGrrS44YJ66QEpUAqlKNQSiIQGGuxxvR6gykps4JBf8BaG7xrHwkgUsowN07PYazFGFPS7Zwr0A0UoW4gkrCktlbsEq86alTQ4rv7vqHBEpWaGVSLfR9NsL2R8lAh5WSknIwxX1P4TXb6rJXBnjILtbRP7sZ8PeiQWdjTvo/t7ATPA6UQiQQjqqs4aPhwRlRVURaLMSSRIO46dKTTdHoezW1tbNq2nW3NLWxpakI3twThZbEYKh7HUQpjTFhJsvjjKN3aClr310AOBBDXRTlO8K4FEN2+vK/X0QGdeeazicdx4vEezz0hBOm2tmBc9PJ0RUmQClwHx3FQUmIJqo6WKikPBBIW1NZKNm8W4WJmaGjI70rJpFNCZsJAmGhosD3LIlJPcN5YC/XFn621tQHp9Oi56qGuLkhK0tDQqyuatRatNa7rZjWuPtQk9mVPeQpCTsEalK+322mzVgqpFmvf3ELqwQ101UEa4CYDkCFBeuECW15Tw7hjjmHSuOOZPP4Ejjn0UA4cNoxhQ4e+Zfp1bQzNO3bw8uYtrN3wEsvWrWf+8hWsefFFOhsbIR4nVlYWZo8t3pD3PY+zppzBUQcfBDkm817X1rC0dXSyo72dV7e8yUtvbOLVLVvQLS3gujiJBFIIdBHfVQiBn05zwtFHMXncCbhOz5Z+z/dZtGoNa55/HicW2+f5lrnv6SdNYMJRR+Ko3glp7/Q82js7ebOpmY1bt/Lqli28ub0Rv70DpIB4GbGYG2j0fWBh6elcKk10kUH3Rf3Mcw9z0t7hRtmjhGAMlmFYW2ERFWHS3VaEaAGx1VrzgoTnfKteIvXAq/t0/f1cyexHgthrsg5rLTHXZUhZnK1b3gzMnK6LiMVwHQch+s6Muef1dafkIUJAPI5ta/uYmT/nNpJJpyDNuASSdSil8LWPaW2DRBmnjz2O/5o+lXMnnR4Q2m7QTVDK6VUZmrB3J2ytfuFF7pq/gLvmpVj33HMgJbHy8qxmU8jzp5tb+MT7zud3X72y3yddS1sb619+hfnLV/CPBYtYsnoN+D7ukCEgRMGChwyJ8IiDDmTF729m6JDyvK7TvKONEz/xKV56fSNOLLZX64SSEq+tjYkTTmTxjT/rU7P/lqYmXnh9I/9Zu44FK1exeNUa3njjDbAgyxO4joPOVvDtR5Rkso5wkcmS44wZw5V1p2HNNAuThE6/3boyIaTKqZ4DAttdrhAgwgVZGbPDTpu1Xlj7KFLN0zo+j4aGxm6adl+RcV2dpL7exGacfYyPuQ5jR4SrktiXHgNpkXKr8tLXewseXk4dkvqimNolYFRy9pnWkV/AmEowYh+ey4Yibxpj/mnmz/lVb5C5FALP8zhg9CgW/uKnrH7hBeY9uYKFq1az+sUN7NjeCEZDLIaMxXAcBxFKvabvJtqumrIxaTxPIRnwOa2llFhrSTc1Ea+ooPY953DZBecz8fjjug0GrXVQ3ilDsOE+8Z6Gkg2HdsaqAeAoxfgjxzD+yDFc/dGL+XtqIT9v+BtLV64CxyGeSOAXYka2hnMnTcRYS9rzek1D25uWKIWgsrycU499O6ce+3au+uBFzFu+gp/89S7+lVoYCB6JBLqAdxVCYNNpxh11JEOHlJP2PKTsWQVMYwxDh5Qz/qgj2bDhJUQ8DnuZV8F9PSYePxYhBB3pdK+3sxQCKSUjq6oYWVXFO487li9eeAFvNjUx78kV3DFnLg8ue5yOxiYYUk7cddFa96tmXDokvBP5qmkzp4P4IJZzUfIAUAhrgv0iY8w+iYfWCoSQCDFESHkKQp4C9gvKdrzGtFn/Ejh/8uf9e0F4zz4lY9/on4uystmkvX3j31wejsXQxneB81lbK6Ch4PUAsEw+ayRS/10otzKQZfZ1wtjgHRx3lkrOfkanHpyb7c/i6pkIITh4xHAOGTmCs995GgAvbdrEsnXrWbBiFYtXr2HtSy/T2dQcnBCLoWIxHKWwWKyx/UHKzk4lNweWeUSAlIr0jh2gFB+/4L1ccVEt48a8rRvxZvaGe7rQivAmQnQVR7aADQWouOvywTOn84Ezp3PHQ3P59u9v49nnn8cJzdw91optMF6ttdnn7Q8SztX6MwKIoxTTTprAtJMmcN+SpVz1y1+z7plniVVVFbztkvGlUEqhekjCOjw3X23WhoJVX7Vz7jaVEIIRVVXUTktSOy3Jupde5qZ//ovbHniI7VveRFVWoKQsqvl/oJFwLvkJNW32BVZwBVJORojAacLzdNbEF4wCGX72vnpkesT3LUIYrBVIdTDK+aw1+rNy+qz5woqf6HkP3kNDgw7Jo7f2jAX1wT6usPZwOtMao80+vUvOfCBtFZZhQLh3W7B2LqivN670DjHCqSTdmQ95+riua5U9AZjbO4UegkXTDxf8zKJ1+OjRHD56NLVTkwA888orPLpmLfOWr2Tp2rU8++prdLa0BntDsRhOLBY4bPSxZ+pA1X6NMaSbmph48gSu/8ynmHbShGAgGhM6OMuiL64CEFKG1R8DuVsKwYdnncl7Jk/iO7f+kR/+6a8gBE7MHdB9KHYSQDLtes7pE5k8fjxfvvHX3HLX33ErK7PCQyH3Is/zCzEni35oU5Vbyj6c6wI47vDD+MkXL+Py/7qQH/zpL9x8z32kd+wgVlER7Bf38VjqXxLO0X7VjNlnWst3kGqiCAq7B0QYaLKqG6nmp5EE5C0EWGPxjQaUUGoqMFVOn71IaK7RDQ3zuz1b7yGzlxdo6z2T4ntHnBTShm2ez/UtQVndXvUEliLYalXhAi2g2z6woxTHHHooxxx6KB87ezZpz+OpDS+xePUaFqxYxWPrn2bDxo34HR2BZ2o83l9OXiUPpRTp9naUlFz3hcv42oc/GDgMaRMscj3UpgpZwDP30loztLycH1z2WWa/8zQu+e4NbNq2DeG6g6bfsu9qDFVDyrn5K1dy7OGH8eWf/RKnrKwvowMGDXJJObNeHHHAAdx4xeVcctZsrrrxNyz4z2Ooyoqs4Dn4STiZdGho8Jl05kEq4XwX+LiQAnxP95iY8pvXwbv7vgaEcJzJCDtPTT/rZk36GhoaNhXsRFNawmHfPJft3feSu4k3lJlQjxCZMA8hBDHX5aSjj+Kko4/iv993Pm0dHax6/gUWrFzF/BWreOKZZ9m8eQt4aXCcgJQdB5lx8tpPSdlxFJ3NLRx52GHc8o2vMHXCidnYX6Vkvz2XUiowbGnNme84md9946ucfcWXcV130AVhZ6w12hiuvKiWoUMq+PT138NNJArWiPdr6064XmTWidOOO5b5v/wpN9x+B9feciue5xErKytoH75Hz9Mvi3xdnSSV8lVy1rkqoZah1McxxoThHqqXCXhnESm4n+9rjLE46lOK2DI1dfZsUimfujpJKXuR7zeibKBrK7n3UJLMPl/W5GwMvtZoYygvK2Pi8WP5yoc+wL//93rW/vF3PPTzH3H1Zz5F8tR3UDNkCF7rDjobG/Ha2gLSCc2tUor9YiA4StG5vZHJp5zM4t/eyNQJJ+Jr3afa7960Ghl6DQ8tTxRiIRsQGpyjFJ7v86lzz+bHV1yO19JSEv0wGMg4E4dureUbH7mYOT//MYeOHEG6pQXH6RsdtY814ToJ9Zb6eiOmzf4uUl4NFjzPB5x+nUwZE6zn+Uh5GEo84Eydda1fX18fUkAQQhOhX1k4VxMW+9StOzn85JicpZAMHzqUme84hZnvOAWAN7Zu47H1T5NasYKFq9aw5sUNtDU1BdsAbgwZj2X3P23fel73HQE3NvHemWdyZ93VlMfjaK371XFpV2MLgSYIfPW3t0AoIDCINUPXcfC15ora97F2wwZu+evfiFVX9Zm2NqjJOBRofK1JnjieRb+5kdpv1rFsxUri1dVB1rdBQcJhaA6nnOKqoSP+iOt+gHSnCVfKUgqVcsJNL2wsdq2aPnuMfmToJ6BBh0JERMQlMGEK0Sx257BhrUVJyQHDh3Heu07nvHedDsALr29kyVNrmb9iJUueWsszL79CuqkpODkeR7lur2c66rOB7yg6tzVy4dmz+Ou367LapiohAgayQsF3br+DRUuWEqup2S/ISIV7lT/7wudZuHIVz2x4CaesbMCPu1ISQH2tOWzUSOb89IdceHUdcxc/SryqqrBwuJIg4QwBT5pUKeOVf8N1ZuJ1eiH5lp4tKTCHW7y0h+t+VE5rGm7aa2tZWt8RacT9qwIV2wz3VqTsKMWYgw5kzEEHcvHMGWhjePrlV1j61FrmLV/B0rXreO6117OZjlQiMWC1MaUUnU3NTJ88iTu+dXU2xlqWmNlTG4OjFP9Zt55v3/x73KFD9xsSyiSjKS8r41dXfokZ//2lQa399xcRa2MYWl7OPd+/jvO+ejUPL15CvGporxFxX8wwQX295ayz4jJe+U/hOjPx0h4Il9LeaxWAi+d5wnXPkYnmv5FMKurqINoj7jcWzmhnvbX0ZPY9M+ZXE6bJ1DrYGx57xOF84pyzuf2bX2f1H25h2W9v5MdfuZIp7zgF6/n9Wgwg70VASdI72jj+mGP4+3X1xEMnp1Ij4IwjUltHB5+44QfBPnW4799fyKQs2NunWM+YiWedftIELpg+Da+1taS2CgaTxSERi3H39d/htJNOpLOlpdcsQr09y4IYYEB2mDuF60zLIeCBAhcv7QnXPVvJ+K3U1xuSSRURcb+swsRcN9gXDrUiX+te3ZeVQgTJDZTMxqtmnLzKYjFOPfbtXFF7Id/86Icx6c68K9T0p3ZlPZ9Eoow7679J1ZAh6DAmt9SQcZL7yk2/Y+3adcTLy/stwUJ2fEi5T59MWFGxsjNZ4JqPXoyKx/u9DQYjZCjsVCTK+Mf13+bwQw7Ga2/vFcG0d83RyaSiocFXyZk/JR57H+nOgUbAmaXKDUzTsQ+L5MyXbGrON3s5fCnCbghYOA7bm5tZ88KLHHv4YbtoAL7WCETgxdwLJJKbQCKjmfm+j5CS5h07Buxik25t5Td1VzN+zBj8Ijth7S72WiCwOVSUSTW4NwJ2lOLfS5dx45/+Qqy6d/fp9gWdnsdzr71Ot2TYuxm3SkmGVQ5lVE11VpsyYbauQjS1k44+iumnncqcRYuJVVQMajJ+K+tXbsa1Ys56JSVaaw4aPpw/f7uO5Oe+gA1DH4tpfek9Eg6SXfgqObOWmHs56bTfywS8U/LoXhBYvLQvXedqpsxcrFNz7u+DhB4RMpPQWmQsxvqXX2XCJz/DMYcewsTjxzJ1womcfvxYjj7k4G7kkYmv7M2wGiEEIjdb1ADbngsKGTRzzvRpfPLdZxeVgDOEoKTstuf+lueEmdB2FqBMmHrwzaYmPv2/P0I6Tr82dWav/IXXN3LypZ/NWg7sW1hTyuNxTjj8MD5y1kwuPe/ccFvFImX+tX0F8LGzZjFnwaJBHaaVERb3ddxlnCyLIYir0Flr4tjj+P4XLuOK7/+AWHV1UR0Be4uEJQ0NhjNmvg0lb0JrA1YWkR+7V6sJHKlyvWsyaS7FLr8VoghZK8Me/gNnzJ5Aw9hNRI5afaoNO06QrGHdCy+ybv3T3Pq3uymrGsrxRxzO5HEnMPWkEznt2GM5aOSIPt0rM7YUqmP2TIDQvk/F0KH85LLPZvMoF4OgcgWfbS0trHruedZueInnX9/I9tZWPN+nprKCEUOrOOLA0bzj7ccw9ogjslpixuyce01HKS776S947dVXg9AcvzRkX5NTdMK+RZs07tjBohUrWbTsMW5/cC531F3NYaNG5a0Rq3BLZuY7TmHY6FFsb25GOc6gTeCx4rnnaW1r60bGmQx5Q+JxaoZWcsCwYd3GzZ6EunyJ+Evvv4B7lyzh4cVLiFVWFo2Ie4eEgzq5Rjr8AuVU46WLU27NhiudlArHUSDAmkxRbj/7To6jCB2c0RqMKU4WLiEkxvi47ihl0z/S1H8o1IYjguwzHg40ADceRyYSWCydvs8TT63jiRUr+dmdf6aqpoZxR47hXSccz9kT38mUCeN71UQSEId9S6tkyWnBUtLZ3MyVl32Oow85uChacC55Pvz4k/zh/geY+8Ry3tjyJqQ7c+dRl1evELgVFZxyzNF88tx384EZ06hIJAJiC60ZruNw24Nz+Ot99xOrKh0CJpTAbc5/97BuBHvD5eXIigoWPfY4M774Pyy48WccMGxYXhqxCB0UR1ZXcdpxx/LAgoVI10UPUhK++Ls3sPapdVCeCIr45I4lKRlaXs5Bw4dx8tFHMfu0Uzl74mmMrK4OybiwLG8itGYA/OpLX+SklatJh9tQxRB6ik/CmXqnU2ZegOOeg+/5RYgDDjRfpRRSgu9vsdpfiLWLhLVrpRWbPEQr1giEGKKMPsAKfTxCTBbYM3Dd4RgT1lgrWDN2SKc1jvNBNfXM3+mGhocjs3QfE3FIxiaURJUQiPIEUpRjraWpvZ1Fy1ewaP5C/rH4UZ6+/dYekXwgr/VcAwxydpY+Cwsh8Do7GXXwQVx+4fmY0HxXiGBkQ2Jftm4937zpd8xZ9hh4HiQSuGVxZHlij33pa83SVatZ+uQKvnf7nVzz8Y9yyVmzsuT14sY3uPwnP8cpLy+5cCS70+etrDg6FCrKamp47rkX+MT//oj7v399t/3xnmrhAph0wlgemDd/QHrm7yvimbrhsdguY8BaS3NbG83Nzax/+hnuvPd+Rh8wmo/Mnsnl//V+Dhk5IttW+baRlBJfa4459BAuv6iWG266pWhm6WKTsKChwTKxNoFs/CHGZMzFhWm/UkocR6H1Guv7vzCOvZs5czZnJfCdJfLgPw8APyL57gOkZ94npP0CbuxYtJ+xmRVho1D8mGTylLDqUtFr6EbowUJoTHZPwFEKJxbDl4qKRFmPCYqQGDKTb1/MhcaYAdP7Skr89nY+d/4l1FRWFqQFZzQBKQTf/eP/Uf+7W/E707gVFYiQNE2OwLQnbVKVlyOE4PnXX+djdd/mrnkpvvXxj1IWi/GJ7/2ApuZmYiXgDV0MeJ5HrKaaB+Yv4N9L/8O7J74TrXWPQ2BEKPKNHzMGpBrUuaRtTh733b2noxRCKUQiEPY2NTXxw1v/yB/uf4BvffwSvnDhBVnBpRCHOGstV33wv/j9v+9ny9ZtyCIUDikuCSeTilTKl+XNF+PExpAu0AxtrcZxFMY0W9+71oyovpGGhnRW4968WTBqlGXsWEt9eE4dsHatyP7W0PCGgV8xceKtMlF9uRBcg+OU4/v5P5sQCt/XuO54pblAQ0PkLV1aEzYbvtTDWrObtm9n+NChu/e8DnMW706aDsyApb8ICiHwPI+a0aP53HvPy2qw+WvAFmMsH7v++9xx9z04VVXEKuM90hAyQhSAG4tBPM69qQXc959lQahIOo0zSAi4i0CDz633P8i7J74zL8eqzCmHjR6FTJTt16FKGWtMuDWJ4ziommrebGnlizf8gAUrVvH7r3+FyvJE3kQshEBrTU1FBZddcD7f+vmNuDXxgr30naKOq1RKc9ZZcdGhrwpXP1FAq2pcV1mtVxptPkxqzpqQ6B1SKb1H82/9bp4rEA7aDXzPnT77IWPsHTjusfheoUKCxfA1ksl/kEpF5ugBjMx+5pd+8WuWr17NjEmnc8b4cZw29ljGHHjgHj2vM1LwQMnapKTEb27hnJkzGF1Ts4sTVE9gTBB+c/F11/Pnu/9J2YgRQQx1AYtSZi84N+TGHYSpGY0x2FiMJ595jk7PCxKkhF7gPWXh4UOHEo/H6Uins9paJIgHlbYcx8EZVsNd9z/Aq1u2cO//3sDwoZX5E3HYvp8+7938+C8NNO3Yka3slS+KF7sRJLCwstO+F9c9JqyIlK+IrXFcZX29yOiOqaTmrCGZdEKi93uoctjwHEEy6XiPPPikTrdOscZ/DMdVWJvfihFowxbHOVmJshmApbY2Sl0zwOFrzdPPPMuv/nIXH/zGNZzwsUs59TOX8T83/pp7Fi9h49at2co2Skpcx8EYg+cPDCOIsRYchw/PnBEsHHkuHpmSht+69Tb+fPc9lI0Ygef7RSOADAGLASTg9GiJA5CSprYdNO9oy1ubBiiLxYg7TtaaEKE7GXu+T9mwYSx9/EkuuPoa2jvTeZcozZQ4HV1Tw/uSZ2Db2goOgSweCU+dasK3/lhBdjlrDY6jrNarzQ5xDqlUY46p1xY07lMpn2TSYdGiLUboszH+06EYk9/oFcIgpAX7sWi4Dw4IIZCJBEOqq4hVVtKR9nh89Rp+8ofbee+Xv8rxH/0k0y+/kmtvvY1HnlzOlsYmpJQMKSsr+Ty+Ugi8jg7e9rbDmTrhxOBdZc/lxoz2vHj1Gq675Q/Eaqp7LXHGoNbprCXuuJTFCkufoG1YzUtESfz2BM/3KRtew8JHl3L5L38VJDyxhdCU5SMzZ4DjFpyxr1jm6KBAQ3L2EULYafh+vuFABinBmGaj9YUsm9ucSfpRtN5Ipfzwmlv19OnvU9Z9DCEzK2hPR7FC+wI4m9NnjqKhYTORg9aAR25qSiUlorw8SMZgLdt37GDesseY9+gSiMUYNWI4k8aNw9M+osTNplJK6Ewz+YTjicdieZuiM3tj//Or3wbRf1Jio5J6PRaIhOdzxIEHUFle3nNTdMDhCAHNO3bQlk4H5tXIFL1nIvZ84sOGcfNf7+K80ydy3qSJec2BTNrc048fy1FvO4LnXnoZNx7Lm4yLowknk0F+aKHfi+OWEcTs9lwss0GON2vtVSyY+yzJpNMroT8NDZpTTnF55JG11piv4zgyT21YYIzGdatknLPDtohM0oPMnJVLyo5SxIYMIV5djZsoY3NjE3fPmct9qYXIeLz06wsLSJ44PvtuPYWvNVII7l36H5Y9uTzYu40IuOfdICXWS/OeSROz1oWeWwmC/tva3ILf2YmUMpL+9yZgW4twXL7ym5vpDAUX2/MphK818ViMGSdPgM6OgnJKF4eEM6ZoIaeBDTJV9Xy10ziOsr73mJn30M3U1qpe9TZ+4gmf2lplRlbfiJdeGRJxz1cTISzBC08HYNSoaB4MclLO9bx2HIdYZSVueXnJayG+1jgVFUw8fmyXZpyPNg38+u5/Deq41N6EkhKvo4ORBx/MJ885O28P9YxH8MrnnoeOzl5LzzqoSNgY3PIE69ev5y/zUlmrTr6YdvKEwBLUz45ZIqwsVCHgVIwpIDOVQAi+A1g2b+7tGR7co6FBWyGvz39FsRJjhBXidE45xQ0192h12s9IudSdhzJpKkfV1HD46FFZib6nWoQUgpc2bWLhylWIRCJMRhdhXzUoRym01pjOTn775S8xoqoqm+oznz4VwNKn1kaN27NJi1CKm+69r2Bh9OSjjyYWxtrnu+gXTsJhqUJHxI5HyIPyCk0Ks2FZ33ta6/T9ZMKdehvBPYQxHffgexvCaPkerqZCYgwCjqSm5igA6uoiEo5QciSM73PwyBFUJBJBhs0eLvwZQSO1YhVtjY24jrNfb0FmSHVfPhlHoM7mZpSx/O7aa7jgjMl578tnihTs6OggtWo1lMUHpRd5b0Abg0gkWPbUOta//Eq2RnlP+x7g0FEjOXjkCIyffy3xwkk41FiN5WiUJK+9VSEMSiEQDaEHs6JvnJtsGEPcAdxNEAuax+aM1SglleZoIEgWEiFCCUEKAb5mzIEHdiPUfPCftesi10PAN4b2xkbSjY10NDbSuadPUxPp1lbijsO5ySk8evOv+MTZswuK0c5UC5r7xJO89OJLuAPBH6GE4CqF19LKgpWrslaengq11lrKYjGOOOAA8PIn4aIl67BSHi2ECPdIe0yFCq0RUjwE9O2+anAvgRQPYsyX8kqzKYQNPETFkbmCSYQIJQVjGFVTndWkekzkIWE8/coroNR+mxQis9gePGI4N37jq1nPZrsbbclai+s4jK6u5oQxb+PIgw/Kkmghe7iZzG2/+/eD3TSzCD3DE08/A+edk+d0siglOHD4MDC6H0k4JExp7dF52qaCjSatt/kd4imAMBdz3yC4l9XWXa10ug0py7NZ/Hv2FgjLMdGwjlDKKC8rI79JStZs98a2RlAy78IDg4WEayor+fz57+nZwh0mSCmEgDMEvvSpdfx7wUKciiH7dcrKvMaztaCC4iC5AmbP5kQw/kfX1BTklFk8TRiGi+DtelaCJghLEtbal1n60LacOd+30K2bkPHXEOJorMkj8t0CYnifa/IRIuwze8DQPVQz2od5CkLQ6fm0dXaAlPu9Sdpa0PvomCYQCBnkHi84qUa44H/r1j+gPY9YPD5oSxj2Wt8FzMv2ltasZSFvwTYeL+hZCt8TzmitwibynJQ2HJQbAairk33fH3WSVMq3sBkh6bGIH4ZkWWHLo+EdoZThOoXJ3caaSOvKasQ9cMxSsqCFPgM/rLZ024NzmLNwMbHKiqg/CujATs8r+DIx1y1IIC0G4dnw/yvCP3tanTo4yRKIJP3h1FSXfZMdeW+uBG9REQomkVgaoSSxo729YBKPu26vxETLnJzcPfk4ShWF4EodmWQxL23axJd++gtUWVlgtIuQt0UhXmDKUADP9wralC9mFSVZcIv0FzLEL2wBIqUFa2U3wSRChJJadKC1vSNPpUFgLcQch6ohQ8CYQBUs1rQVAq+zE9LpPHaCLMTjqFhs0KZtzBSlb0+n+eC136WxsTHKVlbIcAMwhprKimz75ivI7ejoLOhZnCK9jwV25EVAWVMu/WfKHTs21OZFed70KQSIsA3q6gT19RERRyi5laelAE3YWIMSksNHj+bxFSuL5pErhcDv7GTc0UfxhQsvYPjQoeGOkNgr+UopeHnzFn5x19958bXXi1JkvfQUtuB9pJRcct33WPLYE8SGVaP9iIDzl/kEaMPbckL2pFI9nE7B+Ny0fXtB+/yFk3BtraShQSNoz/tBAmfkkUDfekZn2rK+3lBXJ0Xq0eEEynBeJnUsbd006wgRSmkhV4qXN23KLuj5ksFJRx/F3+5/oOhpK2+66n+YOPa4vM49eMRwaq/6Bk48Pqi0w65QJssnv/cDGv79IPGaavyIgIsilJ769vwDWoQMxv/GrVsLCtkrohOUbMxbJLEWYe3hzJw5JNSk+57E5j8xDMQhoReoyKdHBTQBUZxwhNIkYcdhwxubskUYerpmZKbFGeNPgFisKB65Qgh8YygbMoQDhtXga43n+/ha79Mn7QXHHjR8OMRjgyprlAlDmdo707z/m9fy+7v+Try6qtfKRu5P8HyfWGUlU8JiJrKHmZZtaL7uTKfZ8MYmcJx+JOGQcIS1L5Bfsg6JMRYpR6P124G+TfuYSbtpveNQsirM+JVHIlewyOei4R2hJEkYwHHYuHUbW5ubc7/d94kakvBpxx3LmMMPQ3d2FtUhylgbehKrHnkdO2rwFS7LLPIrn3+BKZd9kb8/9DDxmpqIgIsAJSW2o4PTxx3PMYceEuwHS9Hz+QS8smULr7/5JtJx8o6bL5ombAXPFuCOpFGOkEZNDbTS+X0XppRJuynttALSVgbavDTPRkM8Qqku6q5SNDU2snbDS1nS67HWqjVlsRgfmD4V296OVMWbqpH5KFwMw4IOC1auZuKln+XxteuJVQ2NCLhoA01gteZz7zk3mAd5WE8y5zz5zHN0NrfgOCpvn8DCZ1CYmEIY8SzG5HoI95DEDEAtAKlU39mUwiIOYN+X9/MLIdEaacULQFdpxz0LUEG+7EJWHdELa5bShY8Ha6OgxRKFlBI606RWrsJSWOrKz5x3LhXDh+MXkDN3UFsdCumnsD3HHHQgVUOH4sZj2CgWuGhacHrHDk4cdwLvm3JGYPIvwJKSWrGSoIBP/nOgaMk6NB1rMLoxnKU9FbEVWhuh1GnO9FmnAZba2t63MYX3cKbNPEModSLaN3mUYTRIKTD2dc+x6wH24hkdJhaz6YIUBktl9v6FInQkMzhVoXOdyXv5EaI9muqlqw3jKBauXI0gzxJuQqC14bDRo/hi7fvQzS2D0hxcqEafr5CTsThorTlk5AiuvuTDeK2tiKhWcPEsLdbyo89/NqwCZntMn5YgSUva95n75AqIF1bBqkjJOuokqdSb1trlSJWvNmSQUhpjv07fxtlaY8XXwjR8eRSfsEHxBmGXMWfOjpDY90rCOWTVU4ElqIeJGMpZZ8V3Hl95IetIZquDdrD5tENwDWPboulemjDWIsvKeGzd07yyeUuQCzovbTjIIf31iz/IsWOPo6O1tSBtYrAu+IVYCGRY+vDSc87m6Lcfg9fenpfQFKELjuOQ3raNKz5yMTNOOSnvIhrGGCzw+NPP8OyLL+IUWMGqOL2aDPZwJSKFzLOSEjj4vhHKOV9NPXMGDQ26V7XhZNKhoUGraWe+WzjqbDzfIETP7ydEkHbTiFR3QtsD6rLpudrz5M7ArVXYGtrbK4u5blhjD4O8+y9sDhkIF1H+7JLUhF3XpeXNN/nbgoXZBSUfTc0CFYkE/3fN1ykvK8NPp/cbksi02QsbN3LKpz7HSZ/8LCdf+llOuvSznPypz3HiJz5N8ov/w/aWFqy1ecm0QgisMSTicb51yUewaS8y+xcA13Xp2LqVs2fO4AefuRRtTP7j1QYr9x1zHsZ2dhZUjKN4JJzZF7b2n/i+AVSeqwRhBP5vmTSpkoYG0yu5pOvqJKmUJpmsRshfBbMkzwpQ4OB5ncaa+4C972eHpl9h5eY8vcmDQpZSVTu27GhAZDy8C+w/KxCTwsxfeXiHC4kxCKu3RlO+tImYmMudD88DyHsBUVKijeGUY47mjm/XIYzB97z9SiNu70zz5Lr1rFi3juXr1rNi3XqWr13HqmefZ8H8FD//292IPK0NAEopjDF8YPpUTj5pPOkdOwpe8Pc3SBmkQu14801mTZ3CX6+9BimDPN4iz/kjpaSxtZW/pRYgEomCc3cXp0cbGjQgvNScFdbax1AqKHSfz0KutUE5R8pYxW2ADUiriETcRepWivgdKOdwtM5nLzgwuzuOtdYuYMHcZ8Nrv3WPZDRlYTYUYETWKAWOnQXYAuOSBQ0Nhsnn1CDEdLQmj7YIYruN8XwjXgvHRKQJlyC0MTiJBE+sXsOi1WuC/cc8FxElJb7WnD95En/73nVUxmKkW1txHGe/0NqkEMQTCZxEglgigRt+YmUxnOHD+Pldf2fTtu15m/2zUr5SfOfjHwNjo3y4Pegbx1F4nWk6m5q49KJa7vn+9VQkgjpD+Y7PwHMd/vjgHDa9+hqxeLzgDG3FI7dkUoVL+v8hpcjbpCmEwvd94boXqGmzfhsQfL0pimk6mXSorzfU1xs1ffZtwnXfjefpvMzQuXYjYW8HehRaZREb8p9RVqI11vBxZs4cQmpqfrHNXf1mpeN9GtcdgbV+XtcKqk9toybxZs76EaFEtQPjedxw558LvpajFL7WvPddp7PgN7/ktHEn0LltO77nZYsx7G3BE0IMWA3PGLPLJ9AjXLa9sYkf/rUha1rOV9AxxvDuiacx/V0T8aL9990vwUIgw2IeSkq8dJrObds5YvRo/u+6em7+ypXEQ0esfGPbM1pwe2dnYOUo0CGr+CQchPpghP4TXnpLSGz5LsQOvufjuJ9W02b/mWSygoYGTTLp5GWerquT1NYqUimfyZNr5PRZd6Ocj4bxFfmazg1KSTzvZWO8fwAi0wZvidB0L7FPY3R+IVEIidaamHu49OylUG845dNOXu2SSmlmzBguhLgC37d5jQlrDVJgsS9zzz2tdDmIRihFbVgbnIoKHlj0KMvWrc+algshYm0MJx45hkW//gU/uuoKDhk5gs6mJtKtrfi+nyXabJIN2VXaz3gera2tgyrbldYaVVnBb/9xDy9v2hw6WuX3fpmJ9N1PfAzpOIOqnQqFDbVT3/Pw2trobGwk3bqDMQcdxHVf/G+euPUmLp55ZuBMZW1BFhptDFIIfnvPfTz/zLO4iURBDlnFJ2GwJJMODz+81VpxI44jCowZDYlYXSRV2RKmzZxOKuVTXx9ofcmkE2rHYref2lpFMumQyQ3d0KDVjFlnSXfIUqGc9+KlNYXkzhbCIJWwgp+QSrVmNMq9nheGdPlebDVab8srpCu4v8T3jZDOt5g27UieuMnjlFP2vS5Xba2ivj5Qq426DUeNDmd3PnHSlkDjWRaOg0hUHwDmOuN5XH3LrUW5XkZjc5Xify6qZdUfbuGma77OrHdNYkTVUHzPI93SQmdjE52NATl7HR1Yazlw1EjOT06huqKin3LW9g45OI5Dy7Zt3HDnn0NtOP+21cZw+vFjueDM6fgt+19YWOC2Y7OObtbabGWpRCzGQSNG8M5xJ/CFiz/IPT/+Pqtuu4VvfPRihlVWZp2wCiFgE2rBm7Zv54bb70ANKS9a7LZT1JYKE18YX/5KCe9LSDk0JGKZ9/N5nhZKnaCEepjps+8UUv7En3v/46RS/l7ILquVOlPf/U4rzZVArZBQsAk6CKdS+OmNpjPxu33Wgrvmp2DRfdvt1FlrhJRT8PPyzBYYY3GcYUrH/qWnTTuPefOehzpJcr5k6lQTxivb7PEB+Uo2bxY0NPiAUNNm/RbHOaegNgkzhlljl0b0NkA0NWOIVVYyd+Ei7pj7MBefOQNf64IWdyklFjBaU1NZyafOO5dPnXcuWxobeXHjG7y8eTPNO9oQQlBdUcHQIeWMrqnh8NGjqCwvzxXqBo027FRUcNu9/+aK97+Pow85OKjWk4fpXRD4rX77Yx/l3tQitNb7lbnpb9+po6MzHRRNsDmCjlLEXZdhlRUMHTJkl/aXYc3pQmHCWs5f+c0tbN74RlFzeDtFbqsgyUZDwxabnFUv4s5P8Dy/II07TOSBEALH+ZDV+kNy+uwFWO6V2MW+6XwBaCSVCoo6JpNxTFmNI/WRRsrJwLlW6HehFPi+DW0ShYmRgXeytMZczaP3tITvvO89kkwGpnFh5yDllAL2zyW+b1DOccrGHiU58zKdqr+LFIZUim7kmxm64XO6Z545Thv1QxxnFul0IUKJDQQSv8MgFwFBxrCu+0coVe3CGGRZGV/91U2c/c7TqKmoKKiuamawqbCiTEYDGVldzcjqak477ti3XOQGW4hTRhtub2riO7ffwe3f+Gre5ksZasNjjzicS849m5v+/Ffi1dX7TSrLIw86aJ/aW2sd7A8LUbS984xw+o+Fi/njPf8qegpRp+it1dBgqK1VZvPmX0qPS4RSE/D9Qp2fgtkZamtCqSlIOcVqjSLWAmy1U2fuCBeBChw73EqnQigVFB/Xukv7LdRt01qN4yrrpReZ+XNu7TEBA4EjVQqD36B88S0KM4tLtG+QchSu0yCnz1qMNn9wlPNouq3xRZYuzSQFkZw+c4SKy1OBC422FwulYgUScLg37kjr+wtIPbiBujoZbhlEKHEYa3HicV579VU+86Of0nDtNYH2UITFSwiR1aozpsNcL1IRaryZpBaDNcbYD7Xhvzw0ly//1/sZf9SReSeJEGFbXv2RD/HnOQ+zo6MDUUAJvYE2VnefnFlk/tdtzBXtvqEG/PLmzXzm+z9EurGit3dvjPzgCVMpX0rxeYw1oXmpGHXPgn1X39d4no8xFiErkeoIoZzjhXKOR6nDEaICYyye52cLbxaq/WbeTQgwOq2E+G8Axo7N473qDdRJ5s172hqWoJz8QrpyidhaG+wRq3eJWPxmbfRqlRi6Vk6b9aScNmuJmjZrjSpjPY68F1d9HIjhF2yWD0eREAjuAPq2+EaEgqG1JlZVxV333s9P7/oHjlJ4Ra5Vu7NTVqZSkpKy4L26gQCpFF5bO/V//L+C9rszWbQOGzWKyy68AL0fxQ3LUFDb9RNovb0xhkxQ1pa053FR3XfYsnUrTjxWFGes3iZhMtmu/IcfXGK1/iauqwC/WHM6JI7A6cpaG8QF+MEn4wYXCEdOkcg3K9jiuMpqfaU376GVoXNTflpfbSZpBz8pUjEGEZqndej1LZHyCKHUSUKpiUh5HELW4PsGz9OhQFFo24Qe4ulXTGfrvnuIRygtLcMY3KGVXPXzX/LQE0/iOiqq2FNkQceprOCf8+az9Kl1BXmjB3WgLVde9H5GHXwQXjodZdLqDU0ytNxIIfjYDf/L0sefIF5Zie6FedF7YlQYUmRSc26wXvpeXNctIhHvbKWRCCFDs7WkdxwsPdyYi5/+i0nN/WUm7WVB7VNXJ3XqoXus5y0Pa2EV3sNdAkognPi+wfc1Wmd89GV4jCjKSFVKWCF+zKOPtuyzh3iEkltwkBIjBLVfv4bHn34mG/8boUgLrZQYz6fuD3/MLlr5WhWMMQwfOpSvfOgDmLa2KItWL2jAxlqUlFz2k5/zp3vuDfbffb93xkavvk2gFUlj0h+xvr8C5Ti9RMS9DR/Hca3nLdUmfWk2vrZQBCksjVDiG+EMKyaB5QonKhRQiiecZOOk0xuM7rylaG0Sod+0Ycd1aW5r47yrvs7qFzdERFxkbditqOChxY/yyJPLA0crnac2HJqlP/eecxlz1FF4HR0FOdNF6D4PZLh98vkf/4xf3fln4jU1vToPeluEstTVQSrVaPDOxegXByAR+ziOg9brjSfeQyrVmn23YlgLamuVfvihB/D9O3HdgdM2QgQlHK39b1Kp1lCgiLTggUwUxhBLlPHGtm3M+MKXWLR6TUDEvo46tkhSMcZS94fbQ6NU/tqwNYbysjKuueTDmI7OqNRhMRb6MKSpI53mQ9++jl/f+Zc+8UDv/Z6rD1NOPvLIazrtn4XVz+MMFCK2Po7jWG3Wa83ZLHpgS0H7wLsnYktdndRl6kt43mtI6RSY5KQPmsX6uK6D592q58+9Ly8P8QglqrEZYokEW5qamX3FVfx9wUIcR0HoelGaw3FgiAjaGNyKISxa9hj3LlmaDTvKa+EOizt8+MwZnHjiOLyouEP+2m8YTucoxQuvb2TG5Vfyp3/dR7ymb0LA+qbXMmUJFz38jPY7plrffzJH6yvFGWQBHzfmWK2XGt0+jdSDG3qJbAxr1woeeGCL0LoW8EINs1SJ2Md1HZv2l+mOlsvCNolCkgYVEWvceJwO3+fCr13DN357C4bADOprXVKk54dxoc1tbZBOl7xZVgBISf1tt2djWvO9jrXgOIpvf+ISbFjjNkLPhDdf66z5+S+PzGfipz/Po8tX9hkB9x0J5xJxKvWqMZ0zrO/9MyRiiuKQVLye0YDAdR2r/btMR8ssUqk3elXby3iTL3h4ifX1RxGCkIhLTbvMmOafN7bjQpYubQ9DtKL5P9i0A2OQSuEmyrjh5t8z8/IreWrDSzgqCLXvbzLWxmCsJe66tHV0cOPf70YMgFSO2hhiQ4bwxPJVNMxfgAzbMh8oFaQKfc+k05ky8TS81kgb7gn5ZuKKX960mYu/fR0fuPpbbGlpIVZZkY1sHVwknCEb6iSpVKN55KHzre99DSFsYO/qd63YhiSjkNK3af9K8/CDtTz6aAsge93c2uVN/md8fRFC+GHKl1Iw29usBqzNGt2pp5NKvRol5hj8i5WxlnhNNfMee5x3fupzXPv729jR0dkvZGzCxRPIFoD4W2ohp37qc9y7YBGqCLVd+6pdhevwndvvIO152XSf+U5MCIo7CCX3i8Qd+ba5NiYsRRiQ7/aWVq774/9x8ic+zZ333o87ZEioY/St7tMPYlNYgKGuTppHHvq+wJtqtXkMx80UIe1rMg4IRgiB4zpW2yXC86aY+Q/+OKzYJNhbjeBiIZXySSYdnZrTgO/NAjbgug7W6n4zT1urEaFlwNf3GN0+jcVzXy763niEkoWvNbGKIbT7PvW//i2nXvpZbrn3Pto6u8g4s8AVkwQyKQB8rbNeq5mMSPc+uoSZV1zF+792NWtfeBG3vLzH97ZFeL58rQxueTlrn1rLHx+aixQi74U/E3N8xvhxvGfaVLyWlrdM11hI//TXufks6BnS9bXOEq8K80i/snkL1//xDiZ8/FK++Ytfs7W1lVjV0JwUE30Lp5/mtaW+3pJMOv4jjywkmZwkddllAvENXGcUvh84/1gr8ygwv+/kAiClwnEcfP8Nq/3vmnkP/tqACWsP970WmiXih+eTTJ6ubOKnOM5FwWqYzf7VW7HQXf1jbVBUwnUVRrdYL/0dM2/ODwBCDThyxNqPoHWQ29mtrmbdhg186tvX8+M/38Xn3/deLpxyBgeOGN5NYzXGIBAIkSmg3pVecBciDBe+IEECWGx20RRCZDWFl97YxN0LF3Pn3IdZtmoNWItbMSRLbPuMcENVSdllmuwBKRtjcAhyE5s8y+Nl8nZff/sdXHzmDMpiLp7W5FNSLUMedZd8mAcefXSP75MpZq+1DioS9aC5jLUox8GYPEgqHAN+LxadEDkpUEUw6FA5/dK0Ywep5Sv567wU9y1ZQuOWNyGRIFZdFdaA7r/lzOnXmZ1K+eFeq2/gZyTf/Rdh/c9KYT+N6x6YzfsMPtaKAsknQywWcHAchZCg/Vetr39j2s3NLJmzOYdk/BJolzc0fEBNP+sOBNfiuCcHK6JfrDbJmZ/WgjBYKwLBxFVoX6P9vypp6tLz5j4btouNNOD916Tna41bFkckEqzbsIEvfO8HXPv72zj7nadx0YypTDx+LCOqqvaYf9qGi7/IWTgzsTo7k1na83j6lVeZt3wlDy17jEWrV9O05U1wXdwh5QjI0/wcLNIPPfY450+eRFks1kP1M3i3uY8/gW5rJ1YxpMfPYazFKSvjxRc2cPXNv+PH//053Hz3tMPzRlRXEYvFSXd0BNpwKNwYaxHxOCuefobN2xsZVVPd81sAm7c3suKZZ4Ni9vugMQb3jbFo5Wo60umet3MBAuPmxu08/9rrPPnscyxYuYr/rF3Hq6+9DtpAeYJ4dXVgvSmBOPhScSUU1NZ27btOPmukjNkPAR8QMBHHCQoxBB+DECac0WIP72HDWZ0RsTOJRkFK8HysYDHwJ9Nm/8TSh7YBlGCojaCuLqiHnEw6SsXOt8jPCewZKNcFGwgpgQ1Fd2sTkdU7uldRCiaPzWmbIA1opm0soP0tCPEP6fu/8RY8vLyP2kYChjNmHaqUfRYp4znpR3t+MSnx2tqZMPZYlt/ym71P3DCp/n9d+10a/n0/8aqilSoLwtz89IfMvLl/Ipl09lqG860Q9oOaOns2jnyg4OIohXSYEAgpSafT0N4OymHkqBGceNSRnDF+HOPHjGHMQQdy8MgRDC0vx3Wc3ZJye2cnjTt28GZjE8+++hrPvPIqy597jhXPPs8LGzeiW1qDsZkoI+66WU27UBitmTLhRA4dNTJbm3ZfTJ1SSN5sauKRJ5cHi3ghVaeEwE+nedeJ43nbgQfs83N0tyQEs+SJp5/lmZdeQrnuLmbVzH2OOPggTjvuWFzlBBaHfbi+QOBpn2Xr1rPhtddxYvtexEAIgd+Z5oSjj2TcmLdlBa1iEo8FPN+nI+2xvaWZzdub2Ny4ncbGJuhMgxQQj+PGYtmMYyWzd25tp0OJPEq4wGfIeIuBnwE/c2acdar29XkCkxTGTsBxhnZFpudU1sj8NzMhQpNEsEFgQOvtVpsV0tiU0P49WXIBwoVRl2Csa2C2D60FGu4C7oolZx3rC//dWDtLGCag5GikdIL3tV2f3FmaVTPCdhFhG1kbmLmteQ5fP26R9xgTe4TUvW/qLqsAURxwhN1pOmiN4zjIqiqstWxpbGLu4iXMXbAIlEKUlTG8qoqaigrKy+IMKSsjHnPxfE3a92nv7GR7Swstbe0079iB7egIBEspwXVRsRjx6qqsk1gxw0akUqSWPQa+psfMpyQykShCUTaLE4ux+InlLPb9wtgpFkPF47slmMx9Nrz2OhteeDG/68fjPSLg7H3jMdY8+xxrnlrbu/qkIBg3SoHj4MTjqEQCi8WY0o1zd0rsebrIOKy56z/8wGPAYxbgjNkHKuGPs0IcIyxHW8tRCIYCCaytQGBB7ADbBjQJIZ+1xjwnrHxGx+wq5jy02eT2WnAPXZBm0hfoLqCYdOqh9cB64Mckk9UOZccZrY8X2OOstUdiGYkQIwU2EfaxwggP8K2gCdgsrN1ksU8LKdYqodamdfsz3dqhtlYxdmxkeo6wTwttxqznOA7SdYOsTqFzzJuNjby5dWsg8JnMzkeOoCwVqMBpRlVUBOdisab4xLsLbw0Zkt+ebqiN2yK1X2xIecGEbsKwrbe6jxuLIcvKeuX6b3nfsjgykehF4qC7bwFd2yelDqdU53WWEOrqJPPnB3mJFz64UcNG4KFdzshobG/tySxJJiVTpxrq603Jk+/uBZSuNgneo9GHJQSf7mbLlhaH9nYX11Vsj3u0J3zWNqR3McXmnhOQvok03wh5E/JOC7XjOAjHydYP7rZw0uU5myHtvkSphDT11XMYazH9QEzGWAzRkjKQSLgLgSZmstprba1k8+ZgLo8aZcNsTTtrbHs6zpBKGVKpgd1rmTYJ3mP37xqQqAY6dyuwrF0r2LxZMGqUDTVeGxFvhN4i5lxNJUKECAOJhPekDe6KXAek/YlQ9vSuYo/HRybmCBEiRIhIuOhkFCFqj900QiZFnczEEEaIECFCRMIRIvTBAJcym2UJuvYdI1KOECFCKSDK9h1hcGrA1iJjLi+8vpGrb/499/9nGW9s25bNG5vJxpTxoNSlFDsYIUKE/U4TLkQdiFauCCVJwkJKtre2cv1Nt4DrUjN8GOPHjGHyCcczefw4TjrmKEbX1HTTlCNEiBChP0g4ItIIe4Low/sIjBGo4t3SkRJVXY2xlu3NLaSWPUbq0SXgugwfPpzxY97G5HEnMOmE4zl17LH0onU6eL/WVlFQmwZe8CInW1yECBEGAQlHiLBHpbKP7hMW1FBeMYtWZRyzoHsiCWMtW5ubmbfsMeY9ugQch1GjRwdFvsvLix7kL4TwAMsTT3gFXSgT2y5VOhqaESIMAi1HTps5DyFGYjF5SugF1LfKPdf23X0zeZP7gpS67zP21zMXi1T33l+2gPsG7xgXMJ4+8FfIdc4y1uJ5HiBQjiym6GHDGzxjBZuxVu21Ld6qr60VCLSwDEPK4wvJrx0hQoT+VnFspyMsJ6GcqqIE0kdLQYSi6MS6j8Z/9+xOTlhgoMgOWgJrQcljhBDHFPHhg4Im0ayLEGFAwwFa0X5FoJdG+0wRSgD7XkO6qOO1V72jtQ6qf+1pjnWvarUXTVjYnDKWESJEGLhrnXUQxJFSBUnVIw6OMIBgbZC+s3h1lXtXsBBC7rayfffjct7vLX4Xuzk+QoQIA20NcxxgG8a6YPelvOTOVyjeCiCKeFRxHqLvVjfbl+RRQJ+JPujhfTrcgkWiVBylJHanusqlScoe1gbPZgtuP4tAYpFY24lAR2wcIcJAJGE6He2K0+l0A7OW9os3kRO6ONfSxbpOWf7XMUV6hniRrmNM/tfRMVHAgCnOM+zpXRJ7utlOaAfKrONoe6gxdhKYKcKKk4K6ysqBEiJlazWOq6zvfdkI/58YFSMu/IL71lcyBk4a2YqVftHGaIQIEfoOUkV7wBEGCZLJake4JxrkZISdLISYgJAHoFTgxKQNWNMfpOzjOA7aq9WPzLkr6qgIESLkwiHyriw1RP2xr6itDcoxdtVVThF84Mwzqxwjxhvfm4TlDAEnI+WBKOX0h/naWhsDJGPHOqxdW4Q61nVQB2EN7SjZToQI0YIfIUI/j+VMXeWAlLtn/DjrrKGOz3hjzLswTBGCk5G5mnKvkbKP4zjWT3/IzJv7J5JJJ5twI0KECJEmHDVBhEGCrrrKqdTuSLnZh0UEn++TTFY7xMaj/clGqDME9mSkHNVfmnKECBEiEo4QYX8i5UYfFhB8YPI5NY7TOd5o+65gT5mTQk05IuUIESJEJBwhQi+T8vZd9pSR44zvT8LaKdk95VLzvo4QIUJEwhEiDEJSbsoxX/9vdk/Z9yYjOEPY7J5ypClHiBAhIuEIEXqZlHP3lL9HMlntWPdErJlsDFOEsCchnZEo6WTzOhtDmKAjSi8ZIUKEiIQjRCgiKeeGRF0XxCnLccbXk7DiXQJ7EkIcglRxlAPai7TiCBEiRCQcIUIvkvJCgk+wp+w7E4wwU9D+OQI6oiaMECHCzvh//+V9rnx8y+IAAAAASUVORK5CYII=" />
+      <span class="app-name">Dictator<small>말하면 글이 되는 받아쓰기</small></span>
+    </a>
+    <div class="head-actions">
+      <button class="icon-btn" id="newBtn" title="새 노트"><i data-icon="plus"></i></button>
+      <button class="icon-btn" id="helpBtn" title="도움말"><i data-icon="help"></i></button>
+      <button class="icon-btn" id="setBtn" title="설정·백업"><i data-icon="gear"></i></button>
+    </div>
+  </div>
+  <div class="tabs-wrap">
+    <nav class="tabs" id="tabs" role="tablist">
+      <button class="tab" role="tab" data-tab="dict" aria-selected="true"><i data-icon="mic"></i>받아쓰기</button>
+      <button class="tab" role="tab" data-tab="notes"><i data-icon="list"></i>노트<span class="n" id="nNotes">0</span></button>
+      <button class="tab" role="tab" data-tab="words"><i data-icon="book"></i>단어장<span class="n" id="nWords">0</span></button>
+    </nav>
+    <div class="applied" id="applied"></div>
+  </div>
+</header>
+
+<main>
+  <section class="panel" id="work">
+    <!-- Dictation -->
+    <div class="view" id="vDict">
+      <div class="wbar">
+        <div class="titlebox"><input id="title" placeholder="제목 (비워 두면 첫 줄)" maxlength="80" /></div>
+        <select class="langsel" id="langTop" title="말하는 언어"></select>
+        <span class="sep"></span>
+        <button class="tool" id="undoBtn" title="방금 받아쓴 말 지우기"><i data-icon="undo"></i><span class="t">되돌리기</span></button>
+        <button class="tool" id="frBtn" title="찾아 바꾸기"><i data-icon="search"></i><span class="t">찾기</span></button>
+        <button class="tool" id="cleanBtn" title="띄어쓰기·문장부호 정리"><i data-icon="spark"></i><span class="t">정리</span></button>
+        <button class="tool" id="ttsBtn" title="소리 내어 들어보기"><i data-icon="speaker"></i><span class="t">들어보기</span></button>
+        <button class="tool" id="copyBtn" title="모두 복사"><i data-icon="copy"></i><span class="t">복사</span></button>
+        <button class="tool" id="expBtn" title="내보내기"><i data-icon="download"></i><span class="t">내보내기</span></button>
+        <button class="tool" id="focusBtn" title="집중 화면"><i data-icon="expand"></i></button>
+      </div>
+      <div class="editor-wrap">
+        <div class="note warn nosr" id="noSR" hidden></div>
+        <textarea id="ed" spellcheck="false" placeholder="아래 마이크 버튼을 누르고 말해 보세요. 말한 내용이 여기에 글로 적혀요.&#10;&#10;적힌 글은 바로 고칠 수 있어요. 글 중간을 눌러 두면 그 자리에 이어서 받아써요."></textarea>
+      </div>
+      <div class="live-bar" id="liveBar">
+        <div class="live-in">
+          <div class="interim">
+            <div class="st"><span class="dot-live"></span><span id="stTxt">대기 중</span><span class="lng" id="stLang"></span><span class="tm" id="stTime">0:00</span></div>
+            <div class="tx" id="interim" data-ph="마이크를 누르면 듣기 시작해요"></div>
+          </div>
+          <div class="side-mini">
+            <div class="wave"><i></i><i></i><i></i><i></i><i></i></div>
+          </div>
+          <button class="mic" id="micBtn" title="받아쓰기 시작·멈춤 (F8)" aria-label="받아쓰기 시작"><i data-icon="mic"></i></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Notes -->
+    <div class="view" id="vNotes" hidden>
+      <div class="wbar">
+        <div class="search"><i data-icon="search"></i><input class="inp" id="nq" placeholder="노트 찾기" /></div>
+        <div class="seg" id="nSort" style="flex:none">
+          <button data-v="upd" aria-pressed="true">최근</button><button data-v="star" aria-pressed="false">별표</button><button data-v="len" aria-pressed="false">긴 글</button>
+        </div>
+        <span class="grow"></span>
+        <button class="tool prim" id="newBtn2"><i data-icon="plus"></i><span class="t">새 노트</span></button>
+      </div>
+      <div class="scroll"><div class="pad"><div class="inner" id="notesList"></div></div></div>
+    </div>
+
+    <!-- Words -->
+    <div class="view" id="vWords" hidden>
+      <div class="scroll"><div class="pad"><div class="inner">
+        <h2 class="h1">단어장</h2>
+        <p class="lead">자꾸 틀리게 받아써지는 말을 바르게 고쳐 줘요. 이름, 회사 이름, 전문 용어, 영어 낱말처럼 인식이 어려운 말을 적어 두세요. 받아쓸 때마다 자동으로 바뀌어요.</p>
+        <div class="dict-add">
+          <input class="inp" id="wFrom" placeholder="이렇게 들리면 (예: 아웃 그리드)" />
+          <input class="inp" id="wTo" placeholder="이렇게 고쳐요 (예: outgrid)" />
+          <button class="btn primary" id="wAdd"><i data-icon="plus"></i>추가</button>
+        </div>
+        <div class="rows" id="wordsList"></div>
+        <div class="grp" style="margin-top:22px">
+          <div class="grp-h">자주 쓰는 문구<span class="grow"></span></div>
+          <p class="lead" style="margin-bottom:10px">“문구 내 주소”처럼 ‘문구’ 뒤에 이름을 말하면 미리 적어 둔 긴 글이 들어가요. 예: 이름 ‘내 주소’ → 내용 ‘서울시 …’. 음성 명령이 켜져 있을 때만 동작해요.</p>
+          <div class="dict-add">
+            <input class="inp" id="sName" placeholder="부를 이름 (예: 내 주소)" />
+            <input class="inp" id="sBody" placeholder="들어갈 글" />
+            <button class="btn primary" id="sAdd"><i data-icon="plus"></i>추가</button>
+          </div>
+          <div class="rows" id="snipList"></div>
+        </div>
+      </div></div></div>
+    </div>
+  </section>
+
+  <aside class="panel" id="side">
+    <div class="ph">
+      <div><h2>받아쓰기 설정</h2><p id="sideS">말하는 언어와 받아쓰는 방식</p></div>
+      <button class="icon-btn collapse" id="sideToggle" title="접기·펼치기"><i data-icon="chevron"></i></button>
+    </div>
+    <div class="pbody" id="sideBody">
+      <div class="sec">
+        <h3>이 노트<span class="v" id="saveSt"></span></h3>
+        <div class="kpis">
+          <div class="kpi"><div class="k">글자</div><div class="v" id="kChars">0</div></div>
+          <div class="kpi"><div class="k">낱말</div><div class="v" id="kWords">0</div></div>
+          <div class="kpi"><div class="k">받아쓴 시간</div><div class="v" id="kTime">0<small>분</small></div></div>
+        </div>
+      </div>
+      <div class="sec">
+        <h3>말하는 언어</h3>
+        <select class="inp" id="langSide"></select>
+        <div class="chips" id="langChips" style="margin-top:8px"></div>
+      </div>
+      <div class="sec">
+        <h3>받아쓰기 방식</h3>
+        <label class="switch"><span>음성 명령<small>“마침표”, “줄 바꿈”, “방금 거 지워” 같은 말을 명령으로 알아들어요</small></span><input type="checkbox" id="oCmd" /></label>
+        <label class="switch"><span>자동 문장부호<small>“~다”, “~요”로 끝나면 마침표, “~까”로 끝나면 물음표를 붙여요</small></span><input type="checkbox" id="oPunct" /></label>
+        <label class="switch"><span>항상 끝에 이어 쓰기<small>끄면 글 중간을 눌러 둔 자리에 받아써요</small></span><input type="checkbox" id="oAppend" /></label>
+        <label class="switch"><span>쉬었다 말하면 새 줄<small>말 사이가 오래 비면 줄을 바꿔요</small></span><input type="checkbox" id="oPauseNl" /></label>
+        <div class="field" id="pauseRow" style="margin:4px 0 6px"><div class="lbl">쉬는 시간 기준<span class="v" id="pauseV">4초</span></div><input type="range" id="oPause" min="2" max="15" step="1" style="accent-color:var(--dark)" /></div>
+        <label class="switch"><span>시간 표시 넣기<small>새 줄을 시작할 때 [14:05] 처럼 시각을 적어요</small></span><input type="checkbox" id="oStamp" /></label>
+        <label class="switch"><span>화면 켜 두기<small>받아쓰는 동안 화면이 꺼지지 않게 해요</small></span><input type="checkbox" id="oWake" /></label>
+        <label class="switch"><span>시작·멈춤 소리<small>짧은 알림음으로 알려 줘요</small></span><input type="checkbox" id="oBeep" /></label>
+      </div>
+      <div class="sec">
+        <h3>인식 방식</h3>
+        <div class="seg" id="oMode"><button data-v="auto">자동</button><button data-v="cont">길게 이어서</button><button data-v="short">짧게 끊어서</button></div>
+        <p class="hint" style="margin-top:8px" id="modeHint"></p>
+        <div class="field" style="margin-top:6px"><div class="lbl">말이 없으면 자동 멈춤<span class="v" id="idleV">5분</span></div><input type="range" id="oIdle" min="0" max="30" step="1" style="accent-color:var(--dark)" /></div>
+        <label class="switch" id="localRow" hidden><span>기기 안에서 인식<small>지원하는 브라우저에서는 인터넷 없이, 음성을 밖으로 보내지 않고 받아써요</small></span><input type="checkbox" id="oLocal" /></label>
+        <div class="note" id="localNote" hidden></div>
+      </div>
+      <div class="sec">
+        <h3>방금 받아쓴 말<span class="v" id="segN"></span></h3>
+        <p class="hint">말 한 마디씩 시각과 함께 남아요. 누르면 복사돼요.</p>
+        <div class="segs" id="segList"></div>
+      </div>
+      <div class="sec">
+        <h3>음성 명령 목록</h3>
+        <table class="cmdt" id="cmdTable"></table>
+      </div>
+    </div>
+  </aside>
+</main>
+
+<div class="foot"><i data-icon="shield"></i>받아쓴 글은 이 기기에만 저장돼요. 음성 인식은 브라우저가 처리하며, 대부분의 브라우저는 인식을 위해 음성을 인터넷으로 보내요.</div>
+<button class="btn line sm focus-exit" id="focusExit"><i data-icon="x"></i>집중 화면 나가기</button>
+
+<input type="file" id="fileIn" accept=".json,.txt,.md,application/json,text/plain" hidden />
+
+<!-- Export -->
+<dialog id="expDlg">
+  <div class="dlg-head"><h2>내보내기<small id="expSub"></small></h2><button class="icon-btn" data-close><i data-icon="x"></i></button></div>
+  <div class="dlg-body">
+    <div class="btns g2">
+      <button class="btn line" data-exp="txt"><i data-icon="doc"></i>텍스트 (.txt)</button>
+      <button class="btn line" data-exp="md"><i data-icon="doc"></i>Markdown (.md)</button>
+      <button class="btn line" data-exp="srt"><i data-icon="clock"></i>시간별 기록 (.txt)</button>
+      <button class="btn line" data-exp="html"><i data-icon="doc"></i>문서 (.html)</button>
+      <button class="btn line" data-exp="print"><i data-icon="print"></i>인쇄 · PDF</button>
+      <button class="btn line" data-exp="share"><i data-icon="share"></i>공유하기</button>
+    </div>
+    <p>‘시간별 기록’은 말 한 마디마다 받아쓴 시각을 붙여 줘요. 회의록에 쓰기 좋아요.</p>
+  </div>
+</dialog>
+
+<!-- Find & replace -->
+<dialog id="frDlg">
+  <div class="dlg-head"><h2>찾아 바꾸기</h2><button class="icon-btn" data-close><i data-icon="x"></i></button></div>
+  <div class="dlg-body">
+    <div class="field"><label>찾을 말<span class="fr-count" id="frCount"></span></label><input class="inp" id="frFind" /></div>
+    <div class="field"><label>바꿀 말</label><input class="inp" id="frRep" /></div>
+    <label class="switch"><span>단어장에도 추가<small>다음부터 받아쓸 때 자동으로 바꿔요</small></span><input type="checkbox" id="frDict" /></label>
+    <div class="btn-row"><button class="btn ghost" id="frNext">다음 찾기</button><span class="grow"></span><button class="btn primary" id="frAll">모두 바꾸기</button></div>
+  </div>
+</dialog>
+
+<!-- Settings -->
+<dialog id="setDlg">
+  <div class="dlg-head"><h2>설정 · 백업</h2><button class="icon-btn" data-close><i data-icon="x"></i></button></div>
+  <div class="dlg-body">
+    <div class="field"><div class="lbl">글자 크기<span class="v" id="fsV">17</span></div><input type="range" id="fs" min="13" max="30" step="1" style="accent-color:var(--dark)" /></div>
+    <label class="switch"><span>본문을 명조체로<small>마루부리 글꼴로 보여 줘요</small></span><input type="checkbox" id="oSerif" /></label>
+    <div class="sec">
+      <h3>백업</h3>
+      <p class="hint">노트, 단어장, 설정을 파일 하나로 받아 두거나 되살려요. .txt 나 .md 파일을 불러오면 새 노트가 돼요.</p>
+      <div class="btns g2">
+        <button class="btn line" id="bkOut"><i data-icon="download"></i>백업 받기</button>
+        <button class="btn line" id="bkIn"><i data-icon="upload"></i>불러오기</button>
+      </div>
+    </div>
+    <div class="sec">
+      <h3>정리</h3>
+      <div class="btns"><button class="btn line danger" id="wipe"><i data-icon="trash"></i>모든 노트와 설정 지우기</button></div>
+    </div>
+    <div class="note" id="envNote"></div>
+  </div>
+</dialog>
+
+<!-- Help -->
+<dialog id="helpDlg" class="wide">
+  <div class="dlg-head"><h2>Dictator 쓰는 법<small>말하면 글이 되는 받아쓰기</small></h2><button class="icon-btn" data-close><i data-icon="x"></i></button></div>
+  <div class="dlg-body help">
+    <div><h4>시작하기</h4><ul>
+      <li>아래 둥근 마이크 버튼을 누르고 말하세요. 처음 한 번은 마이크 사용을 허락해 주세요.</li>
+      <li>듣는 중인 말은 아래 칸에 흐리게 보이고, 말이 끝나면 위 편집 칸에 글로 들어가요.</li>
+      <li>다시 누르면 멈춰요. 길게 말해도 알아서 계속 이어 들어요.</li>
+      <li>적힌 글은 바로 손으로 고칠 수 있어요. 글 중간을 눌러 두고 말하면 그 자리에 들어가요.</li>
+    </ul></div>
+    <div><h4>음성 명령 (켜져 있을 때)</h4><ul>
+      <li>“마침표”, “쉼표”, “물음표”, “느낌표” → 문장부호</li>
+      <li>“줄 바꿈”, “새 문단” → 줄을 바꿔요</li>
+      <li>“방금 거 지워” → 바로 앞에 받아쓴 말을 지워요</li>
+      <li>“받아쓰기 그만” → 멈춰요</li>
+      <li>“문구 내 주소”처럼 ‘문구’ 뒤에 단어장의 문구 이름을 말하면 그 글이 들어가요</li>
+    </ul></div>
+    <div><h4>알아 두세요</h4><ul>
+      <li>음성 인식은 브라우저 기능이에요. Chrome, Edge, 삼성 인터넷에서 잘 돼요. Firefox는 아직 지원하지 않아요.</li>
+      <li>대부분 인터넷이 있어야 인식돼요. ‘기기 안에서 인식’이 보이면 인터넷 없이도 쓸 수 있어요.</li>
+      <li>파일을 바로 연 경우(file://)에는 마이크가 막힐 수 있어요. https 주소로 열어 주세요.</li>
+      <li>노트는 이 브라우저에만 저장돼요. 가끔 백업을 받아 두세요.</li>
+    </ul></div>
+    <div><h4>단축키</h4>
+      <div class="keys"><kbd>F8</kbd><span>받아쓰기 시작·멈춤</span><kbd>Esc</kbd><span>멈춤 / 집중 화면 나가기</span><kbd>Ctrl Z</kbd><span>편집 되돌리기</span><kbd>Ctrl F</kbd><span>찾아 바꾸기</span></div>
+    </div>
+  </div>
+</dialog>
+
+<!-- Confirm -->
+<dialog id="cfDlg">
+  <div class="dlg-head"><h2 id="cfT"></h2></div>
+  <div class="dlg-body"><p id="cfM"></p><div class="btn-row"><button class="btn ghost" id="cfNo">취소</button><button class="btn primary" id="cfOk">확인</button></div></div>
+</dialog>
+
+<div id="toast" role="status" aria-live="polite"><span id="toastMsg"></span><button id="toastAct" hidden></button></div>
+<div id="printArea"></div>
+<script>
+'use strict';
+/* =========================================================================
+   Dictator · outgrid — speech-to-text notebook
+   Uses the browser's Web Speech API (SpeechRecognition). No server of our own.
+   Notes, word list and settings live in localStorage on this device.
+   ========================================================================= */
+
+/* ---------- Icons ---------- */
+const ICONS = {
+  plus: '<path d="M12 5v14M5 12h14"/>',
+  x: '<path d="M6 6l12 12M18 6 6 18"/>',
+  check: '<path d="m5 12.5 4.5 4.5L19 7.5"/>',
+  trash: '<path d="M4.5 7h15"/><path d="M9.5 7V5.2a1.2 1.2 0 0 1 1.2-1.2h2.6a1.2 1.2 0 0 1 1.2 1.2V7"/><path d="m6.5 7 .9 11.3a2 2 0 0 0 2 1.7h5.2a2 2 0 0 0 2-1.7L17.5 7"/>',
+  help: '<circle cx="12" cy="12" r="8.5"/><path d="M9.6 9.5a2.5 2.5 0 0 1 4.8.9c0 1.7-2.4 2-2.4 3.6M12 16.8v.1"/>',
+  gear: '<circle cx="12" cy="12" r="3"/><path d="M19.4 13.5a7.6 7.6 0 0 0 0-3l2-1.5-2-3.4-2.3.9a7.5 7.5 0 0 0-2.6-1.5L14 2.5h-4l-.5 2.5A7.5 7.5 0 0 0 6.9 6.5l-2.3-.9-2 3.4 2 1.5a7.6 7.6 0 0 0 0 3l-2 1.5 2 3.4 2.3-.9a7.5 7.5 0 0 0 2.6 1.5l.5 2.5h4l.5-2.5a7.5 7.5 0 0 0 2.6-1.5l2.3.9 2-3.4z"/>',
+  download: '<path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/>',
+  upload: '<path d="M12 16V5"/><path d="m7 9.5 5-5 5 5"/><path d="M5 20h14"/>',
+  list: '<path d="M9 6.5h11M9 12h11M9 17.5h11"/><circle cx="4.8" cy="6.5" r=".9" fill="currentColor"/><circle cx="4.8" cy="12" r=".9" fill="currentColor"/><circle cx="4.8" cy="17.5" r=".9" fill="currentColor"/>',
+  shield: '<path d="M12 3.5 5 6.2v5.3c0 4.3 3 7.6 7 9 4-1.4 7-4.7 7-9V6.2z"/><path d="m9.2 12 2 2 3.8-4"/>',
+  chevron: '<path d="m6 9 6 6 6-6"/>',
+  search: '<circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5"/>',
+  doc: '<path d="M6.5 3.5h7l4 4v13h-11z"/><path d="M13.5 3.5v4h4M9 12.5h6M9 16h6"/>',
+  copy: '<rect x="8.5" y="8.5" width="11" height="11" rx="2"/><path d="M15.5 8.5V6a1.5 1.5 0 0 0-1.5-1.5H6A1.5 1.5 0 0 0 4.5 6v8A1.5 1.5 0 0 0 6 15.5h2.5"/>',
+  print: '<path d="M7 9V3.5h10V9"/><rect x="3.5" y="9" width="17" height="7.5" rx="2"/><path d="M7 14h10v6.5H7z"/>',
+  dup: '<rect x="8.5" y="8.5" width="11" height="11" rx="2"/><path d="M14 11.5v5M11.5 14h5"/><path d="M15.5 8.5V6a1.5 1.5 0 0 0-1.5-1.5H6A1.5 1.5 0 0 0 4.5 6v8A1.5 1.5 0 0 0 6 15.5h2.5"/>',
+  mic: '<rect x="9" y="3.5" width="6" height="11" rx="3"/><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v2.5M9 20.5h6"/>',
+  stop: '<rect x="7" y="7" width="10" height="10" rx="2" fill="currentColor"/>',
+  book: '<path d="M4.5 5.5A2 2 0 0 1 6.5 3.5H19v14H6.5a2 2 0 0 0-2 2z"/><path d="M4.5 19.5a2 2 0 0 0 2 2H19v-4"/><path d="M9 8h6"/>',
+  undo: '<path d="M9 7 4.5 11.5 9 16"/><path d="M4.5 11.5H15a4.5 4.5 0 0 1 0 9h-2"/>',
+  spark: '<path d="M12 3.5v4M12 16.5v4M3.5 12h4M16.5 12h4M6 6l2.6 2.6M15.4 15.4 18 18M6 18l2.6-2.6M15.4 8.6 18 6"/>',
+  speaker: '<path d="M4.5 9.5h3l4.5-4v13l-4.5-4h-3z"/><path d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11"/>',
+  expand: '<path d="M4.5 9V4.5H9M15 4.5h4.5V9M19.5 15v4.5H15M9 19.5H4.5V15"/>',
+  star: '<path d="m12 3.8 2.5 5.1 5.6.8-4 3.9.9 5.6-5-2.6-5 2.6.9-5.6-4-3.9 5.6-.8z"/>',
+  clock: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
+  share: '<circle cx="17.5" cy="5.5" r="2.3"/><circle cx="6.5" cy="12" r="2.3"/><circle cx="17.5" cy="18.5" r="2.3"/><path d="m8.5 10.8 7-4.1M8.5 13.2l7 4.1"/>',
+  pen: '<path d="M14.5 5.5 18.5 9.5"/><path d="M4 20l1-4.5L15.8 4.7a2 2 0 0 1 2.8 0l.7.7a2 2 0 0 1 0 2.8L8.5 19 4 20z"/>',
+  arrow: '<path d="M5 12h14M13 6l6 6-6 6"/>',
+};
+function icon(n, cls = '') { return `<svg class="i ${cls}" viewBox="0 0 24 24" aria-hidden="true">${ICONS[n] || ''}</svg>`; }
+function hydrateIcons(root = document) { root.querySelectorAll('i[data-icon]').forEach(el => { const t = document.createElement('template'); t.innerHTML = icon(el.dataset.icon, el.className); el.replaceWith(t.content.firstChild); }); }
+
+/* ---------- Helpers ---------- */
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const pad2 = n => String(n).padStart(2, '0');
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+const store = {
+  get(k, d) { try { const v = localStorage.getItem('dictator.' + k); return v == null ? d : JSON.parse(v); } catch { return d; } },
+  set(k, v) { try { localStorage.setItem('dictator.' + k, JSON.stringify(v)); return true; } catch { toast('저장 공간이 부족해서 저장하지 못했어요', { err: true }); return false; } },
+};
+function fmtDate(t, time = true) {
+  const d = new Date(t), now = new Date();
+  const y = new Date(now); y.setDate(now.getDate() - 1);
+  const hm = `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+  if (d.toDateString() === now.toDateString()) return time ? `오늘 ${hm}` : '오늘';
+  if (d.toDateString() === y.toDateString()) return time ? `어제 ${hm}` : '어제';
+  const base = d.getFullYear() === now.getFullYear() ? `${d.getMonth() + 1}월 ${d.getDate()}일` : `${d.getFullYear()}.${d.getMonth() + 1}.${d.getDate()}`;
+  return time ? `${base} ${hm}` : base;
+}
+const hm = t => { const d = new Date(t); return `${pad2(d.getHours())}:${pad2(d.getMinutes())}`; };
+const hms = t => { const d = new Date(t); return `${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}`; };
+const clockOf = ms => { const s = Math.floor(ms / 1000); const h = Math.floor(s / 3600); return h ? `${h}:${pad2(Math.floor(s / 60) % 60)}:${pad2(s % 60)}` : `${Math.floor(s / 60)}:${pad2(s % 60)}`; };
+function download(name, data, type) {
+  const blob = data instanceof Blob ? data : new Blob([data], { type });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name;
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+}
+function fileSafe(s) { return String(s || 'dictator').replace(/[\\/:*?"<>|\n\r]+/g, ' ').trim().slice(0, 40) || 'dictator'; }
+async function copyText(t) {
+  try { await navigator.clipboard.writeText(t); return true; } catch {
+    const ta = document.createElement('textarea'); ta.value = t; ta.style.position = 'fixed'; ta.style.opacity = '0'; document.body.appendChild(ta); ta.select();
+    let ok = false; try { ok = document.execCommand('copy'); } catch {} ta.remove(); return ok;
+  }
+}
+const countChars = t => String(t || '').replace(/\s/g, '').length;
+const countWords = t => (String(t || '').trim().match(/\S+/g) || []).length;
+const oneLine = (t, n = 40) => { const s = String(t || '').replace(/\s+/g, ' ').trim(); return s.length > n ? s.slice(0, n - 1) + '…' : s; };
+const reEsc = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+let toastTimer;
+function toast(msg, { err = false, action, onAction, ms = 3200 } = {}) {
+  const t = $('#toast'); $('#toastMsg').textContent = msg; t.classList.toggle('err', err);
+  const b = $('#toastAct'); b.hidden = !action; b.textContent = action || ''; b.onclick = () => { t.classList.remove('show'); onAction && onAction(); };
+  t.classList.add('show'); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), action ? Math.max(ms, 6000) : ms);
+}
+function confirmDlg(title, msg, okLabel = '확인', danger = false) {
+  return new Promise(res => {
+    const d = $('#cfDlg'); $('#cfT').textContent = title; $('#cfM').textContent = msg;
+    const ok = $('#cfOk'); ok.textContent = okLabel; ok.className = 'btn ' + (danger ? 'rec' : 'primary');
+    const done = v => { d.close(); res(v); };
+    ok.onclick = () => done(true); $('#cfNo').onclick = () => done(false); d.oncancel = e => { e.preventDefault(); done(false); };
+    d.showModal();
+  });
+}
+function segSet(el, v) { $$('button', el).forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === String(v)))); }
+
+/* ---------- Languages ---------- */
+const LANGS = [
+  ['ko-KR', '한국어'], ['en-US', 'English (US)'], ['en-GB', 'English (UK)'], ['ja-JP', '日本語'], ['zh-CN', '中文 (普通话)'], ['zh-TW', '中文 (台灣)'], ['zh-HK', '粵語 (香港)'],
+  ['es-ES', 'Español'], ['fr-FR', 'Français'], ['de-DE', 'Deutsch'], ['it-IT', 'Italiano'], ['pt-BR', 'Português (BR)'], ['ru-RU', 'Русский'],
+  ['vi-VN', 'Tiếng Việt'], ['th-TH', 'ไทย'], ['id-ID', 'Bahasa Indonesia'], ['ms-MY', 'Bahasa Melayu'], ['fil-PH', 'Filipino'], ['hi-IN', 'हिन्दी'],
+  ['ar-SA', 'العربية'], ['tr-TR', 'Türkçe'], ['nl-NL', 'Nederlands'], ['pl-PL', 'Polski'], ['sv-SE', 'Svenska'], ['uk-UA', 'Українська'], ['mn-MN', 'Монгол'],
+];
+const langName = c => (LANGS.find(l => l[0] === c) || [c, c])[1];
+const isKo = () => S.lang.startsWith('ko');
+const isLatin = () => /^(en|es|fr|de|it|pt|nl|pl|sv|id|ms|fil|tr|vi)/.test(S.lang);
+
+/* ---------- State ---------- */
+const DEF = { lang: 'ko-KR', recent: ['ko-KR', 'en-US'], cmd: true, punct: true, append: false, pauseNl: false, pause: 4, stamp: false, wake: true, beep: true, mode: 'auto', idle: 5, local: false, fs: 17, serif: false };
+let S = { ...DEF, ...store.get('settings', {}) };
+let NOTES = store.get('notes', []);          // [{id,title,text,lang,created,updated,dur,segs:[{t,x,c}],star}]
+let WORDS = store.get('words', []);          // [{a,b}]
+let SNIPS = store.get('snips', []);          // [{n,b}]
+let curId = store.get('cur', null);
+let tab = 'dict';
+const saveS = () => store.set('settings', S);
+const saveNotes = () => store.set('notes', NOTES);
+const cur = () => NOTES.find(n => n.id === curId);
+
+function newNote(open = true) {
+  const n = { id: uid(), title: '', text: '', lang: S.lang, created: Date.now(), updated: Date.now(), dur: 0, segs: [], star: false };
+  NOTES.unshift(n); saveNotes();
+  if (open) openNote(n.id);
+  return n;
+}
+function noteTitle(n) { return (n.title || '').trim() || oneLine((n.text || '').split('\n').find(l => l.trim()) || '', 30) || `받아쓰기 ${fmtDate(n.created)}`; }
+function openNote(id) {
+  if (listening) stopRec();
+  flushSave();
+  curId = id; store.set('cur', id);
+  const n = cur(); if (!n) return;
+  $('#ed').value = n.text; $('#title').value = n.title || '';
+  insPos = n.text.length; undoStack = [];
+  renderNoteStats(); renderSegs(); updUndo();
+  setTab('dict');
+}
+
+/* ---------- Editor & autosave ---------- */
+const ed = $('#ed');
+let insPos = 0, undoStack = [], saveTimer = null, dirty = false;
+function markDirty() { dirty = true; $('#saveSt').textContent = '저장 중…'; clearTimeout(saveTimer); saveTimer = setTimeout(flushSave, 500); renderNoteStats(); }
+function flushSave() {
+  clearTimeout(saveTimer); if (!dirty) return; dirty = false;
+  const n = cur(); if (!n) return;
+  n.text = ed.value; n.title = $('#title').value.trim(); n.updated = Date.now();
+  const i = NOTES.indexOf(n); if (i > 0) { NOTES.splice(i, 1); NOTES.unshift(n); }
+  if (saveNotes()) $('#saveSt').textContent = '저장됨';
+  $('#nNotes').textContent = NOTES.length;
+}
+function trackCaret() { insPos = ed.selectionEnd ?? ed.value.length; }
+ed.addEventListener('input', () => { trackCaret(); markDirty(); });
+['click', 'keyup', 'select', 'focus', 'touchend'].forEach(ev => ed.addEventListener(ev, () => setTimeout(trackCaret, 0)));
+$('#title').addEventListener('input', markDirty);
+
+function renderNoteStats() {
+  const t = ed.value, n = cur();
+  $('#kChars').textContent = countChars(t).toLocaleString();
+  $('#kWords').textContent = countWords(t).toLocaleString();
+  const ms = (n?.dur || 0) + (listening ? Date.now() - runStart : 0);
+  $('#kTime').innerHTML = ms < 60000 ? `${Math.round(ms / 1000)}<small>초</small>` : `${Math.round(ms / 60000)}<small>분</small>`;
+}
+
+/* ---------- Text processing ---------- */
+const PUNCT_CMDS = [
+  // [regex source (words), replacement]
+  ['마침표|온점|period|full stop', '.'],
+  ['쉼표|콤마|comma', ','],
+  ['물음표|question mark', '?'],
+  ['느낌표|exclamation (?:mark|point)', '!'],
+  ['쌍점|콜론|colon', ':'],
+  ['줄 ?바꿈|줄바꿈|다음 ?줄|new ?line', '\n'],
+  ['새 ?문단|문단 ?바꿈|new paragraph', '\n\n'],
+];
+const ACTION_CMDS = [
+  [/^(방금 ?(거|것|말)? ?(지워|지워줘|지우기|취소)|지워 ?줘?|delete that|scratch that|undo that)$/i, 'undo'],
+  [/^(받아쓰기 ?(그만|멈춰|중지|끝)|그만 ?받아써|stop (listening|dictation))$/i, 'stop'],
+];
+const CMD_HELP = [['문구 + 이름 / snippet + 이름', '자주 쓰는 문구'], ['마침표 / period', '.'], ['쉼표 / comma', ','], ['물음표 / question mark', '?'], ['느낌표 / exclamation mark', '!'], ['콜론 / colon', ':'], ['줄 바꿈 / new line', '↵'], ['새 문단 / new paragraph', '↵↵'], ['방금 거 지워 / delete that', '되돌리기'], ['받아쓰기 그만 / stop listening', '멈춤']];
+
+function applyWords(t) {
+  for (const w of WORDS) {
+    if (!w.a) continue;
+    const src = reEsc(w.a.trim()).replace(/\\? /g, '\\s*');
+    try { t = t.replace(new RegExp(src, /[a-z]/i.test(w.a) ? 'gi' : 'g'), w.b); } catch {}
+  }
+  return t;
+}
+function applyCmds(t) {
+  for (const s of SNIPS) {
+    if (!s.n) continue;
+    const src = reEsc(s.n.trim()).replace(/\\? /g, '\\s*');
+    t = t.replace(new RegExp(`문구\\s*${src}|${src}\\s*문구|snippet\\s*${src}`, 'gi'), () => s.b);
+  }
+  for (const [w, r] of PUNCT_CMDS) {
+    const re = new RegExp(`\\s*(?<![\\p{L}\\p{N}])(?:${w})(?![\\p{L}\\p{N}])\\s*`, 'giu');
+    t = t.replace(re, r === '\n' || r === '\n\n' ? r : r + ' ');
+  }
+  return t.replace(/ +\n/g, '\n').replace(/\n +/g, '\n').replace(/ +$/, '');
+}
+function autoPunct(t) {
+  if (!t || /[.,?!:;…~"”')\]\n]$/.test(t)) return t;
+  if (isKo()) {
+    if (/(까|니|냐|나요|가요|래요|ㄹ까요|을까요|는지요|던가요|겠어요\?)$/.test(t)) return t + '?';
+    if (/(다|요|죠|네|음|함|임|됨|함|자|라|군|구나|지|세요|니다)$/.test(t)) return t + '.';
+    return t;
+  }
+  if (/^(en)/.test(S.lang) && /^(who|what|when|where|why|how|is|are|do|does|did|can|could|would|should|will|shall|may)\b/i.test(t)) return t + '?';
+  if (/[\p{L}\p{N}]$/u.test(t)) return t + '.';
+  return t;
+}
+function capSentences(t, before) {
+  if (!isLatin()) return t;
+  const startCap = !before.trim() || /[.?!]\s*$/.test(before) || /\n\s*$/.test(before);
+  if (startCap) t = t.replace(/^(\s*)(\p{Ll})/u, (m, a, b) => a + b.toUpperCase());
+  return t.replace(/([.?!]\s+|\n)(\p{Ll})/gu, (m, a, b) => a + b.toUpperCase()).replace(/\bi\b/g, 'I');
+}
+function joinText(before, piece) {
+  if (!piece) return piece;
+  if (/^[.,?!:;]/.test(piece)) return piece;                 // punctuation sticks to previous word
+  if (piece.startsWith('\n')) return piece;
+  if (!before || /[\s(\[“"']$/.test(before)) return piece;
+  return ' ' + piece;
+}
+let lastCommitAt = 0;
+function commit(raw, conf) {
+  let t = String(raw || '').trim();
+  if (!t) return;
+  if (S.cmd) {
+    for (const [re, act] of ACTION_CMDS) if (re.test(t.replace(/[.?!]$/, ''))) { act === 'undo' ? undoLast(true) : (stopRec(), toast('받아쓰기를 멈췄어요')); return; }
+  }
+  t = applyWords(t);
+  if (S.cmd) t = applyCmds(t);
+  if (S.punct && !/\n$/.test(t)) t = autoPunct(t);
+  const n = cur() || newNote(false);
+  if (!cur()) { curId = n.id; store.set('cur', n.id); }
+  const now = Date.now();
+  let pos = S.append ? ed.value.length : Math.min(insPos, ed.value.length);
+  const before = ed.value.slice(0, pos), after = ed.value.slice(pos);
+  let piece = t;
+  const newLine = S.pauseNl && lastCommitAt && now - lastCommitAt > S.pause * 1000 && before.trim() && !/\n\s*$/.test(before);
+  piece = capSentences(piece, newLine ? '' : before);
+  if (newLine) piece = '\n' + piece.replace(/^\s+/, '');
+  let ins = joinText(before, piece);
+  if (S.stamp && (!before.trim() || /\n$/.test(before) || ins.startsWith('\n'))) {
+    ins = ins.startsWith('\n') ? '\n' + `[${hm(now)}] ` + ins.slice(1) : `[${hm(now)}] ` + ins.replace(/^ /, '');
+  }
+  if (after && !/^[\s.,?!:;)]/.test(after) && !/[\s\n]$/.test(ins)) ins += ' ';
+  ed.value = before + ins + after;
+  undoStack.push({ pos, text: ins }); if (undoStack.length > 100) undoStack.shift();
+  insPos = pos + ins.length;
+  if (document.activeElement === ed) { try { ed.setSelectionRange(insPos, insPos); } catch {} }
+  else if (pos + ins.length >= ed.value.length - 1) ed.scrollTop = ed.scrollHeight;
+  n.segs = n.segs || [];
+  n.segs.push({ t: now, x: t, c: conf ? Math.round(conf * 100) : null });
+  if (n.segs.length > 3000) n.segs.splice(0, n.segs.length - 3000);
+  n.lang = S.lang;
+  lastCommitAt = now;
+  markDirty(); renderSegs(); updUndo();
+}
+function undoLast(byVoice) {
+  const u = undoStack.pop();
+  if (!u) { toast('되돌릴 받아쓰기가 없어요'); updUndo(); return; }
+  const v = ed.value;
+  let at = v.substr(u.pos, u.text.length) === u.text ? u.pos : v.lastIndexOf(u.text);
+  if (at < 0) { toast('글이 바뀌어서 되돌릴 수 없어요'); updUndo(); return; }
+  ed.value = v.slice(0, at) + v.slice(at + u.text.length);
+  insPos = at;
+  const n = cur(); if (n && n.segs?.length) n.segs.pop();
+  markDirty(); renderSegs(); updUndo();
+  toast(byVoice ? '방금 받아쓴 말을 지웠어요' : '되돌렸어요');
+}
+function updUndo() { $('#undoBtn').disabled = !undoStack.length; }
+
+function cleanText(t) {
+  return t.replace(/[ \t]+/g, ' ')
+    .replace(/ +([.,?!:;])/g, '$1')
+    .replace(/([.,?!:;])(?=[^\s\d.,?!:;)\]"”'’])/g, '$1 ')
+    .replace(/([.?!])\1+/g, '$1')
+    .replace(/ *\n */g, '\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
+/* ---------- Speech recognition ---------- */
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+const isAndroid = /Android/i.test(navigator.userAgent);
+let rec = null, listening = false, wantOn = false, runStart = 0, lastSpeech = 0, tick = null, wakeLock = null, errCount = 0, sessionCommitted = '';
+
+function effMode() { return S.mode === 'auto' ? (isAndroid ? 'short' : 'cont') : S.mode; }
+function beep(up) {
+  if (!S.beep) return;
+  try {
+    const ac = beep.ac || (beep.ac = new (window.AudioContext || window.webkitAudioContext)());
+    const o = ac.createOscillator(), g = ac.createGain(); o.type = 'sine';
+    const t0 = ac.currentTime; o.frequency.setValueAtTime(up ? 660 : 880, t0); o.frequency.linearRampToValueAtTime(up ? 990 : 520, t0 + .12);
+    g.gain.setValueAtTime(.0001, t0); g.gain.exponentialRampToValueAtTime(.12, t0 + .02); g.gain.exponentialRampToValueAtTime(.0001, t0 + .18);
+    o.connect(g).connect(ac.destination); o.start(t0); o.stop(t0 + .2);
+  } catch {}
+}
+async function wake(on) {
+  try {
+    if (on && S.wake && 'wakeLock' in navigator && !wakeLock) { wakeLock = await navigator.wakeLock.request('screen'); wakeLock.addEventListener('release', () => { wakeLock = null; }); }
+    if (!on && wakeLock) { await wakeLock.release(); wakeLock = null; }
+  } catch {}
+}
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && listening) wake(true); });
+
+function startRec() {
+  if (!SR) { showNoSR(); toast('이 브라우저는 음성 인식을 지원하지 않아요', { err: true }); return; }
+  if (speechSynthesis?.speaking) stopTTS();
+  if (!cur()) newNote(false), curId = NOTES[0].id, store.set('cur', curId);
+  wantOn = true; errCount = 0; lastSpeech = Date.now(); lastCommitAt = 0;
+  listening = true; runStart = Date.now();
+  beep(true); wake(true); spawn(); setUI();
+  clearInterval(tick); tick = setInterval(onTick, 500);
+}
+function spawn() {
+  const r = new SR();
+  r.lang = S.lang; r.interimResults = true; r.maxAlternatives = 1;
+  r.continuous = effMode() === 'cont';
+  if (S.local && 'processLocally' in r) r.processLocally = true;
+  const done = new Set(); sessionCommitted = '';
+  r.onresult = e => {
+    let interim = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      const res = e.results[i], tx = res[0].transcript;
+      if (res.isFinal) {
+        if (done.has(i)) continue; done.add(i);
+        // Android sometimes repeats the whole session so far in each final result: keep only the new tail.
+        let piece = tx.trim(), prev = sessionCommitted.trim();
+        if (isAndroid && prev) {
+          if (piece.startsWith(prev)) piece = piece.slice(prev.length).trim();
+          else if (piece === prev) piece = '';
+        }
+        sessionCommitted = (sessionCommitted + ' ' + piece).trim();
+        if (piece) commit(piece, res[0].confidence);
+      } else interim += tx;
+    }
+    if (isAndroid && sessionCommitted && interim.trim().startsWith(sessionCommitted)) interim = interim.trim().slice(sessionCommitted.length);
+    showInterim(interim);
+    lastSpeech = Date.now(); errCount = 0;
+  };
+  r.onspeechstart = () => { $('#liveBar').classList.add('speaking'); lastSpeech = Date.now(); };
+  r.onspeechend = () => $('#liveBar').classList.remove('speaking');
+  r.onsoundstart = () => $('#liveBar').classList.add('speaking');
+  r.onsoundend = () => $('#liveBar').classList.remove('speaking');
+  r.onerror = e => {
+    const er = e.error;
+    if (er === 'no-speech' || er === 'aborted') return;
+    if (er === 'not-allowed' || er === 'service-not-allowed') {
+      wantOn = false;
+      toast(location.protocol === 'file:' ? '파일로 열면 마이크가 막힐 수 있어요. https 주소로 열어 주세요' : '마이크 사용이 막혀 있어요. 주소창의 자물쇠 버튼에서 마이크를 허용해 주세요', { err: true, ms: 7000 });
+    } else if (er === 'network') {
+      errCount++;
+      if (errCount >= 3) { wantOn = false; toast('인터넷에 연결되지 않아 받아쓸 수 없어요. 연결을 확인해 주세요', { err: true, ms: 6000 }); }
+    } else if (er === 'audio-capture') { wantOn = false; toast('마이크를 찾지 못했어요. 다른 앱이 마이크를 쓰고 있는지 확인해 주세요', { err: true, ms: 6000 }); }
+    else if (er === 'language-not-supported') { wantOn = false; toast(`${langName(S.lang)}는 이 브라우저에서 인식할 수 없어요`, { err: true, ms: 6000 }); }
+    else { errCount++; if (errCount >= 4) { wantOn = false; toast('음성 인식이 멈췄어요: ' + er, { err: true }); } }
+  };
+  r.onend = () => {
+    showInterim('');
+    $('#liveBar').classList.remove('speaking');
+    if (rec !== r) return;
+    if (wantOn) { setTimeout(() => { if (wantOn && rec === r) { try { spawn(); } catch { finish(); } } }, errCount ? 600 * errCount : 120); }
+    else finish();
+  };
+  rec = r;
+  try { r.start(); } catch (err) { toast('음성 인식을 시작하지 못했어요', { err: true }); wantOn = false; finish(); }
+}
+function stopRec() {
+  wantOn = false;
+  if (rec) { try { rec.stop(); } catch {} }
+  setTimeout(() => { if (listening && !wantOn) finish(); }, 1500);
+}
+function finish() {
+  if (!listening) return;
+  listening = false; rec = null;
+  const n = cur(); if (n) { n.dur = (n.dur || 0) + (Date.now() - runStart); markDirty(); }
+  clearInterval(tick); beep(false); wake(false); showInterim(''); setUI(); renderNoteStats();
+}
+function onTick() {
+  if (!listening) return;
+  $('#stTime').textContent = clockOf(Date.now() - runStart);
+  if (S.idle > 0 && Date.now() - lastSpeech > S.idle * 60000) { stopRec(); toast(`${S.idle}분 동안 말이 없어 받아쓰기를 멈췄어요`); }
+  renderNoteStats();
+}
+function showInterim(t) { $('#interim').textContent = t || ''; }
+function setUI() {
+  const bar = $('#liveBar'); bar.classList.toggle('on', listening);
+  const mb = $('#micBtn'); mb.innerHTML = icon(listening ? 'stop' : 'mic'); mb.setAttribute('aria-label', listening ? '받아쓰기 멈춤' : '받아쓰기 시작');
+  $('#stTxt').textContent = listening ? '듣는 중' : '대기 중';
+  $('#stLang').textContent = langName(S.lang);
+  $('#interim').dataset.ph = listening ? '말씀하세요…' : (SR ? '마이크를 누르면 듣기 시작해요' : '이 브라우저는 음성 인식을 지원하지 않아요');
+  if (!listening) $('#stTime').textContent = '0:00';
+  renderApplied();
+}
+function toggleRec() { listening ? stopRec() : startRec(); }
+function showNoSR() {
+  const el = $('#noSR'); el.hidden = false;
+  el.innerHTML = '이 브라우저는 음성 인식(Web Speech API)을 지원하지 않아요. <b>Chrome</b>, <b>Edge</b>, <b>삼성 인터넷</b>에서 열어 주세요. 글은 여기서 직접 쓰고 저장할 수 있어요.';
+}
+
+/* ---------- On-device recognition (newer Chrome) ---------- */
+// Feature is new and varies by device, so we only ask the browser when the user taps the check button.
+let localChecked = false;
+function initLocal() {
+  const row = $('#localRow'), note = $('#localNote');
+  if (!SR || typeof SR.available !== 'function') { row.hidden = true; note.hidden = true; return; }
+  row.hidden = false; note.hidden = false; note.className = 'note';
+  note.innerHTML = `인터넷 없이 받아쓸 수 있는지 확인해 볼까요? <button class="linkbtn" id="chkLocal">확인하기</button>`;
+  $('#chkLocal').onclick = checkLocal;
+}
+async function checkLocal() {
+  const note = $('#localNote');
+  localChecked = true; note.className = 'note'; note.textContent = '확인 중…';
+  try {
+    const st = await SR.available({ langs: [S.lang], processLocally: true });
+    if (st === 'available') { note.className = 'note ok'; note.textContent = `${langName(S.lang)}는 이 기기 안에서 인식할 수 있어요.`; }
+    else if (st === 'downloadable' || st === 'downloading') {
+      note.innerHTML = `${langName(S.lang)} 기기 인식 모델을 받을 수 있어요. <button class="linkbtn" id="dlLocal">받기</button>`;
+      $('#dlLocal').onclick = async () => { try { note.textContent = '받는 중… 잠시 걸릴 수 있어요'; const ok = await SR.install({ langs: [S.lang], processLocally: true }); toast(ok ? '기기 인식 모델을 받았어요' : '받지 못했어요', { err: !ok }); } catch { toast('받지 못했어요', { err: true }); } checkLocal(); };
+    } else { note.className = 'note warn'; note.textContent = `${langName(S.lang)}는 이 기기에서 기기 안 인식을 지원하지 않아요. 인터넷 인식을 써요.`; if (S.local) { S.local = false; saveS(); $('#oLocal').checked = false; renderApplied(); } }
+  } catch { note.className = 'note warn'; note.textContent = '확인하지 못했어요. 인터넷 인식을 써요.'; }
+}
+
+/* ---------- Read aloud (proofreading) ---------- */
+function stopTTS() { try { speechSynthesis.cancel(); } catch {} $('#ttsBtn').setAttribute('aria-pressed', 'false'); }
+function readAloud() {
+  if (!('speechSynthesis' in window)) { toast('이 브라우저는 읽어 주기를 지원하지 않아요', { err: true }); return; }
+  if (speechSynthesis.speaking) { stopTTS(); return; }
+  if (listening) stopRec();
+  const s = ed.selectionStart !== ed.selectionEnd ? ed.value.slice(ed.selectionStart, ed.selectionEnd) : ed.value;
+  if (!s.trim()) { toast('읽을 글이 없어요'); return; }
+  const parts = s.match(/[^.?!\n]+[.?!\n]*/g) || [s];
+  const voices = speechSynthesis.getVoices(); const base = S.lang.split('-')[0];
+  const v = voices.find(x => x.lang === S.lang) || voices.find(x => x.lang?.startsWith(base));
+  parts.forEach((p, i) => {
+    if (!p.trim()) return;
+    const u = new SpeechSynthesisUtterance(p.trim()); u.lang = S.lang; if (v) u.voice = v; u.rate = 1;
+    if (i === parts.length - 1) u.onend = u.onerror = () => $('#ttsBtn').setAttribute('aria-pressed', 'false');
+    speechSynthesis.speak(u);
+  });
+  $('#ttsBtn').setAttribute('aria-pressed', 'true');
+}
+
+/* ---------- Side panel ---------- */
+function langOptions(sel) { sel.innerHTML = LANGS.map(([c, n]) => `<option value="${c}">${esc(n)}</option>`).join(''); sel.value = S.lang; }
+function setLang(c) {
+  if (c === S.lang) return;
+  S.lang = c; S.recent = [c, ...S.recent.filter(x => x !== c)].slice(0, 5); saveS();
+  $('#langTop').value = c; $('#langSide').value = c; renderLangChips(); setUI(); if (localChecked) checkLocal();
+  if (listening) { try { rec.onend = null; rec.abort(); } catch {} spawn(); }
+  toast(`${langName(c)}로 받아써요`);
+}
+function renderLangChips() {
+  $('#langChips').innerHTML = S.recent.map(c => `<button class="chip" data-lang="${c}" aria-pressed="${c === S.lang}">${esc(langName(c))}</button>`).join('');
+}
+function renderSegs() {
+  const n = cur(), segs = (n?.segs || []).slice(-30).reverse();
+  $('#segN').textContent = n?.segs?.length ? `${n.segs.length}마디` : '';
+  $('#segList').innerHTML = segs.length ? segs.map(s => `<button class="segi" data-copy="${esc(s.x)}"><span class="tm">${hm(s.t)}</span><span class="t">${esc(s.x)}</span>${s.c != null && s.c > 0 ? `<span class="cf" title="인식 확신도">${s.c}%</span>` : ''}</button>`).join('') : '<p class="hint" style="margin:0">아직 받아쓴 말이 없어요.</p>';
+}
+function renderSettings() {
+  $('#oCmd').checked = S.cmd; $('#oPunct').checked = S.punct; $('#oAppend').checked = S.append; $('#oPauseNl').checked = S.pauseNl;
+  $('#oPause').value = S.pause; $('#pauseV').textContent = S.pause + '초'; $('#pauseRow').hidden = !S.pauseNl;
+  $('#oStamp').checked = S.stamp; $('#oWake').checked = S.wake; $('#oBeep').checked = S.beep; $('#oLocal').checked = S.local;
+  $('#oIdle').value = S.idle; $('#idleV').textContent = S.idle ? S.idle + '분' : '안 함';
+  segSet($('#oMode'), S.mode);
+  $('#modeHint').textContent = {
+    auto: `지금 기기에 맞춰 ‘${effMode() === 'cont' ? '길게 이어서' : '짧게 끊어서'}’로 들어요.${isAndroid ? ' 안드로이드는 끊어 듣는 쪽이 더 정확해요.' : ''}`,
+    cont: '한 번 켜면 계속 들어요. 컴퓨터에서 잘 맞아요. 안드로이드에서 글이 겹쳐 나오면 ‘짧게 끊어서’로 바꿔 보세요.',
+    short: '말 한 마디가 끝날 때마다 끊었다가 바로 다시 들어요. 안드로이드·태블릿에서 가장 안정적이에요.',
+  }[S.mode];
+  $('#cmdTable').innerHTML = CMD_HELP.map(([a, b]) => `<tr><td>${esc(a)}</td><td>${esc(b)}</td></tr>`).join('');
+  $('#fs').value = S.fs; $('#fsV').textContent = S.fs; ed.style.setProperty('--ed-size', S.fs + 'px');
+  $('#oSerif').checked = S.serif; ed.classList.toggle('serif', S.serif);
+  renderApplied();
+}
+function renderApplied() {
+  const a = [];
+  a.push(`<span class="achip">${icon('mic')}${esc(langName(S.lang))}</span>`);
+  if (S.cmd) a.push('<span class="achip">음성 명령</span>');
+  if (S.punct) a.push('<span class="achip">자동 문장부호</span>');
+  if (WORDS.length) a.push(`<span class="achip warn">단어장 ${WORDS.length}</span>`);
+  if (S.local) a.push('<span class="achip">기기 안 인식</span>');
+  if (listening) a.unshift('<span class="achip bad">● 듣는 중</span>');
+  $('#applied').innerHTML = a.join('');
+}
+
+/* ---------- Notes list ---------- */
+let nSort = 'upd';
+function renderNotes() {
+  const q = $('#nq').value.trim().toLowerCase();
+  let list = NOTES.filter(n => !q || (n.title + '\n' + n.text).toLowerCase().includes(q));
+  if (nSort === 'star') list = list.filter(n => n.star);
+  if (nSort === 'len') list = [...list].sort((a, b) => b.text.length - a.text.length);
+  $('#nNotes').textContent = NOTES.length;
+  if (!list.length) {
+    $('#notesList').innerHTML = `<div class="empty"><b>${q ? '찾는 노트가 없어요' : nSort === 'star' ? '별표한 노트가 없어요' : '아직 노트가 없어요'}</b>받아쓰기를 시작하면 노트가 저절로 만들어져요.<br><button class="btn primary" data-act="new">${icon('mic')}받아쓰기 시작</button></div>`;
+    return;
+  }
+  const hl = s => q ? esc(s).replace(new RegExp(reEsc(esc(q)), 'gi'), m => `<mark class="hl">${m}</mark>`) : esc(s);
+  const total = NOTES.reduce((s, n) => s + countChars(n.text), 0);
+  $('#notesList').innerHTML = `<div class="grp-h">노트 ${list.length}개<span class="v">· 모두 ${total.toLocaleString()}자</span><span class="grow"></span><button data-act="exportAll">모두 내보내기</button></div>
+  <div class="notes-grid">${list.map(n => `
+    <div class="ncard ${n.id === curId ? 'cur' : ''}" data-open="${n.id}" role="button" tabindex="0">
+      <button class="mini star ${n.star ? 'on' : ''}" data-star="${n.id}" title="별표">${icon('star')}</button>
+      <h4>${hl(noteTitle(n))}</h4>
+      <p>${hl(oneLine(n.text, 220)) || '<span class="muted">빈 노트</span>'}</p>
+      <div class="meta"><span>${fmtDate(n.updated)}</span><span>· ${countChars(n.text).toLocaleString()}자</span>${n.lang && n.lang !== 'ko-KR' ? `<span class="tagb gray">${esc(langName(n.lang))}</span>` : ''}<span class="grow"></span>
+        <button class="mini" data-dup="${n.id}" title="복제">${icon('dup')}</button><button class="mini danger" data-del="${n.id}" title="지우기">${icon('trash')}</button></div>
+    </div>`).join('')}</div>`;
+}
+async function delNote(id) {
+  const n = NOTES.find(x => x.id === id); if (!n) return;
+  if (n.text.trim() && !(await confirmDlg('노트를 지울까요?', `‘${noteTitle(n)}’ 노트를 지워요.`, '지우기', true))) return;
+  const idx = NOTES.indexOf(n); NOTES.splice(idx, 1); saveNotes();
+  if (curId === id) { if (listening) stopRec(); curId = NOTES[0]?.id || null; store.set('cur', curId); if (curId) loadCur(); else { ed.value = ''; $('#title').value = ''; } }
+  renderNotes();
+  toast('노트를 지웠어요', { action: '되살리기', onAction: () => { NOTES.splice(idx, 0, n); saveNotes(); renderNotes(); } });
+}
+function loadCur() { const n = cur(); if (!n) return; ed.value = n.text; $('#title').value = n.title || ''; insPos = n.text.length; undoStack = []; renderNoteStats(); renderSegs(); updUndo(); }
+
+/* ---------- Words & snippets ---------- */
+function renderWords() {
+  $('#nWords').textContent = WORDS.length;
+  $('#wordsList').innerHTML = WORDS.length ? WORDS.map((w, i) => `<div class="dict-row"><span class="a">${esc(w.a)}</span><span class="ar">→</span><span class="b">${esc(w.b) || '<span class="muted">(지움)</span>'}</span><button class="mini danger" data-wdel="${i}" title="지우기">${icon('trash')}</button></div>`).join('') : '<div class="empty" style="padding:28px">아직 등록한 말이 없어요.</div>';
+  $('#snipList').innerHTML = SNIPS.length ? SNIPS.map((s, i) => `<div class="dict-row"><span class="a">${esc(s.n)}</span><span class="ar">→</span><span class="b">${esc(oneLine(s.b, 80))}</span><button class="mini danger" data-sdel="${i}" title="지우기">${icon('trash')}</button></div>`).join('') : '<div class="empty" style="padding:28px">아직 등록한 문구가 없어요.</div>';
+  renderApplied();
+}
+function addWord(a, b) {
+  a = a.trim(); if (!a) return false;
+  const i = WORDS.findIndex(w => w.a === a); if (i >= 0) WORDS[i].b = b; else WORDS.push({ a, b });
+  store.set('words', WORDS); renderWords(); return true;
+}
+
+/* ---------- Export ---------- */
+function noteMeta(n) { return `${fmtDate(n.created)} · ${langName(n.lang || S.lang)} · ${countChars(n.text).toLocaleString()}자`; }
+async function doExport(kind) {
+  flushSave();
+  const n = cur(); if (!n || !n.text.trim()) { toast('내보낼 글이 없어요'); return; }
+  const name = fileSafe(noteTitle(n));
+  if (kind === 'txt') download(name + '.txt', n.text, 'text/plain;charset=utf-8');
+  else if (kind === 'md') download(name + '.md', `# ${noteTitle(n)}\n\n_${noteMeta(n)}_\n\n${n.text}\n`, 'text/markdown;charset=utf-8');
+  else if (kind === 'srt') {
+    if (!n.segs?.length) { toast('시간 기록이 없어요. 받아쓴 노트에서만 만들 수 있어요'); return; }
+    download(name + ' (시간별).txt', `${noteTitle(n)}\n${noteMeta(n)}\n\n` + n.segs.map(s => `[${new Date(s.t).toLocaleDateString('ko-KR')} ${hms(s.t)}] ${s.x}`).join('\n') + '\n', 'text/plain;charset=utf-8');
+  }
+  else if (kind === 'html') download(name + '.html', `<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(noteTitle(n))}</title><style>body{max-width:720px;margin:40px auto;padding:0 20px;font:17px/1.85 "Apple SD Gothic Neo","Malgun Gothic",sans-serif;color:#1C2824;background:#FFFDF8}h1{font-size:26px;margin:0 0 4px}.m{color:#888;font-size:13px;margin-bottom:28px}p{margin:0 0 1em;white-space:pre-wrap}</style></head><body><h1>${esc(noteTitle(n))}</h1><div class="m">${esc(noteMeta(n))}</div>${n.text.split(/\n{2,}/).map(p => `<p>${esc(p)}</p>`).join('')}</body></html>`, 'text/html;charset=utf-8');
+  else if (kind === 'print') {
+    $('#printArea').innerHTML = `<h1>${esc(noteTitle(n))}</h1><div class="m">${esc(noteMeta(n))}</div>${esc(n.text)}`;
+    $('#expDlg').close(); setTimeout(() => window.print(), 60); return;
+  }
+  else if (kind === 'share') {
+    if (navigator.share) { try { await navigator.share({ title: noteTitle(n), text: n.text }); } catch {} }
+    else { await copyText(n.text); toast('공유를 지원하지 않아 글을 복사했어요'); }
+    return;
+  }
+  toast('파일을 받았어요');
+}
+function exportAll() {
+  flushSave();
+  if (!NOTES.length) return;
+  const txt = NOTES.map(n => `# ${noteTitle(n)}\n_${noteMeta(n)}_\n\n${n.text}`).join('\n\n---\n\n');
+  download(`Dictator 노트 ${new Date().toISOString().slice(0, 10)}.md`, txt, 'text/markdown;charset=utf-8');
+}
+function backup() {
+  flushSave();
+  download(`dictator-backup-${new Date().toISOString().slice(0, 10)}.json`, JSON.stringify({ app: 'dictator', v: 1, at: Date.now(), notes: NOTES, words: WORDS, snips: SNIPS, settings: S }, null, 1), 'application/json');
+}
+async function importFile(f) {
+  const txt = await f.text();
+  if (/\.json$/i.test(f.name) || txt.trim().startsWith('{')) {
+    let d; try { d = JSON.parse(txt); } catch { toast('백업 파일을 읽지 못했어요', { err: true }); return; }
+    if (d.app !== 'dictator') { toast('Dictator 백업 파일이 아니에요', { err: true }); return; }
+    const ids = new Set(NOTES.map(n => n.id)); let added = 0;
+    for (const n of d.notes || []) if (n && n.id && !ids.has(n.id)) { NOTES.push({ segs: [], ...n }); added++; }
+    NOTES.sort((a, b) => b.updated - a.updated);
+    for (const w of d.words || []) if (!WORDS.some(x => x.a === w.a)) WORDS.push(w);
+    for (const s of d.snips || []) if (!SNIPS.some(x => x.n === s.n)) SNIPS.push(s);
+    saveNotes(); store.set('words', WORDS); store.set('snips', SNIPS);
+    renderWords(); renderNotes(); toast(`노트 ${added}개를 불러왔어요`);
+  } else {
+    const n = newNote(false); n.text = txt; n.title = f.name.replace(/\.[^.]+$/, ''); saveNotes(); openNote(n.id); toast('파일을 새 노트로 열었어요');
+  }
+}
+
+/* ---------- Find & replace ---------- */
+let frFrom = 0;
+function frUpdate() {
+  const f = $('#frFind').value; if (!f) { $('#frCount').textContent = ''; return; }
+  const c = ed.value.split(f).length - 1; $('#frCount').textContent = c ? `${c}곳` : '없음';
+}
+
+/* ---------- Tabs ---------- */
+function setTab(t) {
+  tab = t;
+  $$('#tabs .tab').forEach(b => b.setAttribute('aria-selected', String(b.dataset.tab === t)));
+  $('#vDict').hidden = t !== 'dict'; $('#vNotes').hidden = t !== 'notes'; $('#vWords').hidden = t !== 'words';
+  $('#work').classList.toggle('list', t !== 'dict');
+  if (t === 'notes') { flushSave(); renderNotes(); }
+  if (t === 'words') renderWords();
+  store.set('tab', t);
+}
+
+/* ---------- Init ---------- */
+function init() {
+  hydrateIcons();
+  langOptions($('#langTop')); langOptions($('#langSide')); renderLangChips();
+  if (!SR) showNoSR();
+  if (!NOTES.length) newNote(false);
+  if (!cur()) curId = NOTES[0].id;
+  loadCur(); renderSettings(); setUI(); renderWords(); initLocal();
+  $('#nNotes').textContent = NOTES.length;
+  $('#saveSt').textContent = '저장됨';
+  $('#envNote').innerHTML = SR ? `음성 인식: 지원됨${typeof SR.available === 'function' ? ' · 기기 안 인식 기능 있음' : ''}${location.protocol === 'file:' ? '<br>파일로 열었어요. 마이크가 막히면 https 주소로 열어 주세요.' : ''}` : '이 브라우저는 음성 인식을 지원하지 않아요. Chrome·Edge·삼성 인터넷에서 열어 주세요.';
+
+  $('#micBtn').onclick = toggleRec;
+  $('#langTop').onchange = e => setLang(e.target.value);
+  $('#langSide').onchange = e => setLang(e.target.value);
+  $('#langChips').onclick = e => { const b = e.target.closest('[data-lang]'); if (b) setLang(b.dataset.lang); };
+  $('#undoBtn').onclick = () => undoLast(false);
+  $('#cleanBtn').onclick = () => { const before = ed.value, after = cleanText(before); if (before === after) { toast('고칠 곳이 없어요'); return; } ed.value = after; insPos = Math.min(insPos, after.length); undoStack = []; updUndo(); markDirty(); toast('띄어쓰기와 문장부호를 정리했어요', { action: '되돌리기', onAction: () => { ed.value = before; markDirty(); } }); };
+  $('#ttsBtn').onclick = readAloud;
+  $('#copyBtn').onclick = async () => { if (!ed.value.trim()) { toast('복사할 글이 없어요'); return; } toast(await copyText(ed.value) ? '모두 복사했어요' : '복사하지 못했어요', { err: false }); };
+  $('#expBtn').onclick = () => { const n = cur(); $('#expSub').textContent = n ? noteTitle(n) : ''; $('#expDlg').showModal(); };
+  $('#expDlg').addEventListener('click', e => { const b = e.target.closest('[data-exp]'); if (b) doExport(b.dataset.exp); });
+  $('#focusBtn').onclick = () => { document.body.classList.add('focus'); };
+  $('#focusExit').onclick = () => document.body.classList.remove('focus');
+  $('#frBtn').onclick = () => { const s = ed.value.slice(ed.selectionStart, ed.selectionEnd); if (s && s.length < 60) $('#frFind').value = s; frFrom = 0; frUpdate(); $('#frDlg').showModal(); $('#frFind').focus(); };
+  $('#frFind').oninput = frUpdate;
+  $('#frNext').onclick = () => {
+    const f = $('#frFind').value; if (!f) return;
+    let i = ed.value.indexOf(f, frFrom); if (i < 0) i = ed.value.indexOf(f);
+    if (i < 0) { toast('찾는 말이 없어요'); return; }
+    $('#frDlg').close(); ed.focus(); ed.setSelectionRange(i, i + f.length); frFrom = i + f.length;
+    const lh = parseFloat(getComputedStyle(ed).lineHeight) || 30; ed.scrollTop = Math.max(0, (ed.value.slice(0, i).split('\n').length - 3) * lh);
+  };
+  $('#frAll').onclick = () => {
+    const f = $('#frFind').value, r = $('#frRep').value; if (!f) return;
+    const c = ed.value.split(f).length - 1; if (!c) { toast('찾는 말이 없어요'); return; }
+    ed.value = ed.value.split(f).join(r); undoStack = []; updUndo(); markDirty();
+    if ($('#frDict').checked) addWord(f, r);
+    $('#frDlg').close(); toast(`${c}곳을 바꿨어요${$('#frDict').checked ? ' · 단어장에도 넣었어요' : ''}`);
+  };
+
+  // Side settings
+  const bindSw = (id, key, after) => $(id).onchange = e => { S[key] = e.target.checked; saveS(); renderSettings(); after && after(); };
+  bindSw('#oCmd', 'cmd'); bindSw('#oPunct', 'punct'); bindSw('#oAppend', 'append'); bindSw('#oPauseNl', 'pauseNl'); bindSw('#oStamp', 'stamp');
+  bindSw('#oWake', 'wake', () => { if (listening) wake(S.wake); });
+  bindSw('#oBeep', 'beep'); bindSw('#oLocal', 'local', () => { if (listening) { try { rec.onend = null; rec.abort(); } catch {} spawn(); } });
+  bindSw('#oSerif', 'serif');
+  $('#oPause').oninput = e => { S.pause = +e.target.value; saveS(); $('#pauseV').textContent = S.pause + '초'; };
+  $('#oIdle').oninput = e => { S.idle = +e.target.value; saveS(); $('#idleV').textContent = S.idle ? S.idle + '분' : '안 함'; };
+  $('#fs').oninput = e => { S.fs = +e.target.value; saveS(); renderSettings(); };
+  $('#oMode').onclick = e => { const b = e.target.closest('button[data-v]'); if (!b) return; S.mode = b.dataset.v; saveS(); renderSettings(); if (listening) { try { rec.onend = null; rec.abort(); } catch {} spawn(); } };
+  $('#segList').onclick = async e => { const b = e.target.closest('[data-copy]'); if (b) toast(await copyText(b.dataset.copy) ? '복사했어요' : '복사하지 못했어요'); };
+  $('#sideToggle').onclick = () => { $('#side').classList.toggle('closed'); store.set('sideClosed', $('#side').classList.contains('closed')); };
+  if (store.get('sideClosed', matchMedia('(max-width: 999px)').matches)) $('#side').classList.add('closed');
+
+  // Notes
+  $('#nq').oninput = renderNotes;
+  $('#nSort').onclick = e => { const b = e.target.closest('button[data-v]'); if (!b) return; nSort = b.dataset.v; segSet($('#nSort'), nSort); renderNotes(); };
+  $('#notesList').addEventListener('click', e => {
+    const t = e.target;
+    let b;
+    if ((b = t.closest('[data-star]'))) { const n = NOTES.find(x => x.id === b.dataset.star); n.star = !n.star; saveNotes(); renderNotes(); return; }
+    if ((b = t.closest('[data-dup]'))) { flushSave(); const n = NOTES.find(x => x.id === b.dataset.dup); const c = { ...n, id: uid(), title: noteTitle(n) + ' (복사본)', created: Date.now(), updated: Date.now(), segs: [...(n.segs || [])], star: false }; NOTES.unshift(c); saveNotes(); renderNotes(); toast('노트를 복제했어요'); return; }
+    if ((b = t.closest('[data-del]'))) { delNote(b.dataset.del); return; }
+    if ((b = t.closest('[data-act]'))) { if (b.dataset.act === 'new') { newNote(); startRec(); } else exportAll(); return; }
+    if ((b = t.closest('[data-open]'))) openNote(b.dataset.open);
+  });
+  $('#notesList').addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.dataset.open) openNote(e.target.dataset.open); });
+  const mkNew = () => { flushSave(); const c = cur(); if (c && !c.text.trim() && !c.title) { setTab('dict'); ed.focus(); return; } newNote(); toast('새 노트를 열었어요'); };
+  $('#newBtn').onclick = mkNew; $('#newBtn2').onclick = mkNew;
+
+  // Words
+  $('#wAdd').onclick = () => { if (addWord($('#wFrom').value, $('#wTo').value.trim())) { $('#wFrom').value = ''; $('#wTo').value = ''; $('#wFrom').focus(); toast('단어장에 넣었어요'); } };
+  ['#wFrom', '#wTo'].forEach(s => $(s).addEventListener('keydown', e => { if (e.key === 'Enter') $('#wAdd').click(); }));
+  $('#sAdd').onclick = () => { const n = $('#sName').value.trim(), b = $('#sBody').value; if (!n || !b) { toast('이름과 내용을 모두 적어 주세요'); return; } const i = SNIPS.findIndex(s => s.n === n); if (i >= 0) SNIPS[i].b = b; else SNIPS.push({ n, b }); store.set('snips', SNIPS); $('#sName').value = ''; $('#sBody').value = ''; renderWords(); toast('문구를 넣었어요'); };
+  $('#wordsList').onclick = e => { const b = e.target.closest('[data-wdel]'); if (b) { WORDS.splice(+b.dataset.wdel, 1); store.set('words', WORDS); renderWords(); } };
+  $('#snipList').onclick = e => { const b = e.target.closest('[data-sdel]'); if (b) { SNIPS.splice(+b.dataset.sdel, 1); store.set('snips', SNIPS); renderWords(); } };
+
+  // Dialogs / settings
+  $$('dialog [data-close]').forEach(b => b.onclick = () => b.closest('dialog').close());
+  $$('dialog').forEach(d => d.addEventListener('click', e => { if (e.target === d) d.close(); }));
+  $('#helpBtn').onclick = () => $('#helpDlg').showModal();
+  $('#setBtn').onclick = () => $('#setDlg').showModal();
+  $('#bkOut').onclick = backup;
+  $('#bkIn').onclick = () => $('#fileIn').click();
+  $('#fileIn').onchange = e => { const f = e.target.files[0]; if (f) importFile(f); e.target.value = ''; $('#setDlg').close(); };
+  $('#wipe').onclick = async () => {
+    if (!(await confirmDlg('모두 지울까요?', '노트, 단어장, 설정을 이 기기에서 모두 지워요. 되돌릴 수 없어요.', '모두 지우기', true))) return;
+    if (listening) stopRec();
+    Object.keys(localStorage).filter(k => k.startsWith('dictator.')).forEach(k => localStorage.removeItem(k));
+    location.reload();
+  };
+  $$('#tabs .tab').forEach(b => b.onclick = () => setTab(b.dataset.tab));
+
+  // Keys
+  document.addEventListener('keydown', e => {
+    if (e.key === 'F8') { e.preventDefault(); if (tab !== 'dict') setTab('dict'); toggleRec(); return; }
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'f' && tab === 'dict' && !$('dialog[open]')) { e.preventDefault(); $('#frBtn').click(); return; }
+    if (e.key === 'Escape' && !$('dialog[open]')) { if (listening) stopRec(); else if (document.body.classList.contains('focus')) document.body.classList.remove('focus'); }
+  });
+  addEventListener('pagehide', flushSave);
+  addEventListener('beforeunload', flushSave);
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flushSave(); });
+  addEventListener('storage', e => { if (e.key === 'dictator.notes' && !listening && !dirty) { NOTES = store.get('notes', []); if (tab === 'notes') renderNotes(); } });
+  setTab(store.get('tab', 'dict') === 'words' ? 'words' : 'dict');
+}
+init();
+</script>
+</body>
+</html>
